@@ -217,3 +217,36 @@ body {
   position: absolute;
   inset: 0;
 }
+
+/* Hero de la landing: degradado continuo sobre "FEEDMA" con los tonos
+   crudos del logo (teal/magenta/ámbar) — el único sitio con movimiento
+   permanente de la app, a propósito, para que el primer momento se sienta
+   vivo sin que el resto del panel (de uso diario) se vuelva ruidoso. */
+@keyframes nx-feedma-shimmer {
+  to { background-position: -200% 0; }
+}
+.nx-feedma-shimmer {
+  background-image: linear-gradient(
+    100deg,
+    #fff 0%, #fff 35%,
+    var(--color-logo-teal) 45%,
+    var(--color-logo-amber) 55%,
+    var(--color-logo-magenta) 65%,
+    #fff 75%, #fff 100%
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: nx-feedma-shimmer 7s linear infinite;
+}
+
+/* Mancha ambiental difuminada detrás del hero: deriva muy lenta, nunca se
+   detiene, pero es demasiado sutil y lenta para distraer. */
+@keyframes nx-hero-drift {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(-4%, 3%) scale(1.08); }
+}
+.nx-hero-blob {
+  animation: nx-hero-drift 16s var(--ease-spring) infinite;
+}
