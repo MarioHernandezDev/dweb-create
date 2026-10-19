@@ -54,20 +54,23 @@ async function advanceStatus() {
   if (post.value && nextStatus.value) await updatePost(post.value.id, { status: nextStatus.value })
 }
 
-// El motor de ML real es de la Fase 4 (ver docs/3-ML-PIPELINE.md); esto
-// sigue siendo una simulación local — a propósito no se guarda en
-// `ml_predictions`, esa tabla solo la escribe el servidor (ver RLS).
+// Primera versión real del motor de ML (Fase 1 MVP, ver
+// docs/3-ML-PIPELINE.md §3.5): modelo heurístico servido por
+// /api/ml/predict, que SÍ persiste en `ml_predictions` (con service_role,
+// el cliente no tiene permiso de escritura ahí — ver RLS). El
+// enriquecimiento con LLM queda para cuando haya clave de API configurada.
 const predicting = ref(false)
-function predict() {
+async function predict() {
   if (!post.value) return
   predicting.value = true
-  setTimeout(() => {
-    if (post.value) {
-      const base = 52 + Math.min(title.value.length, 20) + (caption.value.length > 40 ? 10 : 0)
-      post.value.successScore = Math.min(96, base)
-    }
+  try {
+    const result = await $fetch('/api/ml/predict', { method: 'POST', body: { postId: post.value.id } })
+    if (post.value) post.value.successScore = result.successScore
+  } catch (err) {
+    console.error('[creator/post/:id] fallo al predecir:', err)
+  } finally {
     predicting.value = false
-  }, 900)
+  }
 }
 </script>
 

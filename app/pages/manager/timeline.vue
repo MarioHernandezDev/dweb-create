@@ -1,15 +1,17 @@
 <script setup lang="ts">
-import { influencers, influencerPosts } from '~/utils/mock-data'
-import type { Influencer, Post } from '~/types'
+import type { Post } from '~/types'
 
 useHead({ title: 'Tablero' })
 
-const influencersById = computed(() => Object.fromEntries(influencers.map((c) => [c.id, c])) as Record<string, Influencer>)
+const { influencers, posts, ensureLoaded } = useMyRoster()
+await ensureLoaded()
+
+const influencersById = computed(() => Object.fromEntries(influencers.value.map((c) => [c.id, c])))
 
 const activeInfluencer = ref<string>('all')
 
 const filteredPosts = computed(() =>
-  activeInfluencer.value === 'all' ? influencerPosts : influencerPosts.filter((p) => p.influencerId === activeInfluencer.value)
+  activeInfluencer.value === 'all' ? posts.value : posts.value.filter((p) => p.influencerId === activeInfluencer.value)
 )
 
 const detailOpen = ref(false)

@@ -1,19 +1,20 @@
 <script setup lang="ts">
-import { influencers, influencerPosts } from '~/utils/mock-data'
-
 useHead({ title: 'Resumen' })
 
+const { influencers, posts, ensureLoaded } = useMyRoster()
+await ensureLoaded()
+
 const postsByInfluencer = computed(() => {
-  const map = new Map<string, typeof influencerPosts>()
-  for (const influencer of influencers) map.set(influencer.id, influencerPosts.filter((p) => p.influencerId === influencer.id))
+  const map = new Map<string, typeof posts.value>()
+  for (const influencer of influencers.value) map.set(influencer.id, posts.value.filter((p) => p.influencerId === influencer.id))
   return map
 })
 
-const totalOverdue = computed(() => influencerPosts.filter((p) => p.status === 'overdue').length)
-const totalPublishedWeek = computed(() => influencerPosts.filter((p) => p.status === 'published').length)
+const totalOverdue = computed(() => posts.value.filter((p) => p.status === 'overdue').length)
+const totalPublishedWeek = computed(() => posts.value.filter((p) => p.status === 'published').length)
 
 const sortedInfluencers = computed(() =>
-  [...influencers].sort((a, b) => {
+  [...influencers.value].sort((a, b) => {
     const overdueA = postsByInfluencer.value.get(a.id)!.filter((p) => p.status === 'overdue').length
     const overdueB = postsByInfluencer.value.get(b.id)!.filter((p) => p.status === 'overdue').length
     return overdueB - overdueA
@@ -27,7 +28,7 @@ function overdueCount(influencerId: string) {
   return postsByInfluencer.value.get(influencerId)!.filter((p) => p.status === 'overdue').length
 }
 
-const goalPct = computed(() => Math.min(100, Math.round((totalPublishedWeek.value / influencerPosts.length) * 100)))
+const goalPct = computed(() => (posts.value.length ? Math.min(100, Math.round((totalPublishedWeek.value / posts.value.length) * 100)) : 0))
 const priorityInfluencer = computed(() => sortedInfluencers.value[0])
 
 const quickActions = computed(() => [
@@ -62,7 +63,7 @@ const quickActions = computed(() => [
               />
             </div>
             <span class="shrink-0 text-[0.8125rem] text-[var(--color-text-faint)]" style="font-variant-numeric: proportional-nums">
-              {{ totalPublishedWeek }}/{{ influencerPosts.length }}
+              {{ totalPublishedWeek }}/{{ posts.length }}
             </span>
           </div>
         </div>

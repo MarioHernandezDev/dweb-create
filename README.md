@@ -56,8 +56,9 @@ Somos 2 personas. Para no pisarnos y no perdernos, el proyecto se hace **en este
 - [x] Crear el proyecto real en [Supabase](https://supabase.com) y rellenar `.env` — pasos en [`docs/6-SUPABASE-SETUP.md`](./docs/6-SUPABASE-SETUP.md).
 - [x] Aplicar las migraciones al proyecto real (`npx supabase db push`) — confirmado, el esquema ya existe ahí.
 - [x] Login de verdad (`/login`, con `@nuxtjs/supabase`): cada rol solo puede entrar en su propia sección, sin sesión te manda a `/login`. Quitado el selector "Modo demo".
-- [ ] **← Falta esto:** añadir `SUPABASE_SERVICE_ROLE_KEY` a `.env` (Project Settings → API) y correr `npm run db:seed-users` para que las 3 cuentas de prueba existan de verdad en el proyecto y se pueda iniciar sesión.
-- [ ] Cambiar cada pantalla para que pida los datos a Supabase en vez de a `mock-data.ts` (el contenido sigue siendo de ejemplo; lo que ya es real es quién puede entrar a cada sitio).
+- [x] `SUPABASE_SERVICE_ROLE_KEY` ya está en `.env` y `npm run db:seed-users` confirmado contra el proyecto real: las 3 cuentas (`manager@feedma.test`, `influencer@feedma.test`, `client@feedma.test`, contraseña `feedma-demo-2026`) existen y se puede iniciar sesión con ellas.
+- [x] Cambiar cada pantalla para que pida los datos a Supabase en vez de a `mock-data.ts`. Hecho para las 3 vistas (manager/influencer/cliente): posts, roster, colaboraciones, redes sociales, login y "Descubrir" ya leen y escriben contra Supabase de verdad.
+  - Quedan de mentira, a propósito, solo las piezas que dependen de integraciones de la Fase 4 todavía sin construir: las sugerencias de IA (`suggestionsForDraft`), el panel de métricas por plataforma (`metricsByPlatform`/`engagementSeries` en `creator/metrics.vue` y `manager/metrics.vue` — no hay sincronización real de redes que las alimente) y el motor de tendencias (`creator/trends.vue`).
 
 ### FASE 3 — Pagos (Stripe)
 **Por qué va aquí y no antes:** no tiene sentido montar cobros hasta que haya usuarios reales guardados (Fase 2).
@@ -94,6 +95,7 @@ Cada fase de arriba tiene su detalle técnico en [`docs/`](./docs):
 4. [**Roadmap y Tareas**](./docs/4-ROADMAP-AND-TASKS.md) — checklist semana a semana más detallado que las fases de arriba.
 5. [**Reparto de trabajo del frontend**](./docs/5-FRONTEND-WORK-SPLIT.md) — cómo dividir el frontend actual entre dos personas y flujo de git para fusionar sin conflictos.
 6. [**Poner en marcha Supabase**](./docs/6-SUPABASE-SETUP.md) — guía paso a paso para crear el proyecto real, aplicar las migraciones y generar las 3 cuentas de prueba.
+7. [**Changelog de sesiones**](./docs/CHANGELOG.md) — qué se hizo en cada sesión de desarrollo, por qué, y qué queda por verificar. Léelo antes de retomar el proyecto después de un tiempo sin tocarlo.
 
 ## 🚀 Guía de Inicio Rápido
 

@@ -24,4 +24,5 @@ export function resetAccountCaches() {
   useState<boolean>('my-collaborations-loaded', () => false).value = false
   useState('client-posts', () => []).value = []
   useState<boolean>('client-posts-loaded', () => false).value = false
+  useMyRoster().reset()
 }
