@@ -30,6 +30,7 @@ Toda la arquitectura, el modelo de datos, el pipeline de ML y el plan de trabajo
 2. [**Esquema de Base de Datos**](./docs/2-DATABASE-SCHEMA.md) — modelo entidad-relación, DDL completo y políticas RLS para Supabase.
 3. [**Pipeline de Machine Learning**](./docs/3-ML-PIPELINE.md) — entradas, procesamiento, modelos a usar y formatos de salida (JSON) del motor de predicción y tendencias.
 4. [**Roadmap y Tareas**](./docs/4-ROADMAP-AND-TASKS.md) — checklist semana a semana (Semana 1 a 6) con responsabilidades para un equipo de 2 desarrolladores.
+5. [**Reparto de trabajo del frontend**](./docs/5-FRONTEND-WORK-SPLIT.md) — cómo dividir el frontend actual entre dos personas y flujo de git para fusionar sin conflictos.
 
 ## 🚀 Guía de Inicio Rápido
 

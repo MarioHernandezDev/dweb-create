@@ -1,0 +1,13 @@
+{
+  "name": "dweb-create — Estudio de contenido",
+  "short_name": "dweb-create",
+  "description": "Gestiona entregas, métricas y predicciones de contenido en un solo lugar.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#15161C",
+  "theme_color": "#15161C",
+  "orientation": "portrait-primary",
+  "icons": [
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

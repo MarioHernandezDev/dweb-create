@@ -1,0 +1,174 @@
+@import "tailwindcss";
+
+/*
+  Sistema de diseño de dweb-create.
+  Metáfora visual: un "parte de rodaje" (production board) para creadores de
+  contenido — cada entrega tiene un estado con color propio, la semana es la
+  columna vertebral de la navegación, y el acento cálido ("flame") marca
+  únicamente la acción principal o el dato más importante de cada pantalla.
+*/
+
+@font-face {
+  font-family: "Snasm";
+  src: url("../fonts/Snasm-Light.otf") format("opentype");
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Snasm";
+  src: url("../fonts/Snasm-LightItalic.otf") format("opentype");
+  font-weight: 300;
+  font-style: italic;
+  font-display: swap;
+}
+
+@theme {
+  --font-display: "Snasm", "Hanken Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Hanken Grotesk", ui-sans-serif, system-ui, sans-serif;
+
+  /* Radios: varían según jerarquía, no un único valor repetido en todo */
+  --radius-xs: 0.625rem;   /* 10px — chips, botones pequeños */
+  --radius-sm: 0.875rem;   /* 14px — ítems de lista anidados */
+  --radius-md: 1.25rem;    /* 20px — tarjetas estándar */
+  --radius-lg: 1.75rem;    /* 28px — superficies hero, bottom sheets */
+
+  /* Acento de marca: coral-llama, saturado y cálido (no terracota apagada) */
+  --color-flame-50: #fff1ec;
+  --color-flame-200: #ffc0a8;
+  --color-flame-400: #ff7a54;
+  --color-flame-500: #ff5a36;
+  --color-flame-600: #e8431f;
+  --color-flame-900: #2b0d04;
+
+  /* Violeta "señal": reservado solo para el motor de ML / predicciones */
+  --color-signal-300: #c3b8ff;
+  --color-signal-500: #8b7cff;
+  --color-signal-600: #6f5ce0;
+
+  /* Estados de contenido (dispositivo estructural, no decorativo) */
+  --color-status-idea: #8b8a9e;
+  --color-status-production: #f2a93c;
+  --color-status-review: #8b7cff;
+  --color-status-scheduled: #5cc8f2;
+  --color-status-published: #3ddc97;
+  --color-status-alert: #e8475b;
+
+  --breakpoint-xs: 26rem;
+}
+
+:root,
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --color-ink: #15161c;
+  --color-ink-raised: #1c1e26;
+  --color-ink-overlay: #262834;
+  --color-hairline: rgb(245 243 239 / 9%);
+  --color-hairline-strong: rgb(245 243 239 / 16%);
+
+  --color-text: #f5f3ef;
+  --color-text-muted: #9b9aa8;
+  --color-text-faint: #6b6b76;
+
+  --color-on-flame: #2b0d04;
+  --color-on-signal: #16122e;
+
+  --shadow-float: 0 24px 48px -16px rgb(0 0 0 / 55%), 0 2px 8px -2px rgb(0 0 0 / 40%);
+
+  /* Paleta categórica validada (CVD-safe) para identidad de plataforma.
+     Orden fijo: tiktok, youtube, x, instagram — no reordenar. */
+  --color-platform-tiktok: #199e70;
+  --color-platform-youtube: #e66767;
+  --color-platform-x: #9085e9;
+  --color-platform-instagram: #d55181;
+
+  /* Serie única (magnitud): tendencias de engagement */
+  --color-chart-primary: #3987e5;
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  --color-ink: #faf8f5;
+  --color-ink-raised: #ffffff;
+  --color-ink-overlay: #f1eee7;
+  --color-hairline: rgb(21 22 28 / 8%);
+  --color-hairline-strong: rgb(21 22 28 / 14%);
+
+  --color-text: #1b1b22;
+  --color-text-muted: #65636f;
+  --color-text-faint: #9997a2;
+
+  --color-on-flame: #2b0d04;
+  --color-on-signal: #ffffff;
+
+  --shadow-float: 0 20px 40px -14px rgb(20 20 30 / 18%), 0 2px 6px -2px rgb(20 20 30 / 10%);
+
+  --color-status-idea: #726f85;
+  --color-status-production: #c9830a;
+  --color-status-alert: #d23c52;
+
+  --color-platform-tiktok: #1baf7a;
+  --color-platform-youtube: #e34948;
+  --color-platform-x: #6250d6;
+  --color-platform-instagram: #e87ba4;
+
+  --color-chart-primary: #2a78d6;
+}
+
+@theme inline {
+  --color-ink: var(--color-ink);
+  --color-ink-raised: var(--color-ink-raised);
+  --color-ink-overlay: var(--color-ink-overlay);
+  --color-hairline: var(--color-hairline);
+  --color-hairline-strong: var(--color-hairline-strong);
+  --color-text: var(--color-text);
+  --color-text-muted: var(--color-text-muted);
+  --color-text-faint: var(--color-text-faint);
+  --color-flame: var(--color-flame-500);
+  --color-on-flame: var(--color-on-flame);
+  --color-signal: var(--color-signal-500);
+  --color-on-signal: var(--color-on-signal);
+}
+
+html {
+  background: var(--color-ink);
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background: var(--color-ink);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  font-feature-settings: "ss01" 1;
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior-y: none;
+}
+
+::selection {
+  background: var(--color-flame-500);
+  color: var(--color-on-flame);
+}
+
+/* Foco de teclado visible siempre, sin excepciones */
+:focus-visible {
+  outline: 2px solid var(--color-flame-500);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Scrollbars finas y discretas para los paneles tipo tablero */
+.nx-scroll::-webkit-scrollbar { height: 6px; width: 6px; }
+.nx-scroll::-webkit-scrollbar-thumb { background: var(--color-hairline-strong); border-radius: 999px; }
+.nx-scroll::-webkit-scrollbar-track { background: transparent; }
