@@ -35,7 +35,7 @@ const groups = computed(() => {
       >
         {{ group.label }}
       </h2>
-      <div class="flex flex-col gap-2.5">
+      <div class="flex flex-col gap-2.5 lg:grid lg:grid-cols-2 lg:gap-3">
         <div
           v-for="(post, i) in group.items" :key="post.id"
           class="nx-stagger-in" :style="{ '--stagger-i': i }"

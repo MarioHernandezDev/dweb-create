@@ -1,8 +1,11 @@
 <script setup lang="ts">
 import { roleMeta } from '~/utils/nav'
+import { localPhotos } from '~/utils/images'
 import type { Role } from '~/types'
 
 useHead({ title: 'Bienvenida' })
+
+const banner = localPhotos.onboarding
 
 type WorkMode = 'solo' | 'manager'
 
@@ -73,6 +76,9 @@ const welcomeCopy = computed(() => {
         >
           <!-- Paso 1: elegir rol -->
           <div v-if="step === 1" key="role">
+            <div class="relative h-36 md:h-44 rounded-[var(--radius-lg)] overflow-hidden mb-6">
+              <CoverImage :photo="banner" :width="640" :height="360" scrim="tint" class="absolute inset-0" />
+            </div>
             <h1 class="font-display text-[1.875rem] md:text-[2.25rem] leading-[1.1] text-[var(--color-text)] mb-2">¿Quién eres?</h1>
             <p class="text-[0.9375rem] text-[var(--color-text-muted)] mb-7">Así te mostramos la pantalla que te hace falta, y nada más.</p>
             <div class="flex flex-col gap-3">

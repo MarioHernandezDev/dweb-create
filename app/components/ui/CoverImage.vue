@@ -15,7 +15,13 @@ withDefaults(
 <template>
   <div class="relative overflow-hidden">
     <NuxtImg
+      v-if="photo.id"
       provider="unsplash" :src="photo.id" :alt="photo.alt" fit="crop" :width="width" :height="height"
+      :quality="80" format="webp" class="absolute inset-0 size-full object-cover"
+    />
+    <NuxtImg
+      v-else
+      :src="photo.src" :alt="photo.alt" fit="cover" :width="width" :height="height"
       :quality="80" format="webp" class="absolute inset-0 size-full object-cover"
     />
     <!-- "bottom"/"full" usan un negro fijo (no el --color-ink del tema) porque el texto

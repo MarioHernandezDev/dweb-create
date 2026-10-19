@@ -1,8 +1,11 @@
 <script setup lang="ts">
 import { influencers, managers, formatCompactNumber } from '~/utils/mock-data'
+import { localPhotos } from '~/utils/images'
 import type { Influencer, Manager } from '~/types'
 
 useHead({ title: 'Descubrir' })
+
+const banner = localPhotos.discover
 
 function managerOf(influencer: Influencer) {
   return managers.find((m) => m.id === influencer.managerId)
@@ -30,6 +33,13 @@ function send() {
 
 <template>
   <AppShell role="client" title="Descubrir" subtitle="Contacta directo con un influencer o con su agencia">
+    <div class="relative h-36 md:h-48 rounded-[var(--radius-lg)] overflow-hidden mb-7">
+      <CoverImage :photo="banner" :width="900" :height="400" scrim="bottom" class="absolute inset-0" />
+      <div class="relative h-full flex flex-col justify-end p-5">
+        <p class="font-display text-white text-[1.375rem] leading-snug max-w-[26ch]">Encuentra tu próxima colaboración</p>
+      </div>
+    </div>
+
     <section class="mb-8">
       <h2 class="font-display text-[1.25rem] text-[var(--color-text)] mb-1">Influencers</h2>
       <p class="text-[0.8125rem] text-[var(--color-text-muted)] mb-3.5">Algunos trabajan solos, otros a través de una agencia — tú eliges a quién escribir.</p>
@@ -38,7 +48,7 @@ function send() {
         icon="ph:user-circle" title="Todavía no hay influencers"
         description="En cuanto se unan a FEEDMA, aparecerán aquí para que puedas contactarlos."
       />
-      <div v-else class="flex flex-col gap-2.5">
+      <div v-else class="flex flex-col gap-2.5 lg:grid lg:grid-cols-2 lg:gap-3">
         <BaseCard v-for="influencer in influencers" :key="influencer.id" radius="md" padding="md" class="flex items-center gap-4">
           <BaseAvatar :initials="influencer.initials" :hue="influencer.hue" />
           <div class="min-w-0 flex-1">
@@ -63,7 +73,7 @@ function send() {
         icon="ph:briefcase" title="Todavía no hay agencias"
         description="En cuanto se unan a FEEDMA, aparecerán aquí para que puedas contactarlas."
       />
-      <div v-else class="flex flex-col gap-2.5">
+      <div v-else class="flex flex-col gap-2.5 lg:grid lg:grid-cols-2 lg:gap-3">
         <BaseCard v-for="manager in managers" :key="manager.id" radius="md" padding="md" class="flex items-center gap-4">
           <BaseAvatar :initials="manager.initials" :hue="manager.hue" />
           <div class="min-w-0 flex-1">

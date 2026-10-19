@@ -1,8 +1,11 @@
 export interface CoverPhoto {
-  id: string
+  /** Id de Unsplash (usado con el provider "unsplash" de @nuxt/image). Omitir si se usa `src`. */
+  id?: string
+  /** Ruta local en /public (usada con el provider IPX por defecto). Omitir si se usa `id`. */
+  src?: string
   alt: string
-  credit: string
-  creditUrl: string
+  credit?: string
+  creditUrl?: string
 }
 
 // Fotografías libres (Unsplash License) servidas vía el provider "unsplash" de @nuxt/image.
@@ -30,5 +33,21 @@ export const coverPhotos = {
     alt: 'Envase minimalista de un producto de cuidado de la piel',
     credit: 'Mathilde Langevin',
     creditUrl: 'https://unsplash.com/@mathildelangevin'
+  }
+} satisfies Record<string, CoverPhoto>
+
+// Fotos propias (public/img), servidas en local con el provider IPX por defecto.
+export const localPhotos = {
+  onboarding: {
+    src: '/img/pexels-artempodrez-5716035.jpg',
+    alt: 'Equipo revisando gráficas e informes en una mesa de reuniones'
+  },
+  discover: {
+    src: '/img/pexels-thirdman-7181178.jpg',
+    alt: 'Mesa de trabajo con paletas de color y gráficas de una campaña'
+  },
+  socials: {
+    src: '/img/pexels-viralyft-16852355.jpg',
+    alt: 'Móvil mostrando una carpeta de apps de redes sociales'
   }
 } satisfies Record<string, CoverPhoto>

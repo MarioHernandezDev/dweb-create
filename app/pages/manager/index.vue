@@ -106,7 +106,7 @@ const quickActions = computed(() => [
           Ver tablero completo
         </NuxtLink>
       </div>
-      <div class="flex flex-col gap-2.5">
+      <div class="flex flex-col gap-2.5 lg:grid lg:grid-cols-2 lg:gap-3">
         <div
           v-for="(influencer, i) in sortedInfluencers" :key="influencer.id"
           class="nx-stagger-in" :style="{ '--stagger-i': i }"
