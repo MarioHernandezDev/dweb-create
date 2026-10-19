@@ -2,7 +2,7 @@ import tailwindcss from '@tailwindcss/vite'
 
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
-  modules: ['@nuxt/image', '@nuxt/fonts', '@nuxt/icon/module', '@pinia/nuxt'],
+  modules: ['@nuxt/image', '@nuxt/fonts', '@nuxt/icon/module', '@pinia/nuxt', '@nuxtjs/supabase'],
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
 
@@ -54,6 +54,22 @@ export default defineNuxtConfig({
     // optimizada directamente contra su CDN, sin reprocesarlas en nuestro servidor.
     unsplash: {
       baseURL: 'https://images.unsplash.com/'
+    }
+  },
+
+  supabase: {
+    // El módulo por defecto lee SUPABASE_URL/SUPABASE_KEY; nuestro .env usa
+    // SUPABASE_ANON_KEY (así quedó documentado en docs/6-SUPABASE-SETUP.md),
+    // así que lo mapeamos explícitamente en vez de renombrar el .env de nadie.
+    url: process.env.SUPABASE_URL,
+    key: process.env.SUPABASE_ANON_KEY,
+    // Sin tipos generados todavía (eso es `supabase gen types`, más adelante).
+    types: false,
+    redirectOptions: {
+      login: '/login',
+      callback: '/confirm',
+      // Páginas públicas: todo lo demás exige sesión iniciada.
+      exclude: ['/', '/onboarding']
     }
   }
 })

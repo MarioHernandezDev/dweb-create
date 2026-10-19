@@ -1,90 +1,123 @@
 # FEEDMA
 
-**La plataforma todo-en-uno para creadores de contenido y Community Managers.**
+**El marketplace + panel de gestión para creadores de contenido, sus managers y las marcas que los contratan.**
 
-Administra las entregas de contenido de tus clientes en una línea de tiempo clara, consolida las métricas de todas tus redes sociales en un solo lugar, y usa Machine Learning para predecir el éxito de tus publicaciones antes de subirlas y descubrir tendencias antes que tu competencia.
+Una marca puede contactar directamente a un influencer, o a un manager que representa a varios. Sea cual sea el camino, todos ven en un mismo sitio qué hay que entregar esta semana, cómo van las métricas, y una predicción de éxito antes de publicar.
 
-## ✨ ¿Qué resuelve?
+## ¿Qué resuelve?
 
-- 📅 **Línea de tiempo de entregas**: visualiza cuántos vídeos/posts quedan por subir esta semana, por cliente.
-- 📊 **Métricas consolidadas**: vistas, likes, comentarios y engagement de Instagram, TikTok y YouTube en un solo dashboard.
+- 🤝 **Marketplace de 3 roles**: una marca (**Cliente**) contrata a un **Influencer** directamente o a través de su **Manager**, que reparte el trabajo entre su equipo.
+- 📅 **Línea de tiempo de entregas**: cuántos vídeos/posts quedan por subir esta semana, por influencer.
+- 📊 **Métricas consolidadas**: vistas, likes, comentarios y engagement de Instagram, TikTok, YouTube y más, en un solo dashboard.
 - 🤖 **Predicción con ML**: un score de éxito (0-100) y sugerencias de copy, hashtags y horarios antes de publicar.
-- 📈 **Motor de tendencias**: ideas de contenido basadas en lo que está funcionando ahora mismo en tu nicho.
-- 💳 **Monetización por suscripción**: planes gestionados con Stripe, con modelo de créditos para el consumo de ML.
+- 📈 **Motor de tendencias**: ideas de contenido basadas en lo que está funcionando ahora mismo en el nicho del influencer.
+- 💳 **Monetización doble**: suscripción mensual (Manager/Influencer pagan por usar el panel) + comisión del marketplace cuando una marca contrata a través de la plataforma (Stripe Connect).
 
-## 🧱 Stack Tecnológico
+## Stack Tecnológico
 
 | Capa | Tecnología |
 |---|---|
-| Frontend | [Vue 3](https://vuejs.org/) + [Nuxt 3](https://nuxt.com/) + [TailwindCSS](https://tailwindcss.com/) |
-| Backend / DB / Auth | [Supabase](https://supabase.com/) (PostgreSQL, Auth, RLS, Storage, pgvector) |
-| Pagos / Suscripciones | [Stripe](https://stripe.com/) (Checkout + Webhooks) |
+| Frontend | [Vue 3](https://vuejs.org/) + [Nuxt 4](https://nuxt.com/) + [TailwindCSS](https://tailwindcss.com/) |
+| Backend / DB / Auth | [Supabase](https://supabase.com/) (PostgreSQL, Auth, RLS, Storage) |
+| Pagos | [Stripe](https://stripe.com/) (Checkout + Stripe Connect + Webhooks) |
 | Machine Learning | Server Routes de Nuxt + servicio de inferencia (Python/FastAPI) + LLM vía API |
 | Móvil | Progressive Web App (PWA) — ruta futura a [Capacitor](https://capacitorjs.com/) |
 
-## 📚 Documentación
+---
 
-Toda la arquitectura, el modelo de datos, el pipeline de ML y el plan de trabajo viven en [`docs/`](./docs):
+## 🗺️ Fases del proyecto — léelo antes de tocar código
+
+Somos 2 personas. Para no pisarnos y no perdernos, el proyecto se hace **en este orden, fase por fase**. No se empieza una fase sin haber terminado (o casi) la anterior — cada una depende de la de antes.
+
+**Cómo marcar una fase como hecha:** cuando termines una tarea, marca su casilla `- [ ]` → `- [x]` en este mismo archivo, haz commit (`git commit -m "Hecho fase 1: página de detalle de post"`) y súbelo (`git push`). Cuando esté toda una fase en verde, avísalo en el chat del equipo antes de que nadie empiece la siguiente.
+
+### FASE 0 — Preparación ✅ (ya está hecho)
+- [x] Repositorio creado, Nuxt 4 + TailwindCSS instalado y funcionando.
+- [x] Sistema de diseño: colores del logo, tipografía, iconos propios.
+- [x] Documentación inicial en [`docs/`](./docs).
+
+### FASE 1 — Frontend con datos de ejemplo (en curso)
+**Por qué va primero:** antes de montar una base de datos de verdad, es mucho más fácil ver y tocar la app con datos inventados. Así se detecta qué necesita cada pantalla antes de diseñar las tablas reales.
+
+- [x] Las 3 vistas con su navegación: Manager, Influencer y Cliente.
+- [x] Página "Descubrir" del Cliente (contactar a un influencer o a un manager).
+- [x] Página de detalle de un post (abrir una entrega y ver/editar su información).
+- [x] Onboarding de primer uso (elegir rol, elegir si el influencer trabaja solo o busca manager).
+- [x] Estados vacíos reales (tablero sin entregas, Descubrir sin influencers/agencias, tendencias sin datos).
+- [ ] Revisar cada pantalla en un móvil de verdad, no solo en el navegador del ordenador.
+
+📄 Detalle y reparto de estas tareas entre los dos: [`docs/5-FRONTEND-WORK-SPLIT.md`](./docs/5-FRONTEND-WORK-SPLIT.md).
+
+### FASE 2 — Backend: Supabase (datos reales)
+**Por qué va aquí:** sin esto no hay usuarios de verdad ni nada se guarda — todo lo de la Fase 1 es de mentira (datos inventados en `mock-data.ts`).
+
+- [x] Escribir y **probar** el esquema completo + seguridad (RLS) — ya está en [`supabase/migrations/`](./supabase/migrations), aplicado contra una base de datos real y verificado a mano (un cliente no puede ver ni editar lo que no es suyo). Ver [`docs/2-DATABASE-SCHEMA.md`](./docs/2-DATABASE-SCHEMA.md).
+- [x] Script para crear 3 cuentas de prueba ya relacionadas entre sí (`npm run db:seed-users`), probado en local.
+- [x] Crear el proyecto real en [Supabase](https://supabase.com) y rellenar `.env` — pasos en [`docs/6-SUPABASE-SETUP.md`](./docs/6-SUPABASE-SETUP.md).
+- [x] Aplicar las migraciones al proyecto real (`npx supabase db push`) — confirmado, el esquema ya existe ahí.
+- [x] Login de verdad (`/login`, con `@nuxtjs/supabase`): cada rol solo puede entrar en su propia sección, sin sesión te manda a `/login`. Quitado el selector "Modo demo".
+- [ ] **← Falta esto:** añadir `SUPABASE_SERVICE_ROLE_KEY` a `.env` (Project Settings → API) y correr `npm run db:seed-users` para que las 3 cuentas de prueba existan de verdad en el proyecto y se pueda iniciar sesión.
+- [ ] Cambiar cada pantalla para que pida los datos a Supabase en vez de a `mock-data.ts` (el contenido sigue siendo de ejemplo; lo que ya es real es quién puede entrar a cada sitio).
+
+### FASE 3 — Pagos (Stripe)
+**Por qué va aquí y no antes:** no tiene sentido montar cobros hasta que haya usuarios reales guardados (Fase 2).
+
+- [ ] Crear cuenta de Stripe en modo de pruebas (test mode).
+- [ ] Suscripciones: el Manager y el Influencer pagan una cuota mensual por usar el panel.
+- [ ] Stripe Connect: cuando una marca contrata a un influencer a través de la plataforma, FEEDMA se queda automáticamente con una comisión.
+- [ ] Webhooks de Stripe para que el estado de pago en la app esté siempre al día.
+
+### FASE 4 — Apagar los "mocks": funciones de verdad
+**Por qué va aquí:** hasta este punto, varias cosas de la app son simulaciones (datos de mentira o botones que no hacen nada de verdad). Esta fase las sustituye una a una por la función real.
+
+- [ ] Conectar redes sociales de verdad (Instagram, TikTok, YouTube...) usando sus APIs oficiales.
+- [ ] Motor de Machine Learning real para la predicción de éxito y las tendencias — ver [`docs/3-ML-PIPELINE.md`](./docs/3-ML-PIPELINE.md).
+- [ ] Que el botón "Contactar" de la página Descubrir mande una solicitud de verdad (hoy es una simulación que no se guarda en ningún sitio).
+
+### FASE 5 — Salir a buscar usuarios reales
+**Por qué va al final:** no tiene sentido invitar a nadie hasta que el pago y los datos reales funcionen sin errores.
+
+- [ ] Lista de 5-10 influencers o managers conocidos para probar la app primero (beta cerrada).
+- [ ] Contactar marcas pequeñas para el lado "Cliente" del marketplace.
+- [ ] Recoger lo que falle o confunda, y arreglarlo.
+- [ ] Lanzamiento público.
+
+---
+
+## 📚 Documentación a fondo
+
+Cada fase de arriba tiene su detalle técnico en [`docs/`](./docs):
 
 1. [**Arquitectura**](./docs/1-ARCHITECTURE.md) — visión general del sistema, diagramas de autenticación, flujo de pagos con Stripe y flujo de inferencia de ML.
 2. [**Esquema de Base de Datos**](./docs/2-DATABASE-SCHEMA.md) — modelo entidad-relación, DDL completo y políticas RLS para Supabase.
 3. [**Pipeline de Machine Learning**](./docs/3-ML-PIPELINE.md) — entradas, procesamiento, modelos a usar y formatos de salida (JSON) del motor de predicción y tendencias.
-4. [**Roadmap y Tareas**](./docs/4-ROADMAP-AND-TASKS.md) — checklist semana a semana (Semana 1 a 6) con responsabilidades para un equipo de 2 desarrolladores.
+4. [**Roadmap y Tareas**](./docs/4-ROADMAP-AND-TASKS.md) — checklist semana a semana más detallado que las fases de arriba.
 5. [**Reparto de trabajo del frontend**](./docs/5-FRONTEND-WORK-SPLIT.md) — cómo dividir el frontend actual entre dos personas y flujo de git para fusionar sin conflictos.
+6. [**Poner en marcha Supabase**](./docs/6-SUPABASE-SETUP.md) — guía paso a paso para crear el proyecto real, aplicar las migraciones y generar las 3 cuentas de prueba.
 
 ## 🚀 Guía de Inicio Rápido
-
-> ⚠️ El proyecto está en fase de documentación/planificación inicial. Esta guía se irá completando a medida que se vaya generando el código (Semana 1 del roadmap).
 
 ```bash
 # 1. Clonar el repositorio
 git clone <url-del-repositorio>
 cd dweb-create
 
-# 2. Instalar dependencias (una vez inicializado el proyecto Nuxt)
+# 2. Instalar dependencias
 npm install
 
-# 3. Configurar variables de entorno
-cp .env.example .env
-# Completar: SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY,
-#            STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, STRIPE_PUBLIC_KEY
-
-# 4. Levantar Supabase local (opcional, o usar proyecto en la nube) y aplicar migraciones
-supabase start
-supabase db push
-
-# 5. Correr el entorno de desarrollo
+# 3. Correr el entorno de desarrollo
 npm run dev
 ```
 
-## 🔄 Protocolo de Trabajo
+> A partir de la Fase 2 habrá que añadir variables de entorno de Supabase y Stripe. Cuando esa fase esté lista, esta guía se amplía con los pasos de `.env`.
 
-Somos un equipo de 2 desarrolladores trabajando en iteraciones cortas y acopladas al [roadmap](./docs/4-ROADMAP-AND-TASKS.md). El flujo semanal es el siguiente:
+## 🔄 Cómo trabajamos (resumen simple)
 
-1. **Lunes — Kickoff de la semana (15-30 min)**
-   Revisamos el checklist de la semana en curso en [`4-ROADMAP-AND-TASKS.md`](./docs/4-ROADMAP-AND-TASKS.md), confirmamos la asignación Dev A / Dev B, y convertimos cada ítem pendiente en un issue de GitHub si aún no existe.
+1. Mira la fase en la que estamos arriba y coge una tarea que no esté marcada.
+2. Crea una rama: `git checkout -b feature/lo-que-sea`.
+3. Haz commits pequeños y con mensajes claros mientras trabajas.
+4. Cuando lo tengas, sube la rama y abre un Pull Request — aunque seáis dos, deja rastro de qué cambiaste y por qué.
+5. El otro revisa el PR antes de fusionar a `main`.
+6. Marca la casilla en este README, commitea ese cambio también, y avisa en el chat.
 
-2. **Durante la semana — Desarrollo en ramas cortas**
-   - Cada tarea se desarrolla en una rama propia (`feature/<slug>`) a partir de `develop`.
-   - Commits siguiendo [Conventional Commits](https://www.conventionalcommits.org/) (`feat:`, `fix:`, `docs:`, `chore:`).
-   - Pull Request contra `develop` tan pronto como la tarea sea funcional, aunque sea parcial — preferimos PRs pequeños y frecuentes sobre PRs enormes.
-
-3. **Revisión cruzada (Code Review)**
-   - El otro desarrollador revisa el PR en menos de 24h.
-   - Puntos marcados con 🔗 en el roadmap (trabajo conjunto) se revisan en vivo (pair programming o videollamada corta) en lugar de async.
-   - Antes de aprobar: verificar que las políticas RLS no quedaron abiertas de más (ver checklist de seguridad en [`2-DATABASE-SCHEMA.md`](./docs/2-DATABASE-SCHEMA.md) sección 2.4).
-
-4. **Miércoles — Check-in rápido (15 min)**
-   Sincronización corta para destrabar bloqueos, decidir si algo del checklist semanal se pospone o se reprioriza.
-
-5. **Viernes — Demo interna + Merge a `develop`→`main`**
-   - Se hace una demo corta (10-15 min) de lo construido en la semana, probando el flujo end-to-end relevante.
-   - Si la demo es exitosa y no hay bugs críticos, se mergea `develop` a `main` (que despliega a producción/staging).
-   - Retro de 15 min: ¿qué funcionó?, ¿qué bloqueó?, ¿algo que ajustar en el roadmap de la semana siguiente?
-
-6. **Actualización de documentación viva**
-   Cualquier decisión de arquitectura, cambio de esquema o ajuste al pipeline de ML que surja durante la semana se refleja inmediatamente en los documentos correspondientes dentro de `docs/`, para que la documentación nunca quede desactualizada respecto al código real.
-
----
-
-📄 Documentación generada con el objetivo de servir como fuente única de verdad del proyecto antes de empezar a escribir código de producto.
+Detalle de archivos compartidos a los que hay que tener cuidado (para no pisaros el trabajo) en [`docs/5-FRONTEND-WORK-SPLIT.md`](./docs/5-FRONTEND-WORK-SPLIT.md).

@@ -1,11 +1,8 @@
 <script setup lang="ts">
-import { roleMeta } from '~/utils/nav'
 import { coverPhotos } from '~/utils/images'
-import type { Role } from '~/types'
 
 useHead({ title: 'Estudio de contenido' })
 
-const roles: Role[] = ['manager', 'creator', 'client']
 const hero = coverPhotos.landing
 </script>
 
@@ -38,28 +35,13 @@ const hero = coverPhotos.landing
       </section>
 
       <section class="mt-8">
-        <p class="text-[0.9375rem] text-[var(--color-text-muted)] mb-4">Elige cómo quieres entrar</p>
-        <div class="flex flex-col gap-3">
-          <NuxtLink
-            v-for="role in roles" :key="role" :to="roleMeta[role].home"
-            class="group block"
-          >
-            <BaseCard radius="lg" padding="lg" interactive class="flex items-center gap-4">
-              <span class="flex items-center justify-center size-12 rounded-full bg-[var(--color-ink-overlay)] text-[var(--color-primary-500)] shrink-0">
-                <Icon :name="roleMeta[role].icon" class="size-5" />
-              </span>
-              <div class="min-w-0 flex-1">
-                <p class="font-display text-[1.1875rem] text-[var(--color-text)]">{{ roleMeta[role].label }}</p>
-                <p class="mt-0.5 text-[0.8125rem] text-[var(--color-text-muted)] leading-relaxed">{{ roleMeta[role].description }}</p>
-              </div>
-              <Icon name="ph:arrow-right-bold" class="size-4 shrink-0 text-[var(--color-text-faint)] transition-transform group-hover:translate-x-0.5 group-hover:text-[var(--color-primary-500)]" />
-            </BaseCard>
-          </NuxtLink>
-        </div>
+        <BaseButton to="/login" variant="primary" size="lg" icon="ph:arrow-right-bold" class="w-full">
+          Acceder a tu cuenta
+        </BaseButton>
       </section>
 
-      <p class="mt-8 text-[0.8125rem] text-[var(--color-text-faint)] text-center">
-        Vista previa interna con datos de ejemplo — todavía sin inicio de sesión ni conexión a redes reales.
+      <p class="mt-6 text-[0.8125rem] text-[var(--color-text-faint)] text-center">
+        ¿No tienes cuenta todavía? <NuxtLink to="/onboarding" class="text-[var(--color-text-muted)] hover:text-[var(--color-text)] underline underline-offset-2">Mira cómo sería el registro</NuxtLink>
       </p>
     </main>
   </div>

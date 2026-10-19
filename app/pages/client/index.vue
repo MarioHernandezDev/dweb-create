@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { myBrand, myBrandInfluencerId, influencerPosts, influencers, managers } from '~/utils/mock-data'
+import type { Post } from '~/types'
 
 useHead({ title: 'Calendario' })
 
@@ -28,6 +29,13 @@ function approveNext() {
 
 function requestChangesNext() {
   if (firstPendingId.value) requestChanges(firstPendingId.value)
+}
+
+const detailOpen = ref(false)
+const detailPost = ref<Post | null>(null)
+function openDetail(post: Post) {
+  detailPost.value = posts.value.find((p) => p.id === post.id) ?? post
+  detailOpen.value = true
 }
 
 const quickActions = computed(() => [
@@ -113,7 +121,7 @@ const quickActions = computed(() => [
       </BaseCard>
     </section>
 
-    <WeekBoard :posts="posts">
+    <WeekBoard :posts="posts" @open="openDetail">
       <template #actions="{ post }">
         <div v-if="post.status === 'ready_for_review'" class="mt-3 flex gap-2">
           <BaseButton variant="secondary" size="sm" icon="ph:arrow-counter-clockwise-bold" @click="requestChanges(post.id)">Pedir cambios</BaseButton>
@@ -121,5 +129,14 @@ const quickActions = computed(() => [
         </div>
       </template>
     </WeekBoard>
+
+    <PostDetailSheet v-model="detailOpen" :post="detailPost" :influencer="collaborator">
+      <template #actions="{ post }">
+        <div v-if="post.status === 'ready_for_review'" class="mt-5 flex gap-2.5">
+          <BaseButton variant="secondary" class="flex-1" icon="ph:arrow-counter-clockwise-bold" @click="requestChanges(post.id); detailOpen = false">Pedir cambios</BaseButton>
+          <BaseButton variant="primary" class="flex-1" icon="ph:check-bold" @click="approve(post.id); detailOpen = false">Aprobar</BaseButton>
+        </div>
+      </template>
+    </PostDetailSheet>
   </AppShell>
 </template>

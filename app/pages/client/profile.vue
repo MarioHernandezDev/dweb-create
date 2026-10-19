@@ -5,6 +5,9 @@ useHead({ title: 'Perfil' })
 
 const collaborator = influencers.find((i) => i.id === myBrandInfluencerId)!
 const collaboratorManager = managers.find((m) => m.id === collaborator.managerId)
+
+const user = useSupabaseUser()
+const { logout } = useLogout()
 </script>
 
 <template>
@@ -13,7 +16,7 @@ const collaboratorManager = managers.find((m) => m.id === collaborator.managerId
       <BaseAvatar :initials="myBrand.initials" :hue="myBrand.hue" size="lg" />
       <div>
         <p class="font-display text-[1.25rem] text-[var(--color-text)]">{{ myBrand.name }}</p>
-        <p class="text-[0.9375rem] text-[var(--color-text-muted)]">Cuenta de marca</p>
+        <p class="text-[0.9375rem] text-[var(--color-text-muted)]">{{ user?.email ?? 'Cuenta de marca' }}</p>
       </div>
     </section>
 
@@ -34,6 +37,6 @@ const collaboratorManager = managers.find((m) => m.id === collaborator.managerId
       </BaseCard>
     </section>
 
-    <RoleSwitcher current="client" />
+    <BaseButton variant="secondary" icon="ph:sign-out-bold" class="w-full" @click="logout">Cerrar sesión</BaseButton>
   </AppShell>
 </template>

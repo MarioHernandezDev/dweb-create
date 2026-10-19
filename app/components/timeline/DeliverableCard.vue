@@ -7,10 +7,12 @@ const props = defineProps<{
   post: Post
   influencer?: Influencer
 }>()
+
+defineEmits<{ open: [post: Post] }>()
 </script>
 
 <template>
-  <BaseCard radius="md" padding="none" interactive class="overflow-hidden flex gap-0">
+  <BaseCard radius="md" padding="none" interactive class="overflow-hidden flex gap-0" @click="$emit('open', post)">
     <div class="w-1 shrink-0" :style="{ background: statusMeta[post.status].color }" />
 
     <div class="flex gap-3.5 p-4 flex-1 min-w-0">
@@ -39,7 +41,9 @@ const props = defineProps<{
           </span>
         </div>
 
-        <slot name="actions" />
+        <div @click.stop>
+          <slot name="actions" />
+        </div>
       </div>
     </div>
   </BaseCard>

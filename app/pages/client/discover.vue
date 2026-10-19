@@ -33,7 +33,12 @@ function send() {
     <section class="mb-8">
       <h2 class="font-display text-[1.25rem] text-[var(--color-text)] mb-1">Influencers</h2>
       <p class="text-[0.8125rem] text-[var(--color-text-muted)] mb-3.5">Algunos trabajan solos, otros a través de una agencia — tú eliges a quién escribir.</p>
-      <div class="flex flex-col gap-2.5">
+      <EmptyState
+        v-if="!influencers.length"
+        icon="ph:user-circle" title="Todavía no hay influencers"
+        description="En cuanto se unan a FEEDMA, aparecerán aquí para que puedas contactarlos."
+      />
+      <div v-else class="flex flex-col gap-2.5">
         <BaseCard v-for="influencer in influencers" :key="influencer.id" radius="md" padding="md" class="flex items-center gap-4">
           <BaseAvatar :initials="influencer.initials" :hue="influencer.hue" />
           <div class="min-w-0 flex-1">
@@ -53,7 +58,12 @@ function send() {
     <section>
       <h2 class="font-display text-[1.25rem] text-[var(--color-text)] mb-1">Agencias</h2>
       <p class="text-[0.8125rem] text-[var(--color-text-muted)] mb-3.5">Cuéntales tu campaña y ellos asignan el influencer de su roster que mejor encaje.</p>
-      <div class="flex flex-col gap-2.5">
+      <EmptyState
+        v-if="!managers.length"
+        icon="ph:briefcase" title="Todavía no hay agencias"
+        description="En cuanto se unan a FEEDMA, aparecerán aquí para que puedas contactarlas."
+      />
+      <div v-else class="flex flex-col gap-2.5">
         <BaseCard v-for="manager in managers" :key="manager.id" radius="md" padding="md" class="flex items-center gap-4">
           <BaseAvatar :initials="manager.initials" :hue="manager.hue" />
           <div class="min-w-0 flex-1">

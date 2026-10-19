@@ -7,6 +7,8 @@ const props = defineProps<{
   influencersById?: Record<string, Influencer>
 }>()
 
+defineEmits<{ open: [post: Post] }>()
+
 const groups = computed(() => {
   const sorted = [...props.posts].sort((a, b) => a.dueInDays - b.dueInDays)
   const map = new Map<number, Post[]>()
@@ -38,7 +40,7 @@ const groups = computed(() => {
           v-for="(post, i) in group.items" :key="post.id"
           class="nx-stagger-in" :style="{ '--stagger-i': i }"
         >
-          <DeliverableCard :post="post" :influencer="influencersById?.[post.influencerId]">
+          <DeliverableCard :post="post" :influencer="influencersById?.[post.influencerId]" @open="$emit('open', $event)">
             <template v-if="$slots.actions" #actions>
               <slot name="actions" :post="post" />
             </template>

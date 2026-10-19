@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { influencers, influencerPosts } from '~/utils/mock-data'
-import type { Influencer } from '~/types'
+import type { Influencer, Post } from '~/types'
 
 useHead({ title: 'Tablero' })
 
@@ -11,6 +11,13 @@ const activeInfluencer = ref<string>('all')
 const filteredPosts = computed(() =>
   activeInfluencer.value === 'all' ? influencerPosts : influencerPosts.filter((p) => p.influencerId === activeInfluencer.value)
 )
+
+const detailOpen = ref(false)
+const detailPost = ref<Post | null>(null)
+function openDetail(post: Post) {
+  detailPost.value = post
+  detailOpen.value = true
+}
 </script>
 
 <template>
@@ -38,6 +45,7 @@ const filteredPosts = computed(() =>
       </button>
     </div>
 
-    <WeekBoard :posts="filteredPosts" :influencers-by-id="activeInfluencer === 'all' ? influencersById : undefined" />
+    <WeekBoard :posts="filteredPosts" :influencers-by-id="activeInfluencer === 'all' ? influencersById : undefined" @open="openDetail" />
+    <PostDetailSheet v-model="detailOpen" :post="detailPost" :influencer="detailPost ? influencersById[detailPost.influencerId] : undefined" />
   </AppShell>
 </template>

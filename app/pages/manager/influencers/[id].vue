@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { influencers, influencerPosts, socialAccounts, platformMeta, formatCompactNumber } from '~/utils/mock-data'
+import type { Post } from '~/types'
 
 const route = useRoute()
 const influencer = computed(() => influencers.find((c) => c.id === route.params.id))
@@ -15,6 +16,13 @@ const pending = computed(() => posts.value.filter((p) => p.status !== 'published
 const overdue = computed(() => posts.value.filter((p) => p.status === 'overdue').length)
 const published = computed(() => posts.value.filter((p) => p.status === 'published').length)
 const connectedAccounts = computed(() => socialAccounts.filter((a) => a.connected))
+
+const detailOpen = ref(false)
+const detailPost = ref<Post | null>(null)
+function openDetail(post: Post) {
+  detailPost.value = post
+  detailOpen.value = true
+}
 </script>
 
 <template>
@@ -48,7 +56,8 @@ const connectedAccounts = computed(() => socialAccounts.filter((a) => a.connecte
 
     <section>
       <h2 class="font-display text-[1.125rem] text-[var(--color-text)] mb-3.5">Entregas</h2>
-      <WeekBoard :posts="posts" />
+      <WeekBoard :posts="posts" @open="openDetail" />
     </section>
+    <PostDetailSheet v-model="detailOpen" :post="detailPost" :influencer="influencer" />
   </AppShell>
 </template>

@@ -1,5 +1,8 @@
 <script setup lang="ts">
 useHead({ title: 'Perfil' })
+
+const user = useSupabaseUser()
+const { logout } = useLogout()
 </script>
 
 <template>
@@ -8,7 +11,7 @@ useHead({ title: 'Perfil' })
       <BaseAvatar initials="TU" :hue="266" size="lg" />
       <div>
         <p class="font-display text-[1.25rem] text-[var(--color-text)]">Tu cuenta</p>
-        <p class="text-[0.9375rem] text-[var(--color-text-muted)]">Creador de contenido</p>
+        <p class="text-[0.9375rem] text-[var(--color-text-muted)]">{{ user?.email ?? 'Creador de contenido' }}</p>
       </div>
     </section>
 
@@ -25,6 +28,6 @@ useHead({ title: 'Perfil' })
       </BaseCard>
     </section>
 
-    <RoleSwitcher current="creator" />
+    <BaseButton variant="secondary" icon="ph:sign-out-bold" class="w-full" @click="logout">Cerrar sesión</BaseButton>
   </AppShell>
 </template>

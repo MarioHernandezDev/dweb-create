@@ -1,17 +1,19 @@
 <script setup lang="ts">
-import { selfInfluencer, creatorPosts, engagementSeries } from '~/utils/mock-data'
+import { selfInfluencer, engagementSeries } from '~/utils/mock-data'
 
 useHead({ title: 'Hoy' })
 
+const router = useRouter()
+const creatorPosts = useCreatorPosts()
 const composerOpen = ref(false)
 
-const today = computed(() => creatorPosts.filter((p) => p.dueInDays === 0))
-const upcoming = computed(() => creatorPosts.filter((p) => p.dueInDays > 0 && p.dueInDays <= 3))
-const overdue = computed(() => creatorPosts.filter((p) => p.status === 'overdue'))
+const today = computed(() => creatorPosts.value.filter((p) => p.dueInDays === 0))
+const upcoming = computed(() => creatorPosts.value.filter((p) => p.dueInDays > 0 && p.dueInDays <= 3))
+const overdue = computed(() => creatorPosts.value.filter((p) => p.status === 'overdue'))
 const streak = 6
 
 const weeklyTarget = selfInfluencer.weeklyTarget
-const publishedThisWeek = computed(() => creatorPosts.filter((p) => p.status === 'published').length)
+const publishedThisWeek = computed(() => creatorPosts.value.filter((p) => p.status === 'published').length)
 const goalPct = computed(() => Math.min(100, Math.round((publishedThisWeek.value / weeklyTarget) * 100)))
 
 const quickActions = [
@@ -102,7 +104,7 @@ const quickActions = [
         <h2 class="font-display text-[1.25rem] text-[var(--color-text)]">Próximas entregas</h2>
         <NuxtLink to="/creator/timeline" class="text-[0.875rem] font-medium text-[var(--color-text-muted)] hover:text-[var(--color-text)]">Ver todo</NuxtLink>
       </div>
-      <WeekBoard :posts="[...today, ...upcoming]" />
+      <WeekBoard :posts="[...today, ...upcoming]" @open="router.push(`/creator/post/${$event.id}`)" />
     </section>
 
     <Fab :active="composerOpen" @click="composerOpen = true" />
