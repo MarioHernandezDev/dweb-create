@@ -1,16 +1,16 @@
 <script setup lang="ts">
-import { clients, agencyPosts, socialAccounts, platformMeta } from '~/utils/mock-data'
+import { influencers, influencerPosts, socialAccounts, platformMeta, formatCompactNumber } from '~/utils/mock-data'
 
 const route = useRoute()
-const client = computed(() => clients.find((c) => c.id === route.params.id))
+const influencer = computed(() => influencers.find((c) => c.id === route.params.id))
 
-if (!client.value) {
-  throw createError({ statusCode: 404, statusMessage: 'Cliente no encontrado' })
+if (!influencer.value) {
+  throw createError({ statusCode: 404, statusMessage: 'Influencer no encontrado' })
 }
 
-useHead({ title: client.value.name })
+useHead({ title: influencer.value.name })
 
-const posts = computed(() => agencyPosts.filter((p) => p.clientId === route.params.id))
+const posts = computed(() => influencerPosts.filter((p) => p.influencerId === route.params.id))
 const pending = computed(() => posts.value.filter((p) => p.status !== 'published').length)
 const overdue = computed(() => posts.value.filter((p) => p.status === 'overdue').length)
 const published = computed(() => posts.value.filter((p) => p.status === 'published').length)
@@ -18,12 +18,12 @@ const connectedAccounts = computed(() => socialAccounts.filter((a) => a.connecte
 </script>
 
 <template>
-  <AppShell v-if="client" role="manager" :title="client.name" :subtitle="client.industry">
+  <AppShell v-if="influencer" role="manager" :title="influencer.name" :subtitle="influencer.niche">
     <section class="flex items-center gap-4 mb-7">
-      <BaseAvatar :initials="client.initials" :hue="client.hue" size="lg" />
+      <BaseAvatar :initials="influencer.initials" :hue="influencer.hue" size="lg" />
       <div>
-        <p class="font-display text-[1.375rem] text-[var(--color-text)]">{{ client.name }}</p>
-        <p class="text-[0.9375rem] text-[var(--color-text-muted)]">{{ client.industry }}</p>
+        <p class="font-display text-[1.375rem] text-[var(--color-text)]">{{ influencer.name }}</p>
+        <p class="text-[0.9375rem] text-[var(--color-text-muted)]">{{ influencer.niche }} · {{ formatCompactNumber(influencer.followers) }} seguidores</p>
       </div>
     </section>
 

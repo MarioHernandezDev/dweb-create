@@ -7,11 +7,11 @@ Este documento es para repartir lo que queda del frontend entre dos personas tra
 El código está dividido por **vertical de rol**, casi sin solapamiento entre carpetas:
 
 ```
-app/pages/manager/      → todo lo que ve el community manager
-app/pages/creator/      → todo lo que ve el creador de contenido
-app/pages/client/       → todo lo que ve el cliente final (portal de solo cliente)
+app/pages/manager/      → todo lo que ve el manager (gestiona su roster de influencers)
+app/pages/creator/      → todo lo que ve el influencer (solo o representado por un manager)
+app/pages/client/       → todo lo que ve la marca: calendario de su colaboración + descubrir talento
 
-app/components/clients/   → usado solo por manager
+app/components/influencers/ → usado solo por manager
 app/components/social/    → usado solo por creator
 app/components/ml/        → usado solo por creator
 app/components/timeline/  → COMPARTIDO (manager, creator y client lo usan)
@@ -32,27 +32,28 @@ Esto nos da una regla simple: **si trabajas dentro de `pages/manager/` o `pages/
 
 | Persona | Vertical | Carpetas propias |
 |---|---|---|
-| **Persona A** | Community manager | `app/pages/manager/**`, `app/components/clients/**` |
-| **Persona B** | Creador de contenido | `app/pages/creator/**`, `app/components/social/**`, `app/components/ml/**` |
+| **Persona A** | Manager | `app/pages/manager/**`, `app/components/influencers/**` |
+| **Persona B** | Influencer | `app/pages/creator/**`, `app/components/social/**`, `app/components/ml/**` |
 
-El **portal de cliente** (`app/pages/client/**`) es pequeño y ahora mismo solo tiene una vista. Dejadlo para quien vaya más suelto esa semana, o hacedlo juntos en una sesión corta de pair-programming — no hace falta repartirlo.
+El **portal de marca** (`app/pages/client/**`: calendario + descubrir) es pequeño. Dejadlo para quien vaya más suelto esa semana, o hacedlo juntos en una sesión corta de pair-programming — no hace falta repartirlo.
 
 ## 3. Checklist de tareas pendientes de frontend (para repartir)
 
 ### Persona A — Manager
 - [ ] Página de detalle de un post individual (abrir una entrega del tablero y ver/editar su información).
-- [ ] Flujo de alta de cliente nuevo (`ClientForm`, validaciones básicas).
-- [ ] Estado vacío real cuando un cliente no tiene entregas todavía.
+- [ ] Flujo de alta de un influencer nuevo en el roster, validaciones básicas.
+- [ ] Estado vacío real cuando un influencer del roster no tiene entregas todavía.
 - [ ] Conectar el toggle de "Notificaciones" del perfil (hoy dice "Próximamente").
 
-### Persona B — Creator
+### Persona B — Influencer
 - [ ] Página de detalle de un post individual + edición tras guardarlo desde el composer.
-- [ ] Onboarding de primer uso (bienvenida + conectar la primera red social).
+- [ ] Onboarding de primer uso (bienvenida + elegir si trabajas solo o buscas manager + conectar la primera red social).
 - [ ] Estado vacío real cuando no hay tendencias o no hay redes conectadas.
 - [ ] Contador de créditos de predicción conectado a un estado real (hoy es un número fijo).
 
 ### Conjunto (coordinar antes de empezar)
-- [ ] Portal de cliente: vista de detalle de un post con comentarios.
+- [ ] Portal de marca: vista de detalle de un post con comentarios.
+- [ ] Que "Contactar" en `/client/discover` cree de verdad una solicitud (hoy es un mock que no persiste).
 - [ ] Revisión de accesibilidad y mobile en las pantallas nuevas de cada uno.
 
 ## 4. Archivos compartidos — tocarlos con cuidado

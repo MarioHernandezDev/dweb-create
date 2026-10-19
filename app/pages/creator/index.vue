@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { creatorClient, creatorPosts, engagementSeries } from '~/utils/mock-data'
+import { selfInfluencer, creatorPosts, engagementSeries } from '~/utils/mock-data'
 
 useHead({ title: 'Hoy' })
 
@@ -10,7 +10,7 @@ const upcoming = computed(() => creatorPosts.filter((p) => p.dueInDays > 0 && p.
 const overdue = computed(() => creatorPosts.filter((p) => p.status === 'overdue'))
 const streak = 6
 
-const weeklyTarget = creatorClient.weeklyTarget
+const weeklyTarget = selfInfluencer.weeklyTarget
 const publishedThisWeek = computed(() => creatorPosts.filter((p) => p.status === 'published').length)
 const goalPct = computed(() => Math.min(100, Math.round((publishedThisWeek.value / weeklyTarget) * 100)))
 

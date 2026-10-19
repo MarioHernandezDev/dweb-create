@@ -1,39 +1,39 @@
 <script setup lang="ts">
-import { clients, agencyPosts } from '~/utils/mock-data'
+import { influencers, influencerPosts } from '~/utils/mock-data'
 
 useHead({ title: 'Resumen' })
 
-const postsByClient = computed(() => {
-  const map = new Map<string, typeof agencyPosts>()
-  for (const client of clients) map.set(client.id, agencyPosts.filter((p) => p.clientId === client.id))
+const postsByInfluencer = computed(() => {
+  const map = new Map<string, typeof influencerPosts>()
+  for (const influencer of influencers) map.set(influencer.id, influencerPosts.filter((p) => p.influencerId === influencer.id))
   return map
 })
 
-const totalOverdue = computed(() => agencyPosts.filter((p) => p.status === 'overdue').length)
-const totalPublishedWeek = computed(() => agencyPosts.filter((p) => p.status === 'published').length)
+const totalOverdue = computed(() => influencerPosts.filter((p) => p.status === 'overdue').length)
+const totalPublishedWeek = computed(() => influencerPosts.filter((p) => p.status === 'published').length)
 
-const sortedClients = computed(() =>
-  [...clients].sort((a, b) => {
-    const overdueA = postsByClient.value.get(a.id)!.filter((p) => p.status === 'overdue').length
-    const overdueB = postsByClient.value.get(b.id)!.filter((p) => p.status === 'overdue').length
+const sortedInfluencers = computed(() =>
+  [...influencers].sort((a, b) => {
+    const overdueA = postsByInfluencer.value.get(a.id)!.filter((p) => p.status === 'overdue').length
+    const overdueB = postsByInfluencer.value.get(b.id)!.filter((p) => p.status === 'overdue').length
     return overdueB - overdueA
   })
 )
 
-function pendingCount(clientId: string) {
-  return postsByClient.value.get(clientId)!.filter((p) => p.status !== 'published').length
+function pendingCount(influencerId: string) {
+  return postsByInfluencer.value.get(influencerId)!.filter((p) => p.status !== 'published').length
 }
-function overdueCount(clientId: string) {
-  return postsByClient.value.get(clientId)!.filter((p) => p.status === 'overdue').length
+function overdueCount(influencerId: string) {
+  return postsByInfluencer.value.get(influencerId)!.filter((p) => p.status === 'overdue').length
 }
 
-const goalPct = computed(() => Math.min(100, Math.round((totalPublishedWeek.value / agencyPosts.length) * 100)))
-const priorityClient = computed(() => sortedClients.value[0])
+const goalPct = computed(() => Math.min(100, Math.round((totalPublishedWeek.value / influencerPosts.length) * 100)))
+const priorityInfluencer = computed(() => sortedInfluencers.value[0])
 
 const quickActions = computed(() => [
   { label: 'Tablero', icon: 'ph:kanban-fill', to: '/manager/timeline' },
   { label: 'Métricas', icon: 'ph:chart-line-up-fill', to: '/manager/metrics' },
-  { label: 'Clientes', icon: 'ph:users-three-fill', to: priorityClient.value ? `/manager/clients/${priorityClient.value.id}` : undefined },
+  { label: 'Roster', icon: 'ph:users-three-fill', to: priorityInfluencer.value ? `/manager/influencers/${priorityInfluencer.value.id}` : undefined },
   { label: 'Perfil', icon: 'ph:user-circle-fill', to: '/manager/profile' }
 ])
 </script>
@@ -62,7 +62,7 @@ const quickActions = computed(() => [
               />
             </div>
             <span class="shrink-0 text-[0.8125rem] text-[var(--color-text-faint)]" style="font-variant-numeric: proportional-nums">
-              {{ totalPublishedWeek }}/{{ agencyPosts.length }}
+              {{ totalPublishedWeek }}/{{ influencerPosts.length }}
             </span>
           </div>
         </div>
@@ -93,7 +93,7 @@ const quickActions = computed(() => [
     <section class="mb-9">
       <h2 class="font-display text-[1.25rem] text-[var(--color-text)] mb-3.5">Resumen de la semana</h2>
       <div class="grid grid-cols-3 gap-3">
-        <div class="nx-stagger-in" style="--stagger-i: 0"><StatTile label="Clientes activos" :value="String(clients.length)" /></div>
+        <div class="nx-stagger-in" style="--stagger-i: 0"><StatTile label="Roster activo" :value="String(influencers.length)" /></div>
         <div class="nx-stagger-in" style="--stagger-i: 1"><StatTile label="Fuera de plazo" :value="String(totalOverdue)" /></div>
         <div class="nx-stagger-in" style="--stagger-i: 2"><StatTile label="Publicadas" :value="String(totalPublishedWeek)" /></div>
       </div>
@@ -101,19 +101,19 @@ const quickActions = computed(() => [
 
     <section>
       <div class="flex items-center justify-between mb-3.5">
-        <h2 class="font-display text-[1.25rem] text-[var(--color-text)]">Tus clientes</h2>
+        <h2 class="font-display text-[1.25rem] text-[var(--color-text)]">Tu roster</h2>
         <NuxtLink to="/manager/timeline" class="text-[0.875rem] font-medium text-[var(--color-text-muted)] hover:text-[var(--color-text)]">
           Ver tablero completo
         </NuxtLink>
       </div>
       <div class="flex flex-col gap-2.5">
         <div
-          v-for="(client, i) in sortedClients" :key="client.id"
+          v-for="(influencer, i) in sortedInfluencers" :key="influencer.id"
           class="nx-stagger-in" :style="{ '--stagger-i': i }"
         >
-          <ClientRow
-            :client="client"
-            :pending-count="pendingCount(client.id)" :overdue-count="overdueCount(client.id)"
+          <InfluencerRow
+            :influencer="influencer"
+            :pending-count="pendingCount(influencer.id)" :overdue-count="overdueCount(influencer.id)"
           />
         </div>
       </div>

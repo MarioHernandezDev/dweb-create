@@ -17,13 +17,38 @@ export interface StatusMeta {
   colorVar: string
 }
 
-export interface ClientAccount {
+/** Una agencia/representante. Gestiona una cartera (roster) de influencers. */
+export interface Manager {
+  id: string
+  name: string
+  focus: string
+  initials: string
+  hue: number
+}
+
+/**
+ * Un creador de contenido. `managerId: null` = trabaja independiente, una
+ * marca puede contactarle directamente. Si tiene manager, las marcas
+ * contactan a través de él y es el manager quien asigna el trabajo.
+ */
+export interface Influencer {
+  id: string
+  name: string
+  niche: string
+  initials: string
+  hue: number
+  weeklyTarget: number
+  followers: number
+  managerId: string | null
+}
+
+/** Una marca: el "cliente" que encarga campañas a un influencer o manager. */
+export interface BrandClient {
   id: string
   name: string
   industry: string
   initials: string
   hue: number
-  weeklyTarget: number
 }
 
 export interface CoverArt {
@@ -34,7 +59,7 @@ export interface CoverArt {
 
 export interface Post {
   id: string
-  clientId: string
+  influencerId: string
   title: string
   caption: string
   contentType: ContentType

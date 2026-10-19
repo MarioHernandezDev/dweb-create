@@ -1,10 +1,12 @@
 <script setup lang="ts">
-import { clients, agencyPosts } from '~/utils/mock-data'
+import { myBrand, myBrandInfluencerId, influencerPosts, influencers, managers } from '~/utils/mock-data'
 
 useHead({ title: 'Calendario' })
 
-const myClient = clients.find((c) => c.id === 'lumina')!
-const posts = ref(agencyPosts.filter((p) => p.clientId === 'lumina').map((p) => ({ ...p })))
+const collaborator = influencers.find((i) => i.id === myBrandInfluencerId)!
+const collaboratorManager = computed(() => managers.find((m) => m.id === collaborator.managerId))
+
+const posts = ref(influencerPosts.filter((p) => p.influencerId === myBrandInfluencerId).map((p) => ({ ...p })))
 
 const pendingReview = computed(() => posts.value.filter((p) => p.status === 'ready_for_review').length)
 const firstPendingId = computed(() => posts.value.find((p) => p.status === 'ready_for_review')?.id)
@@ -36,10 +38,25 @@ const quickActions = computed(() => [
 </script>
 
 <template>
-  <AppShell role="client" title="Tu calendario" :subtitle="myClient.name">
-    <section class="mb-6">
-      <h1 class="font-display text-[2rem] md:text-[2.5rem] leading-[1.08] text-[var(--color-text)]">Hola, {{ myClient.name }}</h1>
+  <AppShell role="client" title="Tu calendario" :subtitle="myBrand.name">
+    <section class="mb-5">
+      <h1 class="font-display text-[2rem] md:text-[2.5rem] leading-[1.08] text-[var(--color-text)]">Hola, {{ myBrand.name }}</h1>
       <p class="mt-1.5 text-[0.9375rem] text-[var(--color-text-muted)]">Tu calendario de contenido con la agencia</p>
+    </section>
+
+    <section class="mb-6">
+      <NuxtLink to="/client/discover" class="flex items-center gap-3 px-4 py-3.5 rounded-[var(--radius-md)] bg-[var(--color-ink-overlay)] hover:bg-[var(--color-ink-overlay)]/70 transition-colors">
+        <BaseAvatar :initials="collaborator.initials" :hue="collaborator.hue" size="sm" />
+        <div class="min-w-0 flex-1">
+          <p class="text-[0.875rem] text-[var(--color-text)]">
+            Colaborando con <strong class="font-medium">{{ collaborator.name }}</strong>
+          </p>
+          <p class="text-[0.75rem] text-[var(--color-text-faint)]">
+            {{ collaboratorManager ? `Representado por ${collaboratorManager.name}` : 'Influencer independiente' }}
+          </p>
+        </div>
+        <Icon name="ph:caret-right-bold" class="size-4 text-[var(--color-text-faint)] shrink-0" />
+      </NuxtLink>
     </section>
 
     <section class="mb-6">

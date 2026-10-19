@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import type { ClientAccount, Post } from '~/types'
+import type { Influencer, Post } from '~/types'
 import { dueLabel } from '~/utils/status'
 
 const props = defineProps<{
   posts: Post[]
-  clientsById?: Record<string, ClientAccount>
+  influencersById?: Record<string, Influencer>
 }>()
 
 const groups = computed(() => {
@@ -38,7 +38,7 @@ const groups = computed(() => {
           v-for="(post, i) in group.items" :key="post.id"
           class="nx-stagger-in" :style="{ '--stagger-i': i }"
         >
-          <DeliverableCard :post="post" :client="clientsById?.[post.clientId]">
+          <DeliverableCard :post="post" :influencer="influencersById?.[post.influencerId]">
             <template v-if="$slots.actions" #actions>
               <slot name="actions" :post="post" />
             </template>

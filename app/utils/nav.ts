@@ -8,20 +8,20 @@ export interface NavItem {
 
 export const roleMeta: Record<Role, { label: string; description: string; home: string; icon: string }> = {
   manager: {
-    label: 'Community manager',
-    description: 'Llevas las entregas y métricas de varios clientes.',
+    label: 'Manager',
+    description: 'Representas a varios influencers y repartes su trabajo.',
     home: '/manager',
     icon: 'ph:briefcase-fill'
   },
   creator: {
-    label: 'Creador de contenido',
-    description: 'Gestionas tu propio calendario, tus redes y tus datos.',
+    label: 'Influencer',
+    description: 'Gestionas tu calendario, tus redes y tus datos — solo o con manager.',
     home: '/creator',
     icon: 'ph:sparkle-fill'
   },
   client: {
-    label: 'Cliente',
-    description: 'Revisas y apruebas el contenido de tu agencia.',
+    label: 'Cliente (marca)',
+    description: 'Contactas a un influencer o a su manager, y apruebas el contenido.',
     home: '/client',
     icon: 'ph:user-circle-fill'
   }
@@ -41,7 +41,8 @@ export const roleNav: Record<Role, NavItem[]> = {
     { to: '/creator/metrics', label: 'Métricas', icon: 'ph:chart-line-up-fill' }
   ],
   client: [
-    { to: '/client', label: 'Calendario', icon: 'ph:calendar-check-fill' }
+    { to: '/client', label: 'Calendario', icon: 'ph:calendar-check-fill' },
+    { to: '/client/discover', label: 'Descubrir', icon: 'ph:compass-fill' }
   ]
 }
 

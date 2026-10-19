@@ -8,7 +8,7 @@ const totalEngagement = computed(() => metricsByPlatform.reduce((sum, m) => sum 
 </script>
 
 <template>
-  <AppShell role="manager" title="Métricas" subtitle="Agregado de todos los clientes · últimos 7 días">
+  <AppShell role="manager" title="Métricas" subtitle="Agregado de todo tu roster · últimos 7 días">
     <section class="grid grid-cols-2 gap-3 mb-6">
       <StatTile label="Alcance total" :value="formatCompactNumber(totalViews)" :delta-pct="9.8" :trend="engagementSeries.map((p) => p.value)" />
       <StatTile label="Interacciones" :value="formatCompactNumber(totalEngagement)" :delta-pct="14.2" :trend="engagementSeries.map((p) => p.value * 0.6)" />
