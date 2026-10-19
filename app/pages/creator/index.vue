@@ -41,7 +41,7 @@ const quickActions = [
           <div class="mt-3 flex items-center gap-3">
             <div class="flex-1 h-2 rounded-full bg-[var(--color-ink-overlay)] overflow-hidden">
               <div
-                class="h-full rounded-full bg-[var(--color-flame-500)] transition-[width] duration-700 ease-[var(--ease-spring)]"
+                class="h-full rounded-full bg-[var(--color-primary-500)] transition-[width] duration-700 ease-[var(--ease-spring)]"
                 :style="{ width: `${goalPct}%` }"
               />
             </div>
@@ -52,7 +52,7 @@ const quickActions = [
         </div>
         <button
           type="button" aria-label="Nueva publicación"
-          class="shrink-0 size-14 rounded-full bg-[var(--color-flame-500)] text-[var(--color-on-flame)] shadow-[0_10px_22px_-8px_var(--color-flame-500)] hover:shadow-[0_14px_28px_-6px_var(--color-flame-500)] flex items-center justify-center active:scale-90 transition-[transform,box-shadow] duration-300 ease-[var(--ease-spring-out)]"
+          class="shrink-0 size-14 rounded-full bg-[var(--color-primary-500)] text-[var(--color-on-primary)] shadow-[0_10px_22px_-8px_var(--color-primary-500)] hover:shadow-[0_14px_28px_-6px_var(--color-primary-500)] flex items-center justify-center active:scale-90 transition-[transform,box-shadow] duration-300 ease-[var(--ease-spring-out)]"
           @click="composerOpen = true"
         >
           <Icon name="ph:lightning-fill" class="size-6" />

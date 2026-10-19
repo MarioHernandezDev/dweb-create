@@ -14,10 +14,6 @@ useHead({ title: 'Perfil' })
 
     <section class="mb-6">
       <BaseCard radius="lg" padding="none" class="divide-y divide-[var(--color-hairline)] overflow-hidden">
-        <div class="flex items-center justify-between px-5 py-4">
-          <span class="text-[0.9375rem] text-[var(--color-text)]">Tema de la app</span>
-          <ThemeToggle />
-        </div>
         <NuxtLink to="/creator/socials" class="flex items-center justify-between px-5 py-4">
           <span class="text-[0.9375rem] text-[var(--color-text)]">Redes conectadas</span>
           <Icon name="ph:caret-right-bold" class="size-4 text-[var(--color-text-faint)]" />

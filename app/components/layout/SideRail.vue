@@ -14,9 +14,7 @@ function isActive(to: string) {
 <template>
   <aside class="hidden md:flex md:flex-col w-64 shrink-0 h-dvh sticky top-0 border-r border-[var(--color-hairline)] px-5 py-7">
     <NuxtLink to="/" class="flex items-center gap-2.5 px-1.5 mb-9">
-      <span class="flex items-center justify-center size-8 rounded-[0.625rem] bg-[var(--color-flame-500)] text-[var(--color-on-flame)]">
-        <BrandMark class="size-4.5" />
-      </span>
+      <NuxtImg src="/img/logo-svg.png" alt="" width="32" height="32" class="size-8" />
       <span class="font-display text-[1.125rem] text-[var(--color-text)]">FEEDMA</span>
     </NuxtLink>
 
@@ -28,7 +26,7 @@ function isActive(to: string) {
           ? 'bg-[var(--color-ink-overlay)] text-[var(--color-text)]'
           : 'text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-ink-overlay)]/60'"
       >
-        <Icon :name="item.icon" class="size-[1.15rem] transition-[color,transform] duration-200 ease-[var(--ease-spring-out)]" :class="isActive(item.to) && 'text-[var(--color-flame-500)] scale-110'" />
+        <Icon :name="item.icon" class="size-[1.15rem] transition-[color,transform] duration-200 ease-[var(--ease-spring-out)]" :class="isActive(item.to) && 'text-[var(--color-primary-500)] scale-110'" />
         {{ item.label }}
       </NuxtLink>
     </nav>

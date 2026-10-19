@@ -10,69 +10,57 @@ const hero = coverPhotos.landing
 </script>
 
 <template>
-  <div class="min-h-dvh flex flex-col">
-    <header class="flex items-center justify-between px-6 py-6 md:px-10 md:py-8">
-      <div class="flex items-center gap-2.5">
-        <span class="flex items-center justify-center size-8 rounded-[0.625rem] bg-[var(--color-flame-500)] text-[var(--color-on-flame)]">
-          <BrandMark class="size-4.5" />
-        </span>
-        <span class="font-display text-[1.125rem]">FEEDMA</span>
-      </div>
-      <ThemeToggle />
+  <div class="min-h-dvh bg-[var(--color-ink)]">
+    <header class="flex items-center gap-2.5 px-5 py-5 md:px-10 md:py-6 max-w-xl mx-auto">
+      <NuxtImg src="/img/logo-svg.png" alt="" width="32" height="32" class="size-8" />
+      <span class="font-display text-[1.125rem] text-[var(--color-text)]">FEEDMA</span>
     </header>
 
-    <main class="flex-1 flex items-center">
-      <div class="w-full max-w-6xl mx-auto px-6 md:px-10 py-10 md:py-14 grid md:grid-cols-[1.05fr_0.95fr] gap-10 md:gap-14 items-center">
-        <div class="order-2 md:order-1">
-          <div class="max-w-[42ch]">
-            <h1 class="font-display text-[2.5rem] md:text-[3.5rem] leading-[1.05] text-[var(--color-text)]">
-              El parte de rodaje de tu contenido.
-            </h1>
-            <p class="mt-5 text-[1.0625rem] text-[var(--color-text-muted)] leading-relaxed max-w-[38ch]">
-              Lleva las entregas de cada cliente o cada red, consolida tus métricas y predice qué publicación va a funcionar antes de subirla.
-            </p>
-          </div>
-
-          <div class="mt-12">
-            <p class="text-[0.9375rem] text-[var(--color-text-muted)] mb-4">Elige cómo quieres entrar</p>
-            <div class="grid gap-3.5 sm:grid-cols-3">
-              <NuxtLink
-                v-for="role in roles" :key="role" :to="roleMeta[role].home"
-                class="group block"
-              >
-                <BaseCard radius="lg" padding="lg" interactive class="h-full flex flex-col">
-                  <span class="flex items-center justify-center size-11 rounded-full bg-[var(--color-ink-overlay)] text-[var(--color-flame-500)] mb-5">
-                    <Icon :name="roleMeta[role].icon" class="size-5" />
-                  </span>
-                  <p class="font-display text-[1.1875rem] text-[var(--color-text)]">{{ roleMeta[role].label }}</p>
-                  <p class="mt-1.5 text-[0.875rem] text-[var(--color-text-muted)] leading-relaxed flex-1">{{ roleMeta[role].description }}</p>
-                  <span class="mt-5 inline-flex items-center gap-1.5 text-[0.875rem] font-medium text-[var(--color-text)] group-hover:text-[var(--color-flame-500)] transition-colors">
-                    Entrar
-                    <Icon name="ph:arrow-right-bold" class="size-3.5 transition-transform group-hover:translate-x-0.5" />
-                  </span>
-                </BaseCard>
-              </NuxtLink>
-            </div>
-          </div>
-
-          <p class="mt-10 text-[0.8125rem] text-[var(--color-text-faint)]">
-            Vista previa interna con datos de ejemplo — todavía sin inicio de sesión ni conexión a redes reales.
+    <main class="max-w-xl mx-auto px-4 md:px-10 pb-12">
+      <!-- Hero: la foto manda, el titular vive encima en el borde inferior —
+           patrón de apertura de app móvil, no una franja de texto separada. -->
+      <section class="relative rounded-[var(--radius-lg)] overflow-hidden h-[60vh] max-h-[560px] min-h-[380px]">
+        <CoverImage :photo="hero" :width="900" :height="1200" scrim="full" class="absolute inset-0" />
+        <div class="relative h-full flex flex-col justify-end p-6 md:p-9">
+          <h1 class="font-display text-white text-[2.1rem] md:text-[2.5rem] leading-[1.08] max-w-[18ch]">
+            El parte de rodaje de tu contenido.
+          </h1>
+          <p class="mt-3 text-white/75 text-[0.9375rem] leading-relaxed max-w-[34ch]">
+            Entregas, métricas y predicciones de éxito, todo en un solo sitio.
           </p>
         </div>
+        <a
+          :href="hero.creditUrl" target="_blank" rel="noopener noreferrer"
+          class="absolute top-3 right-3 text-[0.625rem] text-white/50 hover:text-white/80"
+        >
+          Foto: {{ hero.credit }}
+        </a>
+      </section>
 
-        <div class="order-1 md:order-2">
-          <CoverImage
-            :photo="hero" :width="900" :height="1100" scrim="tint"
-            class="rounded-[var(--radius-lg)] border border-[var(--color-hairline)] aspect-[4/3] md:aspect-[3/4] md:h-[560px]"
-          />
-          <a
-            :href="hero.creditUrl" target="_blank" rel="noopener noreferrer"
-            class="mt-2 block text-[0.6875rem] text-[var(--color-text-faint)] hover:text-[var(--color-text-muted)] text-right"
+      <section class="mt-8">
+        <p class="text-[0.9375rem] text-[var(--color-text-muted)] mb-4">Elige cómo quieres entrar</p>
+        <div class="flex flex-col gap-3">
+          <NuxtLink
+            v-for="role in roles" :key="role" :to="roleMeta[role].home"
+            class="group block"
           >
-            Foto: {{ hero.credit }} en Unsplash
-          </a>
+            <BaseCard radius="lg" padding="lg" interactive class="flex items-center gap-4">
+              <span class="flex items-center justify-center size-12 rounded-full bg-[var(--color-ink-overlay)] text-[var(--color-primary-500)] shrink-0">
+                <Icon :name="roleMeta[role].icon" class="size-5" />
+              </span>
+              <div class="min-w-0 flex-1">
+                <p class="font-display text-[1.1875rem] text-[var(--color-text)]">{{ roleMeta[role].label }}</p>
+                <p class="mt-0.5 text-[0.8125rem] text-[var(--color-text-muted)] leading-relaxed">{{ roleMeta[role].description }}</p>
+              </div>
+              <Icon name="ph:arrow-right-bold" class="size-4 shrink-0 text-[var(--color-text-faint)] transition-transform group-hover:translate-x-0.5 group-hover:text-[var(--color-primary-500)]" />
+            </BaseCard>
+          </NuxtLink>
         </div>
-      </div>
+      </section>
+
+      <p class="mt-8 text-[0.8125rem] text-[var(--color-text-faint)] text-center">
+        Vista previa interna con datos de ejemplo — todavía sin inicio de sesión ni conexión a redes reales.
+      </p>
     </main>
   </div>
 </template>

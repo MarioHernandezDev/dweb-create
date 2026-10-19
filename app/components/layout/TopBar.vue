@@ -15,13 +15,12 @@ const showBack = computed(() => route.path.split('/').filter(Boolean).length > 1
     >
       <Icon name="ph:arrow-left-bold" class="size-5" />
     </button>
+    <NuxtImg v-else src="/img/logo-svg.png" alt="" width="28" height="28" class="md:hidden size-7 shrink-0" />
 
     <div class="min-w-0 flex-1">
       <h1 class="font-display text-[1.375rem] md:text-[1.75rem] text-[var(--color-text)] truncate">{{ title }}</h1>
       <p v-if="subtitle" class="text-[0.8125rem] text-[var(--color-text-muted)] truncate">{{ subtitle }}</p>
     </div>
-
-    <ThemeToggle />
 
     <NuxtLink :to="`/${role}/profile`" aria-label="Tu perfil" class="shrink-0">
       <BaseAvatar initials="TU" :hue="266" size="sm" />

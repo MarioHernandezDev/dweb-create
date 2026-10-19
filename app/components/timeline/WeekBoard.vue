@@ -29,7 +29,7 @@ const groups = computed(() => {
     <section v-for="group in groups" :key="group.dueInDays">
       <h2
         class="text-[0.8125rem] font-medium mb-2.5"
-        :class="group.dueInDays < 0 ? 'text-[var(--color-status-alert)]' : group.dueInDays === 0 ? 'text-[var(--color-flame-500)]' : 'text-[var(--color-text-muted)]'"
+        :class="group.dueInDays < 0 ? 'text-[var(--color-status-alert)]' : group.dueInDays === 0 ? 'text-[var(--color-primary-500)]' : 'text-[var(--color-text-muted)]'"
       >
         {{ group.label }}
       </h2>

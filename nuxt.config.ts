@@ -19,21 +19,16 @@ export default defineNuxtConfig({
       htmlAttrs: { lang: 'es' },
       viewport: 'width=device-width, initial-scale=1, viewport-fit=cover',
       link: [
-        { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
+        { rel: 'icon', type: 'image/png', href: '/img/logo-svg.png' },
         { rel: 'manifest', href: '/manifest.webmanifest' }
       ],
       meta: [
-        { name: 'theme-color', content: '#15161C' },
+        // FEEDMA es de modo único claro: no hay toggle de tema ni script
+        // anti-parpadeo que sincronizar, el color de la barra del navegador
+        // es siempre este.
+        { name: 'theme-color', content: '#fbfaff' },
         { name: 'apple-mobile-web-app-capable', content: 'yes' },
-        { name: 'apple-mobile-web-app-status-bar-style', content: 'black-translucent' }
-      ],
-      script: [
-        {
-          // Evita el parpadeo de tema: aplica el modo guardado antes del primer pintado.
-          innerHTML:
-            "(function(){try{var t=localStorage.getItem('dwc-theme');if(!t){t=window.matchMedia('(prefers-color-scheme: light)').matches?'light':'dark';}document.documentElement.setAttribute('data-theme',t);}catch(e){}})();",
-          tagPosition: 'head'
-        }
+        { name: 'apple-mobile-web-app-status-bar-style', content: 'default' }
       ]
     }
   },

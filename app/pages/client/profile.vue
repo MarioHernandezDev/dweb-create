@@ -15,10 +15,6 @@ useHead({ title: 'Perfil' })
     <section class="mb-6">
       <BaseCard radius="lg" padding="none" class="divide-y divide-[var(--color-hairline)] overflow-hidden">
         <div class="flex items-center justify-between px-5 py-4">
-          <span class="text-[0.9375rem] text-[var(--color-text)]">Tema de la app</span>
-          <ThemeToggle />
-        </div>
-        <div class="flex items-center justify-between px-5 py-4">
           <span class="text-[0.9375rem] text-[var(--color-text)]">Gestionado por</span>
           <span class="text-[0.8125rem] text-[var(--color-text-faint)]">Tu agencia</span>
         </div>

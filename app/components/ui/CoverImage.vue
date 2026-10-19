@@ -26,11 +26,11 @@ withDefaults(
     />
     <div
       v-else-if="scrim === 'full'" class="absolute inset-0"
-      style="background: linear-gradient(140deg, rgb(10 9 12 / 80%) 0%, rgb(10 9 12 / 48%) 60%, color-mix(in oklab, var(--color-flame-600) 45%, rgb(10 9 12 / 40%)) 130%)"
+      style="background: linear-gradient(140deg, rgb(10 9 12 / 80%) 0%, rgb(10 9 12 / 48%) 60%, color-mix(in oklab, var(--color-primary-600) 45%, rgb(10 9 12 / 40%)) 130%)"
     />
     <div
       v-else-if="scrim === 'tint'" class="absolute inset-0 mix-blend-multiply"
-      style="background: linear-gradient(135deg, color-mix(in oklab, var(--color-flame-600) 22%, transparent) 0%, transparent 55%)"
+      style="background: linear-gradient(135deg, color-mix(in oklab, var(--color-primary-600) 22%, transparent) 0%, transparent 55%)"
     />
     <slot />
   </div>

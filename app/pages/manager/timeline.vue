@@ -20,7 +20,7 @@ const filteredPosts = computed(() =>
         type="button"
         class="shrink-0 h-9 px-4 rounded-full text-[0.8125rem] font-medium border transition-colors"
         :class="activeClient === 'all'
-          ? 'bg-[var(--color-flame-500)] text-[var(--color-on-flame)] border-[var(--color-flame-500)]'
+          ? 'bg-[var(--color-primary-500)] text-[var(--color-on-primary)] border-[var(--color-primary-500)]'
           : 'border-[var(--color-hairline-strong)] text-[var(--color-text-muted)] hover:text-[var(--color-text)]'"
         @click="activeClient = 'all'"
       >
@@ -30,7 +30,7 @@ const filteredPosts = computed(() =>
         v-for="client in clients" :key="client.id" type="button"
         class="shrink-0 h-9 px-4 rounded-full text-[0.8125rem] font-medium border transition-colors"
         :class="activeClient === client.id
-          ? 'bg-[var(--color-flame-500)] text-[var(--color-on-flame)] border-[var(--color-flame-500)]'
+          ? 'bg-[var(--color-primary-500)] text-[var(--color-on-primary)] border-[var(--color-primary-500)]'
           : 'border-[var(--color-hairline-strong)] text-[var(--color-text-muted)] hover:text-[var(--color-text)]'"
         @click="activeClient = client.id"
       >

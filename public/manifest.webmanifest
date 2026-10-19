@@ -4,10 +4,10 @@
   "description": "Gestiona entregas, métricas y predicciones de contenido en un solo lugar.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#15161C",
-  "theme_color": "#15161C",
+  "background_color": "#fbfaff",
+  "theme_color": "#fbfaff",
   "orientation": "portrait-primary",
   "icons": [
-    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+    { "src": "/img/logo-svg.png", "sizes": "500x500", "type": "image/png", "purpose": "any" }
   ]
 }

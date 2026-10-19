@@ -17,14 +17,14 @@ const roles: Role[] = ['manager', 'creator', 'client']
         v-for="role in roles" :key="role" :to="roleMeta[role].home"
         class="flex items-center gap-3 px-3.5 h-12 rounded-[var(--radius-sm)] border transition-colors"
         :class="role === current
-          ? 'border-[var(--color-flame-500)]/50 bg-[var(--color-flame-500)]/[0.08]'
+          ? 'border-[var(--color-primary-500)]/50 bg-[var(--color-primary-500)]/[0.08]'
           : 'border-[var(--color-hairline)] hover:border-[var(--color-hairline-strong)]'"
       >
-        <Icon :name="roleMeta[role].icon" class="size-4.5" :class="role === current ? 'text-[var(--color-flame-500)]' : 'text-[var(--color-text-faint)]'" />
+        <Icon :name="roleMeta[role].icon" class="size-4.5" :class="role === current ? 'text-[var(--color-primary-500)]' : 'text-[var(--color-text-faint)]'" />
         <span class="text-[0.9375rem]" :class="role === current ? 'text-[var(--color-text)] font-medium' : 'text-[var(--color-text-muted)]'">
           {{ roleMeta[role].label }}
         </span>
-        <Icon v-if="role === current" name="ph:check-circle-fill" class="size-4 ml-auto text-[var(--color-flame-500)]" />
+        <Icon v-if="role === current" name="ph:check-circle-fill" class="size-4 ml-auto text-[var(--color-primary-500)]" />
       </NuxtLink>
     </div>
   </BaseCard>
