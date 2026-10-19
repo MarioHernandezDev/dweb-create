@@ -25,6 +25,13 @@ export default defineNuxtRouteMiddleware(async (to) => {
   // con el trigger de la migración, pero por si acaso no lo dejamos colgado).
   if (!myRole) return
 
+  // Deja lista la ficha de rol (influencer/brand_client/manager) antes de
+  // montar cualquier página de esa sección — así ninguna página necesita su
+  // propio "cargando…" solo para saber quién es el usuario.
+  if (myRole === 'creator') await useMyInfluencer().ensureInfluencer(user.value.id)
+  else if (myRole === 'client') await useMyBrandClient().ensureBrandClient(user.value.id)
+  else if (myRole === 'manager') await useMyManager().ensureManager(user.value.id)
+
   if (to.path === '/login') {
     return navigateTo(roleMeta[myRole].home)
   }

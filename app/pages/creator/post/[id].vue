@@ -5,9 +5,11 @@ import type { PostStatus } from '~/types'
 
 const route = useRoute()
 const router = useRouter()
-const creatorPosts = useCreatorPosts()
+const { posts, ensureLoaded, updatePost, deletePost } = useMyPosts()
 
-const post = computed(() => creatorPosts.value.find((p) => p.id === route.params.id))
+await ensureLoaded()
+
+const post = computed(() => posts.value.find((p) => p.id === route.params.id))
 
 if (!post.value) {
   throw createError({ statusCode: 404, statusMessage: 'Publicación no encontrada' })
@@ -18,17 +20,28 @@ useHead({ title: post.value.title })
 const title = ref(post.value.title)
 const caption = ref(post.value.caption)
 const dirty = computed(() => title.value !== post.value?.title || caption.value !== post.value?.caption)
+const saving = ref(false)
 
-function save() {
+async function save() {
   if (!post.value) return
-  post.value.title = title.value
-  post.value.caption = caption.value
+  saving.value = true
+  try {
+    await updatePost(post.value.id, { title: title.value, caption: caption.value })
+  } finally {
+    saving.value = false
+  }
 }
 
-function remove() {
-  const idx = creatorPosts.value.findIndex((p) => p.id === route.params.id)
-  if (idx !== -1) creatorPosts.value.splice(idx, 1)
-  router.push('/creator/timeline')
+const deleting = ref(false)
+async function remove() {
+  if (!post.value) return
+  deleting.value = true
+  try {
+    await deletePost(post.value.id)
+    router.push('/creator/timeline')
+  } finally {
+    deleting.value = false
+  }
 }
 
 const statusFlow: PostStatus[] = ['idea', 'in_production', 'ready_for_review', 'scheduled', 'published']
@@ -37,10 +50,13 @@ const nextStatus = computed(() => {
   const idx = statusFlow.indexOf(post.value.status)
   return idx >= 0 && idx < statusFlow.length - 1 ? statusFlow[idx + 1] : null
 })
-function advanceStatus() {
-  if (post.value && nextStatus.value) post.value.status = nextStatus.value
+async function advanceStatus() {
+  if (post.value && nextStatus.value) await updatePost(post.value.id, { status: nextStatus.value })
 }
 
+// El motor de ML real es de la Fase 4 (ver docs/3-ML-PIPELINE.md); esto
+// sigue siendo una simulación local — a propósito no se guarda en
+// `ml_predictions`, esa tabla solo la escribe el servidor (ver RLS).
 const predicting = ref(false)
 function predict() {
   if (!post.value) return
@@ -99,8 +115,10 @@ function predict() {
         </div>
 
         <div class="flex gap-2.5">
-          <BaseButton variant="danger" icon="ph:trash-fill" @click="remove">Eliminar</BaseButton>
-          <BaseButton variant="primary" icon="ph:check-bold" class="flex-1" :disabled="!dirty" @click="save">Guardar cambios</BaseButton>
+          <BaseButton variant="danger" icon="ph:trash-fill" :icon-spin="deleting" :disabled="deleting" @click="remove">Eliminar</BaseButton>
+          <BaseButton variant="primary" icon="ph:check-bold" class="flex-1" :icon-spin="saving" :disabled="!dirty || saving" @click="save">
+            {{ saving ? 'Guardando…' : 'Guardar cambios' }}
+          </BaseButton>
         </div>
       </div>
 

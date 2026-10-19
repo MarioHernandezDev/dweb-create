@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { influencers, managers, formatCompactNumber } from '~/utils/mock-data'
+import { formatCompactNumber } from '~/utils/mock-data'
+import { initialsFromName, hueFromString } from '~/utils/avatar'
 import { localPhotos } from '~/utils/images'
 import type { Influencer, Manager } from '~/types'
 
@@ -7,26 +8,91 @@ useHead({ title: 'Descubrir' })
 
 const banner = localPhotos.discover
 
-function managerOf(influencer: Influencer) {
-  return managers.find((m) => m.id === influencer.managerId)
+const client = useSupabaseClient()
+const { brandClient } = useMyBrandClient()
+
+interface InfluencerRow { id: string; display_name: string; niche: string | null; manager_id: string | null; managers: { agency_name: string } | null }
+interface ManagerRow { id: string; agency_name: string; focus: string | null }
+
+const influencers = ref<Influencer[]>([])
+const managers = ref<Manager[]>([])
+const rosterCountByManagerId = ref<Record<string, number>>({})
+
+async function loadDirectory() {
+  const [{ data: influencerRows, error: influencerError }, { data: managerRows, error: managerError }] = await Promise.all([
+    client.from('influencers').select('id, display_name, niche, manager_id, managers(agency_name)'),
+    client.from('managers').select('id, agency_name, focus')
+  ])
+  if (influencerError) console.error('[discover] fallo al cargar influencers:', influencerError.message)
+  if (managerError) console.error('[discover] fallo al cargar managers:', managerError.message)
+
+  const rows = (influencerRows ?? []) as InfluencerRow[]
+  influencers.value = rows.map((r) => ({
+    id: r.id,
+    name: r.display_name,
+    niche: r.niche ?? 'Sin especificar',
+    initials: initialsFromName(r.display_name),
+    hue: hueFromString(r.display_name),
+    // El nº de seguidores real llega con la sincronización de redes (Fase 4);
+    // hasta entonces, 0 es honesto — no inventamos una cifra.
+    weeklyTarget: 0,
+    followers: 0,
+    managerId: r.manager_id
+  }))
+
+  const counts: Record<string, number> = {}
+  for (const r of rows) if (r.manager_id) counts[r.manager_id] = (counts[r.manager_id] ?? 0) + 1
+  rosterCountByManagerId.value = counts
+
+  managers.value = ((managerRows ?? []) as ManagerRow[]).map((m) => ({
+    id: m.id,
+    name: m.agency_name,
+    focus: m.focus ?? 'Sin especificar',
+    initials: initialsFromName(m.agency_name),
+    hue: hueFromString(m.agency_name)
+  }))
 }
-function rosterOf(manager: Manager) {
-  return influencers.filter((i) => i.managerId === manager.id)
+
+await loadDirectory()
+
+function managerOf(influencer: Influencer) {
+  return managers.value.find((m) => m.id === influencer.managerId)
+}
+function rosterCountOf(manager: Manager) {
+  return rosterCountByManagerId.value[manager.id] ?? 0
 }
 
 const sheetOpen = ref(false)
 const sheetStage = ref<'form' | 'sent'>('form')
-const target = ref<{ kind: 'influencer' | 'manager'; name: string } | null>(null)
+const target = ref<{ kind: 'influencer' | 'manager'; id: string; name: string } | null>(null)
 const message = ref('')
+const sending = ref(false)
 
-function openContact(kind: 'influencer' | 'manager', name: string) {
-  target.value = { kind, name }
+function openContact(kind: 'influencer' | 'manager', id: string, name: string) {
+  target.value = { kind, id, name }
   sheetStage.value = 'form'
   message.value = ''
   sheetOpen.value = true
 }
 
-function send() {
+async function send() {
+  if (!target.value || !message.value) return
+  const me = brandClient.value
+  if (!me) return
+
+  sending.value = true
+  const { error } = await client.from('collaborations').insert({
+    brand_client_id: me.id,
+    influencer_id: target.value.kind === 'influencer' ? target.value.id : null,
+    manager_id: target.value.kind === 'manager' ? target.value.id : null,
+    brief: message.value
+  } as never)
+  sending.value = false
+
+  if (error) {
+    console.error('[discover] fallo al enviar la solicitud:', error.message)
+    return
+  }
   sheetStage.value = 'sent'
 }
 </script>
@@ -60,7 +126,7 @@ function send() {
               {{ managerOf(influencer) ? `Representado por ${managerOf(influencer)!.name}` : 'Independiente' }}
             </p>
           </div>
-          <BaseButton variant="secondary" size="sm" class="shrink-0" @click="openContact('influencer', influencer.name)">Contactar</BaseButton>
+          <BaseButton variant="secondary" size="sm" class="shrink-0" @click="openContact('influencer', influencer.id, influencer.name)">Contactar</BaseButton>
         </BaseCard>
       </div>
     </section>
@@ -79,9 +145,9 @@ function send() {
           <div class="min-w-0 flex-1">
             <p class="text-[0.9375rem] font-medium text-[var(--color-text)] truncate">{{ manager.name }}</p>
             <p class="text-[0.8125rem] text-[var(--color-text-muted)] truncate">{{ manager.focus }}</p>
-            <p class="text-[0.75rem] text-[var(--color-text-faint)] mt-0.5">{{ rosterOf(manager).length }} influencers en su roster</p>
+            <p class="text-[0.75rem] text-[var(--color-text-faint)] mt-0.5">{{ rosterCountOf(manager) }} influencers en su roster</p>
           </div>
-          <BaseButton variant="secondary" size="sm" class="shrink-0" @click="openContact('manager', manager.name)">Contactar</BaseButton>
+          <BaseButton variant="secondary" size="sm" class="shrink-0" @click="openContact('manager', manager.id, manager.name)">Contactar</BaseButton>
         </BaseCard>
       </div>
     </section>
@@ -93,7 +159,9 @@ function send() {
           id="brief" v-model="message" rows="4" placeholder="Qué necesitas, para cuándo, y qué presupuesto manejas…"
           class="w-full px-3.5 py-2.5 rounded-[var(--radius-sm)] bg-[var(--color-ink-overlay)] border border-[var(--color-hairline)] text-[0.9375rem] text-[var(--color-text)] placeholder:text-[var(--color-text-faint)] focus:outline-none focus:border-[var(--color-primary-500)]/60 resize-none"
         />
-        <BaseButton variant="primary" size="lg" class="w-full mt-4" :disabled="!message" @click="send">Enviar solicitud</BaseButton>
+        <BaseButton variant="primary" size="lg" class="w-full mt-4" :icon-spin="sending" :disabled="!message || sending" @click="send">
+          {{ sending ? 'Enviando…' : 'Enviar solicitud' }}
+        </BaseButton>
       </template>
       <template v-else>
         <div class="flex flex-col items-center text-center gap-3 py-4">

@@ -1,20 +1,25 @@
 <script setup lang="ts">
-import { selfInfluencer, engagementSeries } from '~/utils/mock-data'
+import { engagementSeries } from '~/utils/mock-data'
 
 useHead({ title: 'Hoy' })
 
 const router = useRouter()
-const creatorPosts = useCreatorPosts()
+const { posts, ensureLoaded } = useMyPosts()
 const composerOpen = ref(false)
 
-const today = computed(() => creatorPosts.value.filter((p) => p.dueInDays === 0))
-const upcoming = computed(() => creatorPosts.value.filter((p) => p.dueInDays > 0 && p.dueInDays <= 3))
-const overdue = computed(() => creatorPosts.value.filter((p) => p.status === 'overdue'))
+await ensureLoaded()
+
+const today = computed(() => posts.value.filter((p) => p.dueInDays === 0))
+const upcoming = computed(() => posts.value.filter((p) => p.dueInDays > 0 && p.dueInDays <= 3))
+const overdue = computed(() => posts.value.filter((p) => p.status === 'overdue'))
 const streak = 6
 
-const weeklyTarget = selfInfluencer.weeklyTarget
-const publishedThisWeek = computed(() => creatorPosts.value.filter((p) => p.status === 'published').length)
-const goalPct = computed(() => Math.min(100, Math.round((publishedThisWeek.value / weeklyTarget) * 100)))
+// El objetivo semanal (nº de publicaciones/semana) es del perfil del
+// influencer en Supabase en el futuro; de momento, fijo, como el resto de
+// la ficha de "creator" que aún no se edita desde la app.
+const weeklyTarget = 5
+const publishedThisWeek = computed(() => posts.value.filter((p) => p.status === 'published').length)
+const goalPct = computed(() => (posts.value.length ? Math.min(100, Math.round((publishedThisWeek.value / weeklyTarget) * 100)) : 0))
 
 const quickActions = [
   { label: 'Publicar', icon: 'ph:pencil-simple-fill', action: () => { composerOpen.value = true } },

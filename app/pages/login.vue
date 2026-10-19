@@ -4,7 +4,7 @@ import { roleMeta } from '~/utils/nav'
 useHead({ title: 'Acceder' })
 
 const supabase = useSupabaseClient()
-const { ensureRole, reset } = useMyRole()
+const { ensureRole } = useMyRole()
 
 const email = ref('')
 const password = ref('')
@@ -21,7 +21,10 @@ const demoPassword = 'feedma-demo-2026'
 async function login(loginEmail: string, loginPassword: string) {
   loading.value = true
   error.value = ''
-  reset()
+  // Las cuentas de demo cambian de rol con un clic, sin pasar por "Cerrar
+  // sesión" — hay que tirar toda la caché de la cuenta anterior aquí
+  // también, o se vería su contenido un instante al entrar con la nueva.
+  resetAccountCaches()
 
   const { data, error: signInError } = await supabase.auth.signInWithPassword({ email: loginEmail, password: loginPassword })
   if (signInError) {

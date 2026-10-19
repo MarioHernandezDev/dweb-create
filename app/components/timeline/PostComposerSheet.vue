@@ -4,6 +4,7 @@ import type { ContentType, Platform } from '~/types'
 import { contentTypeMeta } from '~/utils/status'
 
 const open = defineModel<boolean>({ default: false })
+const { createPost } = useMyPosts()
 
 const title = ref('')
 const caption = ref('')
@@ -13,7 +14,7 @@ const platform = ref<Platform>('instagram')
 const contentTypes = Object.keys(contentTypeMeta) as ContentType[]
 const platforms = Object.entries(platformMeta).map(([value, meta]) => ({ value: value as Platform, label: meta.label }))
 
-type Stage = 'draft' | 'loading' | 'result'
+type Stage = 'draft' | 'loading' | 'result' | 'saving'
 const stage = ref<Stage>('draft')
 const result = ref<{ score: number; confidence: number } | null>(null)
 
@@ -24,6 +25,16 @@ function predict() {
     result.value = { score: Math.min(96, base), confidence: 0.74 + Math.random() * 0.15 }
     stage.value = 'result'
   }, 900)
+}
+
+async function schedule() {
+  stage.value = 'saving'
+  try {
+    await createPost({ title: title.value, caption: caption.value, contentType: contentType.value, platform: platform.value })
+    open.value = false
+  } finally {
+    stage.value = 'result'
+  }
 }
 
 watch(open, (value) => {
@@ -38,7 +49,7 @@ watch(open, (value) => {
 <template>
   <BottomSheet v-model="open" title="Nueva publicación">
     <Transition name="nx-fade-slide" mode="out-in">
-      <div v-if="stage !== 'result'" key="draft" class="flex flex-col gap-4">
+      <div v-if="stage === 'draft' || stage === 'loading'" key="draft" class="flex flex-col gap-4">
         <div>
           <label class="block text-[0.8125rem] font-medium text-[var(--color-text-muted)] mb-1.5" for="post-title">Título interno</label>
           <input
@@ -84,8 +95,13 @@ watch(open, (value) => {
       <div v-else-if="result" key="result">
         <SuccessScoreCard :score="result.score" :confidence="result.confidence" :suggestions="suggestionsForDraft" />
         <div class="flex gap-2.5 mt-5">
-          <BaseButton variant="secondary" class="flex-1" @click="stage = 'draft'">Editar</BaseButton>
-          <BaseButton variant="primary" class="flex-1" icon="ph:calendar-plus-fill" @click="open = false">Programar</BaseButton>
+          <BaseButton variant="secondary" class="flex-1" :disabled="stage === 'saving'" @click="stage = 'draft'">Editar</BaseButton>
+          <BaseButton
+            variant="primary" class="flex-1" icon="ph:calendar-plus-fill" :icon-spin="stage === 'saving'" :disabled="stage === 'saving'"
+            @click="schedule"
+          >
+            {{ stage === 'saving' ? 'Guardando…' : 'Programar' }}
+          </BaseButton>
         </div>
       </div>
     </Transition>

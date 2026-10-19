@@ -1,5 +1,4 @@
 import type {
-  BrandClient,
   CoverArt,
   Influencer,
   Manager,
@@ -62,41 +61,6 @@ export const influencerPosts: Post[] = [
   { id: 'p17', influencerId: 'elena', title: 'Carrusel: cómo elegir tu primera pluma', caption: 'Guía rápida para quien empieza en el mundo analógico.', contentType: 'carousel', platform: 'instagram', status: 'idea', dueInDays: 5, hashtags: ['#papeleria'], cover: cover(150) },
   { id: 'p18', influencerId: 'elena', title: 'Reel: unboxing colección cápsula', caption: 'Lo nuevo acaba de llegar al taller.', contentType: 'reel', platform: 'instagram', status: 'ready_for_review', dueInDays: 0, hashtags: ['#unboxing'], cover: cover(158) }
 ]
-
-// Vista en primera persona (rol "Creador"): un influencer independiente
-// viendo su propio tablero — managerId null a propósito, para cubrir el
-// otro camino del marketplace (el de "Mantener los 3 roles" sin manager de por medio).
-export const selfInfluencer: Influencer = {
-  id: 'self',
-  name: 'Tu cuenta',
-  niche: 'Lifestyle y productividad',
-  initials: 'TU',
-  hue: 266,
-  weeklyTarget: 5,
-  followers: 170_500,
-  managerId: null
-}
-
-export const creatorPosts: Post[] = [
-  { id: 'c1', influencerId: 'self', title: 'Reel: mi escritorio minimalista 2026', caption: 'Todo lo que uso cada día cabe en una mesa de 90cm.', contentType: 'reel', platform: 'instagram', status: 'ready_for_review', dueInDays: 0, hashtags: ['#desksetup', '#minimalismo'], cover: cover(266), successScore: 78 },
-  { id: 'c2', influencerId: 'self', title: 'Carrusel: 5 apps que cambiaron mi rutina', caption: 'Nada de productividad tóxica, solo lo que realmente uso.', contentType: 'carousel', platform: 'instagram', status: 'in_production', dueInDays: 1, hashtags: ['#productividad'], cover: cover(274) },
-  { id: 'c3', influencerId: 'self', title: 'Vídeo: un día conmigo (vlog)', caption: 'De las 7 de la mañana a medianoche, sin editar lo aburrido.', contentType: 'video', platform: 'youtube', status: 'scheduled', dueInDays: 3, hashtags: ['#dayinmylife'], cover: cover(258) },
-  { id: 'c4', influencerId: 'self', title: 'Story: pregúntame lo que quieras', caption: '', contentType: 'story', platform: 'instagram', status: 'scheduled', dueInDays: 2, hashtags: [], cover: cover(280) },
-  { id: 'c5', influencerId: 'self', title: 'Reel: por qué dejé mi trabajo de oficina', caption: 'La historia completa, sin filtros.', contentType: 'reel', platform: 'tiktok', status: 'overdue', dueInDays: -1, hashtags: ['#careerchange'], cover: cover(250) },
-  { id: 'c6', influencerId: 'self', title: 'Carrusel: mi setup de cámara para vlogs', caption: 'Todo el equipo, con precios reales.', contentType: 'carousel', platform: 'instagram', status: 'published', dueInDays: -3, hashtags: ['#gear'], cover: cover(290) },
-  { id: 'c7', influencerId: 'self', title: 'Reel: 3 libros que leí este mes', caption: 'Resumen de 60 segundos de cada uno.', contentType: 'reel', platform: 'instagram', status: 'idea', dueInDays: 6, hashtags: ['#booktok'], cover: cover(244) }
-]
-
-// La marca de la demo (rol "Cliente"): tiene una colaboración activa con
-// Nora Blake, a través de su manager Estudio Nova.
-export const myBrand: BrandClient = {
-  id: 'alma-beauty',
-  name: 'Alma Beauty Co.',
-  industry: 'Belleza',
-  initials: 'AB',
-  hue: 300
-}
-export const myBrandInfluencerId = 'nora'
 
 export const metricsByPlatform: MetricSummary[] = [
   { platform: 'tiktok', views: 512_900, likes: 48_760, comments: 3_410, shares: 5_220, deltaPct: 24.1 },

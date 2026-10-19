@@ -2,7 +2,7 @@
 import type { SocialAccount } from '~/types'
 import { platformMeta, formatCompactNumber } from '~/utils/mock-data'
 
-defineProps<{ account: SocialAccount }>()
+defineProps<{ account: SocialAccount; busy?: boolean }>()
 defineEmits<{ connect: []; disconnect: [] }>()
 </script>
 
@@ -32,9 +32,11 @@ defineEmits<{ connect: []; disconnect: [] }>()
     </span>
 
     <BaseButton
-      v-if="account.connected" variant="ghost" size="sm" icon="ph:dots-three-bold" icon-only
-      aria-label="Más opciones" @click="$emit('disconnect')"
+      v-if="account.connected" variant="ghost" size="sm" icon="ph:x-bold" icon-only :disabled="busy"
+      aria-label="Desconectar" @click="$emit('disconnect')"
     />
-    <BaseButton v-else variant="secondary" size="sm" @click="$emit('connect')">Conectar</BaseButton>
+    <BaseButton v-else variant="secondary" size="sm" :icon-spin="busy" :disabled="busy" @click="$emit('connect')">
+      {{ busy ? 'Conectando…' : 'Conectar' }}
+    </BaseButton>
   </BaseCard>
 </template>

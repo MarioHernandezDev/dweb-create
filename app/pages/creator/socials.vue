@@ -1,16 +1,24 @@
 <script setup lang="ts">
-import { socialAccounts as initialAccounts } from '~/utils/mock-data'
 import { localPhotos } from '~/utils/images'
+import type { SocialAccount } from '~/types'
 
 useHead({ title: 'Redes' })
 
 const banner = localPhotos.socials
 
-const accounts = ref(initialAccounts.map((a) => ({ ...a })))
+const { accounts, ensureLoaded, connect, disconnect } = useMySocialAccounts()
+await ensureLoaded()
 
-function toggle(id: string) {
-  const acc = accounts.value.find((a) => a.id === id)
-  if (acc) acc.connected = !acc.connected
+const busyPlatform = ref<SocialAccount['platform'] | null>(null)
+
+async function toggle(acc: SocialAccount) {
+  busyPlatform.value = acc.platform
+  try {
+    if (acc.connected) await disconnect(acc.platform)
+    else await connect(acc.platform)
+  } finally {
+    busyPlatform.value = null
+  }
 }
 
 const connectedCount = computed(() => accounts.value.filter((a) => a.connected).length)
@@ -28,8 +36,8 @@ const connectedCount = computed(() => accounts.value.filter((a) => a.connected).
 
     <div class="flex flex-col gap-2.5 md:max-w-xl">
       <SocialAccountRow
-        v-for="acc in accounts" :key="acc.id" :account="acc"
-        @connect="toggle(acc.id)" @disconnect="toggle(acc.id)"
+        v-for="acc in accounts" :key="acc.platform" :account="acc" :busy="busyPlatform === acc.platform"
+        @connect="toggle(acc)" @disconnect="toggle(acc)"
       />
     </div>
   </AppShell>
