@@ -34,14 +34,16 @@ const groups = computed(() => {
         {{ group.label }}
       </h2>
       <div class="flex flex-col gap-2.5">
-        <DeliverableCard
-          v-for="post in group.items" :key="post.id" :post="post"
-          :client="clientsById?.[post.clientId]"
+        <div
+          v-for="(post, i) in group.items" :key="post.id"
+          class="nx-stagger-in" :style="{ '--stagger-i': i }"
         >
-          <template v-if="$slots.actions" #actions>
-            <slot name="actions" :post="post" />
-          </template>
-        </DeliverableCard>
+          <DeliverableCard :post="post" :client="clientsById?.[post.clientId]">
+            <template v-if="$slots.actions" #actions>
+              <slot name="actions" :post="post" />
+            </template>
+          </DeliverableCard>
+        </div>
       </div>
     </section>
   </div>

@@ -1,9 +1,7 @@
 <script setup lang="ts">
-import { creatorPosts, engagementSeries } from '~/utils/mock-data'
-import { coverPhotos } from '~/utils/images'
+import { creatorClient, creatorPosts, engagementSeries } from '~/utils/mock-data'
 
 useHead({ title: 'Hoy' })
-const cover = coverPhotos.creator
 
 const composerOpen = ref(false)
 
@@ -11,20 +9,70 @@ const today = computed(() => creatorPosts.filter((p) => p.dueInDays === 0))
 const upcoming = computed(() => creatorPosts.filter((p) => p.dueInDays > 0 && p.dueInDays <= 3))
 const overdue = computed(() => creatorPosts.filter((p) => p.status === 'overdue'))
 const streak = 6
+
+const weeklyTarget = creatorClient.weeklyTarget
+const publishedThisWeek = computed(() => creatorPosts.filter((p) => p.status === 'published').length)
+const goalPct = computed(() => Math.min(100, Math.round((publishedThisWeek.value / weeklyTarget) * 100)))
+
+const quickActions = [
+  { label: 'Publicar', icon: 'ph:pencil-simple-fill', action: () => { composerOpen.value = true } },
+  { label: 'Tablero', icon: 'ph:kanban-fill', to: '/creator/timeline' },
+  { label: 'Redes', icon: 'ph:share-network-fill', to: '/creator/socials' },
+  { label: 'Tendencias', icon: 'ph:flame-fill', to: '/creator/trends' }
+]
 </script>
 
 <template>
   <AppShell role="creator" title="Hoy">
-    <section class="relative rounded-[var(--radius-lg)] overflow-hidden mb-8 h-44 md:h-52">
-      <CoverImage :photo="cover" :width="1200" :height="500" scrim="full" class="absolute inset-0" />
-      <div class="relative h-full flex flex-col justify-end p-6 md:p-8">
-        <p class="font-display text-[2.5rem] md:text-[2.75rem] leading-none text-white">
-          {{ today.length + upcoming.length }} <span class="text-[1.125rem] font-sans font-normal text-white/70">publicaciones esta semana</span>
-        </p>
-        <p class="mt-2 inline-flex items-center gap-1.5 text-[0.9375rem] text-[var(--color-status-production)]">
-          <Icon name="ph:fire-fill" class="size-4" />
-          Racha de {{ streak }} días publicando
-        </p>
+    <section class="mb-6">
+      <h1 class="font-display text-[2rem] md:text-[2.5rem] leading-[1.08] text-[var(--color-text)]">¡Vamos con fuerza hoy!</h1>
+      <p class="mt-1.5 inline-flex items-center gap-1.5 text-[0.9375rem] text-[var(--color-status-production)]">
+        <Icon name="ph:fire-fill" class="size-4" />
+        Racha de {{ streak }} días publicando
+      </p>
+    </section>
+
+    <section class="mb-6">
+      <BaseCard radius="lg" padding="lg" class="flex items-center gap-4 md:max-w-md">
+        <div class="min-w-0 flex-1">
+          <p class="text-[0.9375rem] text-[var(--color-text)] leading-snug">
+            Estás al <strong class="font-semibold">{{ goalPct }}%</strong> de tu objetivo semanal
+          </p>
+          <div class="mt-3 flex items-center gap-3">
+            <div class="flex-1 h-2 rounded-full bg-[var(--color-ink-overlay)] overflow-hidden">
+              <div
+                class="h-full rounded-full bg-[var(--color-flame-500)] transition-[width] duration-700 ease-[var(--ease-spring)]"
+                :style="{ width: `${goalPct}%` }"
+              />
+            </div>
+            <span class="shrink-0 text-[0.8125rem] text-[var(--color-text-faint)]" style="font-variant-numeric: proportional-nums">
+              {{ publishedThisWeek }}/{{ weeklyTarget }}
+            </span>
+          </div>
+        </div>
+        <button
+          type="button" aria-label="Nueva publicación"
+          class="shrink-0 size-14 rounded-full bg-[var(--color-flame-500)] text-[var(--color-on-flame)] shadow-[0_10px_22px_-8px_var(--color-flame-500)] hover:shadow-[0_14px_28px_-6px_var(--color-flame-500)] flex items-center justify-center active:scale-90 transition-[transform,box-shadow] duration-300 ease-[var(--ease-spring-out)]"
+          @click="composerOpen = true"
+        >
+          <Icon name="ph:lightning-fill" class="size-6" />
+        </button>
+      </BaseCard>
+    </section>
+
+    <section class="mb-8">
+      <div class="flex justify-between md:justify-start md:gap-8">
+        <component
+          :is="action.to ? 'NuxtLink' : 'button'" v-for="action in quickActions" :key="action.label"
+          :to="action.to" :type="!action.to ? 'button' : undefined"
+          class="flex flex-col items-center gap-1.5 flex-1 md:flex-none md:w-16"
+          @click="action.action?.()"
+        >
+          <span class="flex items-center justify-center size-14 rounded-full bg-[var(--color-ink-raised)] border border-[var(--color-hairline)] text-[var(--color-text)] transition-[transform,border-color] duration-200 ease-[var(--ease-spring)] active:scale-95 hover:border-[var(--color-hairline-strong)]">
+            <Icon :name="action.icon" class="size-5" />
+          </span>
+          <span class="text-[0.75rem] text-[var(--color-text-muted)] text-center">{{ action.label }}</span>
+        </component>
       </div>
     </section>
 
@@ -37,9 +85,16 @@ const streak = 6
       </BaseCard>
     </section>
 
-    <section class="grid grid-cols-2 gap-3 mb-8">
-      <StatTile label="Interacciones, 7 días" value="24.8K" :delta-pct="14.2" :trend="engagementSeries.map((p) => p.value)" />
-      <StatTile label="Seguidores totales" value="170.5K" :delta-pct="4.1" :trend="engagementSeries.map((p) => p.value * 0.8)" />
+    <section class="mb-8">
+      <h2 class="font-display text-[1.25rem] text-[var(--color-text)] mb-3.5">Resumen de hoy</h2>
+      <div class="grid grid-cols-2 gap-3">
+        <div class="nx-stagger-in" style="--stagger-i: 0">
+          <StatTile label="Interacciones, 7 días" value="24.8K" :delta-pct="14.2" :trend="engagementSeries.map((p) => p.value)" />
+        </div>
+        <div class="nx-stagger-in" style="--stagger-i: 1">
+          <StatTile label="Seguidores totales" value="170.5K" :delta-pct="4.1" :trend="engagementSeries.map((p) => p.value * 0.8)" />
+        </div>
+      </div>
     </section>
 
     <section>
@@ -50,7 +105,7 @@ const streak = 6
       <WeekBoard :posts="[...today, ...upcoming]" />
     </section>
 
-    <Fab @click="composerOpen = true" />
+    <Fab :active="composerOpen" @click="composerOpen = true" />
     <PostComposerSheet v-model="composerOpen" />
   </AppShell>
 </template>

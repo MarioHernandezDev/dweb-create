@@ -1,15 +1,39 @@
 <script setup lang="ts">
-defineProps<{ options: { value: string; label: string }[]; modelValue: string }>()
+const props = defineProps<{ options: { value: string; label: string }[]; modelValue: string }>()
 defineEmits<{ 'update:modelValue': [value: string] }>()
+
+const btnRefs = ref<(HTMLElement | null)[]>([])
+const indicatorStyle = ref({ width: '0px', transform: 'translateX(0px)' })
+
+function setBtnRef(el: Element | null, i: number) {
+  btnRefs.value[i] = el as HTMLElement | null
+}
+
+function updateIndicator() {
+  const idx = props.options.findIndex((o) => o.value === props.modelValue)
+  const el = btnRefs.value[idx]
+  if (!el) return
+  indicatorStyle.value = { width: `${el.offsetWidth}px`, transform: `translateX(${el.offsetLeft}px)` }
+}
+
+onMounted(() => nextTick(updateIndicator))
+watch(() => props.modelValue, () => nextTick(updateIndicator))
+watch(() => props.options, () => nextTick(updateIndicator), { deep: true })
 </script>
 
 <template>
-  <div class="inline-flex items-center gap-1 rounded-[var(--radius-xs)] bg-[var(--color-ink-overlay)] border border-[var(--color-hairline)] p-1">
+  <div class="relative inline-flex items-center gap-1 rounded-[var(--radius-xs)] bg-[var(--color-ink-overlay)] border border-[var(--color-hairline)] p-1">
+    <span
+      class="absolute top-1 bottom-1 left-0 rounded-[calc(var(--radius-xs)-4px)] bg-[var(--color-ink-raised)] shadow-sm transition-[transform,width] duration-300 ease-[var(--ease-spring)]"
+      :style="indicatorStyle"
+      aria-hidden="true"
+    />
     <button
-      v-for="opt in options" :key="opt.value" type="button"
-      class="px-3.5 h-8 rounded-[calc(var(--radius-xs)-4px)] text-[0.8125rem] font-medium transition-colors duration-150"
+      v-for="(opt, i) in options" :key="opt.value" type="button"
+      :ref="(el) => setBtnRef(el as Element | null, i)"
+      class="relative z-10 px-3.5 h-8 rounded-[calc(var(--radius-xs)-4px)] text-[0.8125rem] font-medium transition-colors duration-150"
       :class="modelValue === opt.value
-        ? 'bg-[var(--color-ink-raised)] text-[var(--color-text)] shadow-sm'
+        ? 'text-[var(--color-text)]'
         : 'text-[var(--color-text-muted)] hover:text-[var(--color-text)]'"
       @click="$emit('update:modelValue', opt.value)"
     >

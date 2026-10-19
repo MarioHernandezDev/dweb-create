@@ -6,6 +6,7 @@ const props = withDefaults(
     size?: 'sm' | 'md' | 'lg'
     icon?: string
     iconOnly?: boolean
+    iconSpin?: boolean
     disabled?: boolean
     type?: 'button' | 'submit'
   }>(),
@@ -22,7 +23,7 @@ const sizeClasses: Record<string, string> = {
 
 const variantClasses: Record<string, string> = {
   primary:
-    'bg-[var(--color-flame-500)] text-[var(--color-on-flame)] hover:bg-[var(--color-flame-400)] active:bg-[var(--color-flame-600)] shadow-[0_8px_20px_-8px_var(--color-flame-500)]',
+    'bg-[var(--color-flame-500)] text-[var(--color-on-flame)] hover:bg-[var(--color-flame-400)] active:bg-[var(--color-flame-600)] shadow-[0_8px_20px_-8px_var(--color-flame-500)] hover:shadow-[0_12px_26px_-6px_var(--color-flame-500)]',
   secondary:
     'bg-[var(--color-ink-overlay)] text-[var(--color-text)] border border-[var(--color-hairline-strong)] hover:border-[var(--color-flame-500)]/60',
   ghost: 'bg-transparent text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-ink-overlay)]',
@@ -36,10 +37,10 @@ const variantClasses: Record<string, string> = {
     :to="to"
     :type="!to ? type : undefined"
     :disabled="!to ? disabled : undefined"
-    class="inline-flex items-center justify-center font-medium rounded-[var(--radius-xs)] transition-colors duration-150 disabled:opacity-40 disabled:pointer-events-none select-none"
+    class="inline-flex items-center justify-center font-medium rounded-[var(--radius-xs)] transition-[background-color,border-color,color,box-shadow,transform] duration-200 ease-[var(--ease-spring)] active:scale-[0.97] disabled:opacity-40 disabled:pointer-events-none disabled:active:scale-100 select-none"
     :class="[sizeClasses[size], variantClasses[variant], iconOnly && 'px-0 aspect-square']"
   >
-    <Icon v-if="icon" :name="icon" class="shrink-0" :class="size === 'sm' ? 'size-4' : 'size-[1.15em]'" />
+    <Icon v-if="icon" :name="icon" class="shrink-0" :class="[size === 'sm' ? 'size-4' : 'size-[1.15em]', iconSpin && 'animate-spin']" />
     <span v-if="!iconOnly"><slot /></span>
   </component>
 </template>

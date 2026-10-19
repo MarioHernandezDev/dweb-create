@@ -133,6 +133,14 @@
   --color-on-signal: var(--color-on-signal);
 }
 
+:root {
+  /* Curvas de animación: "spring" suave para feedback de UI (sin overshoot,
+     se siente premium y rápido) y "spring-out" con ligero rebote para
+     elementos lúdicos (indicadores, FAB). */
+  --ease-spring: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring-out: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
 html {
   background: var(--color-ink);
   -webkit-tap-highlight-color: transparent;
@@ -172,3 +180,52 @@ body {
 .nx-scroll::-webkit-scrollbar { height: 6px; width: 6px; }
 .nx-scroll::-webkit-scrollbar-thumb { background: var(--color-hairline-strong); border-radius: 999px; }
 .nx-scroll::-webkit-scrollbar-track { background: transparent; }
+
+/* Transición entre páginas: cross-fade + leve desplazamiento vertical.
+   La saliente se saca del flujo (position: absolute) para que la entrante
+   no "salte" mientras ambas coexisten durante la transición. */
+.page-enter-active,
+.page-leave-active {
+  transition: opacity 0.22s var(--ease-spring), transform 0.22s var(--ease-spring);
+}
+.page-enter-from {
+  opacity: 0;
+  transform: translateY(10px);
+}
+.page-leave-to {
+  opacity: 0;
+  transform: translateY(-6px);
+}
+.page-leave-active {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+}
+
+/* Entrada escalonada para listas (tarjetas de tablero, filas de cliente, etc.) */
+@keyframes nx-stagger-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.nx-stagger-in {
+  animation: nx-stagger-in 0.45s var(--ease-spring) backwards;
+  animation-delay: calc(var(--stagger-i, 0) * 45ms);
+}
+
+/* Transición de contenido dentro de hojas/paneles (p.ej. draft -> resultado) */
+.nx-fade-slide-enter-active,
+.nx-fade-slide-leave-active {
+  transition: opacity 0.2s var(--ease-spring), transform 0.2s var(--ease-spring);
+}
+.nx-fade-slide-enter-from {
+  opacity: 0;
+  transform: translateY(6px);
+}
+.nx-fade-slide-leave-to {
+  opacity: 0;
+  transform: translateY(-6px);
+}
+.nx-fade-slide-leave-active {
+  position: absolute;
+  inset: 0;
+}

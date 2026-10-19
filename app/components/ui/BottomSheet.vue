@@ -17,15 +17,15 @@ watch(
 <template>
   <Teleport to="body">
     <Transition
-      enter-active-class="transition-opacity duration-200" enter-from-class="opacity-0" enter-to-class="opacity-100"
-      leave-active-class="transition-opacity duration-150" leave-from-class="opacity-100" leave-to-class="opacity-0"
+      enter-active-class="transition-opacity duration-250 ease-[var(--ease-spring)]" enter-from-class="opacity-0" enter-to-class="opacity-100"
+      leave-active-class="transition-opacity duration-200 ease-[var(--ease-spring)]" leave-from-class="opacity-100" leave-to-class="opacity-0"
     >
       <div v-if="modelValue" class="fixed inset-0 z-50 bg-black/55 backdrop-blur-[2px]" @click="close" />
     </Transition>
 
     <Transition
-      enter-active-class="transition-transform duration-250 ease-out" enter-from-class="translate-y-full md:translate-y-4 md:opacity-0" enter-to-class="translate-y-0 md:opacity-100"
-      leave-active-class="transition-transform duration-200 ease-in" leave-from-class="translate-y-0" leave-to-class="translate-y-full md:translate-y-4 md:opacity-0"
+      enter-active-class="transition-[transform,opacity] duration-[350ms] ease-[var(--ease-spring-out)]" enter-from-class="translate-y-full md:translate-y-4 md:opacity-0" enter-to-class="translate-y-0 md:opacity-100"
+      leave-active-class="transition-[transform,opacity] duration-200 ease-[var(--ease-spring)]" leave-from-class="translate-y-0" leave-to-class="translate-y-full md:translate-y-4 md:opacity-0"
     >
       <div
         v-if="modelValue"
@@ -40,7 +40,7 @@ watch(
               <Icon name="ph:x-bold" class="size-4" />
             </button>
           </div>
-          <div class="overflow-y-auto px-5 py-5 nx-scroll">
+          <div class="relative overflow-y-auto px-5 py-5 nx-scroll">
             <slot />
           </div>
         </div>

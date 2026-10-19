@@ -42,8 +42,8 @@ watch(open, (value) => {
 
 <template>
   <BottomSheet v-model="open" title="Nueva publicación">
-    <template v-if="stage !== 'result'">
-      <div class="flex flex-col gap-4">
+    <Transition name="nx-fade-slide" mode="out-in">
+      <div v-if="stage !== 'result'" key="draft" class="flex flex-col gap-4">
         <div>
           <label class="block text-[0.8125rem] font-medium text-[var(--color-text-muted)] mb-1.5" for="post-title">Título interno</label>
           <input
@@ -76,21 +76,23 @@ watch(open, (value) => {
         </div>
 
         <BaseButton
-          variant="primary" size="lg" icon="ph:sparkle-fill" class="w-full mt-1"
+          variant="primary" size="lg"
+          :icon="stage === 'loading' ? 'ph:circle-notch-bold' : 'ph:sparkle-fill'" :icon-spin="stage === 'loading'"
+          class="w-full mt-1"
           :disabled="!title || stage === 'loading'" @click="predict"
         >
           {{ stage === 'loading' ? 'Analizando…' : 'Predecir éxito' }}
         </BaseButton>
         <p class="text-center text-[0.75rem] text-[var(--color-text-faint)] -mt-2">Consume 1 crédito de tu plan</p>
       </div>
-    </template>
 
-    <template v-else-if="result">
-      <SuccessScoreCard :score="result.score" :confidence="result.confidence" :suggestions="suggestionsForDraft" />
-      <div class="flex gap-2.5 mt-5">
-        <BaseButton variant="secondary" class="flex-1" @click="stage = 'draft'">Editar</BaseButton>
-        <BaseButton variant="primary" class="flex-1" icon="ph:calendar-plus-fill" @click="open = false">Programar</BaseButton>
+      <div v-else-if="result" key="result">
+        <SuccessScoreCard :score="result.score" :confidence="result.confidence" :suggestions="suggestionsForDraft" />
+        <div class="flex gap-2.5 mt-5">
+          <BaseButton variant="secondary" class="flex-1" @click="stage = 'draft'">Editar</BaseButton>
+          <BaseButton variant="primary" class="flex-1" icon="ph:calendar-plus-fill" @click="open = false">Programar</BaseButton>
+        </div>
       </div>
-    </template>
+    </Transition>
   </BottomSheet>
 </template>

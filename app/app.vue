@@ -5,5 +5,5 @@ useHead({
 </script>
 
 <template>
-  <NuxtPage />
+  <NuxtPage :transition="{ name: 'page', mode: 'default' }" />
 </template>

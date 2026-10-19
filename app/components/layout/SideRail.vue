@@ -23,12 +23,12 @@ function isActive(to: string) {
     <nav class="flex flex-col gap-1" aria-label="Navegación principal">
       <NuxtLink
         v-for="item in items" :key="item.to" :to="item.to"
-        class="flex items-center gap-3 px-3.5 h-11 rounded-[var(--radius-sm)] text-[0.9375rem] font-medium transition-colors"
+        class="flex items-center gap-3 px-3.5 h-11 rounded-[var(--radius-sm)] text-[0.9375rem] font-medium transition-[background-color,color] duration-200 ease-[var(--ease-spring)]"
         :class="isActive(item.to)
           ? 'bg-[var(--color-ink-overlay)] text-[var(--color-text)]'
           : 'text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-ink-overlay)]/60'"
       >
-        <Icon :name="item.icon" class="size-[1.15rem]" :class="isActive(item.to) && 'text-[var(--color-flame-500)]'" />
+        <Icon :name="item.icon" class="size-[1.15rem] transition-[color,transform] duration-200 ease-[var(--ease-spring-out)]" :class="isActive(item.to) && 'text-[var(--color-flame-500)] scale-110'" />
         {{ item.label }}
       </NuxtLink>
     </nav>

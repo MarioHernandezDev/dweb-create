@@ -46,9 +46,9 @@ function overdueCount(clientId: string) {
     </section>
 
     <section class="grid grid-cols-3 gap-3 mb-9">
-      <StatTile label="Clientes activos" :value="String(clients.length)" />
-      <StatTile label="Fuera de plazo" :value="String(totalOverdue)" />
-      <StatTile label="Publicadas" :value="String(totalPublishedWeek)" />
+      <div class="nx-stagger-in" style="--stagger-i: 0"><StatTile label="Clientes activos" :value="String(clients.length)" /></div>
+      <div class="nx-stagger-in" style="--stagger-i: 1"><StatTile label="Fuera de plazo" :value="String(totalOverdue)" /></div>
+      <div class="nx-stagger-in" style="--stagger-i: 2"><StatTile label="Publicadas" :value="String(totalPublishedWeek)" /></div>
     </section>
 
     <section>
@@ -59,10 +59,15 @@ function overdueCount(clientId: string) {
         </NuxtLink>
       </div>
       <div class="flex flex-col gap-2.5">
-        <ClientRow
-          v-for="client in sortedClients" :key="client.id" :client="client"
-          :pending-count="pendingCount(client.id)" :overdue-count="overdueCount(client.id)"
-        />
+        <div
+          v-for="(client, i) in sortedClients" :key="client.id"
+          class="nx-stagger-in" :style="{ '--stagger-i': i }"
+        >
+          <ClientRow
+            :client="client"
+            :pending-count="pendingCount(client.id)" :overdue-count="overdueCount(client.id)"
+          />
+        </div>
       </div>
     </section>
   </AppShell>

@@ -30,7 +30,7 @@ const paddingClasses: Record<string, string> = {
       tone === 'raised' ? 'bg-[var(--color-ink-raised)]' : 'bg-[var(--color-ink-overlay)]',
       radiusClasses[radius],
       paddingClasses[padding],
-      interactive && 'transition-[border-color,transform] duration-150 hover:border-[var(--color-hairline-strong)] active:scale-[0.99] cursor-pointer'
+      interactive && 'transition-[border-color,transform,box-shadow] duration-200 ease-[var(--ease-spring)] hover:border-[var(--color-hairline-strong)] hover:-translate-y-0.5 hover:shadow-[var(--shadow-float)] active:scale-[0.99] active:translate-y-0 cursor-pointer'
     ]"
   >
     <slot />
