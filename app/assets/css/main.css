@@ -84,6 +84,11 @@
   --color-platform-x: #9085e9;
   --color-platform-instagram: #d55181;
 
+  /* Fuera de la paleta de datos: solo tiñen un icono junto a su etiqueta
+     (conectar redes), nunca se comparan como serie entre sí. */
+  --color-platform-facebook: #4c8dff;
+  --color-platform-linkedin: #3aa0e8;
+
   /* Serie única (magnitud): tendencias de engagement */
   --color-chart-primary: #3987e5;
 }
@@ -114,6 +119,9 @@
   --color-platform-youtube: #e34948;
   --color-platform-x: #6250d6;
   --color-platform-instagram: #e87ba4;
+
+  --color-platform-facebook: #2e6fe0;
+  --color-platform-linkedin: #0f7cc4;
 
   --color-chart-primary: #2a78d6;
 }

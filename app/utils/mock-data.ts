@@ -92,7 +92,9 @@ export const socialAccounts: SocialAccount[] = [
   { id: 'sa2', platform: 'tiktok', handle: '@tucuenta', followers: 112_800, deltaPct: 8.7, connected: true },
   { id: 'sa3', platform: 'youtube', handle: 'Tu Canal', followers: 9_420, deltaPct: 1.1, connected: true },
   { id: 'sa4', platform: 'x', handle: '@tucuenta', followers: 0, deltaPct: 0, connected: false },
-  { id: 'sa1', platform: 'instagram', handle: '@tucuenta', followers: 48_300, deltaPct: 3.2, connected: true }
+  { id: 'sa1', platform: 'instagram', handle: '@tucuenta', followers: 48_300, deltaPct: 3.2, connected: true },
+  { id: 'sa5', platform: 'facebook', handle: '', followers: 0, deltaPct: 0, connected: false },
+  { id: 'sa6', platform: 'linkedin', handle: 'Tu Página', followers: 3_120, deltaPct: 2.4, connected: true }
 ]
 
 export const trendSuggestions: TrendSuggestion[] = [
@@ -113,7 +115,9 @@ export const platformMeta: Record<Platform, { label: string; icon: string; color
   tiktok: { label: 'TikTok', icon: 'ph:tiktok-logo-fill', colorVar: 'var(--color-platform-tiktok)' },
   youtube: { label: 'YouTube', icon: 'ph:youtube-logo-fill', colorVar: 'var(--color-platform-youtube)' },
   x: { label: 'X', icon: 'ph:x-logo-fill', colorVar: 'var(--color-platform-x)' },
-  instagram: { label: 'Instagram', icon: 'ph:instagram-logo-fill', colorVar: 'var(--color-platform-instagram)' }
+  instagram: { label: 'Instagram', icon: 'ph:instagram-logo-fill', colorVar: 'var(--color-platform-instagram)' },
+  facebook: { label: 'Facebook', icon: 'ph:facebook-logo-fill', colorVar: 'var(--color-platform-facebook)' },
+  linkedin: { label: 'LinkedIn', icon: 'ph:linkedin-logo-fill', colorVar: 'var(--color-platform-linkedin)' }
 }
 
 export function formatCompactNumber(value: number): string {

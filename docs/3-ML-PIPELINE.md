@@ -2,7 +2,7 @@
 
 ## 3.1 Objetivos del Motor de ML
 
-El motor de ML de **dweb-create** tiene dos funciones principales:
+El motor de ML de **FEEDMA** tiene dos funciones principales:
 
 1. **Predicción de éxito (Success Score)**: dado un borrador de publicación (caption, hashtags, tipo de contenido, hora propuesta, red social, historial del cliente), estimar un score de 0 a 100 que indique la probabilidad de buen desempeño (engagement relativo al promedio histórico del cliente/industria).
 2. **Generación de ideas y tendencias (Trend Engine)**: analizar tendencias actuales por plataforma/nicho y sugerir ideas de contenido, hooks, hashtags y mejores horarios de publicación.

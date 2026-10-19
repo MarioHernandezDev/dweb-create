@@ -14,9 +14,9 @@ const hero = coverPhotos.landing
     <header class="flex items-center justify-between px-6 py-6 md:px-10 md:py-8">
       <div class="flex items-center gap-2.5">
         <span class="flex items-center justify-center size-8 rounded-[0.625rem] bg-[var(--color-flame-500)] text-[var(--color-on-flame)]">
-          <Icon name="ph:flame-fill" class="size-4.5" />
+          <BrandMark class="size-4.5" />
         </span>
-        <span class="font-display text-[1.125rem]">dweb-create</span>
+        <span class="font-display text-[1.125rem]">FEEDMA</span>
       </div>
       <ThemeToggle />
     </header>

@@ -15,9 +15,9 @@ function isActive(to: string) {
   <aside class="hidden md:flex md:flex-col w-64 shrink-0 h-dvh sticky top-0 border-r border-[var(--color-hairline)] px-5 py-7">
     <NuxtLink to="/" class="flex items-center gap-2.5 px-1.5 mb-9">
       <span class="flex items-center justify-center size-8 rounded-[0.625rem] bg-[var(--color-flame-500)] text-[var(--color-on-flame)]">
-        <Icon name="ph:flame-fill" class="size-4.5" />
+        <BrandMark class="size-4.5" />
       </span>
-      <span class="font-display text-[1.125rem] text-[var(--color-text)]">dweb-create</span>
+      <span class="font-display text-[1.125rem] text-[var(--color-text)]">FEEDMA</span>
     </NuxtLink>
 
     <nav class="flex flex-col gap-1" aria-label="Navegación principal">

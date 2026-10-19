@@ -10,7 +10,7 @@ export type PostStatus =
 
 export type ContentType = 'video' | 'reel' | 'carousel' | 'image' | 'story'
 
-export type Platform = 'instagram' | 'tiktok' | 'youtube' | 'x'
+export type Platform = 'instagram' | 'tiktok' | 'youtube' | 'x' | 'facebook' | 'linkedin'
 
 export interface StatusMeta {
   label: string
