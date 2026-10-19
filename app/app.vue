@@ -1,6 +1,6 @@
 <script setup lang="ts">
 useHead({
-  titleTemplate: (title) => (title ? `${title} · dweb-create` : 'dweb-create — Estudio de contenido')
+  titleTemplate: (title) => (title ? `${title} · FEEDMA` : 'FEEDMA — Estudio de contenido')
 })
 </script>
 

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { suggestionsForDraft } from '~/utils/mock-data'
+import { suggestionsForDraft, platformMeta } from '~/utils/mock-data'
 import type { ContentType, Platform } from '~/types'
 import { contentTypeMeta } from '~/utils/status'
 
@@ -11,12 +11,7 @@ const contentType = ref<ContentType>('reel')
 const platform = ref<Platform>('instagram')
 
 const contentTypes = Object.keys(contentTypeMeta) as ContentType[]
-const platforms: { value: Platform; label: string }[] = [
-  { value: 'instagram', label: 'Instagram' },
-  { value: 'tiktok', label: 'TikTok' },
-  { value: 'youtube', label: 'YouTube' },
-  { value: 'x', label: 'X' }
-]
+const platforms = Object.entries(platformMeta).map(([value, meta]) => ({ value: value as Platform, label: meta.label }))
 
 type Stage = 'draft' | 'loading' | 'result'
 const stage = ref<Stage>('draft')

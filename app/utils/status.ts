@@ -1,12 +1,13 @@
 import type { ContentType, PostStatus } from '~/types'
 
-export const statusMeta: Record<PostStatus, { label: string; color: string; icon: string }> = {
-  idea: { label: 'Idea', color: 'var(--color-status-idea)', icon: 'ph:lightbulb-fill' },
-  in_production: { label: 'En producción', color: 'var(--color-status-production)', icon: 'ph:camera-fill' },
-  ready_for_review: { label: 'Para revisar', color: 'var(--color-status-review)', icon: 'ph:eye-fill' },
-  scheduled: { label: 'Programado', color: 'var(--color-status-scheduled)', icon: 'ph:clock-fill' },
-  published: { label: 'Publicado', color: 'var(--color-status-published)', icon: 'ph:check-circle-fill' },
-  overdue: { label: 'Fuera de plazo', color: 'var(--color-status-alert)', icon: 'ph:warning-fill' }
+// El icono de cada estado vive en StatusGlyph.vue (set propio, no icon-font).
+export const statusMeta: Record<PostStatus, { label: string; color: string }> = {
+  idea: { label: 'Idea', color: 'var(--color-status-idea)' },
+  in_production: { label: 'En producción', color: 'var(--color-status-production)' },
+  ready_for_review: { label: 'Para revisar', color: 'var(--color-status-review)' },
+  scheduled: { label: 'Programado', color: 'var(--color-status-scheduled)' },
+  published: { label: 'Publicado', color: 'var(--color-status-published)' },
+  overdue: { label: 'Fuera de plazo', color: 'var(--color-status-alert)' }
 }
 
 export const contentTypeMeta: Record<ContentType, { label: string; icon: string }> = {

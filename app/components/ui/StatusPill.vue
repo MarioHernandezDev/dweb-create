@@ -12,7 +12,7 @@ const meta = computed(() => statusMeta[props.status])
     :class="compact ? 'gap-1 px-2 py-0.5 text-[0.6875rem]' : 'gap-1.5 px-2.5 py-1 text-[0.75rem]'"
     :style="{ color: meta.color, background: `color-mix(in oklab, ${meta.color} 16%, transparent)` }"
   >
-    <Icon :name="meta.icon" class="size-[1em]" />
+    <StatusGlyph :status="status" class="size-[1.1em]" />
     {{ meta.label }}
   </span>
 </template>

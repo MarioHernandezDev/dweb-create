@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { clients, agencyPosts, socialAccounts } from '~/utils/mock-data'
+import { clients, agencyPosts, socialAccounts, platformMeta } from '~/utils/mock-data'
 
 const route = useRoute()
 const client = computed(() => clients.find((c) => c.id === route.params.id))
@@ -40,8 +40,8 @@ const connectedAccounts = computed(() => socialAccounts.filter((a) => a.connecte
           v-for="acc in connectedAccounts" :key="acc.id"
           class="inline-flex items-center gap-2 h-9 pl-2.5 pr-3.5 rounded-full bg-[var(--color-ink-overlay)] border border-[var(--color-hairline)] text-[0.8125rem] text-[var(--color-text-muted)]"
         >
-          <Icon :name="acc.platform === 'instagram' ? 'ph:instagram-logo-fill' : acc.platform === 'tiktok' ? 'ph:tiktok-logo-fill' : acc.platform === 'youtube' ? 'ph:youtube-logo-fill' : 'ph:x-logo-fill'" class="size-4" />
-          {{ acc.handle }}
+          <Icon :name="platformMeta[acc.platform].icon" class="size-4" :style="{ color: platformMeta[acc.platform].colorVar }" />
+          {{ acc.handle || platformMeta[acc.platform].label }}
         </span>
       </div>
     </section>

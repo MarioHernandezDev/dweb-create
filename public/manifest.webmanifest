@@ -1,6 +1,6 @@
 {
-  "name": "dweb-create — Estudio de contenido",
-  "short_name": "dweb-create",
+  "name": "FEEDMA — Estudio de contenido",
+  "short_name": "FEEDMA",
   "description": "Gestiona entregas, métricas y predicciones de contenido en un solo lugar.",
   "start_url": "/",
   "display": "standalone",
