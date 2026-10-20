@@ -16,13 +16,9 @@ export function useMyBrandClient() {
     if (brandClient.value !== undefined) return brandClient.value
 
     const client = useSupabaseClient()
-    let id = userId ?? useSupabaseUser().value?.id
-    if (!id) {
-      // Ver el mismo caso en useMyInfluencer.ts: esperar a la sesión real
-      // en vez de fiarse del ref reactivo, que puede ir por detrás.
-      const { data: sessionData } = await client.auth.getSession()
-      id = sessionData.session?.user.id
-    }
+    // `getUser()` en vez de `useSupabaseUser().value`: ver useMyInfluencer.ts
+    // y role-guard.global.ts para el detalle del fallo que esto evita.
+    const id = userId ?? (await client.auth.getUser()).data.user?.id
     // No cachear `null` aquí si solo falta el id todavía (ver el mismo caso
     // en useMyRole.ts/useMyInfluencer.ts) — se dejaría atascado el resto de
     // la sesión de pestaña en vez de poder reintentarlo.

@@ -5,6 +5,8 @@ export interface MyCollaboration {
   influencerName: string | null
   managerId: string | null
   managerName: string | null
+  budgetCents: number | null
+  paidAt: string | null
 }
 
 interface CollaborationRow {
@@ -12,6 +14,8 @@ interface CollaborationRow {
   status: string
   influencer_id: string | null
   manager_id: string | null
+  budget_cents: number | null
+  paid_at: string | null
   influencers: { display_name: string } | null
   managers: { agency_name: string } | null
 }
@@ -27,6 +31,7 @@ export function useMyCollaborations() {
 
   const collaborations = useState<MyCollaboration[]>('my-collaborations', () => [])
   const loaded = useState<boolean>('my-collaborations-loaded', () => false)
+  const paying = useState<string | null>('my-collaborations-paying', () => null)
 
   async function refresh() {
     const me = brandClient.value ?? (await ensureBrandClient())
@@ -34,7 +39,7 @@ export function useMyCollaborations() {
 
     const { data, error } = await client
       .from('collaborations')
-      .select('id, status, influencer_id, manager_id, influencers(display_name), managers(agency_name)')
+      .select('id, status, influencer_id, manager_id, budget_cents, paid_at, influencers(display_name), managers(agency_name)')
       .eq('brand_client_id', me.id)
       .order('created_at', { ascending: false })
     if (error) {
@@ -48,7 +53,9 @@ export function useMyCollaborations() {
       influencerId: r.influencer_id,
       influencerName: r.influencers?.display_name ?? null,
       managerId: r.manager_id,
-      managerName: r.managers?.agency_name ?? null
+      managerName: r.managers?.agency_name ?? null,
+      budgetCents: r.budget_cents,
+      paidAt: r.paid_at
     }))
     loaded.value = true
   }
@@ -58,5 +65,15 @@ export function useMyCollaborations() {
     return collaborations.value
   }
 
-  return { collaborations, loaded, refresh, ensureLoaded }
+  async function payForCollaboration(collaborationId: string) {
+    paying.value = collaborationId
+    try {
+      const { url } = await $fetch('/api/stripe/pay-collaboration', { method: 'POST', body: { collaborationId } })
+      await navigateTo(url, { external: true })
+    } finally {
+      paying.value = null
+    }
+  }
+
+  return { collaborations, loaded, paying, refresh, ensureLoaded, payForCollaboration }
 }

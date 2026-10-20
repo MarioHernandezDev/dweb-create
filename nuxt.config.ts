@@ -58,10 +58,21 @@ export default defineNuxtConfig({
   },
 
   runtimeConfig: {
-    // Solo servidor (no va bajo `public`): las sugerencias de IA se piden
-    // desde /api/ml/predict, nunca desde el navegador. Ver docs/8-AI-SUGGESTIONS-SETUP.md.
+    // Privado: solo visible en el servidor (rutas de server/api), nunca en
+    // el bundle del cliente — por eso no llevan prefijo NUXT_PUBLIC_.
+    stripeSecretKey: process.env.STRIPE_SECRET_KEY,
+    stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET,
+    // Las sugerencias de IA se piden desde /api/ml/predict, nunca desde el
+    // navegador — ver docs/8-AI-SUGGESTIONS-SETUP.md.
     openrouterApiKey: process.env.OPENROUTER_API_KEY,
-    openrouterModel: process.env.OPENROUTER_MODEL || 'nvidia/nemotron-3-super-120b-a12b:free'
+    // `meta-llama/llama-3.3-70b-instruct:free` desapareció del catálogo
+    // gratuito de OpenRouter (404) — ver docs/CHANGELOG.md.
+    openrouterModel: process.env.OPENROUTER_MODEL || 'nvidia/nemotron-3-super-120b-a12b:free',
+    public: {
+      // Pública a propósito: la usa el navegador para cargar Stripe.js antes
+      // del Checkout. Nunca pongas aquí ninguna de las claves de arriba.
+      stripePublishableKey: process.env.STRIPE_PUBLISHABLE_KEY
+    }
   },
 
   supabase: {

@@ -22,8 +22,13 @@ export function resetAccountCaches() {
   useState<boolean>('my-social-accounts-loaded', () => false).value = false
   useState('my-collaborations', () => []).value = []
   useState<boolean>('my-collaborations-loaded', () => false).value = false
+  useState<string | null>('my-collaborations-paying', () => null).value = null
   useState('client-posts', () => []).value = []
   useState<boolean>('client-posts-loaded', () => false).value = false
   useMyRoster().reset()
   useMyTrends().reset()
+
+  useState<unknown>('my-subscription', () => null).value = null
+  useState<boolean>('my-subscription-loaded', () => false).value = false
+  useState<boolean>('my-connect-onboarded', () => false).value = false
 }

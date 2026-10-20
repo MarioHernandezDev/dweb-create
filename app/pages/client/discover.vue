@@ -66,17 +66,19 @@ const sheetOpen = ref(false)
 const sheetStage = ref<'form' | 'sent'>('form')
 const target = ref<{ kind: 'influencer' | 'manager'; id: string; name: string } | null>(null)
 const message = ref('')
+const budgetEuros = ref<number | null>(null)
 const sending = ref(false)
 
 function openContact(kind: 'influencer' | 'manager', id: string, name: string) {
   target.value = { kind, id, name }
   sheetStage.value = 'form'
   message.value = ''
+  budgetEuros.value = null
   sheetOpen.value = true
 }
 
 async function send() {
-  if (!target.value || !message.value) return
+  if (!target.value || !message.value || !budgetEuros.value) return
   const me = brandClient.value
   if (!me) return
 
@@ -85,7 +87,8 @@ async function send() {
     brand_client_id: me.id,
     influencer_id: target.value.kind === 'influencer' ? target.value.id : null,
     manager_id: target.value.kind === 'manager' ? target.value.id : null,
-    brief: message.value
+    brief: message.value,
+    budget_cents: Math.round(budgetEuros.value * 100)
   } as never)
   sending.value = false
 
@@ -156,10 +159,21 @@ async function send() {
       <template v-if="sheetStage === 'form'">
         <label class="block text-[0.8125rem] font-medium text-[var(--color-text-muted)] mb-1.5" for="brief">Cuéntales tu campaña</label>
         <textarea
-          id="brief" v-model="message" rows="4" placeholder="Qué necesitas, para cuándo, y qué presupuesto manejas…"
+          id="brief" v-model="message" rows="4" placeholder="Qué necesitas y para cuándo…"
           class="w-full px-3.5 py-2.5 rounded-[var(--radius-sm)] bg-[var(--color-ink-overlay)] border border-[var(--color-hairline)] text-[0.9375rem] text-[var(--color-text)] placeholder:text-[var(--color-text-faint)] focus:outline-none focus:border-[var(--color-primary-500)]/60 resize-none"
         />
-        <BaseButton variant="primary" size="lg" class="w-full mt-4" :icon-spin="sending" :disabled="!message || sending" @click="send">
+
+        <label class="block text-[0.8125rem] font-medium text-[var(--color-text-muted)] mb-1.5 mt-4" for="budget">Presupuesto (€)</label>
+        <input
+          id="budget" v-model.number="budgetEuros" type="number" min="1" step="1" placeholder="Ej. 300"
+          class="w-full h-11 px-3.5 rounded-[var(--radius-sm)] bg-[var(--color-ink-overlay)] border border-[var(--color-hairline)] text-[0.9375rem] text-[var(--color-text)] placeholder:text-[var(--color-text-faint)] focus:outline-none focus:border-[var(--color-primary-500)]/60"
+        >
+        <p class="text-[0.75rem] text-[var(--color-text-faint)] mt-1.5">Lo pagas desde FEEDMA cuando acordéis los detalles — el dinero llega directo, descontando la comisión de la plataforma.</p>
+
+        <BaseButton
+          variant="primary" size="lg" class="w-full mt-4" :icon-spin="sending" :disabled="!message || !budgetEuros || sending"
+          @click="send"
+        >
           {{ sending ? 'Enviando…' : 'Enviar solicitud' }}
         </BaseButton>
       </template>

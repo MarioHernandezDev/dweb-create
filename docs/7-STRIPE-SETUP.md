@@ -45,15 +45,24 @@ STRIPE_SECRET_KEY=sk_test_...
 STRIPE_PUBLISHABLE_KEY=pk_test_...
 ```
 
-## 3. Lo que viene después (esto ya lo monto yo)
+## 3. Ya está montado — esto es lo que hace cada pieza
 
-Con las claves de prueba en `.env`, lo siguiente es código, no configuración manual — y es lo que toca cuando confirmes que has hecho los pasos 1 y 2:
+Con las claves de prueba en `.env`, el código ya existe:
 
-- Rutas de servidor `server/api/stripe/create-checkout-session.post.ts` (suscripción) y el equivalente de Connect para que un influencer/manager conecte su cuenta de Stripe desde su perfil (`account_links` de Connect).
-- `server/api/stripe/webhook.post.ts` para escuchar `checkout.session.completed`, `account.updated` (cuándo un influencer ya terminó de verificarse en Connect) y los eventos de ciclo de vida de la suscripción.
-- Tabla `subscriptions` (ya existe en el esquema, `supabase/migrations/20261019120000_initial_schema.sql`) — falta la columna para guardar el `stripe_account_id` de Connect de cada influencer/manager; eso será una migración nueva.
+- `server/api/stripe/create-checkout-session.post.ts` — suscripción (Manager → plan "Agencia", Influencer → plan "Pro"). Los precios están en código (`server/utils/stripe-plans.ts`), no hace falta crear nada en el Dashboard de Stripe.
+- `server/api/stripe/connect/account-link.post.ts` — crea la cuenta Connect del manager/influencer (si no existe) y devuelve el enlace de onboarding de Stripe.
+- `server/api/stripe/webhook.post.ts` — único sitio que escribe en `subscriptions` y en `stripe_connect_onboarded`: escucha `checkout.session.completed`, `customer.subscription.updated/deleted` y `account.updated`.
+- Botones ya en `creator/profile.vue` y `manager/profile.vue` ("Mejorar a Pro/Agencia", "Conectar cuenta de pagos").
 
-## 4. Probar el webhook en local (cuando lleguemos ahí)
+### Falta un paso tuyo: aplicar la migración nueva
+
+`supabase/migrations/20261020090000_stripe_connect_accounts.sql` añade las columnas `stripe_connect_account_id`/`stripe_connect_onboarded` a `managers` e `influencers` — Claude Code no tiene tu sesión del CLI de Supabase para aplicarla por ti:
+
+```bash
+npx supabase db push
+```
+
+## 4. Probar el webhook en local
 
 Stripe necesita mandarte los eventos a una URL pública, y en local (`localhost:3000`) no eres accesible desde fuera. Para probarlo sin desplegar nada:
 
@@ -63,7 +72,14 @@ stripe login
 stripe listen --forward-to localhost:3000/api/stripe/webhook
 ```
 
-El comando `stripe listen` imprime un `whsec_...` — eso es tu `STRIPE_WEBHOOK_SECRET` de pruebas, se pega en `.env`.
+El comando `stripe listen` imprime un `whsec_...` — eso es tu `STRIPE_WEBHOOK_SECRET` de pruebas, se pega en `.env`. Mientras `stripe listen` esté corriendo (déjalo en una terminal aparte), cualquier pago de prueba real llega a tu servidor local.
+
+### Probar de verdad (con el servidor y `stripe listen` corriendo a la vez)
+
+1. Entra como `influencer@feedma.test`, perfil → "Mejorar a Pro" → te lleva a Stripe Checkout.
+2. Usa la [tarjeta de pruebas de Stripe](https://docs.stripe.com/testing#cards) `4242 4242 4242 4242`, cualquier fecha futura, cualquier CVC.
+3. Al volver a FEEDMA deberías ver "Suscripción activada" y el plan ya no pone "Plan gratuito".
+4. En el mismo perfil, "Conectar" en Cuenta de pagos → onboarding de Stripe (puedes rellenarlo con datos de prueba, Stripe te guía) → al volver debería verse "Verificada".
 
 ## Próximos pasos relacionados
 

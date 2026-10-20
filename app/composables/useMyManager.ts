@@ -2,6 +2,7 @@ export interface MyManager {
   id: string
   agencyName: string
   focus: string | null
+  stripeConnectOnboarded: boolean
 }
 
 /**
@@ -16,13 +17,9 @@ export function useMyManager() {
     if (manager.value !== undefined) return manager.value
 
     const client = useSupabaseClient()
-    let id = userId ?? useSupabaseUser().value?.id
-    if (!id) {
-      // Ver el mismo caso en useMyInfluencer.ts: esperar a la sesión real
-      // en vez de fiarse del ref reactivo, que puede ir por detrás.
-      const { data: sessionData } = await client.auth.getSession()
-      id = sessionData.session?.user.id
-    }
+    // `getUser()` en vez de `useSupabaseUser().value`: ver useMyInfluencer.ts
+    // y role-guard.global.ts para el detalle del fallo que esto evita.
+    const id = userId ?? (await client.auth.getUser()).data.user?.id
     // No cachear `null` aquí si solo falta el id todavía (ver el mismo caso
     // en useMyRole.ts/useMyInfluencer.ts) — se dejaría atascado el resto de
     // la sesión de pestaña en vez de poder reintentarlo.
@@ -30,11 +27,13 @@ export function useMyManager() {
 
     const { data } = await client
       .from('managers')
-      .select('id, agency_name, focus')
+      .select('id, agency_name, focus, stripe_connect_onboarded')
       .eq('profile_id', id)
-      .maybeSingle<{ id: string; agency_name: string; focus: string | null }>()
+      .maybeSingle<{ id: string; agency_name: string; focus: string | null; stripe_connect_onboarded: boolean }>()
 
-    manager.value = data ? { id: data.id, agencyName: data.agency_name, focus: data.focus } : null
+    manager.value = data
+      ? { id: data.id, agencyName: data.agency_name, focus: data.focus, stripeConnectOnboarded: data.stripe_connect_onboarded }
+      : null
     return manager.value
   }
 
