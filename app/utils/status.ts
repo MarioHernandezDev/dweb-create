@@ -26,6 +26,15 @@ export const contentTypeMeta: Record<ContentType, { label: string; icon: string 
   story: { label: 'Story', icon: 'ph:circle-dashed' }
 }
 
+export function relativeTime(iso: string): string {
+  const mins = Math.round((Date.now() - new Date(iso).getTime()) / 60_000)
+  if (mins < 1) return 'ahora'
+  if (mins < 60) return `hace ${mins} min`
+  const hours = Math.round(mins / 60)
+  if (hours < 24) return `hace ${hours} h`
+  return `hace ${Math.round(hours / 24)} d`
+}
+
 export function dueLabel(dueInDays: number): string {
   if (dueInDays < -1) return `Hace ${Math.abs(dueInDays)} días`
   if (dueInDays === -1) return 'Ayer'

@@ -18,9 +18,10 @@ defineEmits<{ open: [post: Post] }>()
     <div class="flex gap-3.5 p-4 flex-1 min-w-0">
       <div
         class="relative size-16 shrink-0 rounded-[var(--radius-sm)] overflow-hidden flex items-center justify-center"
-        :style="{ background: `linear-gradient(${post.cover.angle}deg, ${post.cover.from}, ${post.cover.to})` }"
+        :style="!post.mediaUrl ? { background: `linear-gradient(${post.cover.angle}deg, ${post.cover.from}, ${post.cover.to})` } : undefined"
       >
-        <Icon :name="contentTypeMeta[post.contentType].icon" class="size-6 text-white/90" />
+        <img v-if="post.mediaUrl" :src="post.mediaUrl" alt="" class="absolute inset-0 size-full object-cover">
+        <Icon v-else :name="contentTypeMeta[post.contentType].icon" class="size-6 text-white/90" />
       </div>
 
       <div class="min-w-0 flex-1">

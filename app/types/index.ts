@@ -57,6 +57,7 @@ export interface Post {
   dueInDays: number
   hashtags: string[]
   cover: CoverArt
+  mediaUrl?: string | null
   successScore?: number
   confidence?: number
   suggestions?: Suggestion[]
@@ -93,6 +94,7 @@ export interface TrendSuggestion {
   growthPct: number
   hashtags: string[]
   format: string
+  detectedAt: string
 }
 
 export interface Suggestion {

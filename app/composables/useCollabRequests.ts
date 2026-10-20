@@ -7,6 +7,7 @@ export interface CollabRequest {
   budgetCents: number | null
   partnerName: string
   createdAt: string
+  updatedAt: string
 }
 
 interface CollabRequestRow {
@@ -15,6 +16,7 @@ interface CollabRequestRow {
   brief: string
   budget_cents: number | null
   created_at: string
+  updated_at: string
   partners: { company_name: string } | null
 }
 
@@ -25,7 +27,8 @@ function mapRow(row: CollabRequestRow): CollabRequest {
     brief: row.brief,
     budgetCents: row.budget_cents,
     partnerName: row.partners?.company_name ?? 'Partner',
-    createdAt: row.created_at
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
   }
 }
 
@@ -49,7 +52,7 @@ export function useCollabRequests() {
 
     const { data, error } = await client
       .from('collaborations')
-      .select('id, status, brief, budget_cents, created_at, partners(company_name)')
+      .select('id, status, brief, budget_cents, created_at, updated_at, partners(company_name)')
       .eq('creator_id', me.id)
       .order('created_at', { ascending: false })
     if (error) {
@@ -67,10 +70,16 @@ export function useCollabRequests() {
 
   const pendingCount = computed(() => requests.value.filter((r) => r.status === 'requested').length)
 
-  async function accept(id: string) {
+  // `agreedBudgetCents` sincroniza `collaborations.budget_cents` con la
+  // última contraoferta aceptada (si hubo negociación) — el presupuesto que
+  // lee el cobro de Stripe es esta columna (server/api/stripe/pay-
+  // collaboration.post.ts), no el historial de `collaboration_offers`.
+  async function accept(id: string, agreedBudgetCents?: number | null) {
     acting.value = id
     try {
-      const { error } = await client.from('collaborations').update({ status: 'accepted' } as never).eq('id', id)
+      const payload: Record<string, unknown> = { status: 'accepted' }
+      if (agreedBudgetCents !== undefined) payload.budget_cents = agreedBudgetCents
+      const { error } = await client.from('collaborations').update(payload as never).eq('id', id)
       if (error) throw error
       await refresh()
     } finally {

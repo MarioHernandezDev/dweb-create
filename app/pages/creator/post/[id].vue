@@ -91,12 +91,10 @@ async function predict() {
   <AppShell v-if="post" role="creator" title="Editar publicación">
     <div class="lg:grid lg:grid-cols-[1fr_320px] lg:gap-8 lg:items-start">
       <div>
-        <div
-          class="relative h-40 rounded-[var(--radius-lg)] overflow-hidden flex items-center justify-center mb-6"
-          :style="{ background: `linear-gradient(${post.cover.angle}deg, ${post.cover.from}, ${post.cover.to})` }"
-        >
-          <Icon :name="contentTypeMeta[post.contentType].icon" class="size-10 text-white/90" />
-        </div>
+        <CoverUploader
+          :post-id="post.id" :media-url="post.mediaUrl" :cover="post.cover" :icon="contentTypeMeta[post.contentType].icon"
+          class="mb-6" @update:media-url="(url) => { if (post) post.mediaUrl = url }"
+        />
 
         <div class="flex items-center gap-2.5 mb-6 flex-wrap">
           <StatusPill :status="post.status" />

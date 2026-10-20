@@ -32,7 +32,8 @@ export const roleNav: Record<Role, NavItem[]> = {
   ],
   partner: [
     { to: '/partner', label: 'Calendario', icon: 'ph:calendar-check-fill' },
-    { to: '/partner/discover', label: 'Descubrir', icon: 'ph:compass-fill' }
+    { to: '/partner/discover', label: 'Descubrir', icon: 'ph:compass-fill' },
+    { to: '/partner/requests', label: 'Solicitudes', icon: 'ph:handshake-fill' }
   ]
 }
 

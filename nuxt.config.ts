@@ -82,6 +82,12 @@ export default defineNuxtConfig({
     // sociales en `social_accounts` y para firmar el `state` del OAuth. Ver
     // docs/9-INSTAGRAM-OAUTH-SETUP.md para cómo generarla.
     socialTokenEncryptionKey: process.env.SOCIAL_TOKEN_ENCRYPTION_KEY,
+    // Panel de admin (/admin) — contraseña única compartida por el equipo,
+    // sin cuenta de Supabase de por medio a propósito (ver
+    // server/utils/admin-session.ts). `adminSessionSecret` solo cifra la
+    // cookie de sesión, nunca se compara con nada que escriba un humano.
+    adminPassword: process.env.ADMIN_PASSWORD,
+    adminSessionSecret: process.env.ADMIN_SESSION_SECRET,
     public: {
       // Pública a propósito: la usa el navegador para cargar Stripe.js antes
       // del Checkout. Nunca pongas aquí ninguna de las claves de arriba.
@@ -100,8 +106,11 @@ export default defineNuxtConfig({
     redirectOptions: {
       login: '/login',
       callback: '/confirm',
-      // Páginas públicas: todo lo demás exige sesión iniciada.
-      exclude: ['/', '/onboarding', '/instalaciones']
+      // Páginas públicas: todo lo demás exige sesión iniciada. /admin/* no
+      // usa cuentas de Supabase en absoluto (ver server/utils/admin-
+      // session.ts) — sin esto, este módulo las mandaría a /login antes de
+      // que nuestra propia comprobación de contraseña entrara en juego.
+      exclude: ['/', '/onboarding', '/instalaciones', '/admin', '/admin/*']
     }
   }
 })

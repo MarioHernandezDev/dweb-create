@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { AppNotification } from '~/composables/useNotifications'
+import { relativeTime } from '~/utils/status'
 
 useHead({ title: 'Bandeja de entrada' })
 
@@ -29,15 +30,6 @@ const typeIcon: Record<string, string> = {
 
 function iconFor(n: AppNotification) {
   return typeIcon[n.type] ?? 'ph:bell-fill'
-}
-
-function relativeTime(iso: string) {
-  const mins = Math.round((Date.now() - new Date(iso).getTime()) / 60_000)
-  if (mins < 1) return 'ahora'
-  if (mins < 60) return `hace ${mins} min`
-  const hours = Math.round(mins / 60)
-  if (hours < 24) return `hace ${hours} h`
-  return `hace ${Math.round(hours / 24)} d`
 }
 
 const hasUnread = computed(() => notifications.value.some((n) => !n.readAt))

@@ -16,9 +16,10 @@ const open = defineModel<boolean>({ default: false })
     <template v-if="post">
       <div
         class="relative h-32 rounded-[var(--radius-md)] overflow-hidden flex items-center justify-center mb-5"
-        :style="{ background: `linear-gradient(${post.cover.angle}deg, ${post.cover.from}, ${post.cover.to})` }"
+        :style="!post.mediaUrl ? { background: `linear-gradient(${post.cover.angle}deg, ${post.cover.from}, ${post.cover.to})` } : undefined"
       >
-        <Icon :name="contentTypeMeta[post.contentType].icon" class="size-8 text-white/90" />
+        <img v-if="post.mediaUrl" :src="post.mediaUrl" alt="" class="absolute inset-0 size-full object-cover">
+        <Icon v-else :name="contentTypeMeta[post.contentType].icon" class="size-8 text-white/90" />
       </div>
 
       <div class="flex items-center gap-2 flex-wrap mb-4">

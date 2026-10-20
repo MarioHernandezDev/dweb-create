@@ -1,7 +1,8 @@
 // FEEDMA — crea 2 cuentas de prueba (creador de contenido, partner) ya
-// relacionadas entre sí (una colaboración y un post esperando aprobación),
-// para probar la app con datos reales de Supabase en vez de los mocks del
-// frontend.
+// relacionadas entre sí (varias colaboraciones repartidas entre pendientes
+// e historial, y varios posts repartidos por las 5 fases del tablero, uno
+// de ellos fuera de plazo a propósito), para probar la app con datos
+// reales de Supabase en vez de los mocks del frontend.
 //
 // Usa la Admin API oficial de Supabase (auth.admin.createUser), NUNCA inserta
 // a mano en auth.users — así el hash de la contraseña y el login quedan
@@ -87,67 +88,185 @@ async function main() {
     .single()
   if (partnerError) throw partnerError
 
-  // Los relacionamos: una colaboración en curso + un post esperando revisión,
-  // para que de entrada haya algo real que aprobar/editar en cada vista.
-  // `collaborations`/`posts` no tienen una clave natural con la que hacer
-  // upsert, así que comprobamos a mano si ya existen antes de insertar —
-  // si no, cada vez que se vuelve a correr el script (p.ej. en otra máquina
-  // del equipo) se duplica la colaboración y el post de demo.
-  let collaboration
-  const { data: existingCollaboration, error: existingCollabError } = await admin
-    .from('collaborations')
-    .select()
-    .eq('partner_id', partner.id)
-    .eq('creator_id', creator.id)
-    .maybeSingle()
-  if (existingCollabError) throw existingCollabError
-
-  if (existingCollaboration) {
-    collaboration = existingCollaboration
-    console.log('↪ La colaboración de demo ya existía, reutilizándola')
-  } else {
-    const { data: newCollaboration, error: collabError } = await admin
+  // Varias colaboraciones con el mismo partner de demo, repartidas entre
+  // pendiente ("requested", la pestaña "Solicitudes" las separa) e historial
+  // (aceptada/en curso/completada/rechazada) — así esa pantalla no se ve
+  // vacía ni con un único caso al entrar por primera vez. Idempotente por
+  // `brief` (no hay clave natural mejor): si ya existe para este par
+  // creador/partner, no se duplica al volver a correr el script.
+  async function ensureCollaboration({ brief, status, budgetCents }) {
+    const { data: existing, error: existingError } = await admin
       .from('collaborations')
-      .insert({
-        partner_id: partner.id,
-        creator_id: creator.id,
-        status: 'in_progress',
-        brief: 'Campaña de lanzamiento de la nueva línea de skincare.'
-      })
+      .select()
+      .eq('partner_id', partner.id)
+      .eq('creator_id', creator.id)
+      .eq('brief', brief)
+      .maybeSingle()
+    if (existingError) throw existingError
+    if (existing) {
+      console.log(`↪ Colaboración "${brief}" ya existía, reutilizándola`)
+      return existing
+    }
+
+    const { data: created, error: createError } = await admin
+      .from('collaborations')
+      .insert({ partner_id: partner.id, creator_id: creator.id, status, brief, budget_cents: budgetCents ?? null })
       .select()
       .single()
-    if (collabError) throw collabError
-    collaboration = newCollaboration
+    if (createError) throw createError
+    console.log(`✓ Colaboración creada: ${brief} (${status})`)
+    return created
   }
 
-  const { data: existingPost, error: existingPostError } = await admin
-    .from('posts')
-    .select('id')
-    .eq('collaboration_id', collaboration.id)
-    .maybeSingle()
-  if (existingPostError) throw existingPostError
+  const collaboration = await ensureCollaboration({
+    brief: 'Campaña de lanzamiento de la nueva línea de skincare.',
+    status: 'in_progress',
+    budgetCents: 150000
+  })
+  const blackFriday = await ensureCollaboration({
+    brief: 'Vídeo patrocinado para el Black Friday — presupuesto cerrado, a falta de fecha.',
+    status: 'requested',
+    budgetCents: 90000
+  })
+  await ensureCollaboration({
+    brief: 'Serie de 3 stories semanales durante un mes, formato "rutina diaria".',
+    status: 'requested',
+    budgetCents: null
+  })
+  await ensureCollaboration({
+    brief: 'Colaboración puntual para el lanzamiento de la edición limitada de verano.',
+    status: 'completed',
+    budgetCents: 220000
+  })
+  await ensureCollaboration({
+    brief: 'Promoción de un producto que no encajaba con el contenido habitual de Nora.',
+    status: 'declined',
+    budgetCents: 60000
+  })
 
-  if (existingPost) {
-    console.log('↪ El post de demo ya existía, no se crea otro')
-  } else {
-    const { error: postError } = await admin.from('posts').insert({
-      creator_id: creator.id,
-      collaboration_id: collaboration.id,
+  // Un puñado de posts repartidos por las 5 fases del tablero (ver
+  // app/components/timeline/PhaseBoard.vue) — así el tablero no se ve vacío
+  // ni con una sola card al entrar por primera vez. Solo 3 de los 7 van
+  // atados a la colaboración (collaboration_id): el resto es "contenido
+  // propio" de Nora, sin partner de por medio, como pasaría de verdad.
+  // Idempotente por título (no hay clave natural mejor): si ya existe para
+  // esta creadora, no se duplica al volver a correr el script.
+  const days = (n) => new Date(Date.now() + n * 24 * 60 * 60 * 1000).toISOString()
+  const demoPosts = [
+    {
+      title: 'Reel: unboxing productos nuevos',
+      caption: 'Lo que ha llegado esta semana, probado en directo.',
+      content_type: 'reel',
+      platform: 'instagram',
+      status: 'idea',
+      due_date: days(6)
+    },
+    {
+      title: 'Carrusel: antes/después piel',
+      caption: '',
+      content_type: 'carousel',
+      platform: 'instagram',
+      status: 'idea',
+      due_date: days(9)
+    },
+    {
+      title: 'Story: detrás de cámaras del rodaje',
+      caption: 'Un vistazo rápido al set antes de publicar el vídeo largo.',
+      content_type: 'story',
+      platform: 'instagram',
+      status: 'in_production',
+      due_date: days(1)
+    },
+    {
+      title: 'Carrusel: tips de aplicación',
+      caption: 'Tres errores comunes al aplicar el sérum.',
+      content_type: 'carousel',
+      platform: 'tiktok',
+      status: 'in_production',
+      due_date: days(-2) // fuera de plazo a propósito, para ver el aviso en el tablero
+    },
+    {
       title: 'Reel: rutina skincare nocturna',
       caption: 'Cuatro pasos, cinco minutos, piel lista para mañana.',
       content_type: 'reel',
       platform: 'instagram',
       status: 'ready_for_review',
-      due_date: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString()
-    })
+      due_date: days(2),
+      collaboration_id: collaboration.id
+    },
+    {
+      title: 'Vídeo: review completa de la línea',
+      caption: 'Qué me ha parecido cada producto, sin filtros.',
+      content_type: 'video',
+      platform: 'youtube',
+      status: 'scheduled',
+      due_date: days(4),
+      collaboration_id: collaboration.id
+    },
+    {
+      title: 'Imagen: packaging final de la colección',
+      caption: 'La foto que cerró la campaña.',
+      content_type: 'image',
+      platform: 'instagram',
+      status: 'published',
+      due_date: days(-5),
+      collaboration_id: collaboration.id
+    }
+  ]
+
+  for (const post of demoPosts) {
+    const { data: existingPost, error: existingPostError } = await admin
+      .from('posts')
+      .select('id')
+      .eq('creator_id', creator.id)
+      .eq('title', post.title)
+      .maybeSingle()
+    if (existingPostError) throw existingPostError
+
+    if (existingPost) {
+      console.log(`↪ "${post.title}" ya existía, no se crea otra vez`)
+      continue
+    }
+
+    const { error: postError } = await admin.from('posts').insert({ creator_id: creator.id, ...post })
     if (postError) throw postError
+    console.log(`✓ Post creado: ${post.title} (${post.status})`)
+  }
+
+  // Una contraoferta de ejemplo en la colaboración pendiente del Black
+  // Friday, para ver el hilo de negociación con datos reales al entrar por
+  // primera vez (ver NegotiationPanel.vue). Necesita la migración
+  // 20261021140000_collaboration_offers_and_reports.sql ya aplicada — si
+  // no lo está, se avisa y se sigue sin romper el resto del seed.
+  try {
+    const { data: existingOffer, error: existingOfferError } = await admin
+      .from('collaboration_offers')
+      .select('id')
+      .eq('collaboration_id', blackFriday.id)
+      .maybeSingle()
+    if (existingOfferError) throw existingOfferError
+
+    if (existingOffer) {
+      console.log('↪ Ya había una contraoferta de ejemplo en "Vídeo patrocinado para el Black Friday"')
+    } else {
+      const { error: offerError } = await admin.from('collaboration_offers').insert({
+        collaboration_id: blackFriday.id,
+        proposed_by: 'creator',
+        budget_cents: 110000,
+        message: 'Con el alcance que pedís, necesito subir un poco el presupuesto.'
+      })
+      if (offerError) throw offerError
+      console.log('✓ Contraoferta de ejemplo creada (Nora pide 1100€ en vez de los 900€ iniciales)')
+    }
+  } catch (err) {
+    console.log(`↪ No se ha podido crear la contraoferta de ejemplo (¿falta aplicar la migración de collaboration_offers?): ${err.message}`)
   }
 
   console.log('\nListo. 2 cuentas de prueba, ya relacionadas entre sí:\n')
   console.log('  creator@feedma.test  (Creador de contenido — Nora Blake)')
   console.log('  partner@feedma.test  (Partner — Alma Beauty Co., colaborando con Nora)')
   console.log(`\n  Contraseña de las dos: ${DEMO_PASSWORD}`)
-  console.log('\nHay 1 colaboración en curso y 1 post esperando aprobación de Alma Beauty Co.\n')
+  console.log('\n5 colaboraciones con Alma Beauty Co. (2 pendientes, 3 en el historial) y posts repartidos por las 5 fases del tablero (uno de ellos fuera de plazo, a propósito).\n')
 }
 
 main().catch((err) => {

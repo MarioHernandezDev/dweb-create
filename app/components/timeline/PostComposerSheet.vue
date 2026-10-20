@@ -3,6 +3,11 @@ import { suggestionsForDraft, platformMeta } from '~/utils/mock-data'
 import type { ContentType, Platform, Suggestion } from '~/types'
 import { contentTypeMeta } from '~/utils/status'
 
+const props = defineProps<{
+  /** Rellena el borrador al abrir — viene de "Usar esta idea" en Tendencias. */
+  prefill?: { title: string; hashtags: string[]; contentType: ContentType; platform: Platform } | null
+}>()
+
 const open = defineModel<boolean>({ default: false })
 const { createPost, updatePost } = useMyPosts()
 const { balance: creditBalance, ensureLoaded: ensureCreditsLoaded, setBalance: setCreditBalance } = useMyCredits()
@@ -17,6 +22,7 @@ const caption = ref('')
 const contentType = ref<ContentType>('reel')
 const platform = ref<Platform>('instagram')
 const collaborationId = ref('')
+const hashtagsInput = ref('')
 
 const contentTypes = Object.keys(contentTypeMeta) as ContentType[]
 const platforms = Object.entries(platformMeta).map(([value, meta]) => ({ value: value as Platform, label: meta.label }))
@@ -32,6 +38,14 @@ const error = ref('')
 // de crear uno duplicado.
 const createdPostId = ref<string | null>(null)
 
+function parsedHashtags(): string[] {
+  return hashtagsInput.value
+    .split(/[\s,]+/)
+    .map((h) => h.trim())
+    .filter(Boolean)
+    .map((h) => (h.startsWith('#') ? h : `#${h}`))
+}
+
 async function saveDraft(): Promise<string> {
   if (!createdPostId.value) {
     const created = await createPost({
@@ -39,11 +53,12 @@ async function saveDraft(): Promise<string> {
       caption: caption.value,
       contentType: contentType.value,
       platform: platform.value,
-      collaborationId: collaborationId.value || null
+      collaborationId: collaborationId.value || null,
+      hashtags: parsedHashtags()
     })
     createdPostId.value = created.id
   } else {
-    await updatePost(createdPostId.value, { title: title.value, caption: caption.value })
+    await updatePost(createdPostId.value, { title: title.value, caption: caption.value, hashtags: parsedHashtags() })
   }
   return createdPostId.value
 }
@@ -93,11 +108,18 @@ watch(open, (value) => {
   if (value) {
     ensureCreditsLoaded()
     ensureCollabRequestsLoaded()
+    if (props.prefill) {
+      title.value = props.prefill.title
+      contentType.value = props.prefill.contentType
+      platform.value = props.prefill.platform
+      hashtagsInput.value = props.prefill.hashtags.join(' ')
+    }
     return
   }
   stage.value = 'draft'
   title.value = ''
   caption.value = ''
+  hashtagsInput.value = ''
   collaborationId.value = ''
   createdPostId.value = null
   result.value = null
@@ -149,6 +171,14 @@ watch(open, (value) => {
               <option v-for="p in platforms" :key="p.value" :value="p.value">{{ p.label }}</option>
             </select>
           </div>
+        </div>
+
+        <div>
+          <label class="block text-[0.8125rem] font-medium text-[var(--color-text-muted)] mb-1.5" for="post-hashtags">Hashtags</label>
+          <input
+            id="post-hashtags" v-model="hashtagsInput" type="text" placeholder="#rutina #escritorio #productividad"
+            class="w-full h-11 px-3.5 rounded-[var(--radius-sm)] bg-[var(--color-ink-overlay)] border border-[var(--color-hairline)] text-[0.9375rem] text-[var(--color-text)] placeholder:text-[var(--color-text-faint)] focus:outline-none focus:border-[var(--color-primary-500)]/60"
+          >
         </div>
 
         <p v-if="error" class="text-[0.8125rem] text-[var(--color-status-alert)] -mt-1">{{ error }}</p>

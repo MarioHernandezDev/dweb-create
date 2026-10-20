@@ -10,6 +10,7 @@ interface PostRow {
   platform: Platform
   status: PostStatus
   due_date: string
+  media_url: string | null
   metadata: { hashtags?: string[] } | null
   ml_predictions: { success_score: number; confidence: number | null; suggestions: Suggestion[] | null; created_at: string }[] | null
 }
@@ -48,6 +49,7 @@ function mapRow(row: PostRow): Post {
     dueInDays,
     hashtags: row.metadata?.hashtags ?? [],
     cover: coverFromId(row.id),
+    mediaUrl: row.media_url,
     successScore: prediction?.success_score,
     confidence: prediction?.confidence ?? undefined,
     // La IA que enriquece la predicción es opcional (ver docs/8-AI-SUGGESTIONS-SETUP.md):
@@ -65,6 +67,7 @@ export interface NewPostInput {
   dueInDays?: number
   /** Colaboración activa a la que pertenece — opcional, contenido propio si no se indica. */
   collaborationId?: string | null
+  hashtags?: string[]
 }
 
 /**
@@ -106,12 +109,13 @@ export function useMyPosts() {
     return posts.value
   }
 
-  async function updatePost(id: string, patch: { title?: string; caption?: string; status?: PostStatus; hashtags?: string[] }) {
+  async function updatePost(id: string, patch: { title?: string; caption?: string; status?: PostStatus; hashtags?: string[]; mediaUrl?: string | null }) {
     const payload: Record<string, unknown> = {}
     if (patch.title !== undefined) payload.title = patch.title
     if (patch.caption !== undefined) payload.caption = patch.caption
     if (patch.status !== undefined) payload.status = patch.status
     if (patch.hashtags !== undefined) payload.metadata = { hashtags: patch.hashtags }
+    if (patch.mediaUrl !== undefined) payload.media_url = patch.mediaUrl
 
     // Sin tipos generados de la base de datos todavía (como en useMyRole),
     // el cliente no puede inferir las columnas de `posts` por sí solo.
@@ -120,6 +124,32 @@ export function useMyPosts() {
 
     const local = posts.value.find((p) => p.id === id)
     if (local) Object.assign(local, patch)
+  }
+
+  // Portada real del post (bucket "post-media", ver
+  // supabase/migrations/20261021130000_post_media_bucket.sql). La carpeta
+  // es el auth.uid() del creador — es justo lo que comprueban las políticas
+  // RLS de storage.objects, así que tiene que venir de la sesión, no de
+  // `creator.value.id` (ese es el id de la fila `creators`, no el de auth).
+  async function uploadCover(postId: string, file: File) {
+    const { data: userData, error: userError } = await client.auth.getUser()
+    if (userError || !userData.user) throw userError ?? new Error('No hay sesión activa.')
+
+    const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg'
+    const path = `${userData.user.id}/${postId}.${ext}`
+
+    const { error: uploadError } = await client.storage
+      .from('post-media')
+      .upload(path, file, { upsert: true, contentType: file.type })
+    if (uploadError) throw uploadError
+
+    // Bucket público + upsert: la URL pública es estable, pero el navegador
+    // la cachearía tal cual si no se le añade algo que cambie en cada subida.
+    const { data: publicUrlData } = client.storage.from('post-media').getPublicUrl(path)
+    const mediaUrl = `${publicUrlData.publicUrl}?v=${Date.now()}`
+
+    await updatePost(postId, { mediaUrl })
+    return mediaUrl
   }
 
   async function deletePost(id: string) {
@@ -143,7 +173,8 @@ export function useMyPosts() {
         content_type: input.contentType,
         platform: input.platform,
         status: 'idea',
-        due_date: dueDate.toISOString()
+        due_date: dueDate.toISOString(),
+        metadata: input.hashtags?.length ? { hashtags: input.hashtags } : {}
       } as never)
       .select('*, ml_predictions(success_score, confidence, suggestions, created_at)')
       .single<PostRow>()
@@ -154,5 +185,5 @@ export function useMyPosts() {
     return mapped
   }
 
-  return { posts, loading, loaded, refresh, ensureLoaded, updatePost, deletePost, createPost }
+  return { posts, loading, loaded, refresh, ensureLoaded, updatePost, deletePost, createPost, uploadCover }
 }

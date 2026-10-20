@@ -50,6 +50,7 @@ interface TrendRow {
   hashtags: string[] | null
   score: string | number | null
   growth_pct: string | number | null
+  detected_at: string
 }
 
 const FRESH_WINDOW_HOURS = 24
@@ -79,7 +80,8 @@ function mapDbRow(row: TrendRow) {
     trendScore: Math.round(Number(row.score ?? 0)),
     growthPct: Math.round(Number(row.growth_pct ?? 0)),
     hashtags: row.hashtags ?? [],
-    format: row.format ?? ''
+    format: row.format ?? '',
+    detectedAt: row.detected_at
   }
 }
 
@@ -154,18 +156,24 @@ export default defineEventHandler(async (event) => {
 
   const niche = creator.niche?.trim() || 'general'
 
-  const freshSince = new Date(Date.now() - FRESH_WINDOW_HOURS * 3_600_000).toISOString()
-  const { data: cached } = await client
-    .from('trends')
-    .select('id, platform, topic, format, hashtags, score, growth_pct')
-    .eq('niche', niche)
-    .gte('detected_at', freshSince)
-    .order('detected_at', { ascending: false })
-    .limit(TARGET_COUNT)
-    .returns<TrendRow[]>()
+  // `force=1` (botón "Buscar más ideas") ignora la caché de 24h a propósito
+  // y pide ideas nuevas de verdad, en vez de enseñar otra vez lo mismo.
+  const force = getQuery(event).force === '1'
 
-  if (cached && cached.length >= MIN_CACHED) {
-    return { trends: cached.map(mapDbRow) }
+  if (!force) {
+    const freshSince = new Date(Date.now() - FRESH_WINDOW_HOURS * 3_600_000).toISOString()
+    const { data: cached } = await client
+      .from('trends')
+      .select('id, platform, topic, format, hashtags, score, growth_pct, detected_at')
+      .eq('niche', niche)
+      .gte('detected_at', freshSince)
+      .order('detected_at', { ascending: false })
+      .limit(TARGET_COUNT)
+      .returns<TrendRow[]>()
+
+    if (cached && cached.length >= MIN_CACHED) {
+      return { trends: cached.map(mapDbRow) }
+    }
   }
 
   const { data: ownPosts } = await client
@@ -193,7 +201,7 @@ export default defineEventHandler(async (event) => {
       score: idea.score,
       growth_pct: idea.growthPct
     })) as never)
-    .select('id, platform, topic, format, hashtags, score, growth_pct')
+    .select('id, platform, topic, format, hashtags, score, growth_pct, detected_at')
     .returns<TrendRow[]>()
   if (insertError) throw createError({ statusCode: 500, statusMessage: insertError.message })
 

@@ -10,10 +10,10 @@ export function useMyTrends() {
   const loading = useState<boolean>('my-trends-loading', () => false)
   const loaded = useState<boolean>('my-trends-loaded', () => false)
 
-  async function refresh() {
+  async function refresh(force = false) {
     loading.value = true
     try {
-      const { trends: data } = await $fetch<{ trends: TrendSuggestion[] }>('/api/ml/trends')
+      const { trends: data } = await $fetch<{ trends: TrendSuggestion[] }>('/api/ml/trends', { query: force ? { force: '1' } : undefined })
       trends.value = data
       loaded.value = true
     } catch (err) {

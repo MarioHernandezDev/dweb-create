@@ -10,6 +10,7 @@ interface PostRow {
   platform: Platform
   status: PostStatus
   due_date: string
+  media_url: string | null
   metadata: { hashtags?: string[] } | null
 }
 
@@ -34,7 +35,8 @@ function mapRow(row: PostRow): Post {
     status: row.status,
     dueInDays,
     hashtags: row.metadata?.hashtags ?? [],
-    cover: coverFromId(row.id)
+    cover: coverFromId(row.id),
+    mediaUrl: row.media_url
   }
 }
 
