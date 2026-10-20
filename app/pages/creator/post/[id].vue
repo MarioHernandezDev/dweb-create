@@ -8,8 +8,8 @@ const router = useRouter()
 const { posts, ensureLoaded, updatePost, deletePost } = useMyPosts()
 const { balance: creditBalance, ensureLoaded: ensureCreditsLoaded, setBalance: setCreditBalance } = useMyCredits()
 
-await ensureLoaded()
-await ensureCreditsLoaded()
+// En paralelo, no en serie — dos consultas independientes.
+await Promise.all([ensureLoaded(), ensureCreditsLoaded()])
 
 const post = computed(() => posts.value.find((p) => p.id === route.params.id))
 

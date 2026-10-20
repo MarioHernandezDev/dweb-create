@@ -5,9 +5,12 @@ useHead({ title: 'Hoy' })
 
 const router = useRouter()
 const { posts, ensureLoaded } = useMyPosts()
+const { pendingCount: pendingRequests, ensureLoaded: ensureRequestsLoaded } = useCollabRequests()
 const composerOpen = ref(false)
 
-await ensureLoaded()
+// En paralelo, no en serie — son dos consultas independientes, esperarlas
+// una tras otra solo suma su latencia de red sin motivo.
+await Promise.all([ensureLoaded(), ensureRequestsLoaded()])
 
 const today = computed(() => posts.value.filter((p) => p.dueInDays === 0))
 const upcoming = computed(() => posts.value.filter((p) => p.dueInDays > 0 && p.dueInDays <= 3))
@@ -88,6 +91,15 @@ const quickActions = [
         <Icon name="ph:warning-fill" class="size-5 text-[var(--color-status-alert)] shrink-0" />
         <p class="text-[0.875rem] text-[var(--color-text)]">
           Tienes {{ overdue.length }} publicación fuera de plazo. <NuxtLink to="/creator/timeline" class="font-medium underline underline-offset-2">Revisar</NuxtLink>
+        </p>
+      </BaseCard>
+    </section>
+
+    <section v-if="pendingRequests" class="mb-7">
+      <BaseCard radius="md" padding="md" class="flex items-center gap-3 border-[var(--color-status-review)]/30 bg-[var(--color-status-review)]/[0.08]">
+        <Icon name="ph:handshake-fill" class="size-5 text-[var(--color-status-review)] shrink-0" />
+        <p class="text-[0.875rem] text-[var(--color-text)]">
+          Tienes {{ pendingRequests }} solicitud{{ pendingRequests > 1 ? 'es' : '' }} de colaboración nueva{{ pendingRequests > 1 ? 's' : '' }}. <NuxtLink to="/creator/requests" class="font-medium underline underline-offset-2">Ver</NuxtLink>
         </p>
       </BaseCard>
     </section>

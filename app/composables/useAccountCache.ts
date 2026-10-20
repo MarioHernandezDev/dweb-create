@@ -11,6 +11,13 @@
  * único sitio, para no tener que recordar actualizar dos.
  */
 export function resetAccountCaches() {
+  // Caché corta de role-guard.global.ts (ver ese archivo) — sin esto, una
+  // cuenta nueva podría heredar por hasta 30s el "usuario verificado" de la
+  // sesión anterior en la misma pestaña (p. ej. al saltar entre cuentas de
+  // demo en login.vue, donde no hay un signOut real de por medio).
+  useState<{ id: string } | null>('role-guard-user-cache', () => null).value = null
+  useState<number>('role-guard-user-cache-at', () => 0).value = 0
+
   useMyRole().reset()
   useMyInfluencer().reset()
   useMyBrandClient().reset()
@@ -28,6 +35,9 @@ export function resetAccountCaches() {
   useMyRoster().reset()
   useMyTrends().reset()
   useMyCredits().reset()
+  useCollabRequests().reset()
+  useRosterRequests().reset()
+  useNotifications().reset()
 
   useState<unknown>('my-subscription', () => null).value = null
   useState<boolean>('my-subscription-loaded', () => false).value = false

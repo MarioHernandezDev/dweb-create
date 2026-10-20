@@ -6,13 +6,17 @@ const { logout } = useLogout()
 
 const route = useRoute()
 const { subscription, connectOnboarded, redirecting, ensureLoaded, refresh: refreshBilling, subscribe, connectPayouts } = useMyBilling()
+const { pendingCount: pendingRosterRequests, ensureLoaded: ensureRosterRequestsLoaded } = useRosterRequests()
 
 // Al volver de Stripe (Checkout o Connect) los datos ya cambiaron en el
 // servidor vía webhook — hay que refrescar de verdad, no fiarse de la
 // caché de la visita anterior a esta pantalla (si no, se queda enseñando
-// "sin plan"/"sin conectar" aunque el pago se haya guardado bien).
-if (route.query.checkout || route.query.connect) await refreshBilling()
-else await ensureLoaded()
+// "sin plan"/"sin conectar" aunque el pago se haya guardado bien). En
+// paralelo con las solicitudes de plantilla — son consultas independientes.
+await Promise.all([
+  ensureRosterRequestsLoaded(),
+  route.query.checkout || route.query.connect ? refreshBilling() : ensureLoaded()
+])
 
 const planLabel = computed(() => {
   if (!subscription.value) return 'Plan gratuito'
@@ -48,6 +52,13 @@ const planLabel = computed(() => {
 
       <section class="mb-6">
         <BaseCard radius="lg" padding="none" class="divide-y divide-[var(--color-hairline)] overflow-hidden">
+          <NuxtLink to="/manager/roster-requests" class="flex items-center justify-between px-5 py-4">
+            <span class="text-[0.9375rem] text-[var(--color-text)]">Solicitudes de plantilla</span>
+            <span class="flex items-center gap-2">
+              <span v-if="pendingRosterRequests" class="text-[0.8125rem] text-[var(--color-status-review)]">{{ pendingRosterRequests }}</span>
+              <Icon name="ph:caret-right-bold" class="size-4 text-[var(--color-text-faint)]" />
+            </span>
+          </NuxtLink>
           <div class="flex items-center justify-between px-5 py-4">
             <span class="text-[0.9375rem] text-[var(--color-text)]">Notificaciones</span>
             <span class="text-[0.8125rem] text-[var(--color-text-faint)]">Próximamente</span>

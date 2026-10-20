@@ -6,11 +6,17 @@ import { contentTypeMeta } from '~/utils/status'
 const open = defineModel<boolean>({ default: false })
 const { createPost, updatePost } = useMyPosts()
 const { balance: creditBalance, ensureLoaded: ensureCreditsLoaded, setBalance: setCreditBalance } = useMyCredits()
+const { requests: collabRequests, ensureLoaded: ensureCollabRequestsLoaded } = useCollabRequests()
+
+// Solo las colaboraciones ya aceptadas tienen sentido aquí — pedir vincular
+// una "requested" sería prometerle algo a la marca que todavía no acordó.
+const activeCollaborations = computed(() => collabRequests.value.filter((r) => r.status === 'accepted' || r.status === 'in_progress'))
 
 const title = ref('')
 const caption = ref('')
 const contentType = ref<ContentType>('reel')
 const platform = ref<Platform>('instagram')
+const collaborationId = ref('')
 
 const contentTypes = Object.keys(contentTypeMeta) as ContentType[]
 const platforms = Object.entries(platformMeta).map(([value, meta]) => ({ value: value as Platform, label: meta.label }))
@@ -28,7 +34,13 @@ const createdPostId = ref<string | null>(null)
 
 async function saveDraft(): Promise<string> {
   if (!createdPostId.value) {
-    const created = await createPost({ title: title.value, caption: caption.value, contentType: contentType.value, platform: platform.value })
+    const created = await createPost({
+      title: title.value,
+      caption: caption.value,
+      contentType: contentType.value,
+      platform: platform.value,
+      collaborationId: collaborationId.value || null
+    })
     createdPostId.value = created.id
   } else {
     await updatePost(createdPostId.value, { title: title.value, caption: caption.value })
@@ -80,11 +92,13 @@ function schedule() {
 watch(open, (value) => {
   if (value) {
     ensureCreditsLoaded()
+    ensureCollabRequestsLoaded()
     return
   }
   stage.value = 'draft'
   title.value = ''
   caption.value = ''
+  collaborationId.value = ''
   createdPostId.value = null
   result.value = null
   error.value = ''
@@ -109,6 +123,17 @@ watch(open, (value) => {
             id="post-caption" v-model="caption" rows="3" placeholder="Escribe el texto que acompaña tu publicación…"
             class="w-full px-3.5 py-2.5 rounded-[var(--radius-sm)] bg-[var(--color-ink-overlay)] border border-[var(--color-hairline)] text-[0.9375rem] text-[var(--color-text)] placeholder:text-[var(--color-text-faint)] focus:outline-none focus:border-[var(--color-primary-500)]/60 resize-none"
           />
+        </div>
+
+        <div v-if="activeCollaborations.length">
+          <label class="block text-[0.8125rem] font-medium text-[var(--color-text-muted)] mb-1.5" for="post-collab">Colaboración</label>
+          <select
+            id="post-collab" v-model="collaborationId"
+            class="w-full h-11 px-3 rounded-[var(--radius-sm)] bg-[var(--color-ink-overlay)] border border-[var(--color-hairline)] text-[0.875rem] text-[var(--color-text)]"
+          >
+            <option value="">Contenido propio</option>
+            <option v-for="c in activeCollaborations" :key="c.id" :value="c.id">{{ c.brandName }}</option>
+          </select>
         </div>
 
         <div class="grid grid-cols-2 gap-3">

@@ -99,7 +99,7 @@ const timecode = computed(() => {
             Acceder a tu cuenta
           </BaseButton>
           <NuxtLink to="/onboarding" class="text-[0.875rem] text-white/60 hover:text-white underline underline-offset-4 decoration-white/30">
-            ¿No tienes cuenta? Mira cómo sería el registro
+            ¿No tienes cuenta? Regístrate
           </NuxtLink>
         </div>
       </div>

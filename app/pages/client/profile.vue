@@ -1,5 +1,11 @@
 <script setup lang="ts">
 import { initialsFromName, hueFromString } from '~/utils/avatar'
+import { formatEuros } from '~/utils/mock-data'
+import { collaborationStatusMeta } from '~/utils/status'
+
+// "Pagar" solo tiene sentido una vez la otra parte ha aceptado — antes de
+// eso ni siquiera sabe que existe la solicitud (ver useCollabRequests.ts).
+const payableStatuses = ['accepted', 'in_progress', 'completed']
 
 useHead({ title: 'Perfil' })
 
@@ -12,11 +18,6 @@ else await ensureLoaded()
 
 const user = useSupabaseUser()
 const { logout } = useLogout()
-
-function formatEuros(cents: number | null) {
-  if (!cents) return 'Sin presupuesto'
-  return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(cents / 100)
-}
 </script>
 
 <template>
@@ -62,10 +63,15 @@ function formatEuros(cents: number | null) {
             <p v-if="collab.influencerName && collab.managerName" class="text-[0.75rem] text-[var(--color-text-faint)] mb-3">
               Representado por {{ collab.managerName }}
             </p>
-            <p v-else class="text-[0.75rem] text-[var(--color-text-faint)] mb-3">Estado: {{ collab.status }}</p>
+            <p v-else class="text-[0.75rem] mb-3" :style="{ color: collaborationStatusMeta[collab.status].color }">
+              {{ collaborationStatusMeta[collab.status].label }}
+            </p>
 
             <p v-if="collab.paidAt" class="inline-flex items-center gap-1.5 text-[0.8125rem] text-[var(--color-status-published)]">
               <Icon name="ph:check-circle-fill" class="size-4" /> Pagado
+            </p>
+            <p v-else-if="!payableStatuses.includes(collab.status)" class="text-[0.75rem] text-[var(--color-text-faint)]">
+              Se podrá pagar cuando acepten la solicitud.
             </p>
             <BaseButton
               v-else variant="primary" size="sm" class="w-full" :disabled="!collab.budgetCents || paying === collab.id"

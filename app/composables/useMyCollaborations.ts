@@ -1,6 +1,8 @@
+import type { CollaborationStatus } from '~/types'
+
 export interface MyCollaboration {
   id: string
-  status: string
+  status: CollaborationStatus
   influencerId: string | null
   influencerName: string | null
   managerId: string | null
@@ -49,7 +51,7 @@ export function useMyCollaborations() {
 
     collaborations.value = (data as CollaborationRow[]).map((r) => ({
       id: r.id,
-      status: r.status,
+      status: r.status as CollaborationStatus,
       influencerId: r.influencer_id,
       influencerName: r.influencers?.display_name ?? null,
       managerId: r.manager_id,

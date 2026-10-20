@@ -4,6 +4,12 @@ const router = useRouter()
 const route = useRoute()
 
 const showBack = computed(() => route.path.split('/').filter(Boolean).length > 1)
+
+// Se recarga en cada visita (no solo la primera) — es una bandeja de
+// entrada, el número tiene que notarse fresco al navegar, no quedarse
+// pegado al valor de la primera vez que se montó esta barra.
+const { unreadCount, refresh: refreshNotifications } = useNotifications()
+refreshNotifications()
 </script>
 
 <template>
@@ -21,6 +27,16 @@ const showBack = computed(() => route.path.split('/').filter(Boolean).length > 1
       <h1 class="font-display text-[1.375rem] md:text-[1.75rem] text-[var(--color-text)] truncate">{{ title }}</h1>
       <p v-if="subtitle" class="text-[0.8125rem] text-[var(--color-text-muted)] truncate">{{ subtitle }}</p>
     </div>
+
+    <NuxtLink to="/inbox" aria-label="Bandeja de entrada" class="relative shrink-0 size-9 flex items-center justify-center rounded-full text-[var(--color-text-muted)] hover:bg-[var(--color-ink-overlay)] hover:text-[var(--color-text)]">
+      <Icon name="ph:tray-fill" class="size-[1.15rem]" />
+      <span
+        v-if="unreadCount"
+        class="absolute top-1 right-1 min-w-[0.9375rem] h-[0.9375rem] px-1 rounded-full bg-[var(--color-status-alert)] text-white text-[0.625rem] font-semibold leading-[0.9375rem] text-center"
+      >
+        {{ unreadCount > 9 ? '9+' : unreadCount }}
+      </span>
+    </NuxtLink>
 
     <NuxtLink :to="`/${role}/profile`" aria-label="Tu perfil" class="shrink-0">
       <BaseAvatar initials="TU" :hue="266" size="sm" />
