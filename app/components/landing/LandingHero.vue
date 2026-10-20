@@ -33,7 +33,7 @@ const timecode = computed(() => {
 </script>
 
 <template>
-  <div class="relative min-h-dvh overflow-hidden flex flex-col" :class="{ 'nx-feedma-ready': titleReady }">
+  <div class="relative min-h-[120dvh] overflow-hidden flex flex-col" :class="{ 'nx-feedma-ready': titleReady }">
     <Transition name="nx-preloader" @after-leave="titleReady = true">
       <div
         v-if="isLoading"
@@ -60,7 +60,7 @@ const timecode = computed(() => {
          texto blanco tenga contraste suficiente encima de cualquier foto. -->
     <div
       class="absolute inset-0"
-      style="background: linear-gradient(195deg, rgb(8 6 18 / 45%) 0%, rgb(8 6 18 / 72%) 45%, rgb(8 6 18 / 92%) 100%)"
+      style="background: linear-gradient(195deg, rgb(8 6 18 / 25%) 0%, rgb(8 6 18 / 48%) 45%, rgb(8 6 18 / 72%) 100%)"
     />
 
     <!-- Mancha ambiental: el único movimiento permanente de la app -->
