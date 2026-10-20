@@ -61,7 +61,7 @@ export default defineNuxtConfig({
     // Solo servidor (no va bajo `public`): las sugerencias de IA se piden
     // desde /api/ml/predict, nunca desde el navegador. Ver docs/8-AI-SUGGESTIONS-SETUP.md.
     openrouterApiKey: process.env.OPENROUTER_API_KEY,
-    openrouterModel: process.env.OPENROUTER_MODEL || 'meta-llama/llama-3.3-70b-instruct:free'
+    openrouterModel: process.env.OPENROUTER_MODEL || 'nvidia/nemotron-3-super-120b-a12b:free'
   },
 
   supabase: {

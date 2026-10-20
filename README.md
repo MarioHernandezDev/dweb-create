@@ -72,7 +72,7 @@ Somos 2 personas. Para no pisarnos y no perdernos, el proyecto se hace **en este
 **Por qué va aquí:** hasta este punto, varias cosas de la app son simulaciones (datos de mentira o botones que no hacen nada de verdad). Esta fase las sustituye una a una por la función real.
 
 - [ ] Conectar redes sociales de verdad (Instagram, TikTok, YouTube...) usando sus APIs oficiales — hoy "Conectar" en Redes solo crea la fila en `social_accounts`, sin OAuth real detrás.
-- [x] Motor de Machine Learning real para la predicción de éxito — ver [`docs/3-ML-PIPELINE.md`](./docs/3-ML-PIPELINE.md). `/api/ml/predict` calcula el score con un modelo heurístico y lo guarda de verdad en `ml_predictions`. Falta el motor de tendencias (`creator/trends.vue` sigue mock).
+- [x] Motor de Machine Learning real para la predicción de éxito y el motor de tendencias — ver [`docs/3-ML-PIPELINE.md`](./docs/3-ML-PIPELINE.md). `/api/ml/predict` calcula el score con un modelo heurístico y lo guarda de verdad en `ml_predictions`; `/api/ml/trends` genera ideas reales (nicho + posts propios + LLM) y las guarda en `trends`. Ninguno usa fuentes externas de tendencias de verdad todavía (Google Trends, pgvector…) — eso sigue siendo trabajo futuro.
 - [x] Sugerencias de IA (copy/hashtags/horario) junto a la predicción — `/api/ml/predict` las pide a un LLM gratuito vía OpenRouter cuando hay `OPENROUTER_API_KEY` configurada (ver [`docs/8-AI-SUGGESTIONS-SETUP.md`](./docs/8-AI-SUGGESTIONS-SETUP.md)); si no, cae en el texto fijo de siempre sin romper nada.
 
 ### FASE 5 — Salir a buscar usuarios reales

@@ -14,34 +14,54 @@ const platform = ref<Platform>('instagram')
 const contentTypes = Object.keys(contentTypeMeta) as ContentType[]
 const platforms = Object.entries(platformMeta).map(([value, meta]) => ({ value: value as Platform, label: meta.label }))
 
-type Stage = 'draft' | 'loading' | 'result'
+type Stage = 'draft' | 'predicting' | 'saving' | 'result'
 const stage = ref<Stage>('draft')
 const result = ref<{ score: number; confidence: number; suggestions: Suggestion[] } | null>(null)
 const error = ref('')
 
-// El post se crea de verdad (estado "idea") en el primer "Predecir éxito" —
-// /api/ml/predict solo puede puntuar algo que ya existe en `posts` (ahí es
-// donde se guarda la predicción). Si se vuelve a "Editar" y se predice otra
-// vez, se actualiza ese mismo post en vez de crear uno duplicado.
+// El post se crea de verdad (estado "idea") en el primer "Predecir éxito" o
+// "Guardar sin predecir" — ambos caminos escriben en `posts`. Si se vuelve a
+// "Editar" y se guarda/predice otra vez, se actualiza ese mismo post en vez
+// de crear uno duplicado.
 const createdPostId = ref<string | null>(null)
 
+async function saveDraft(): Promise<string> {
+  if (!createdPostId.value) {
+    const created = await createPost({ title: title.value, caption: caption.value, contentType: contentType.value, platform: platform.value })
+    createdPostId.value = created.id
+  } else {
+    await updatePost(createdPostId.value, { title: title.value, caption: caption.value })
+  }
+  return createdPostId.value
+}
+
 async function predict() {
-  stage.value = 'loading'
+  stage.value = 'predicting'
   error.value = ''
   try {
-    if (!createdPostId.value) {
-      const created = await createPost({ title: title.value, caption: caption.value, contentType: contentType.value, platform: platform.value })
-      createdPostId.value = created.id
-    } else {
-      await updatePost(createdPostId.value, { title: title.value, caption: caption.value })
-    }
-
-    const prediction = await $fetch('/api/ml/predict', { method: 'POST', body: { postId: createdPostId.value } })
+    const postId = await saveDraft()
+    const prediction = await $fetch('/api/ml/predict', { method: 'POST', body: { postId } })
     result.value = { score: prediction.successScore, confidence: prediction.confidence, suggestions: prediction.suggestions }
     stage.value = 'result'
   } catch (err) {
     console.error('[PostComposerSheet] fallo al predecir:', err)
     error.value = 'No se ha podido predecir. Inténtalo de nuevo.'
+    stage.value = 'draft'
+  }
+}
+
+// Guarda la publicación como idea sin gastar un crédito en predecir —
+// para quien solo quiere dejarla anotada y predecirla más tarde desde su
+// propia página (donde "Predecir" sigue disponible).
+async function saveOnly() {
+  stage.value = 'saving'
+  error.value = ''
+  try {
+    await saveDraft()
+    open.value = false
+  } catch (err) {
+    console.error('[PostComposerSheet] fallo al guardar:', err)
+    error.value = 'No se ha podido guardar. Inténtalo de nuevo.'
     stage.value = 'draft'
   }
 }
@@ -66,7 +86,7 @@ watch(open, (value) => {
 <template>
   <BottomSheet v-model="open" title="Nueva publicación">
     <Transition name="nx-fade-slide" mode="out-in">
-      <div v-if="stage === 'draft' || stage === 'loading'" key="draft" class="flex flex-col gap-4">
+      <div v-if="stage !== 'result'" key="draft" class="flex flex-col gap-4">
         <div>
           <label class="block text-[0.8125rem] font-medium text-[var(--color-text-muted)] mb-1.5" for="post-title">Título interno</label>
           <input
@@ -102,13 +122,22 @@ watch(open, (value) => {
 
         <BaseButton
           variant="primary" size="lg"
-          :icon="stage === 'loading' ? 'ph:circle-notch-bold' : 'ph:sparkle-fill'" :icon-spin="stage === 'loading'"
+          :icon="stage === 'predicting' ? 'ph:circle-notch-bold' : 'ph:sparkle-fill'" :icon-spin="stage === 'predicting'"
           class="w-full mt-1"
-          :disabled="!title || stage === 'loading'" @click="predict"
+          :disabled="!title || stage === 'predicting' || stage === 'saving'" @click="predict"
         >
-          {{ stage === 'loading' ? 'Analizando…' : 'Predecir éxito' }}
+          {{ stage === 'predicting' ? 'Analizando…' : 'Predecir éxito' }}
         </BaseButton>
         <p class="text-center text-[0.75rem] text-[var(--color-text-faint)] -mt-2">Consume 1 crédito de tu plan</p>
+
+        <BaseButton
+          variant="secondary" size="lg"
+          :icon="stage === 'saving' ? 'ph:circle-notch-bold' : 'ph:note-pencil-fill'" :icon-spin="stage === 'saving'"
+          class="w-full"
+          :disabled="!title || stage === 'predicting' || stage === 'saving'" @click="saveOnly"
+        >
+          {{ stage === 'saving' ? 'Guardando…' : 'Guardar sin predecir' }}
+        </BaseButton>
       </div>
 
       <div v-else-if="result" key="result">

@@ -107,7 +107,10 @@ Varía la plataforma entre las 4 ideas cuando tenga sentido para el nicho.`
     const response = await $fetch<{ choices?: { message?: { content?: string } }[] }>('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-      body: { model, messages: [{ role: 'user', content: prompt }], temperature: 0.8 },
+      // Ver el mismo comentario en predict.post.ts: los modelos gratuitos de
+      // OpenRouter son "reasoning" y necesitan presupuesto de tokens de
+      // sobra o se cortan antes de escribir el JSON final.
+      body: { model, messages: [{ role: 'user', content: prompt }], temperature: 0.8, max_tokens: 800 },
       timeout: 15_000
     })
 
