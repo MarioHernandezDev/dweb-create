@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import type { Influencer, Post } from '~/types'
+import type { Creator, Post } from '~/types'
 import { dueLabel } from '~/utils/status'
 
 const props = defineProps<{
   posts: Post[]
-  influencersById?: Record<string, Influencer>
+  creatorsById?: Record<string, Creator>
 }>()
 
 defineEmits<{ open: [post: Post] }>()
@@ -40,7 +40,7 @@ const groups = computed(() => {
           v-for="(post, i) in group.items" :key="post.id"
           class="nx-stagger-in" :style="{ '--stagger-i': i }"
         >
-          <DeliverableCard :post="post" :influencer="influencersById?.[post.influencerId]" @open="$emit('open', $event)">
+          <DeliverableCard :post="post" :creator="creatorsById?.[post.creatorId]" @open="$emit('open', $event)">
             <template v-if="$slots.actions" #actions>
               <slot name="actions" :post="post" />
             </template>

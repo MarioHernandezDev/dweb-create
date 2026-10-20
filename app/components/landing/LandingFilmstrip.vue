@@ -8,10 +8,9 @@ interface Frame { photo: CoverPhoto; caption: string }
 
 const frames: Frame[] = [
   { photo: coverPhotos.creator, caption: 'Graba o diseña — el creador marca el ritmo de la semana.' },
-  { photo: coverPhotos.manager, caption: 'El manager reparte el trabajo entre todo su roster.' },
-  { photo: localPhotos.onboarding, caption: 'La marca revisa y aprueba antes de que salga nada.' },
+  { photo: localPhotos.onboarding, caption: 'El partner revisa y aprueba antes de que salga nada.' },
   { photo: localPhotos.metrics, caption: 'Las métricas y la predicción de éxito llegan solas.' },
-  { photo: coverPhotos.client, caption: 'Y la marca ve crecer el resultado real, no una maqueta.' }
+  { photo: coverPhotos.partner, caption: 'Y el partner ve crecer el resultado real, no una maqueta.' }
 ]
 
 const section = ref<HTMLElement | null>(null)
@@ -84,7 +83,7 @@ onUnmounted(() => mm?.revert())
 
     <div class="min-h-dvh flex flex-col justify-center py-16 md:py-0">
       <div ref="heading" class="px-5 md:px-10 lg:px-16 max-w-7xl mx-auto w-full mb-8 md:mb-10 overflow-hidden">
-        <p data-reveal class="text-[0.8125rem] font-medium text-[var(--color-logo-teal)] mb-2">Una entrega, cinco miradas</p>
+        <p data-reveal class="text-[0.8125rem] font-medium text-[var(--color-logo-teal)] mb-2">Una entrega, cuatro miradas</p>
         <h3 class="font-display font-light text-[clamp(1.5rem,3.6vw,2.5rem)] text-white max-w-[30ch]">
           <span data-reveal class="block">Lo mismo se ve distinto según quién lo mira — FEEDMA lo enseña todo a la vez.</span>
         </h3>

@@ -3,10 +3,8 @@ import type { CollaborationStatus } from '~/types'
 export interface MyCollaboration {
   id: string
   status: CollaborationStatus
-  influencerId: string | null
-  influencerName: string | null
-  managerId: string | null
-  managerName: string | null
+  creatorId: string
+  creatorName: string | null
   budgetCents: number | null
   paidAt: string | null
 }
@@ -14,35 +12,33 @@ export interface MyCollaboration {
 interface CollaborationRow {
   id: string
   status: string
-  influencer_id: string | null
-  manager_id: string | null
+  creator_id: string
   budget_cents: number | null
   paid_at: string | null
-  influencers: { display_name: string } | null
-  managers: { agency_name: string } | null
+  creators: { display_name: string } | null
 }
 
 /**
- * Las colaboraciones de la marca logueada (rol "client"), con el nombre del
- * influencer y/o manager ya resueltos — evita que `client/index.vue` y
- * `client/profile.vue` repitan el mismo join.
+ * Las colaboraciones del partner logueado, con el nombre del creador ya
+ * resuelto — evita que `partner/index.vue` y `partner/profile.vue` repitan
+ * el mismo join.
  */
 export function useMyCollaborations() {
   const client = useSupabaseClient()
-  const { brandClient, ensureBrandClient } = useMyBrandClient()
+  const { partner, ensurePartner } = useMyPartner()
 
   const collaborations = useState<MyCollaboration[]>('my-collaborations', () => [])
   const loaded = useState<boolean>('my-collaborations-loaded', () => false)
   const paying = useState<string | null>('my-collaborations-paying', () => null)
 
   async function refresh() {
-    const me = brandClient.value ?? (await ensureBrandClient())
+    const me = partner.value ?? (await ensurePartner())
     if (!me) return
 
     const { data, error } = await client
       .from('collaborations')
-      .select('id, status, influencer_id, manager_id, budget_cents, paid_at, influencers(display_name), managers(agency_name)')
-      .eq('brand_client_id', me.id)
+      .select('id, status, creator_id, budget_cents, paid_at, creators(display_name)')
+      .eq('partner_id', me.id)
       .order('created_at', { ascending: false })
     if (error) {
       console.error('[useMyCollaborations] fallo al cargar colaboraciones:', error.message)
@@ -52,10 +48,8 @@ export function useMyCollaborations() {
     collaborations.value = (data as CollaborationRow[]).map((r) => ({
       id: r.id,
       status: r.status as CollaborationStatus,
-      influencerId: r.influencer_id,
-      influencerName: r.influencers?.display_name ?? null,
-      managerId: r.manager_id,
-      managerName: r.managers?.agency_name ?? null,
+      creatorId: r.creator_id,
+      creatorName: r.creators?.display_name ?? null,
       budgetCents: r.budget_cents,
       paidAt: r.paid_at
     }))

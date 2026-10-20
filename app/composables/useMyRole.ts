@@ -1,18 +1,11 @@
 import type { Role } from '~/types'
 
-// En la base de datos el rol se llama 'influencer' (así se llama la tabla);
-// en el frontend, las rutas y el tipo Role usan 'creator' (así nació la app).
-// Esto traduce entre los dos mundos en el único sitio donde hace falta.
-const dbRoleToAppRole: Record<string, Role> = {
-  manager: 'manager',
-  influencer: 'creator',
-  client: 'client'
-}
-
 /**
- * El rol (manager / influencer / client) del usuario ya logueado, leído de
- * `profiles.role`. Se cachea en memoria de la pestaña (useState) para no
- * volver a consultarlo en cada cambio de ruta.
+ * El rol (creator / partner) del usuario ya logueado, leído de
+ * `profiles.role` — mismo valor en la base de datos y en el frontend desde
+ * que se quitó el rol manager, no hace falta traducir entre los dos mundos.
+ * Se cachea en memoria de la pestaña (useState) para no volver a
+ * consultarlo en cada cambio de ruta.
  */
 export function useMyRole() {
   const role = useState<Role | null | undefined>('my-role', () => undefined)
@@ -41,7 +34,7 @@ export function useMyRole() {
     // Sin tipos generados de la base de datos todavía (`supabase gen types`,
     // más adelante), así que tipamos la fila a mano en este único punto.
     const { data } = await client.from('profiles').select('role').eq('id', id).single<{ role: string }>()
-    role.value = (data?.role ? dbRoleToAppRole[data.role] : undefined) ?? null
+    role.value = (data?.role as Role | undefined) ?? null
     return role.value
   }
 

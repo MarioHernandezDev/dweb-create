@@ -7,15 +7,6 @@ interface RoleCard { role: Role; accent: string; points: string[] }
 
 const cards: RoleCard[] = [
   {
-    role: 'manager',
-    accent: 'var(--color-primary-500)',
-    points: [
-      'Ves el calendario de todo tu roster a la vez.',
-      'Repartes encargos sin salir de FEEDMA.',
-      'Comparas métricas entre tus influencers.'
-    ]
-  },
-  {
     role: 'creator',
     accent: 'var(--color-logo-amber)',
     points: [
@@ -25,12 +16,12 @@ const cards: RoleCard[] = [
     ]
   },
   {
-    role: 'client',
+    role: 'partner',
     accent: 'var(--color-logo-teal)',
     points: [
       'Apruebas cada entrega antes de que se publique.',
       'Ves las métricas reales de tu campaña.',
-      'Hablas directo con el influencer o su manager.'
+      'Hablas directo con el creador de contenido.'
     ]
   }
 ]
@@ -48,10 +39,10 @@ onMounted(() => {
     <div class="max-w-6xl mx-auto">
       <p class="text-[0.8125rem] font-medium text-[var(--color-primary-500)] mb-2">Para quién es</p>
       <h3 class="font-display font-light text-[clamp(1.5rem,3.2vw,2.25rem)] text-[var(--color-text)] max-w-[34ch] mb-12 md:mb-16">
-        Marcas, influencers y sus managers — mismo parte, distinta vista.
+        Partners y creadores de contenido — mismo parte, distinta vista.
       </h3>
 
-      <div class="grid md:grid-cols-3 gap-5 md:gap-6">
+      <div class="grid md:grid-cols-2 gap-5 md:gap-6">
         <div
           v-for="card in cards" :key="card.role" data-card
           class="bg-[var(--color-ink-raised)] rounded-[var(--radius-md)] border border-[var(--color-hairline)] p-7 flex flex-col"

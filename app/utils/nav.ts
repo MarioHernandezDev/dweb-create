@@ -7,33 +7,21 @@ export interface NavItem {
 }
 
 export const roleMeta: Record<Role, { label: string; description: string; home: string; icon: string }> = {
-  manager: {
-    label: 'Manager',
-    description: 'Representas a varios influencers y repartes su trabajo.',
-    home: '/manager',
-    icon: 'ph:briefcase-fill'
-  },
   creator: {
-    label: 'Influencer',
-    description: 'Gestionas tu calendario, tus redes y tus datos — solo o con manager.',
+    label: 'Creador de contenido',
+    description: 'Gestionas tu calendario, tus redes y tus datos.',
     home: '/creator',
     icon: 'ph:sparkle-fill'
   },
-  client: {
-    label: 'Cliente (marca)',
-    description: 'Contactas a un influencer o a su manager, y apruebas el contenido.',
-    home: '/client',
+  partner: {
+    label: 'Partner',
+    description: 'Contactas a un creador de contenido y apruebas el contenido.',
+    home: '/partner',
     icon: 'ph:user-circle-fill'
   }
 }
 
 export const roleNav: Record<Role, NavItem[]> = {
-  manager: [
-    { to: '/manager', label: 'Resumen', icon: 'ph:squares-four-fill' },
-    { to: '/manager/timeline', label: 'Tablero', icon: 'ph:kanban-fill' },
-    { to: '/manager/requests', label: 'Solicitudes', icon: 'ph:handshake-fill' },
-    { to: '/manager/metrics', label: 'Métricas', icon: 'ph:chart-line-up-fill' }
-  ],
   creator: [
     { to: '/creator', label: 'Hoy', icon: 'ph:house-fill' },
     { to: '/creator/timeline', label: 'Tablero', icon: 'ph:kanban-fill' },
@@ -42,14 +30,12 @@ export const roleNav: Record<Role, NavItem[]> = {
     { to: '/creator/trends', label: 'Tendencias', icon: 'ph:flame-fill' },
     { to: '/creator/metrics', label: 'Métricas', icon: 'ph:chart-line-up-fill' }
   ],
-  client: [
-    { to: '/client', label: 'Calendario', icon: 'ph:calendar-check-fill' },
-    { to: '/client/discover', label: 'Descubrir', icon: 'ph:compass-fill' }
+  partner: [
+    { to: '/partner', label: 'Calendario', icon: 'ph:calendar-check-fill' },
+    { to: '/partner/discover', label: 'Descubrir', icon: 'ph:compass-fill' }
   ]
 }
 
 export function roleFromPath(path: string): Role {
-  if (path.startsWith('/creator')) return 'creator'
-  if (path.startsWith('/client')) return 'client'
-  return 'manager'
+  return path.startsWith('/partner') ? 'partner' : 'creator'
 }

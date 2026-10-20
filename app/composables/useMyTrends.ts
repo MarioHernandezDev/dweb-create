@@ -1,7 +1,7 @@
 import type { TrendSuggestion } from '~/types'
 
 /**
- * Ideas de contenido para el nicho del influencer logueado, pedidas a
+ * Ideas de contenido para el nicho del creador logueado, pedidas a
  * `/api/ml/trends` (ver ese archivo para lo que es real y lo que es
  * generado por LLM — nada aquí finge ser una tendencia detectada de verdad).
  */

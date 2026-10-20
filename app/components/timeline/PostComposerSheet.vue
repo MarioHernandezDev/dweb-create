@@ -9,7 +9,7 @@ const { balance: creditBalance, ensureLoaded: ensureCreditsLoaded, setBalance: s
 const { requests: collabRequests, ensureLoaded: ensureCollabRequestsLoaded } = useCollabRequests()
 
 // Solo las colaboraciones ya aceptadas tienen sentido aquí — pedir vincular
-// una "requested" sería prometerle algo a la marca que todavía no acordó.
+// una "requested" sería prometerle algo al partner que todavía no acordó.
 const activeCollaborations = computed(() => collabRequests.value.filter((r) => r.status === 'accepted' || r.status === 'in_progress'))
 
 const title = ref('')
@@ -132,7 +132,7 @@ watch(open, (value) => {
             class="w-full h-11 px-3 rounded-[var(--radius-sm)] bg-[var(--color-ink-overlay)] border border-[var(--color-hairline)] text-[0.875rem] text-[var(--color-text)]"
           >
             <option value="">Contenido propio</option>
-            <option v-for="c in activeCollaborations" :key="c.id" :value="c.id">{{ c.brandName }}</option>
+            <option v-for="c in activeCollaborations" :key="c.id" :value="c.id">{{ c.partnerName }}</option>
           </select>
         </div>
 

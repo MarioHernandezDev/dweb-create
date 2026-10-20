@@ -21,7 +21,7 @@ import { serverSupabaseServiceRole, serverSupabaseUser } from '#supabase/server'
  * de insert para "authenticated", a propósito — ver migración de RLS): solo
  * el servidor, con la service_role key, puede hacerlo. Por eso esta ruta
  * repite a mano la misma comprobación de autorización que la policy de
- * `posts` (dueño del post o su manager) antes de escribir nada.
+ * `posts` (dueño del post) antes de escribir nada.
  *
  * Deliberadamente fuera de esta versión: consumo de `credit_ledger` — falta
  * decidir cómo se cargan créditos a las cuentas.
@@ -33,16 +33,15 @@ interface PredictBody {
 
 interface PostRow {
   id: string
-  influencer_id: string
+  creator_id: string
   title: string
   caption: string | null
   metadata: { hashtags?: string[] } | null
 }
 
-interface InfluencerRow {
+interface CreatorRow {
   id: string
   profile_id: string
-  manager_id: string | null
 }
 
 interface AiSuggestion {
@@ -147,36 +146,25 @@ export default defineEventHandler(async (event) => {
 
   const { data: post } = await client
     .from('posts')
-    .select('id, influencer_id, title, caption, metadata')
+    .select('id, creator_id, title, caption, metadata')
     .eq('id', body.postId)
     .maybeSingle<PostRow>()
   if (!post) throw createError({ statusCode: 404, statusMessage: 'Publicación no encontrada.' })
 
-  const { data: influencer } = await client
-    .from('influencers')
-    .select('id, profile_id, manager_id')
-    .eq('id', post.influencer_id)
-    .maybeSingle<InfluencerRow>()
-  if (!influencer) throw createError({ statusCode: 404, statusMessage: 'Influencer no encontrado.' })
-
-  let authorized = influencer.profile_id === user.sub
-  if (!authorized && influencer.manager_id) {
-    const { data: manager } = await client
-      .from('managers')
-      .select('id')
-      .eq('id', influencer.manager_id)
-      .eq('profile_id', user.sub)
-      .maybeSingle()
-    authorized = !!manager
-  }
-  if (!authorized) throw createError({ statusCode: 403, statusMessage: 'No tienes permiso sobre esta publicación.' })
+  const { data: creator } = await client
+    .from('creators')
+    .select('id, profile_id')
+    .eq('id', post.creator_id)
+    .maybeSingle<CreatorRow>()
+  if (!creator) throw createError({ statusCode: 404, statusMessage: 'Creador no encontrado.' })
+  if (creator.profile_id !== user.sub) throw createError({ statusCode: 403, statusMessage: 'No tienes permiso sobre esta publicación.' })
 
   // Créditos (ver README Fase 4 — "Consumo de créditos" y
   // supabase/migrations/20261020160000_credit_grants.sql): se comprueba
   // ANTES de llamar al LLM, para no gastar esa llamada en una cuenta sin
   // saldo. `credit_ledger` es un libro de movimientos (positivos = concedidos,
   // negativos = gastados) — el saldo es su suma, no hay columna cacheada.
-  const { data: ledgerRows } = await client.from('credit_ledger').select('amount').eq('influencer_id', post.influencer_id)
+  const { data: ledgerRows } = await client.from('credit_ledger').select('amount').eq('creator_id', post.creator_id)
   const creditBalance = (ledgerRows ?? []).reduce((sum, row) => sum + row.amount, 0)
   if (creditBalance <= 0) {
     throw createError({ statusCode: 402, statusMessage: 'Sin créditos disponibles. Mejora tu plan para seguir prediciendo.' })
@@ -213,7 +201,7 @@ export default defineEventHandler(async (event) => {
   // resultado ya calculado.
   const { error: ledgerError } = await client
     .from('credit_ledger')
-    .insert({ influencer_id: post.influencer_id, amount: -1, reason: 'ml_prediction', related_post_id: post.id } as never)
+    .insert({ creator_id: post.creator_id, amount: -1, reason: 'ml_prediction', related_post_id: post.id } as never)
   if (ledgerError) console.error('[ml/predict] fallo al descontar el crédito (la predicción ya se guardó igual):', ledgerError.message)
 
   return {

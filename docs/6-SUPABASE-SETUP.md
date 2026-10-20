@@ -1,16 +1,15 @@
 # 6. Poner en marcha Supabase (Fase 2)
 
-Esta guía es la versión "para tontos" de la Fase 2 del [`README`](../README.md): cómo crear el proyecto de verdad, aplicar el esquema que ya está escrito y probado, y tener 3 cuentas de prueba funcionando.
+Esta guía es la versión "para tontos" de la Fase 2 del [`README`](../README.md): cómo crear el proyecto de verdad, aplicar el esquema que ya está escrito y probado, y tener 2 cuentas de prueba funcionando.
 
 Todo el SQL de este proyecto vive versionado en [`supabase/migrations/`](../supabase/migrations) — nunca se escribe SQL suelto a mano en el panel de Supabase. Eso es justo lo que pide la Fase 2: que quede guardado y registrado, no perdido en el historial de un dashboard.
 
 ## 0. Antes de nada: esto ya está probado
 
 Las migraciones de `supabase/migrations/` ya se aplicaron contra una base de datos Postgres real (con Supabase corriendo en local) y se comprobó a mano que la seguridad (RLS) funciona de verdad:
-- Un cliente solo ve el post de su propia colaboración, no los de otros.
-- Un manager ve a los influencers de su roster.
+- Un partner solo ve el post de su propia colaboración, no los de otros.
 - Si no has iniciado sesión, no ves nada.
-- Un cliente **no puede** editar un post directamente (se bloquea), pero **sí puede** aprobarlo con la función oficial `approve_post`.
+- Un partner **no puede** editar un post directamente (se bloquea), pero **sí puede** aprobarlo con la función oficial `approve_post`.
 
 No es teoría: se ejecutó y se verificó. Lo único que falta es crear **tu** proyecto y aplicarlo ahí.
 
@@ -47,9 +46,9 @@ npx supabase db push
 # Esto aplica, en orden, los 3 archivos de supabase/migrations/ a tu proyecto real
 ```
 
-Si todo va bien, en **Table Editor** del panel de Supabase ya deberías ver las 12 tablas: `profiles`, `managers`, `influencers`, `brand_clients`, `collaborations`, `social_accounts`, `posts`, `metrics`, `ml_predictions`, `trends`, `subscriptions`, `credit_ledger`.
+Si todo va bien, en **Table Editor** del panel de Supabase ya deberías ver las tablas: `profiles`, `creators`, `partners`, `collaborations`, `social_accounts`, `posts`, `metrics`, `ml_predictions`, `trends`, `subscriptions`, `credit_ledger`, `notifications`.
 
-## 4. Crear las 3 cuentas de prueba
+## 4. Crear las cuentas de prueba
 
 Con `.env` ya relleno:
 
@@ -61,11 +60,10 @@ Esto crea, usando la API oficial de administración de Supabase (nunca escribien
 
 | Cuenta | Email | Contraseña |
 |---|---|---|
-| Manager (Estudio Nova) | `manager@feedma.test` | `feedma-demo-2026` |
-| Influencer (Nora Blake, representada por Estudio Nova) | `influencer@feedma.test` | `feedma-demo-2026` |
-| Cliente (Alma Beauty Co.) | `client@feedma.test` | `feedma-demo-2026` |
+| Creador de contenido (Nora Blake) | `creator@feedma.test` | `feedma-demo-2026` |
+| Partner (Alma Beauty Co.) | `partner@feedma.test` | `feedma-demo-2026` |
 
-Las tres quedan relacionadas entre sí desde el minuto uno: hay una colaboración en curso entre Alma Beauty Co. y Nora Blake, con un post esperando aprobación — así hay algo real que probar en cada vista, no una cuenta vacía.
+Las dos quedan relacionadas entre sí desde el minuto uno: hay una colaboración en curso entre Alma Beauty Co. y Nora Blake, con un post esperando aprobación — así hay algo real que probar en cada vista, no una cuenta vacía.
 
 > El script se puede ejecutar varias veces sin romper nada: si una cuenta ya existe, la reutiliza en vez de fallar.
 
@@ -73,7 +71,7 @@ Las tres quedan relacionadas entre sí desde el minuto uno: hay una colaboració
 
 Puedes repetir la comprobación que ya hicimos nosotros, usando el **SQL Editor** del panel de Supabase:
 
-1. Inicia sesión como `client@feedma.test` en la app (cuando la Fase 2 del frontend esté conectada) y confirma que solo ves el post de Nora Blake, no inventario de otros influencers.
+1. Inicia sesión como `partner@feedma.test` en la app (cuando la Fase 2 del frontend esté conectada) y confirma que solo ves el post de Nora Blake, no inventario de otros creadores.
 2. Intenta, desde el SQL Editor logueado como ese usuario (`select auth.uid()` para confirmar quién eres), hacer un `update posts set title = '...'` directo — debe afectar **0 filas**.
 3. Llama a `select approve_post('el-id-del-post')` — ese sí debe funcionar.
 

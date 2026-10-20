@@ -2,11 +2,11 @@
 -- NOTIFICATIONS — bandeja de entrada del usuario (icono junto al perfil).
 --
 -- De momento son avisos de un solo sentido (el sistema avisa al usuario):
--- inicio de sesión, alta de cuenta, solicitudes de colaboración y de
--- plantilla. Nada de esto lo escribe el cliente directamente — siempre a
--- través de `public.notify()`, llamada desde triggers (security definer),
--- igual que el resto de automatismos del esquema. Un chat entre usuarios o
--- un puente a email son posibles ampliaciones futuras sobre esta misma tabla.
+-- inicio de sesión, alta de cuenta, solicitudes de colaboración. Nada de
+-- esto lo escribe el cliente directamente — siempre a través de
+-- `public.notify()`, llamada desde triggers (security definer), igual que
+-- el resto de automatismos del esquema. Un chat entre usuarios o un puente
+-- a email son posibles ampliaciones futuras sobre esta misma tabla.
 -- ============================================================================
 
 create table public.notifications (
@@ -165,55 +165,3 @@ $$;
 create trigger on_collaboration_updated
     after update on public.collaborations
     for each row execute function public.notify_collaboration_updated();
-
--- ----------------------------------------------------------------------------
--- Solicitudes de plantilla: avisa al manager cuando llega una, y al
--- influencer cuando le responden. `handle_roster_request_accepted` (de
--- 20261021090000_roster_requests.sql) se redefine entera: antes solo movía
--- `manager_id` al aceptar, ahora también avisa en ambos sentidos.
--- ----------------------------------------------------------------------------
-create or replace function public.notify_roster_request_created()
-returns trigger
-language plpgsql security definer set search_path = public
-as $$
-declare
-    manager_profile_id uuid;
-    influencer_name text;
-begin
-    select profile_id into manager_profile_id from public.managers where id = new.manager_id;
-    select display_name into influencer_name from public.influencers where id = new.influencer_id;
-    perform public.notify(manager_profile_id, 'roster_requested', 'Nueva solicitud de plantilla', coalesce(influencer_name, 'Un influencer') || ' quiere unirse a tu agencia.', '/manager/roster-requests');
-    return new;
-end;
-$$;
-
-create trigger on_roster_request_created
-    after insert on public.roster_requests
-    for each row execute function public.notify_roster_request_created();
-
-create or replace function public.handle_roster_request_accepted()
-returns trigger
-language plpgsql security definer set search_path = public
-as $$
-declare
-    influencer_profile_id uuid;
-    manager_name text;
-begin
-    if new.status is distinct from old.status and new.status in ('accepted', 'declined') then
-        if new.status = 'accepted' then
-            update public.influencers set manager_id = new.manager_id where id = new.influencer_id;
-        end if;
-
-        select profile_id into influencer_profile_id from public.influencers where id = new.influencer_id;
-        select agency_name into manager_name from public.managers where id = new.manager_id;
-        perform public.notify(
-            influencer_profile_id,
-            'roster_' || new.status,
-            case when new.status = 'accepted' then 'Solicitud aceptada' else 'Solicitud rechazada' end,
-            case when new.status = 'accepted' then coalesce(manager_name, 'La agencia') || ' te ha aceptado en su plantilla.' else coalesce(manager_name, 'La agencia') || ' ha rechazado tu solicitud.' end,
-            '/creator/discover'
-        );
-    end if;
-    return new;
-end;
-$$;

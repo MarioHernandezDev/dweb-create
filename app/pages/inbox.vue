@@ -3,10 +3,10 @@ import type { AppNotification } from '~/composables/useNotifications'
 
 useHead({ title: 'Bandeja de entrada' })
 
-// Fuera de /manager, /creator, /client a propósito — la misma pantalla
-// sirve para los 3 roles, solo cambia el `role` que le pasamos a AppShell
-// para que la barra lateral y la de navegación salgan con el aspecto de la
-// cuenta logueada.
+// Fuera de /creator y /partner a propósito — la misma pantalla sirve para
+// los 2 roles, solo cambia el `role` que le pasamos a AppShell para que la
+// barra lateral y la de navegación salgan con el aspecto de la cuenta
+// logueada.
 const { role, ensureRole } = useMyRole()
 const myRole = role.value ?? (await ensureRole()) ?? 'creator'
 

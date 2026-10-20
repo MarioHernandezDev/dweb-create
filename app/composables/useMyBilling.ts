@@ -4,16 +4,16 @@ export interface MySubscription {
 }
 
 /**
- * Estado de pago del manager/influencer logueado (Fase 3): su suscripción
- * (si la hay) y si ya conectó su cuenta de Stripe Connect para cobrar. Solo
- * lee — las escrituras de verdad las hace el webhook, nunca el cliente (ver
+ * Estado de pago del creador logueado (Fase 3): su suscripción (si la hay)
+ * y si ya conectó su cuenta de Stripe Connect para cobrar. Solo lee — las
+ * escrituras de verdad las hace el webhook, nunca el cliente (ver
  * server/api/stripe/webhook.post.ts).
  *
- * A propósito NO depende de `useMyInfluencer`/`useMyManager` para resolver
- * quién es el dueño: esos composables cachean su resultado durante toda la
- * sesión de pestaña, así que si `refresh()` dependiera de su `.value` podía
- * quedarse leyendo un dato de antes de pagar/conectar. Aquí se resuelve el
- * dueño directamente en cada `refresh()`, siempre fresco.
+ * A propósito NO depende de `useMyCreator` para resolver quién es el dueño:
+ * ese composable cachea su resultado durante toda la sesión de pestaña, así
+ * que si `refresh()` dependiera de su `.value` podía quedarse leyendo un
+ * dato de antes de pagar/conectar. Aquí se resuelve el dueño directamente en
+ * cada `refresh()`, siempre fresco.
  */
 export function useMyBilling() {
   const client = useSupabaseClient()
@@ -30,16 +30,13 @@ export function useMyBilling() {
     // en una recarga (ver role-guard.global.ts para el detalle del fallo).
     const { data: { user } } = await client.auth.getUser()
     const uid = user?.id
-    if (!uid || (role.value !== 'manager' && role.value !== 'creator')) {
+    if (!uid || role.value !== 'creator') {
       loaded.value = true
       return
     }
 
-    const table = role.value === 'manager' ? 'managers' : 'influencers'
-    const ownerColumn = role.value === 'manager' ? 'manager_id' : 'influencer_id'
-
     const { data: ownerRow, error: ownerError } = await client
-      .from(table)
+      .from('creators')
       .select('id, stripe_connect_onboarded')
       .eq('profile_id', uid)
       .maybeSingle<{ id: string; stripe_connect_onboarded: boolean }>()
@@ -56,7 +53,7 @@ export function useMyBilling() {
     const { data, error } = await client
       .from('subscriptions')
       .select('plan_id, status')
-      .eq(ownerColumn, ownerRow.id)
+      .eq('creator_id', ownerRow.id)
       .maybeSingle<{ plan_id: string; status: string }>()
     if (error) console.error('[useMyBilling] fallo al cargar la suscripción:', error.message)
 
@@ -69,7 +66,7 @@ export function useMyBilling() {
     return subscription.value
   }
 
-  async function subscribe(planId: 'pro' | 'agency') {
+  async function subscribe(planId: 'pro') {
     redirecting.value = true
     try {
       const { url } = await $fetch('/api/stripe/create-checkout-session', { method: 'POST', body: { planId } })

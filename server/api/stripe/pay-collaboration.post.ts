@@ -2,12 +2,11 @@ import { serverSupabaseServiceRole, serverSupabaseUser } from '#supabase/server'
 
 /**
  * POST /api/stripe/pay-collaboration — el cobro real del marketplace (ver
- * README Fase 3): la marca paga el presupuesto acordado y el dinero llega
- * directo al influencer o manager (su cuenta de Stripe Connect), menos la
- * comisión de FEEDMA (`application_fee_amount`). Esto es un Checkout de
- * pago único (`mode: 'payment'`), distinto del de suscripción — ahí FEEDMA
- * es quien cobra; aquí FEEDMA solo se queda una comisión de un pago entre
- * otros dos.
+ * README Fase 3): el partner paga el presupuesto acordado y el dinero llega
+ * directo al creador (su cuenta de Stripe Connect), menos la comisión de
+ * FEEDMA (`application_fee_amount`). Esto es un Checkout de pago único
+ * (`mode: 'payment'`), distinto del de suscripción — ahí FEEDMA es quien
+ * cobra; aquí FEEDMA solo se queda una comisión de un pago entre otros dos.
  */
 
 interface Body {
@@ -16,9 +15,8 @@ interface Body {
 
 interface CollaborationRow {
   id: string
-  brand_client_id: string
-  influencer_id: string | null
-  manager_id: string | null
+  partner_id: string
+  creator_id: string
   budget_cents: number | null
   paid_at: string | null
   status: string
@@ -33,19 +31,19 @@ export default defineEventHandler(async (event) => {
 
   const client = serverSupabaseServiceRole(event)
 
-  const { data: brandClient } = await client
-    .from('brand_clients')
+  const { data: partner } = await client
+    .from('partners')
     .select('id')
     .eq('profile_id', user.sub)
     .maybeSingle<{ id: string }>()
-  if (!brandClient) throw createError({ statusCode: 403, statusMessage: 'Solo una marca puede pagar una colaboración.' })
+  if (!partner) throw createError({ statusCode: 403, statusMessage: 'Solo un partner puede pagar una colaboración.' })
 
   const { data: collaboration } = await client
     .from('collaborations')
-    .select('id, brand_client_id, influencer_id, manager_id, budget_cents, paid_at, status')
+    .select('id, partner_id, creator_id, budget_cents, paid_at, status')
     .eq('id', body.collaborationId)
     .maybeSingle<CollaborationRow>()
-  if (!collaboration || collaboration.brand_client_id !== brandClient.id) {
+  if (!collaboration || collaboration.partner_id !== partner.id) {
     throw createError({ statusCode: 404, statusMessage: 'Colaboración no encontrada.' })
   }
   if (collaboration.paid_at) throw createError({ statusCode: 400, statusMessage: 'Esta colaboración ya está pagada.' })
@@ -58,25 +56,10 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'Esta colaboración no tiene presupuesto definido.' })
   }
 
-  // Se paga a quien de verdad va a recibir el dinero: el influencer directo
-  // si lo hay, y si no, su manager (mismo criterio que "a quién contacta la
-  // marca" en client/discover.vue).
-  let payeeTable: 'influencers' | 'managers'
-  let payeeId: string
-  if (collaboration.influencer_id) {
-    payeeTable = 'influencers'
-    payeeId = collaboration.influencer_id
-  } else if (collaboration.manager_id) {
-    payeeTable = 'managers'
-    payeeId = collaboration.manager_id
-  } else {
-    throw createError({ statusCode: 400, statusMessage: 'Esta colaboración no tiene a quién pagar todavía.' })
-  }
-
   const { data: payee } = await client
-    .from(payeeTable)
+    .from('creators')
     .select('stripe_connect_account_id, stripe_connect_onboarded')
-    .eq('id', payeeId)
+    .eq('id', collaboration.creator_id)
     .maybeSingle<{ stripe_connect_account_id: string | null; stripe_connect_onboarded: boolean }>()
   if (!payee?.stripe_connect_account_id || !payee.stripe_connect_onboarded) {
     throw createError({
@@ -104,8 +87,8 @@ export default defineEventHandler(async (event) => {
       application_fee_amount: platformFeeCents(budgetCents),
       transfer_data: { destination: payee.stripe_connect_account_id }
     },
-    success_url: `${origin}/client/profile?payment=success`,
-    cancel_url: `${origin}/client/profile?payment=cancelled`,
+    success_url: `${origin}/partner/profile?payment=success`,
+    cancel_url: `${origin}/partner/profile?payment=cancelled`,
     metadata: { collaboration_id: collaboration.id }
   })
 

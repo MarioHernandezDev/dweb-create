@@ -69,7 +69,7 @@ onMounted(() => {
           Tu próxima entrega, sin dramas de producción.
         </h3>
         <p class="text-white/65 text-[0.9375rem] leading-relaxed max-w-[42ch] mx-auto mb-9">
-          Entra con tu cuenta o mira cómo sería el registro — da igual si eres marca, influencer o manager.
+          Entra con tu cuenta o crea una nueva — da igual si eres partner o creador de contenido.
         </p>
         <div class="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-5">
           <BaseButton to="/login" variant="primary" size="lg" icon="ph:arrow-right-bold" class="w-full sm:w-auto sm:px-9">

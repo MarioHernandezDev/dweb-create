@@ -15,7 +15,7 @@ Hoy, "Conectar" en Redes solo crea una fila en `social_accounts` sin ningún tok
 
 ## 1. Requisito previo: cuenta de Instagram profesional
 
-En la app de Instagram (del influencer que vayas a probar, puede ser tu propia cuenta de pruebas): **Ajustes y privacidad → Tipo de cuenta y herramientas → Cambiar a cuenta profesional** → elige Creador. Gratis, sin verificación de negocio para esto.
+En la app de Instagram (del creador que vayas a probar, puede ser tu propia cuenta de pruebas): **Ajustes y privacidad → Tipo de cuenta y herramientas → Cambiar a cuenta profesional** → elige Creador. Gratis, sin verificación de negocio para esto.
 
 ## 2. Crear la app en Meta for Developers (esto lo tienes que hacer tú)
 
@@ -44,7 +44,7 @@ Reinicia `npm run dev` para que recoja las variables nuevas.
 
 ## 4. Cómo probar que funciona
 
-1. Entra como `influencer@feedma.test` (o la cuenta que tenga la cuenta de Instagram profesional de pruebas vinculada en el paso 1).
+1. Entra como `creator@feedma.test` (o la cuenta que tenga la cuenta de Instagram profesional de pruebas vinculada en el paso 1).
 2. Ve a **Redes** → pulsa "Conectar" en Instagram.
 3. Te manda a instagram.com a autorizar. Si tu cuenta es la del desarrollador de la app (o la añadiste como "tester" en el dashboard), funciona sin más — para cuentas de terceros hace falta **Advanced Access** (App Review + verificación de negocio de Meta), que queda fuera de esta primera versión.
 4. Tras autorizar, vuelves a `/creator/socials` con un mensaje de "Cuenta de Instagram conectada" y la fila ya aparece como conectada (con tu `@usuario` real).

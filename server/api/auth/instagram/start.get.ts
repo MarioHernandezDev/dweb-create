@@ -20,14 +20,14 @@ export default defineEventHandler(async (event) => {
   }
 
   const client = serverSupabaseServiceRole(event)
-  const { data: influencer } = await client
-    .from('influencers')
+  const { data: creator } = await client
+    .from('creators')
     .select('id')
     .eq('profile_id', user.sub)
     .maybeSingle<{ id: string }>()
-  if (!influencer) throw createError({ statusCode: 403, statusMessage: 'Solo los creadores pueden conectar redes sociales.' })
+  if (!creator) throw createError({ statusCode: 403, statusMessage: 'Solo los creadores pueden conectar redes sociales.' })
 
-  const state = createOAuthState(influencer.id, config.socialTokenEncryptionKey)
+  const state = createOAuthState(creator.id, config.socialTokenEncryptionKey)
 
   const authorizeUrl = new URL('https://www.instagram.com/oauth/authorize')
   authorizeUrl.searchParams.set('client_id', config.instagramAppId)

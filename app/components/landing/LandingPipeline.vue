@@ -9,7 +9,7 @@ interface Stage { status: PostStatus; copy: string }
 const stages: Stage[] = [
   { status: 'idea', copy: 'Apuntas la idea en el calendario de la semana.' },
   { status: 'in_production', copy: 'Se graba o se diseña — el estado lo marca quien lo está haciendo.' },
-  { status: 'ready_for_review', copy: 'El manager o la marca lo revisa antes de que salga.' },
+  { status: 'ready_for_review', copy: 'El partner lo revisa antes de que salga.' },
   { status: 'scheduled', copy: 'Fecha y hora fijadas, listo para publicarse solo.' },
   { status: 'published', copy: 'Publicado. Las métricas empiezan a entrar solas.' }
 ]

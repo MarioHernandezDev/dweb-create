@@ -4,6 +4,50 @@ Registro de qué se hizo, por qué, y qué queda pendiente de verificar — pens
 
 ---
 
+## 2026-10-21 (18) — Se elimina el rol Manager; Influencer → "Creador de contenido", Cliente → "Partner" (renombrado completo)
+
+Decisión de producto del usuario: un manager, en la práctica, sería un partner más (contrata/organiza trabajo) — categorizarlo como un tercer rol aparte no tenía sentido. Se centralizan las relaciones en **creator ↔ partner**, y de paso se renombran los otros dos roles. A petición explícita, el renombrado es **completo y destructivo**: no solo etiquetas de UI, también tablas, columnas, funciones, políticas RLS, rutas y tipos — y se borra de verdad lo que queda sin uso (no se deja en desuso). Posible porque el proyecto sigue sin desplegarse (sin usuarios reales en producción todavía).
+
+### Base de datos
+
+- **`supabase/migrations/20261021120000_remove_manager_rename_creator_partner.sql`** (nueva, sin aplicar todavía — depende de que las migraciones anteriores ya estén aplicadas, en orden): la migración más grande hasta ahora.
+  - Borra la cuenta demo de manager y su fila de `profiles` (`delete from auth.users ...`), la tabla `managers` entera, y `roster_requests` (con sus triggers y funciones — quedaba huérfana sin manager al que unirse).
+  - Quita `manager_id` de `collaborations`/`subscriptions`/`influencers`; `collaborations.creator_id` pasa a ser `not null` (ya no hay manager que lo asigne más tarde — se borran de demo las filas que se quedarían sin dueño).
+  - Renombra tablas: `influencers` → `creators`, `brand_clients` → `partners`. Renombra columnas: `influencer_id` → `creator_id`, `brand_client_id` → `partner_id`, en todas las tablas que los tenían.
+  - `profiles.role`: el check pasa de `('manager','influencer','client')` a `('creator','partner')`; las filas existentes se actualizan (`influencer`→`creator`, `client`→`partner`).
+  - Redefine bajo los nombres nuevos: `current_creator_id()`, `current_partner_id()`, `has_active_collaboration_with()`, todas las políticas RLS, `handle_new_user()` (sin rama de manager), `grant_welcome_credits()` (trigger ahora en `creators`), `approve_post`/`request_post_changes` (comprueban `partner_id`), y los triggers de notificaciones de colaboración (`notify_collaboration_created`/`updated`, ya sin la rama "manager asigna más tarde").
+  - `subscriptions.plan_id`: fuera `'agency'` (era el plan de manager).
+- Las migraciones `20261020180000_real_signup.sql` y `20261021110000_notifications.sql` (ninguna de las dos confirmada aplicada todavía) se dejaron **tal cual** a propósito: en el momento en que corren dentro de la secuencia, las tablas viejas (`influencers`/`managers`/`brand_clients`) todavía existen — son perfectamente válidas para ese punto del historial, y la migración de arriba las redefine al final con los nombres nuevos. Aplicar todas las migraciones pendientes seguidas, en orden, en una sola sesión.
+
+### Frontend
+
+- **Tipos** (`~/types`): `Role = 'creator' | 'partner'` (sin `'manager'`/`'client'`, sin traducción DB↔frontend — antes `useMyRole` traducía `'influencer'` de la base de datos a `'creator'` del frontend; ahora son el mismo valor en los dos sitios). `Influencer` → `Creator` (sin `managerId`), `BrandClient` → `Partner`, `Manager` eliminado. `Post.influencerId` → `creatorId`.
+- **Composables**: `useMyInfluencer` → `useMyCreator`, `useMyBrandClient` → `useMyPartner`; `useMyManager`, `useMyRoster`, `useRosterRequests` **eliminados** (con el manager desaparece el roster y sus solicitudes). `useClientPosts` → `usePartnerPosts`. `useCollabRequests` simplificado (ya no hay rama "aceptar y asignar a alguien del roster" — el partner contacta directo al creador, sin intermediario). `useMyCollaborations`, `useMyPosts`, `useMyBilling`, `useMyCredits`, `useMySocialAccounts`, `useAccountCache` actualizados a los nombres de columna/tabla nuevos.
+- **Páginas**: `app/pages/manager/` **eliminado entero** (7 archivos — resumen, roster, solicitudes, solicitudes de plantilla, tablero, métricas, perfil). `app/pages/client/` → `app/pages/partner/` (discover ya no tiene sección "Agencias"). `app/pages/creator/discover.vue` **eliminado** (pedir unirse a un roster ya no tiene sentido sin managers). `creator/profile.vue` pierde la fila "Agencia".
+- **Componentes**: `app/components/influencers/InfluencerRow.vue` eliminado (solo lo usaba el manager). `PostDetailSheet`/`WeekBoard`/`DeliverableCard`: prop `influencer` → `creator`, tipo `Influencer` → `Creator`.
+- **Navegación** (`utils/nav.ts`): `roleMeta`/`roleNav` solo `creator`/`partner`, con las etiquetas pedidas ("Creador de contenido", "Partner"). `role-guard.global.ts` simplificado a 2 secciones.
+- **Landing**: `LandingRoles.vue` (3 tarjetas → 2), `LandingFilmstrip.vue` (quita el frame de manager), `LandingHero.vue`/`LandingCta.vue`/`LandingPipeline.vue` (texto actualizado).
+
+### Servidor
+
+- `server/utils/account-identity.ts`: `resolvePayerIdentity` simplificado — solo creadores tienen Connect/suscripción (antes resolvía manager O influencer).
+- `server/utils/stripe-plans.ts`: fuera el plan `'agency'`, fuera el campo `for: 'influencer'|'manager'` (ya no hace falta, solo hay un tipo de cuenta que paga).
+- `server/api/stripe/{create-checkout-session,connect/account-link,pay-collaboration}.post.ts`, `webhook.post.ts`, `ml/{predict,trends}.*.ts`, `auth/instagram/{start,callback}.get.ts`, `utils/oauth-state.ts`: `influencer_id`/`influencers`/`manager_id`/`managers` → `creator_id`/`creators` (sin rama de manager en ningún sitio).
+
+### Otros
+
+- `scripts/seed-demo-users.mjs`: ahora crea 2 cuentas (`creator@feedma.test`, `partner@feedma.test`), no 3. **Las cuentas demo ya existentes en el proyecto real** (`influencer@feedma.test`, `client@feedma.test`) siguen funcionando con sus emails de siempre — la migración les actualiza el `role`, pero no cambia su email; solo una base de datos nueva (o re-seedeada desde cero) tendría los emails `creator@`/`partner@`.
+- `docs/2-DATABASE-SCHEMA.md` reescrito; `README.md`, `6-SUPABASE-SETUP.md`, `7-STRIPE-SETUP.md`, `8-AI-SUGGESTIONS-SETUP.md`, `9-INSTAGRAM-OAUTH-SETUP.md`, `1-ARCHITECTURE.md` actualizados. `5-FRONTEND-WORK-SPLIT.md` (describe el reparto de la Fase 1 con 3 roles) se dejó con un aviso arriba en vez de reescribirlo entero — es un documento histórico de una fase ya cerrada.
+
+### Verificado / sin verificar
+
+- `npx vue-tsc --noEmit` limpio (todo el proyecto) tras el renombrado completo.
+- `npx nuxi prepare` corrido para regenerar los auto-imports de Nuxt con los composables nuevos/renombrados.
+- Servidor de pruebas sano: `/`, `/login`, `/onboarding` → 200; `/inbox`, `/creator`, `/creator/requests`, `/creator/profile`, `/partner`, `/partner/discover`, `/partner/profile`, `/manager` → 302 (sin sesión, como cualquier ruta protegida — `/manager` ya no existe como página, pero el middleware de sesión redirige antes de que eso se note).
+- **Falta aplicar la migración** en Supabase (después de las pendientes anteriores, en orden) y **probar en navegador real**: iniciar sesión con las cuentas existentes (ahora con rol `creator`/`partner`), confirmar que el registro de una cuenta nueva sigue funcionando, y repetir el flujo de colaboración completo (contactar → aceptar → post vinculado → aprobar → pagar) ya sin manager de por medio.
+
+---
+
 ## 2026-10-21 (17) — La app se sentía lenta al navegar: dos causas reales, medidas
 
 El usuario reportó que "la web va lentísima". Medido contra el proyecto real (`curl` directo a Supabase, 3 intentos): cada ida y vuelta ronda **300-450ms**, con un pico de 1.6s si el proyecto llevaba un rato inactivo (cold start del free tier). Con eso confirmado, se repasó qué hace la app en cada navegación.

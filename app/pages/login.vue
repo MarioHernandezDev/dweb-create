@@ -13,9 +13,8 @@ const activeDemo = ref('')
 const error = ref('')
 
 const demoAccounts = [
-  { label: 'Manager', email: 'manager@feedma.test', icon: 'ph:briefcase-fill' },
-  { label: 'Influencer', email: 'influencer@feedma.test', icon: 'ph:sparkle-fill' },
-  { label: 'Cliente', email: 'client@feedma.test', icon: 'ph:user-circle-fill' }
+  { label: 'Creador de contenido', email: 'creator@feedma.test', icon: 'ph:sparkle-fill' },
+  { label: 'Partner', email: 'partner@feedma.test', icon: 'ph:user-circle-fill' }
 ]
 const demoPassword = 'feedma-demo-2026'
 

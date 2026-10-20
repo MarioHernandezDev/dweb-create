@@ -8,56 +8,33 @@ useHead({ title: 'Crear cuenta' })
 const banner = localPhotos.onboarding
 const supabase = useSupabaseClient()
 
-type WorkMode = 'solo' | 'manager'
 type Stage = 'form' | 'sent'
 
-// El rol del frontend ('creator') no es el mismo valor que guarda la base de
-// datos ('influencer') — ver dbRoleToAppRole en useMyRole.ts, esto es el
-// mapeo inverso, solo hace falta aquí.
-const dbRole: Record<Role, string> = { creator: 'influencer', manager: 'manager', client: 'client' }
-
-const roles: Role[] = ['manager', 'creator', 'client']
+const roles: Role[] = ['creator', 'partner']
 const selectedRole = ref<Role | null>(null)
-const workMode = ref<WorkMode | null>(null)
 const stage = ref<Stage>('form')
 
-// El influencer tiene un paso extra (solo/con manager); los otros dos roles
-// van directos del paso 1 al formulario. El paso "solo/manager" todavía no
-// hace nada de verdad (no hay forma de unirse al roster de una agencia
-// todavía) — solo ajusta el texto de después, como antes.
-const needsWorkModeStep = computed(() => selectedRole.value === 'creator')
-const step = computed(() => {
-  if (!selectedRole.value) return 1
-  if (needsWorkModeStep.value && !workMode.value) return 2
-  return 3
-})
-const totalSteps = computed(() => (needsWorkModeStep.value ? 3 : 2))
+const step = computed(() => (!selectedRole.value ? 1 : 2))
 
 function chooseRole(role: Role) {
   selectedRole.value = role
-  workMode.value = null
 }
 
 function back() {
-  if (step.value === 3 && needsWorkModeStep.value) workMode.value = null
-  else selectedRole.value = null
+  selectedRole.value = null
 }
 
 const fullName = ref('')
-const orgName = ref('') // nombre de agencia/empresa — solo manager/client
-const detail = ref('') // niche/focus/industry, opcional
+const orgName = ref('') // nombre de empresa — solo partner
+const detail = ref('') // niche/industry, opcional
 const email = ref('')
 const password = ref('')
 const loading = ref(false)
 const error = ref('')
 
-const needsOrgName = computed(() => selectedRole.value === 'manager' || selectedRole.value === 'client')
-const orgLabel = computed(() => (selectedRole.value === 'manager' ? 'Nombre de tu agencia' : 'Nombre de la empresa'))
-const detailLabel = computed(() => {
-  if (selectedRole.value === 'manager') return 'Especialidad (opcional)'
-  if (selectedRole.value === 'client') return 'Sector (opcional)'
-  return 'Nicho (opcional)'
-})
+const needsOrgName = computed(() => selectedRole.value === 'partner')
+const orgLabel = 'Nombre de la empresa'
+const detailLabel = computed(() => (selectedRole.value === 'partner' ? 'Sector (opcional)' : 'Nicho (opcional)'))
 
 async function register() {
   if (!selectedRole.value) return
@@ -71,9 +48,9 @@ async function register() {
     password: password.value,
     options: {
       data: {
-        role: dbRole[selectedRole.value],
+        role: selectedRole.value,
         full_name: fullName.value,
-        // Para influencer (sin campo de empresa), el display_name es el
+        // Para creator (sin campo de empresa), el display_name es el
         // propio nombre — ver handle_new_user() en la migración.
         name: needsOrgName.value ? orgName.value : fullName.value,
         detail: detail.value || null
@@ -110,7 +87,7 @@ async function register() {
             <Icon name="ph:arrow-left-bold" class="size-4" />
           </button>
           <span
-            v-for="n in totalSteps" :key="n" class="h-1.5 rounded-full transition-[width,background-color] duration-300 ease-[var(--ease-spring)]"
+            v-for="n in 2" :key="n" class="h-1.5 rounded-full transition-[width,background-color] duration-300 ease-[var(--ease-spring)]"
             :class="n <= step ? 'w-7 bg-[var(--color-primary-500)]' : 'w-3.5 bg-[var(--color-ink-overlay)]'"
           />
         </div>
@@ -143,37 +120,7 @@ async function register() {
             </div>
           </div>
 
-          <!-- Paso 2 (solo influencer): solo o con manager -->
-          <div v-else-if="stage === 'form' && step === 2" key="workmode">
-            <h1 class="font-display text-[1.875rem] md:text-[2.25rem] leading-[1.1] text-[var(--color-text)] mb-2">¿Trabajas solo o con un manager?</h1>
-            <p class="text-[0.9375rem] text-[var(--color-text-muted)] mb-7">Puedes cambiarlo más adelante — esto solo decide quién puede gestionar tus entregas además de ti.</p>
-            <div class="flex flex-col gap-3">
-              <button type="button" class="text-left" @click="workMode = 'solo'">
-                <BaseCard radius="lg" padding="lg" interactive class="flex items-center gap-4">
-                  <span class="flex items-center justify-center size-12 rounded-full bg-[var(--color-ink-overlay)] text-[var(--color-primary-500)] shrink-0">
-                    <Icon name="ph:user-fill" class="size-5" />
-                  </span>
-                  <div class="min-w-0 flex-1">
-                    <p class="font-display text-[1.1875rem] text-[var(--color-text)]">Trabajo solo</p>
-                    <p class="mt-0.5 text-[0.8125rem] text-[var(--color-text-muted)] leading-relaxed">Las marcas te contactan directamente. Gestionas tú todo tu calendario.</p>
-                  </div>
-                </BaseCard>
-              </button>
-              <button type="button" class="text-left" @click="workMode = 'manager'">
-                <BaseCard radius="lg" padding="lg" interactive class="flex items-center gap-4">
-                  <span class="flex items-center justify-center size-12 rounded-full bg-[var(--color-ink-overlay)] text-[var(--color-primary-500)] shrink-0">
-                    <Icon name="ph:users-three-fill" class="size-5" />
-                  </span>
-                  <div class="min-w-0 flex-1">
-                    <p class="font-display text-[1.1875rem] text-[var(--color-text)]">Busco un manager</p>
-                    <p class="mt-0.5 text-[0.8125rem] text-[var(--color-text-muted)] leading-relaxed">Una agencia reparte el trabajo por ti y negocia con las marcas. Unirte al roster de una agencia es un paso aparte, todavía manual.</p>
-                  </div>
-                </BaseCard>
-              </button>
-            </div>
-          </div>
-
-          <!-- Paso 3: formulario real de registro -->
+          <!-- Paso 2: formulario real de registro -->
           <form v-else-if="stage === 'form'" key="register" class="flex flex-col gap-4" @submit.prevent="register">
             <h1 class="font-display text-[1.875rem] md:text-[2.25rem] leading-[1.1] text-[var(--color-text)] mb-1">Crea tu cuenta</h1>
             <p class="text-[0.9375rem] text-[var(--color-text-muted)] mb-2">Como {{ selectedRole ? roleMeta[selectedRole].label : '' }}.</p>

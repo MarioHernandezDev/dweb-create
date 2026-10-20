@@ -18,8 +18,8 @@ const overdue = computed(() => posts.value.filter((p) => p.status === 'overdue')
 const streak = 6
 
 // El objetivo semanal (nº de publicaciones/semana) es del perfil del
-// influencer en Supabase en el futuro; de momento, fijo, como el resto de
-// la ficha de "creator" que aún no se edita desde la app.
+// creador en Supabase en el futuro; de momento, fijo, como el resto de la
+// ficha de "creator" que aún no se edita desde la app.
 const weeklyTarget = 5
 const publishedThisWeek = computed(() => posts.value.filter((p) => p.status === 'published').length)
 const goalPct = computed(() => (posts.value.length ? Math.min(100, Math.round((publishedThisWeek.value / weeklyTarget) * 100)) : 0))

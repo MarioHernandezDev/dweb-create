@@ -60,7 +60,7 @@
       class="nx-stagger-in text-[var(--color-text-muted)] text-[0.9375rem] md:text-[1.0625rem] leading-relaxed max-w-[40ch] mb-9"
       style="--stagger-i: 2"
     >
-      Entregas, métricas y predicciones de éxito — marcas, influencers y sus managers, todo en un solo sitio.
+      Entregas, métricas y predicciones de éxito — partners y creadores de contenido, todo en un solo sitio.
     </p>
 
     <div class="nx-stagger-in flex flex-col items-center gap-4 sm:flex-row sm:gap-6" style="--stagger-i: 3">

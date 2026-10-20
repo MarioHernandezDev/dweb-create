@@ -1,5 +1,7 @@
 # 5. Reparto de trabajo del frontend (ahora mismo)
 
+> ⚠️ **Documento de la Fase 1, parcialmente desfasado**: describe el reparto cuando todavía existían 3 roles (manager/influencer/cliente). El rol Manager se eliminó y los otros dos se renombraron a Creador de contenido (`creator`) y Partner (`partner`) — ver `docs/CHANGELOG.md`. La estructura de carpetas por rol que describe abajo sigue siendo el patrón general, solo que ahora son 2 verticales (`creator`/`partner`), no 3.
+
 Este documento es para repartir lo que queda del frontend entre dos personas trabajando en el mismo repo a la vez, sin pisaros los cambios. Se centra en el trabajo *actual* (frontend con datos de ejemplo); el reparto del proyecto completo semana a semana sigue en [`4-ROADMAP-AND-TASKS.md`](./4-ROADMAP-AND-TASKS.md).
 
 ## 1. Cómo está organizado el código

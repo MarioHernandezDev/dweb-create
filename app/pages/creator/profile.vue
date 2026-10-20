@@ -6,7 +6,6 @@ const { logout } = useLogout()
 
 const route = useRoute()
 const { subscription, connectOnboarded, redirecting, ensureLoaded, refresh: refreshBilling, subscribe, connectPayouts } = useMyBilling()
-const { influencer } = useMyInfluencer()
 
 // Al volver de Stripe (Checkout o Connect) los datos ya cambiaron en el
 // servidor vía webhook — hay que refrescar de verdad, no fiarse de la
@@ -53,13 +52,6 @@ const planLabel = computed(() => {
             <span class="text-[0.9375rem] text-[var(--color-text)]">Redes conectadas</span>
             <Icon name="ph:caret-right-bold" class="size-4 text-[var(--color-text-faint)]" />
           </NuxtLink>
-          <NuxtLink to="/creator/discover" class="flex items-center justify-between px-5 py-4">
-            <span class="text-[0.9375rem] text-[var(--color-text)]">Agencia</span>
-            <span class="flex items-center gap-2">
-              <span class="text-[0.8125rem] text-[var(--color-text-faint)]">{{ influencer?.managerName ?? 'Trabajas solo' }}</span>
-              <Icon name="ph:caret-right-bold" class="size-4 text-[var(--color-text-faint)]" />
-            </span>
-          </NuxtLink>
           <div class="flex items-center justify-between px-5 py-4">
             <span class="text-[0.9375rem] text-[var(--color-text)]">Créditos de predicción</span>
             <span class="text-[0.8125rem] text-[var(--color-text-faint)]">18 restantes</span>
@@ -86,7 +78,7 @@ const planLabel = computed(() => {
             <div>
               <p class="text-[0.9375rem] text-[var(--color-text)]">Cuenta de pagos</p>
               <p class="text-[0.75rem] text-[var(--color-text-faint)] mt-0.5">
-                {{ connectOnboarded ? 'Verificada — ya puedes cobrar colaboraciones' : 'Necesaria para cobrar cuando una marca te contrata' }}
+                {{ connectOnboarded ? 'Verificada — ya puedes cobrar colaboraciones' : 'Necesaria para cobrar cuando un partner te contrata' }}
               </p>
             </div>
             <Icon v-if="connectOnboarded" name="ph:check-circle-fill" class="size-5 text-[var(--color-status-published)] shrink-0" />

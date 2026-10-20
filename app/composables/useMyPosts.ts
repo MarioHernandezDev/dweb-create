@@ -2,7 +2,7 @@ import type { ContentType, Platform, Post, PostStatus, Suggestion } from '~/type
 
 interface PostRow {
   id: string
-  influencer_id: string
+  creator_id: string
   collaboration_id: string | null
   title: string
   caption: string | null
@@ -38,7 +38,7 @@ function mapRow(row: PostRow): Post {
   const prediction = latestPrediction(row.ml_predictions)
   return {
     id: row.id,
-    influencerId: row.influencer_id,
+    creatorId: row.creator_id,
     collaborationId: row.collaboration_id,
     title: row.title,
     caption: row.caption ?? '',
@@ -68,28 +68,28 @@ export interface NewPostInput {
 }
 
 /**
- * Los posts del influencer logueado, leídos de verdad de Supabase (sustituye
+ * Los posts del creador logueado, leídos de verdad de Supabase (sustituye
  * a `useCreatorPosts`, que vivía solo de `mock-data.ts`). Cacheados en
  * `useState` como el resto de la app; `useLogout`/`login.vue` los vacían al
  * cambiar de cuenta.
  */
 export function useMyPosts() {
   const client = useSupabaseClient()
-  const { influencer, ensureInfluencer } = useMyInfluencer()
+  const { creator, ensureCreator } = useMyCreator()
 
   const posts = useState<Post[]>('my-posts', () => [])
   const loading = useState<boolean>('my-posts-loading', () => false)
   const loaded = useState<boolean>('my-posts-loaded', () => false)
 
   async function refresh() {
-    const me = influencer.value ?? (await ensureInfluencer())
+    const me = creator.value ?? (await ensureCreator())
     if (!me) return
 
     loading.value = true
     const { data, error } = await client
       .from('posts')
       .select('*, ml_predictions(success_score, confidence, suggestions, created_at)')
-      .eq('influencer_id', me.id)
+      .eq('creator_id', me.id)
       .order('due_date', { ascending: true })
     loading.value = false
 
@@ -129,14 +129,14 @@ export function useMyPosts() {
   }
 
   async function createPost(input: NewPostInput) {
-    const me = influencer.value ?? (await ensureInfluencer())
-    if (!me) throw new Error('No se ha encontrado tu ficha de influencer.')
+    const me = creator.value ?? (await ensureCreator())
+    if (!me) throw new Error('No se ha encontrado tu ficha de creador.')
 
     const dueDate = new Date(Date.now() + (input.dueInDays ?? 3) * 86_400_000)
     const { data, error } = await client
       .from('posts')
       .insert({
-        influencer_id: me.id,
+        creator_id: me.id,
         collaboration_id: input.collaborationId ?? null,
         title: input.title,
         caption: input.caption,

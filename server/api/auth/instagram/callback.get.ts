@@ -54,8 +54,8 @@ export default defineEventHandler(async (event) => {
     return redirectWithError('Falta el código de autorización de Instagram.')
   }
 
-  const influencerId = verifyOAuthState(state, config.socialTokenEncryptionKey)
-  if (!influencerId) {
+  const creatorId = verifyOAuthState(state, config.socialTokenEncryptionKey)
+  if (!creatorId) {
     return redirectWithError('La sesión de conexión caducó o no es válida. Inténtalo otra vez.')
   }
 
@@ -90,7 +90,7 @@ export default defineEventHandler(async (event) => {
     const { error } = await client
       .from('social_accounts')
       .upsert({
-        influencer_id: influencerId,
+        creator_id: creatorId,
         platform: 'instagram',
         handle: profile.username,
         access_token_encrypted: encrypted,
@@ -101,7 +101,7 @@ export default defineEventHandler(async (event) => {
         refresh_token_encrypted: encrypted,
         token_expires_at: expiresAt,
         connected_at: new Date().toISOString()
-      } as never, { onConflict: 'influencer_id,platform' })
+      } as never, { onConflict: 'creator_id,platform' })
     if (error) throw error
 
     return sendRedirect(event, '/creator/socials?instagram=connected')

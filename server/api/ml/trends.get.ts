@@ -8,7 +8,7 @@ import type { ContentType, Platform } from '~/types'
  * scraping de hashtags virales — eso sigue siendo trabajo futuro, igual que
  * el pgvector/embeddings de la Fase 2 del documento). Lo que sí es real:
  *
- * - El nicho y los posts propios del influencer SÍ vienen de Supabase de
+ * - El nicho y los posts propios del creador SÍ vienen de Supabase de
  *   verdad (nada de mock-data.ts).
  * - Las ideas de contenido las genera el LLM gratuito de OpenRouter (mismo
  *   que /api/ml/predict) a partir de ese nicho y esos posts, para no repetir
@@ -22,7 +22,7 @@ import type { ContentType, Platform } from '~/types'
  *   durante 24h por nicho, para no llamar al LLM en cada visita a la página.
  */
 
-interface InfluencerRow {
+interface CreatorRow {
   id: string
   niche: string | null
 }
@@ -84,7 +84,7 @@ function mapDbRow(row: TrendRow) {
 }
 
 /**
- * Pide al LLM gratuito ideas de contenido para el nicho del influencer,
+ * Pide al LLM gratuito ideas de contenido para el nicho del creador,
  * evitando repetir lo que ya ha publicado. Nunca lanza: si falla o no
  * devuelve JSON válido, se queda en `[]` y el handler usa `FALLBACK_IDEAS`.
  */
@@ -145,14 +145,14 @@ export default defineEventHandler(async (event) => {
 
   const client = serverSupabaseServiceRole(event)
 
-  const { data: influencer } = await client
-    .from('influencers')
+  const { data: creator } = await client
+    .from('creators')
     .select('id, niche')
     .eq('profile_id', user.sub)
-    .maybeSingle<InfluencerRow>()
-  if (!influencer) throw createError({ statusCode: 403, statusMessage: 'Esta ruta es solo para creadores.' })
+    .maybeSingle<CreatorRow>()
+  if (!creator) throw createError({ statusCode: 403, statusMessage: 'Esta ruta es solo para creadores.' })
 
-  const niche = influencer.niche?.trim() || 'general'
+  const niche = creator.niche?.trim() || 'general'
 
   const freshSince = new Date(Date.now() - FRESH_WINDOW_HOURS * 3_600_000).toISOString()
   const { data: cached } = await client
@@ -171,7 +171,7 @@ export default defineEventHandler(async (event) => {
   const { data: ownPosts } = await client
     .from('posts')
     .select('title, platform, content_type')
-    .eq('influencer_id', influencer.id)
+    .eq('creator_id', creator.id)
     .order('created_at', { ascending: false })
     .limit(8)
     .returns<OwnPostRow[]>()

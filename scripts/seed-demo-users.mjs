@@ -1,7 +1,7 @@
-// FEEDMA — crea 3 cuentas de prueba (manager, influencer, cliente) ya
-// relacionadas entre sí (el influencer representado por el manager, con una
-// colaboración y un post esperando aprobación), para probar la app con datos
-// reales de Supabase en vez de los mocks del frontend.
+// FEEDMA — crea 2 cuentas de prueba (creador de contenido, partner) ya
+// relacionadas entre sí (una colaboración y un post esperando aprobación),
+// para probar la app con datos reales de Supabase en vez de los mocks del
+// frontend.
 //
 // Usa la Admin API oficial de Supabase (auth.admin.createUser), NUNCA inserta
 // a mano en auth.users — así el hash de la contraseña y el login quedan
@@ -59,48 +59,33 @@ async function createDemoUser({ email, role, fullName }) {
 }
 
 async function main() {
-  const managerUser = await createDemoUser({
-    email: 'manager@feedma.test',
-    role: 'manager',
-    fullName: 'Estudio Nova (demo)'
-  })
-  const influencerUser = await createDemoUser({
-    email: 'influencer@feedma.test',
-    role: 'influencer',
+  const creatorUser = await createDemoUser({
+    email: 'creator@feedma.test',
+    role: 'creator',
     fullName: 'Nora Blake (demo)'
   })
-  const clientUser = await createDemoUser({
-    email: 'client@feedma.test',
-    role: 'client',
+  const partnerUser = await createDemoUser({
+    email: 'partner@feedma.test',
+    role: 'partner',
     fullName: 'Alma Beauty Co. (demo)'
   })
 
   // El trigger on_auth_user_created ya creó la fila en `profiles` para cada
-  // uno. Ahora rellenamos su ficha de rol (managers / influencers /
-  // brand_clients), con upsert para que el script se pueda repetir sin error.
-  const { data: manager, error: managerError } = await admin
-    .from('managers')
-    .upsert({ profile_id: managerUser.id, agency_name: 'Estudio Nova', focus: 'Moda, fitness y belleza' }, { onConflict: 'profile_id' })
+  // uno. Ahora rellenamos su ficha de rol (creators / partners), con upsert
+  // para que el script se pueda repetir sin error.
+  const { data: creator, error: creatorError } = await admin
+    .from('creators')
+    .upsert({ profile_id: creatorUser.id, display_name: 'Nora Blake', niche: 'Belleza y skincare' }, { onConflict: 'profile_id' })
     .select()
     .single()
-  if (managerError) throw managerError
+  if (creatorError) throw creatorError
 
-  const { data: influencer, error: influencerError } = await admin
-    .from('influencers')
-    .upsert(
-      { profile_id: influencerUser.id, manager_id: manager.id, display_name: 'Nora Blake', niche: 'Belleza y skincare' },
-      { onConflict: 'profile_id' }
-    )
+  const { data: partner, error: partnerError } = await admin
+    .from('partners')
+    .upsert({ profile_id: partnerUser.id, company_name: 'Alma Beauty Co.', industry: 'Belleza' }, { onConflict: 'profile_id' })
     .select()
     .single()
-  if (influencerError) throw influencerError
-
-  const { data: brandClient, error: clientError } = await admin
-    .from('brand_clients')
-    .upsert({ profile_id: clientUser.id, company_name: 'Alma Beauty Co.', industry: 'Belleza' }, { onConflict: 'profile_id' })
-    .select()
-    .single()
-  if (clientError) throw clientError
+  if (partnerError) throw partnerError
 
   // Los relacionamos: una colaboración en curso + un post esperando revisión,
   // para que de entrada haya algo real que aprobar/editar en cada vista.
@@ -112,8 +97,8 @@ async function main() {
   const { data: existingCollaboration, error: existingCollabError } = await admin
     .from('collaborations')
     .select()
-    .eq('brand_client_id', brandClient.id)
-    .eq('influencer_id', influencer.id)
+    .eq('partner_id', partner.id)
+    .eq('creator_id', creator.id)
     .maybeSingle()
   if (existingCollabError) throw existingCollabError
 
@@ -124,9 +109,8 @@ async function main() {
     const { data: newCollaboration, error: collabError } = await admin
       .from('collaborations')
       .insert({
-        brand_client_id: brandClient.id,
-        manager_id: manager.id,
-        influencer_id: influencer.id,
+        partner_id: partner.id,
+        creator_id: creator.id,
         status: 'in_progress',
         brief: 'Campaña de lanzamiento de la nueva línea de skincare.'
       })
@@ -147,7 +131,7 @@ async function main() {
     console.log('↪ El post de demo ya existía, no se crea otro')
   } else {
     const { error: postError } = await admin.from('posts').insert({
-      influencer_id: influencer.id,
+      creator_id: creator.id,
       collaboration_id: collaboration.id,
       title: 'Reel: rutina skincare nocturna',
       caption: 'Cuatro pasos, cinco minutos, piel lista para mañana.',
@@ -159,11 +143,10 @@ async function main() {
     if (postError) throw postError
   }
 
-  console.log('\nListo. 3 cuentas de prueba, ya relacionadas entre sí:\n')
-  console.log('  manager@feedma.test     (Manager — Estudio Nova)')
-  console.log('  influencer@feedma.test  (Influencer — Nora Blake, representada por Estudio Nova)')
-  console.log('  client@feedma.test      (Cliente — Alma Beauty Co., colaborando con Nora)')
-  console.log(`\n  Contraseña de las tres: ${DEMO_PASSWORD}`)
+  console.log('\nListo. 2 cuentas de prueba, ya relacionadas entre sí:\n')
+  console.log('  creator@feedma.test  (Creador de contenido — Nora Blake)')
+  console.log('  partner@feedma.test  (Partner — Alma Beauty Co., colaborando con Nora)')
+  console.log(`\n  Contraseña de las dos: ${DEMO_PASSWORD}`)
   console.log('\nHay 1 colaboración en curso y 1 post esperando aprobación de Alma Beauty Co.\n')
 }
 

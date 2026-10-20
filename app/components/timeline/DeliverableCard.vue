@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import type { Influencer, Post } from '~/types'
+import type { Creator, Post } from '~/types'
 import { contentTypeMeta, statusMeta } from '~/utils/status'
 import { platformMeta } from '~/utils/mock-data'
 
 const props = defineProps<{
   post: Post
-  influencer?: Influencer
+  creator?: Creator
 }>()
 
 defineEmits<{ open: [post: Post] }>()
@@ -31,9 +31,9 @@ defineEmits<{ open: [post: Post] }>()
 
         <div class="mt-2 flex flex-wrap items-center gap-2">
           <StatusPill :status="post.status" compact />
-          <span v-if="influencer" class="inline-flex items-center gap-1 text-[0.75rem] text-[var(--color-text-faint)]">
+          <span v-if="creator" class="inline-flex items-center gap-1 text-[0.75rem] text-[var(--color-text-faint)]">
             <span class="size-1 rounded-full bg-[var(--color-text-faint)]" />
-            {{ influencer.name }}
+            {{ creator.name }}
           </span>
           <span v-if="post.successScore" class="inline-flex items-center gap-1 text-[0.75rem] font-medium text-[var(--color-signal-500)]">
             <Icon name="ph:sparkle-fill" class="size-3.5" />

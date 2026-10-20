@@ -9,7 +9,7 @@ interface SocialAccountRow {
 }
 
 /**
- * Las redes conectadas del influencer logueado, leídas de `social_accounts`.
+ * Las redes conectadas del creador logueado, leídas de `social_accounts`.
  * La tabla solo guarda una fila POR red ya conectada (sin fila = sin
  * conectar) — aquí se completa con el resto de plataformas del catálogo
  * para que la pantalla siga mostrando las 6, conectadas o no, como antes.
@@ -24,7 +24,7 @@ interface SocialAccountRow {
  */
 export function useMySocialAccounts() {
   const client = useSupabaseClient()
-  const { influencer, ensureInfluencer } = useMyInfluencer()
+  const { creator, ensureCreator } = useMyCreator()
 
   const accounts = useState<SocialAccount[]>('my-social-accounts', () => [])
   const loaded = useState<boolean>('my-social-accounts-loaded', () => false)
@@ -45,13 +45,13 @@ export function useMySocialAccounts() {
   }
 
   async function refresh() {
-    const me = influencer.value ?? (await ensureInfluencer())
+    const me = creator.value ?? (await ensureCreator())
     if (!me) return
 
     const { data, error } = await client
       .from('social_accounts')
       .select('id, platform, handle, followers_count')
-      .eq('influencer_id', me.id)
+      .eq('creator_id', me.id)
     if (error) {
       console.error('[useMySocialAccounts] fallo al cargar redes:', error.message)
       return
@@ -73,19 +73,19 @@ export function useMySocialAccounts() {
       return
     }
 
-    const me = influencer.value ?? (await ensureInfluencer())
+    const me = creator.value ?? (await ensureCreator())
     if (!me) return
 
-    const { error } = await client.from('social_accounts').insert({ influencer_id: me.id, platform } as never)
+    const { error } = await client.from('social_accounts').insert({ creator_id: me.id, platform } as never)
     if (error) throw error
     await refresh()
   }
 
   async function disconnect(platform: SocialAccount['platform']) {
-    const me = influencer.value ?? (await ensureInfluencer())
+    const me = creator.value ?? (await ensureCreator())
     if (!me) return
 
-    const { error } = await client.from('social_accounts').delete().eq('influencer_id', me.id).eq('platform', platform)
+    const { error } = await client.from('social_accounts').delete().eq('creator_id', me.id).eq('platform', platform)
     if (error) throw error
     await refresh()
   }

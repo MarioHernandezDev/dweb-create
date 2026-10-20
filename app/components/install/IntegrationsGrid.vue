@@ -41,7 +41,7 @@ onMounted(() => {
         Seis redes, una sola pantalla de métricas.
       </h3>
       <p class="text-[0.9375rem] text-[var(--color-text-muted)] leading-relaxed max-w-[52ch] mb-12 md:mb-14">
-        Ya puedes enlazar cada cuenta a mano desde tu perfil de influencer. La sincronización automática de seguidores y métricas por API está en camino.
+        Ya puedes enlazar cada cuenta a mano desde tu perfil de creador de contenido. La sincronización automática de seguidores y métricas por API está en camino.
       </p>
 
       <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 md:gap-5">

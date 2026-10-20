@@ -1,4 +1,4 @@
-export type Role = 'manager' | 'creator' | 'client'
+export type Role = 'creator' | 'partner'
 
 export type PostStatus =
   | 'idea'
@@ -19,21 +19,8 @@ export interface StatusMeta {
   colorVar: string
 }
 
-/** Una agencia/representante. Gestiona una cartera (roster) de influencers. */
-export interface Manager {
-  id: string
-  name: string
-  focus: string
-  initials: string
-  hue: number
-}
-
-/**
- * Un creador de contenido. `managerId: null` = trabaja independiente, una
- * marca puede contactarle directamente. Si tiene manager, las marcas
- * contactan a través de él y es el manager quien asigna el trabajo.
- */
-export interface Influencer {
+/** Un creador de contenido. */
+export interface Creator {
   id: string
   name: string
   niche: string
@@ -41,11 +28,10 @@ export interface Influencer {
   hue: number
   weeklyTarget: number
   followers: number
-  managerId: string | null
 }
 
-/** Una marca: el "cliente" que encarga campañas a un influencer o manager. */
-export interface BrandClient {
+/** Un partner: la marca/empresa que encarga campañas a un creador. */
+export interface Partner {
   id: string
   name: string
   industry: string
@@ -61,7 +47,7 @@ export interface CoverArt {
 
 export interface Post {
   id: string
-  influencerId: string
+  creatorId: string
   collaborationId?: string | null
   title: string
   caption: string

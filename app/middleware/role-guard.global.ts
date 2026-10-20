@@ -1,7 +1,7 @@
 import { roleMeta } from '~/utils/nav'
 import type { Role } from '~/types'
 
-const roleSections: Role[] = ['manager', 'creator', 'client']
+const roleSections: Role[] = ['creator', 'partner']
 
 function sectionOf(path: string): Role | null {
   return roleSections.find((r) => path === `/${r}` || path.startsWith(`/${r}/`)) ?? null
@@ -11,8 +11,8 @@ function sectionOf(path: string): Role | null {
  * Control de acceso por rol. `@nuxtjs/supabase` ya se encarga de exigir
  * sesión iniciada (ver `redirectOptions` en nuxt.config.ts); esto añade la
  * segunda capa: una cuenta de un rol no puede entrar en la sección de otro
- * rol, aunque esté logueada. Si alguien con rol "cliente" visita /manager,
- * lo mandamos a /client, no le dejamos ver nada de ahí.
+ * rol, aunque esté logueada. Si alguien con rol "partner" visita /creator,
+ * lo mandamos a /partner, no le dejamos ver nada de ahí.
  */
 // Cuánto nos fiamos de la última verificación de `getUser()` antes de
 // repetirla. Ver el comentario dentro del middleware para el razonamiento
@@ -57,12 +57,11 @@ export default defineNuxtRouteMiddleware(async (to) => {
   // con el trigger de la migración, pero por si acaso no lo dejamos colgado).
   if (!myRole) return
 
-  // Deja lista la ficha de rol (influencer/brand_client/manager) antes de
-  // montar cualquier página de esa sección — así ninguna página necesita su
-  // propio "cargando…" solo para saber quién es el usuario.
-  if (myRole === 'creator') await useMyInfluencer().ensureInfluencer(user.id)
-  else if (myRole === 'client') await useMyBrandClient().ensureBrandClient(user.id)
-  else if (myRole === 'manager') await useMyManager().ensureManager(user.id)
+  // Deja lista la ficha de rol (creator/partner) antes de montar cualquier
+  // página de esa sección — así ninguna página necesita su propio
+  // "cargando…" solo para saber quién es el usuario.
+  if (myRole === 'creator') await useMyCreator().ensureCreator(user.id)
+  else await useMyPartner().ensurePartner(user.id)
 
   if (to.path === '/login') {
     return navigateTo(roleMeta[myRole].home)

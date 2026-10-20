@@ -1,36 +1,34 @@
 <script setup lang="ts">
 import { initialsFromName, hueFromString } from '~/utils/avatar'
-import type { Influencer, Post } from '~/types'
+import type { Creator, Post } from '~/types'
 
 useHead({ title: 'Calendario' })
 
-const { brandClient } = useMyBrandClient()
+const { partner } = useMyPartner()
 const { collaborations, ensureLoaded: ensureCollaborationsLoaded } = useMyCollaborations()
-const { posts, ensureLoaded: ensurePostsLoaded, approvePost, requestChanges: requestPostChanges } = useClientPosts()
+const { posts, ensureLoaded: ensurePostsLoaded, approvePost, requestChanges: requestPostChanges } = usePartnerPosts()
 
 // En paralelo, no en serie — dos consultas independientes.
 await Promise.all([ensureCollaborationsLoaded(), ensurePostsLoaded()])
 
 // La demo de mock-data asumía una sola colaboración; en real puede haber
-// varias (una marca puede trabajar con más de un influencer a la vez) — de
+// varias (un partner puede trabajar con más de un creador a la vez) — de
 // momento mostramos la más reciente como "la" colaboración de la cabecera,
 // y el tablero de abajo ya agrega los posts de todas.
 const primaryCollaboration = computed(() => collaborations.value[0] ?? null)
-const collaborator = computed<Influencer | null>(() => {
+const collaborator = computed<Creator | null>(() => {
   const c = primaryCollaboration.value
-  if (!c?.influencerName) return null
+  if (!c?.creatorName) return null
   return {
-    id: c.influencerId ?? '',
-    name: c.influencerName,
+    id: c.creatorId,
+    name: c.creatorName,
     niche: '',
-    initials: initialsFromName(c.influencerName),
-    hue: hueFromString(c.influencerName),
+    initials: initialsFromName(c.creatorName),
+    hue: hueFromString(c.creatorName),
     weeklyTarget: 0,
-    followers: 0,
-    managerId: c.managerId
+    followers: 0
   }
 })
-const collaboratorManagerName = computed(() => primaryCollaboration.value?.managerName ?? null)
 
 const pendingReview = computed(() => posts.value.filter((p) => p.status === 'ready_for_review').length)
 const firstPendingId = computed(() => posts.value.find((p) => p.status === 'ready_for_review')?.id)
@@ -73,37 +71,34 @@ function openDetail(post: Post) {
 const quickActions = computed(() => [
   { label: 'Aprobar siguiente', icon: 'ph:check-circle-fill', action: approveNext, disabled: !firstPendingId.value },
   { label: 'Pedir cambios', icon: 'ph:arrow-counter-clockwise-bold', action: requestChangesNext, disabled: !firstPendingId.value },
-  { label: 'Perfil', icon: 'ph:user-circle-fill', to: '/client/profile' }
+  { label: 'Perfil', icon: 'ph:user-circle-fill', to: '/partner/profile' }
 ])
 </script>
 
 <template>
-  <AppShell role="client" title="Tu calendario" :subtitle="brandClient?.name">
+  <AppShell role="partner" title="Tu calendario" :subtitle="partner?.name">
     <section class="mb-5">
-      <h1 class="font-display text-[2rem] md:text-[2.5rem] leading-[1.08] text-[var(--color-text)]">Hola, {{ brandClient?.name }}</h1>
-      <p class="mt-1.5 text-[0.9375rem] text-[var(--color-text-muted)]">Tu calendario de contenido con la agencia</p>
+      <h1 class="font-display text-[2rem] md:text-[2.5rem] leading-[1.08] text-[var(--color-text)]">Hola, {{ partner?.name }}</h1>
+      <p class="mt-1.5 text-[0.9375rem] text-[var(--color-text-muted)]">Tu calendario de contenido</p>
     </section>
 
     <section class="mb-6">
-      <NuxtLink v-if="collaborator" to="/client/discover" class="flex items-center gap-3 px-4 py-3.5 rounded-[var(--radius-md)] bg-[var(--color-ink-overlay)] hover:bg-[var(--color-ink-overlay)]/70 transition-colors">
+      <NuxtLink v-if="collaborator" to="/partner/discover" class="flex items-center gap-3 px-4 py-3.5 rounded-[var(--radius-md)] bg-[var(--color-ink-overlay)] hover:bg-[var(--color-ink-overlay)]/70 transition-colors">
         <BaseAvatar :initials="collaborator.initials" :hue="collaborator.hue" size="sm" />
         <div class="min-w-0 flex-1">
           <p class="text-[0.875rem] text-[var(--color-text)]">
             Colaborando con <strong class="font-medium">{{ collaborator.name }}</strong>
           </p>
-          <p class="text-[0.75rem] text-[var(--color-text-faint)]">
-            {{ collaboratorManagerName ? `Representado por ${collaboratorManagerName}` : 'Influencer independiente' }}
-          </p>
         </div>
         <Icon name="ph:caret-right-bold" class="size-4 text-[var(--color-text-faint)] shrink-0" />
       </NuxtLink>
-      <NuxtLink v-else to="/client/discover" class="flex items-center gap-3 px-4 py-3.5 rounded-[var(--radius-md)] bg-[var(--color-ink-overlay)] hover:bg-[var(--color-ink-overlay)]/70 transition-colors">
+      <NuxtLink v-else to="/partner/discover" class="flex items-center gap-3 px-4 py-3.5 rounded-[var(--radius-md)] bg-[var(--color-ink-overlay)] hover:bg-[var(--color-ink-overlay)]/70 transition-colors">
         <span class="flex items-center justify-center size-9 rounded-full bg-[var(--color-primary-500)]/12 text-[var(--color-primary-500)] shrink-0">
           <Icon name="ph:magnifying-glass-bold" class="size-4" />
         </span>
         <div class="min-w-0 flex-1">
           <p class="text-[0.875rem] text-[var(--color-text)]">Aún no tienes ninguna colaboración activa</p>
-          <p class="text-[0.75rem] text-[var(--color-text-faint)]">Descubre un influencer o una agencia para empezar</p>
+          <p class="text-[0.75rem] text-[var(--color-text-faint)]">Descubre un creador de contenido para empezar</p>
         </div>
         <Icon name="ph:caret-right-bold" class="size-4 text-[var(--color-text-faint)] shrink-0" />
       </NuxtLink>
@@ -172,7 +167,7 @@ const quickActions = computed(() => [
       </template>
     </WeekBoard>
 
-    <PostDetailSheet v-model="detailOpen" :post="detailPost" :influencer="collaborator ?? undefined">
+    <PostDetailSheet v-model="detailOpen" :post="detailPost" :creator="collaborator ?? undefined">
       <template #actions="{ post }">
         <div v-if="post.status === 'ready_for_review'" class="mt-5 flex gap-2.5">
           <BaseButton variant="secondary" class="flex-1" icon="ph:arrow-counter-clockwise-bold" :disabled="acting" @click="requestChanges(post.id); detailOpen = false">Pedir cambios</BaseButton>

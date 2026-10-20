@@ -1,21 +1,21 @@
 /**
- * El saldo de créditos del influencer logueado — suma de `credit_ledger`
- * (ver README Fase 4, "Consumo de créditos"). No hay columna de saldo
- * cacheada: la tabla es un libro de movimientos, el saldo es su suma.
- * RLS ya permite leerla (política `credit_ledger_select_scoped`).
+ * El saldo de créditos del creador logueado — suma de `credit_ledger` (ver
+ * README Fase 4, "Consumo de créditos"). No hay columna de saldo cacheada:
+ * la tabla es un libro de movimientos, el saldo es su suma. RLS ya permite
+ * leerla (política `credit_ledger_select_scoped`).
  */
 export function useMyCredits() {
   const client = useSupabaseClient()
-  const { influencer, ensureInfluencer } = useMyInfluencer()
+  const { creator, ensureCreator } = useMyCreator()
 
   const balance = useState<number | null>('my-credits-balance', () => null)
   const loaded = useState<boolean>('my-credits-loaded', () => false)
 
   async function refresh() {
-    const me = influencer.value ?? (await ensureInfluencer())
+    const me = creator.value ?? (await ensureCreator())
     if (!me) return
 
-    const { data, error } = await client.from('credit_ledger').select('amount').eq('influencer_id', me.id)
+    const { data, error } = await client.from('credit_ledger').select('amount').eq('creator_id', me.id)
     if (error) {
       console.error('[useMyCredits] fallo al cargar créditos:', error.message)
       return

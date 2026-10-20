@@ -42,7 +42,7 @@ OpenRouter rota qué modelos están en su catálogo gratuito de vez en cuando (e
 
 Con la clave ya en `.env` (reinicia `npm run dev` para que recoja la variable nueva):
 
-1. Entra como `influencer@feedma.test`.
+1. Entra como `creator@feedma.test`.
 2. Abre una publicación existente (o crea una nueva desde el botón "+") y pulsa "Predecir" / "Predecir éxito".
 3. Si todo va bien, las sugerencias que aparecen junto a la puntuación ya no son siempre el mismo texto fijo — cambian según el título/caption que hayas escrito.
 4. Si algo falla (clave mal copiada, modelo no disponible, rate limit), no se rompe nada: la puntuación se calcula igual y las sugerencias caen de vuelta en el texto fijo. El error exacto queda en el log del servidor (`[ml/predict] fallo al pedir sugerencias al LLM`), no se le muestra al usuario como un fallo — para él, simplemente no hay sugerencias personalizadas esta vez.

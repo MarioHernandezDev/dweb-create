@@ -105,9 +105,9 @@ async function handleInvoicePaid(client: SupabaseClient, invoice: Stripe.Invoice
 
   const { data: sub } = await client
     .from('subscriptions')
-    .select('plan_id, manager_id, influencer_id')
+    .select('plan_id, creator_id')
     .eq('stripe_subscription_id', subscriptionId)
-    .maybeSingle<{ plan_id: string; manager_id: string | null; influencer_id: string | null }>()
+    .maybeSingle<{ plan_id: string; creator_id: string }>()
   if (!sub) {
     // Puede pasar si invoice.paid llega antes de que checkout.session.completed
     // termine de guardar la suscripción — raro, pero posible. Se pierde esa
@@ -119,23 +119,10 @@ async function handleInvoicePaid(client: SupabaseClient, invoice: Stripe.Invoice
   const plan = plans[sub.plan_id]
   if (!plan) return // 'free' no tiene fila en `plans` (no es un plan de pago, no recarga por aquí)
 
-  if (sub.influencer_id) {
-    const { error } = await client
-      .from('credit_ledger')
-      .insert({ influencer_id: sub.influencer_id, amount: plan.monthlyCredits, reason: 'subscription_grant' } as never)
-    if (error) console.error('[stripe webhook] fallo al conceder créditos:', error.message)
-    return
-  }
-
-  if (sub.manager_id) {
-    // Agencia: cada influencer de la plantilla recibe sus propios créditos,
-    // no se reparte un pozo común del manager.
-    const { data: roster } = await client.from('influencers').select('id').eq('manager_id', sub.manager_id)
-    if (!roster?.length) return
-    const grants = roster.map((r) => ({ influencer_id: r.id, amount: plan.monthlyCredits, reason: 'subscription_grant' }))
-    const { error } = await client.from('credit_ledger').insert(grants as never)
-    if (error) console.error('[stripe webhook] fallo al conceder créditos a la plantilla:', error.message)
-  }
+  const { error } = await client
+    .from('credit_ledger')
+    .insert({ creator_id: sub.creator_id, amount: plan.monthlyCredits, reason: 'subscription_grant' } as never)
+  if (error) console.error('[stripe webhook] fallo al conceder créditos:', error.message)
 }
 
 async function handleSubscriptionChange(client: SupabaseClient, subscription: Stripe.Subscription) {
@@ -151,24 +138,6 @@ async function handleAccountUpdated(client: SupabaseClient, account: Stripe.Acco
   const onboarded = !!(account.details_submitted && account.charges_enabled)
   const payload = { stripe_connect_onboarded: onboarded } as never
 
-  const { data: influencer } = await client
-    .from('influencers')
-    .select('id')
-    .eq('stripe_connect_account_id', account.id)
-    .maybeSingle()
-  if (influencer) {
-    const { error } = await client.from('influencers').update(payload).eq('stripe_connect_account_id', account.id)
-    if (error) console.error('[stripe webhook] fallo al actualizar influencer.stripe_connect_onboarded:', error.message)
-    return
-  }
-
-  const { data: manager } = await client
-    .from('managers')
-    .select('id')
-    .eq('stripe_connect_account_id', account.id)
-    .maybeSingle()
-  if (manager) {
-    const { error } = await client.from('managers').update(payload).eq('stripe_connect_account_id', account.id)
-    if (error) console.error('[stripe webhook] fallo al actualizar manager.stripe_connect_onboarded:', error.message)
-  }
+  const { error } = await client.from('creators').update(payload).eq('stripe_connect_account_id', account.id)
+  if (error) console.error('[stripe webhook] fallo al actualizar creator.stripe_connect_onboarded:', error.message)
 }

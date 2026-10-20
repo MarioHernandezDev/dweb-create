@@ -6,8 +6,8 @@ Versión "para tontos" de la Fase 3 del [`README`](../README.md), igual que [`6-
 
 FEEDMA cobra de dos formas distintas (ver [`README`](../README.md) y [`1-ARCHITECTURE.md`](./1-ARCHITECTURE.md) §1.5):
 
-1. **Suscripción normal**: el Manager o el Influencer pagan una cuota mensual a FEEDMA por usar el panel. Esto es un Stripe Checkout + Billing normal, como el de cualquier SaaS.
-2. **Stripe Connect**: cuando una marca contrata a un influencer *a través de la plataforma*, el dinero tiene que llegar al influencer (o a su manager), no a FEEDMA — y FEEDMA se queda automáticamente con una comisión de esa transacción. Eso **no se puede hacer con un Checkout normal**: hace falta Connect, que es la pieza de Stripe pensada justo para marketplaces (Uber, Airbnb, Etsy… todos lo usan para pagar a terceros desde su plataforma).
+1. **Suscripción normal**: el creador de contenido paga una cuota mensual a FEEDMA por usar el panel. Esto es un Stripe Checkout + Billing normal, como el de cualquier SaaS.
+2. **Stripe Connect**: cuando un partner contrata a un creador *a través de la plataforma*, el dinero tiene que llegar al creador, no a FEEDMA — y FEEDMA se queda automáticamente con una comisión de esa transacción. Eso **no se puede hacer con un Checkout normal**: hace falta Connect, que es la pieza de Stripe pensada justo para marketplaces (Uber, Airbnb, Etsy… todos lo usan para pagar a terceros desde su plataforma).
 
 Así que sí: **se crea con Connect activado**, desde el principio. No es una cuenta de Stripe "normal" a la que luego se le añade Connect — se configura así desde el primer paso.
 
@@ -22,11 +22,11 @@ Igual que con Supabase: Claude Code no puede crear cuentas externas ni aceptar l
 
 ### Por qué Standard y no Express o Custom
 
-Stripe Connect tiene 3 tipos de cuenta conectada (la cuenta que recibe el dinero — en FEEDMA, la del influencer o manager):
+Stripe Connect tiene 3 tipos de cuenta conectada (la cuenta que recibe el dinero — en FEEDMA, la del creador de contenido):
 
 | Tipo | Qué significa | Para FEEDMA |
 |---|---|---|
-| **Standard** ✅ | El influencer/manager tiene su propio Dashboard de Stripe completo. Stripe se encarga de todo el papeleo (verificación de identidad, cumplimiento legal, soporte). FEEDMA solo pide el pago y se queda su comisión. | **Recomendado**: es el más simple de programar y el que menos responsabilidad legal asume FEEDMA (Stripe es quien verifica la identidad de cada influencer, no vosotros). |
+| **Standard** ✅ | El creador tiene su propio Dashboard de Stripe completo. Stripe se encarga de todo el papeleo (verificación de identidad, cumplimiento legal, soporte). FEEDMA solo pide el pago y se queda su comisión. | **Recomendado**: es el más simple de programar y el que menos responsabilidad legal asume FEEDMA (Stripe es quien verifica la identidad de cada creador, no vosotros). |
 | Express | A medio camino: onboarding más rápido y con la marca de FEEDMA, pero FEEDMA ya asume algo más de responsabilidad. | De más adelante, si el producto crece y queréis una experiencia más integrada. |
 | Custom | FEEDMA construye toda la experiencia, incluida la verificación de identidad. Máximo control, máxima responsabilidad legal y de cumplimiento. | No para un proyecto de estudiantes en pruebas — es básicamente operar como una entidad financiera. |
 
@@ -49,14 +49,14 @@ STRIPE_PUBLISHABLE_KEY=pk_test_...
 
 Con las claves de prueba en `.env`, el código ya existe:
 
-- `server/api/stripe/create-checkout-session.post.ts` — suscripción (Manager → plan "Agencia", Influencer → plan "Pro"). Los precios están en código (`server/utils/stripe-plans.ts`), no hace falta crear nada en el Dashboard de Stripe.
-- `server/api/stripe/connect/account-link.post.ts` — crea la cuenta Connect del manager/influencer (si no existe) y devuelve el enlace de onboarding de Stripe.
+- `server/api/stripe/create-checkout-session.post.ts` — suscripción (el creador de contenido → plan "Pro"). Los precios están en código (`server/utils/stripe-plans.ts`), no hace falta crear nada en el Dashboard de Stripe.
+- `server/api/stripe/connect/account-link.post.ts` — crea la cuenta Connect del creador (si no existe) y devuelve el enlace de onboarding de Stripe.
 - `server/api/stripe/webhook.post.ts` — único sitio que escribe en `subscriptions` y en `stripe_connect_onboarded`: escucha `checkout.session.completed`, `customer.subscription.updated/deleted` y `account.updated`.
-- Botones ya en `creator/profile.vue` y `manager/profile.vue` ("Mejorar a Pro/Agencia", "Conectar cuenta de pagos").
+- Botones ya en `creator/profile.vue` ("Mejorar a Pro", "Conectar cuenta de pagos").
 
 ### Falta un paso tuyo: aplicar la migración nueva
 
-`supabase/migrations/20261020090000_stripe_connect_accounts.sql` añade las columnas `stripe_connect_account_id`/`stripe_connect_onboarded` a `managers` e `influencers` — Claude Code no tiene tu sesión del CLI de Supabase para aplicarla por ti:
+`supabase/migrations/20261020090000_stripe_connect_accounts.sql` añade las columnas `stripe_connect_account_id`/`stripe_connect_onboarded` a `creators` (antes `influencers`) — Claude Code no tiene tu sesión del CLI de Supabase para aplicarla por ti:
 
 ```bash
 npx supabase db push
@@ -76,7 +76,7 @@ El comando `stripe listen` imprime un `whsec_...` — eso es tu `STRIPE_WEBHOOK_
 
 ### Probar de verdad (con el servidor y `stripe listen` corriendo a la vez)
 
-1. Entra como `influencer@feedma.test`, perfil → "Mejorar a Pro" → te lleva a Stripe Checkout.
+1. Entra como `creator@feedma.test`, perfil → "Mejorar a Pro" → te lleva a Stripe Checkout.
 2. Usa la [tarjeta de pruebas de Stripe](https://docs.stripe.com/testing#cards) `4242 4242 4242 4242`, cualquier fecha futura, cualquier CVC.
 3. Al volver a FEEDMA deberías ver "Suscripción activada" y el plan ya no pone "Plan gratuito".
 4. En el mismo perfil, "Conectar" en Cuenta de pagos → onboarding de Stripe (puedes rellenarlo con datos de prueba, Stripe te guía) → al volver debería verse "Verificada".

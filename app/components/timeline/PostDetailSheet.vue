@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { contentTypeMeta, dueLabel } from '~/utils/status'
 import { platformMeta } from '~/utils/mock-data'
-import type { Influencer, Post } from '~/types'
+import type { Creator, Post } from '~/types'
 
 const props = defineProps<{
   post: Post | null
-  influencer?: Influencer
+  creator?: Creator
 }>()
 
 const open = defineModel<boolean>({ default: false })
@@ -23,7 +23,7 @@ const open = defineModel<boolean>({ default: false })
 
       <div class="flex items-center gap-2 flex-wrap mb-4">
         <StatusPill :status="post.status" />
-        <span v-if="influencer" class="text-[0.8125rem] text-[var(--color-text-muted)]">{{ influencer.name }}</span>
+        <span v-if="creator" class="text-[0.8125rem] text-[var(--color-text-muted)]">{{ creator.name }}</span>
         <span class="text-[0.8125rem] text-[var(--color-text-faint)]">· {{ dueLabel(post.dueInDays) }}</span>
       </div>
 
