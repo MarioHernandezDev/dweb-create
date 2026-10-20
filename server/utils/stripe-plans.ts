@@ -17,3 +17,14 @@ export const plans: Record<string, PlanConfig> = {
   pro: { id: 'pro', label: 'FEEDMA Pro', unitAmount: 1999, for: 'influencer' },
   agency: { id: 'agency', label: 'FEEDMA Agencia', unitAmount: 4999, for: 'manager' }
 }
+
+/**
+ * Comisión del marketplace: cuando una marca paga a un influencer/manager a
+ * través de la plataforma, FEEDMA se queda este % (ver README Fase 3,
+ * "Stripe Connect"). Vive aquí, en un único sitio, igual que los planes.
+ */
+export const MARKETPLACE_FEE_RATE = 0.1
+
+export function platformFeeCents(budgetCents: number): number {
+  return Math.round(budgetCents * MARKETPLACE_FEE_RATE)
+}

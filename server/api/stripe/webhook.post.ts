@@ -50,6 +50,10 @@ export default defineEventHandler(async (event) => {
 })
 
 async function handleCheckoutCompleted(client: SupabaseClient, session: Stripe.Checkout.Session) {
+  if (session.mode === 'payment') {
+    await handleCollaborationPaid(client, session)
+    return
+  }
   if (session.mode !== 'subscription' || !session.subscription) return
 
   const planId = session.metadata?.plan_id
@@ -71,6 +75,18 @@ async function handleCheckoutCompleted(client: SupabaseClient, session: Stripe.C
 
   const { error } = await client.from('subscriptions').upsert(payload as never, { onConflict: ownerColumn })
   if (error) console.error('[stripe webhook] fallo al guardar la suscripción:', error.message)
+}
+
+async function handleCollaborationPaid(client: SupabaseClient, session: Stripe.Checkout.Session) {
+  const collaborationId = session.metadata?.collaboration_id
+  if (!collaborationId) return
+
+  const payload = {
+    stripe_payment_intent_id: session.payment_intent as string,
+    paid_at: new Date().toISOString()
+  }
+  const { error } = await client.from('collaborations').update(payload as never).eq('id', collaborationId)
+  if (error) console.error('[stripe webhook] fallo al marcar la colaboración como pagada:', error.message)
 }
 
 async function handleSubscriptionChange(client: SupabaseClient, subscription: Stripe.Subscription) {
