@@ -1,14 +1,26 @@
 <script setup lang="ts">
-import { coverPhotos } from '~/utils/images'
-
-const hero = coverPhotos.landing
+const heroImageSrc = '/img/hero.jpg'
+const brandLetters = 'FEEDMA'.split('')
+const isLoading = ref(true)
+const titleReady = ref(false)
 
 // Lectura de "cámara grabando" puramente ambiental — un guiño de parte de
 // rodaje, no un dato real. Arranca en un instante creíble en vez de 00:00:00.
 const elapsed = ref(427)
 let timer: ReturnType<typeof setInterval> | undefined
-onMounted(() => {
+onMounted(async () => {
+  const startedAt = performance.now()
   timer = setInterval(() => (elapsed.value += 1), 1000)
+  const logo = new Image()
+  logo.src = '/img/logo-svg.png'
+  const heroImage = new Image()
+  heroImage.src = heroImageSrc
+  await Promise.race([
+    Promise.allSettled([document.fonts.ready, logo.decode(), heroImage.decode()]),
+    new Promise((resolve) => setTimeout(resolve, 1500))
+  ])
+  await new Promise((resolve) => setTimeout(resolve, Math.max(0, 900 - (performance.now() - startedAt))))
+  isLoading.value = false
 })
 onUnmounted(() => clearInterval(timer))
 
@@ -21,14 +33,27 @@ const timecode = computed(() => {
 </script>
 
 <template>
-  <div class="relative min-h-dvh overflow-hidden flex flex-col">
+  <div class="relative min-h-dvh overflow-hidden flex flex-col" :class="{ 'nx-feedma-ready': titleReady }">
+    <Transition name="nx-preloader" @after-leave="titleReady = true">
+      <div
+        v-if="isLoading"
+        role="status"
+        aria-label="Cargando FEEDMA"
+        class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#0a0812]"
+      >
+        <img src="/img/logo-svg.png" alt="FEEDMA" class="nx-preloader-logo size-40 sm:size-48" width="512" height="512">
+        <span class="nx-preloader-bar mt-8" aria-hidden="true" />
+      </div>
+    </Transition>
+
     <!-- Base sólida siempre visible, independiente de si la foto ya ha
          cargado: el contraste del texto nunca depende de una descarga de red. -->
-    <div class="absolute inset-0 bg-gradient-to-br from-[var(--color-primary-900)] via-[#150c34] to-[#0a0812]" />
+    <div class="absolute inset-0 " />
 
     <NuxtImg
-      provider="unsplash" :src="hero.id" :alt="hero.alt" fit="crop" :width="1920" :height="1200"
-      :quality="78" format="webp" class="absolute inset-0 size-full object-cover opacity-55"
+      :src="heroImageSrc" alt="" aria-hidden="true" fit="cover" :width="1920" :height="1200"
+      :quality="82" format="webp" loading="eager" fetchpriority="high"
+      class="absolute inset-0 size-full object-cover object-center"
     />
 
     <!-- Scrim propio (no el de CoverImage): más oscuro de base para que el
@@ -45,49 +70,41 @@ const timecode = computed(() => {
       style="background: radial-gradient(circle, var(--color-logo-teal), var(--color-primary-500) 55%, transparent 72%)"
     />
 
-    <main class="relative z-10 flex-1 flex flex-col justify-center px-5 md:px-10 lg:px-16 pb-10 pt-24 md:pt-16 max-w-7xl mx-auto w-full">
-      <span class="inline-flex items-center gap-2 text-[0.75rem] font-medium text-white/55 tracking-[0.04em] mb-5 md:mb-6">
-        <span class="relative flex size-1.5">
-          <span class="absolute inset-0 rounded-full bg-[var(--color-status-alert)] animate-ping" />
-          <span class="relative size-1.5 rounded-full bg-[var(--color-status-alert)]" />
-        </span>
-        REC · {{ timecode }}
-      </span>
+    <main class="relative z-10 flex-1 flex flex-col justify-center w-full pb-10 pt-24 md:pt-16">
+      
 
-      <h1 class="nx-feedma-shimmer font-display font-light leading-[0.8] tracking-tight text-[clamp(3.25rem,14vw,13rem)] -ml-1 mb-1 md:mb-2">
-        FEEDMA
+      <h1
+        aria-label="FEEDMA"
+        class="nx-feedma-shimmer nx-feedma-title grid w-full grid-cols-6 px-5 font-display font-light leading-[0.8] text-[clamp(2.5rem,18vw,24rem)] mb-1 md:px-10 md:mb-2 lg:px-16"
+      >
+        <span
+          v-for="(letter, index) in brandLetters"
+          :key="index"
+          aria-hidden="true"
+          class="nx-feedma-letter"
+          :style="{ '--letter-delay': `${index * 120}ms` }"
+        >{{ letter }}</span>
       </h1>
 
-      <h2 class="font-display text-white text-[1.375rem] sm:text-[1.75rem] md:text-[2.25rem] leading-[1.15] max-w-[22ch] md:max-w-[26ch] mb-3 md:mb-4">
-        El parte de rodaje de tu contenido.
-      </h2>
-      <p class="text-white/70 text-[0.9375rem] md:text-[1.0625rem] leading-relaxed max-w-[34ch] md:max-w-[46ch] mb-8 md:mb-10">
-        Entregas, métricas y predicciones de éxito — marcas, influencers y sus managers, todo en un solo sitio.
-      </p>
+      <div class="mx-auto w-full max-w-7xl px-5 md:px-10 lg:px-16">
+        <h2 class="font-display text-white text-[1.375rem] sm:text-[1.75rem] md:text-[2.25rem] leading-[1.15] max-w-[22ch] md:max-w-[26ch] mb-3 md:mb-4">
+          El parte de rodaje de tu contenido.
+        </h2>
+        <p class="text-white/70 text-[0.9375rem] md:text-[1.0625rem] leading-relaxed max-w-[34ch] md:max-w-[46ch] mb-8 md:mb-10">
+          Entregas, métricas y predicciones de éxito — marcas, influencers y sus managers, todo en un solo sitio.
+        </p>
 
-      <div class="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 max-w-sm sm:max-w-none">
-        <BaseButton to="/login" variant="primary" size="lg" icon="ph:arrow-right-bold" class="w-full sm:w-auto sm:px-10">
-          Acceder a tu cuenta
-        </BaseButton>
-        <NuxtLink to="/onboarding" class="text-[0.875rem] text-white/60 hover:text-white underline underline-offset-4 decoration-white/30">
-          ¿No tienes cuenta? Mira cómo sería el registro
-        </NuxtLink>
+        <div class="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 max-w-sm sm:max-w-none">
+          <BaseButton to="/login" variant="primary" size="lg" icon="ph:arrow-right-bold" class="w-full sm:w-auto sm:px-10">
+            Acceder a tu cuenta
+          </BaseButton>
+          <NuxtLink to="/onboarding" class="text-[0.875rem] text-white/60 hover:text-white underline underline-offset-4 decoration-white/30">
+            ¿No tienes cuenta? Mira cómo sería el registro
+          </NuxtLink>
+        </div>
       </div>
     </main>
 
-    <div class="relative z-10 flex items-center justify-between px-5 pb-5 md:px-10 md:pb-7 max-w-7xl mx-auto w-full">
-      <a
-        :href="hero.creditUrl" target="_blank" rel="noopener noreferrer"
-        class="text-[0.625rem] text-white/35 hover:text-white/70"
-      >
-        Foto: {{ hero.credit }}
-      </a>
-
-      <span aria-hidden="true" class="hidden sm:flex items-center gap-1.5 text-white/35 text-[0.6875rem]">
-        Desliza
-        <Icon name="ph:caret-down-bold" class="size-3 nx-scroll-cue" />
-      </span>
-    </div>
   </div>
 </template>
 
