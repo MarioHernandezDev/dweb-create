@@ -29,15 +29,19 @@ export function useMyRole() {
   async function ensureRole(userId?: string) {
     if (role.value !== undefined) return role.value
 
-    const id = userId ?? useSupabaseUser().value?.id
+    // Sin tipos generados de la base de datos todavía (`supabase gen types`,
+    // más adelante), así que tipamos la fila a mano en este único punto.
+    const client = useSupabaseClient()
+    // `getUser()` en vez de `useSupabaseUser().value`: ese ref lo rellena
+    // un listener aparte y puede no haberse enterado todavía de la sesión
+    // en una recarga normal, no solo justo tras el login — se vio de
+    // verdad (ver role-guard.global.ts, que es quien más depende de esto).
+    const id = userId ?? (await client.auth.getUser()).data.user?.id
     if (!id) {
       role.value = null
       return null
     }
 
-    // Sin tipos generados de la base de datos todavía (`supabase gen types`,
-    // más adelante), así que tipamos la fila a mano en este único punto.
-    const client = useSupabaseClient()
     const { data } = await client.from('profiles').select('role').eq('id', id).single<{ role: string }>()
     role.value = (data?.role ? dbRoleToAppRole[data.role] : undefined) ?? null
     return role.value

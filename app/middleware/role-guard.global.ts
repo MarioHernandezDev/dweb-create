@@ -15,11 +15,17 @@ function sectionOf(path: string): Role | null {
  * lo mandamos a /client, no le dejamos ver nada de ahí.
  */
 export default defineNuxtRouteMiddleware(async (to) => {
-  const user = useSupabaseUser()
-  if (!user.value) return
+  // OJO: `useSupabaseUser().value` es un ref que un listener aparte
+  // (`onAuthStateChange`) rellena de forma asíncrona — en una recarga
+  // normal puede que todavía no se haya enterado de la sesión cuando este
+  // middleware corre (visto de verdad: vacío de forma intermitente, no
+  // siempre). `getUser()` lo resuelve activamente contra Supabase en vez
+  // de fiarse de ese ref, así que es fiable aunque el listener vaya tarde.
+  const { data: { user } } = await useSupabaseClient().auth.getUser()
+  if (!user) return
 
   const { ensureRole } = useMyRole()
-  const myRole = await ensureRole()
+  const myRole = await ensureRole(user.id)
 
   // Sesión iniciada pero sin fila en `profiles` todavía (no debería pasar
   // con el trigger de la migración, pero por si acaso no lo dejamos colgado).
@@ -28,9 +34,9 @@ export default defineNuxtRouteMiddleware(async (to) => {
   // Deja lista la ficha de rol (influencer/brand_client/manager) antes de
   // montar cualquier página de esa sección — así ninguna página necesita su
   // propio "cargando…" solo para saber quién es el usuario.
-  if (myRole === 'creator') await useMyInfluencer().ensureInfluencer(user.value.id)
-  else if (myRole === 'client') await useMyBrandClient().ensureBrandClient(user.value.id)
-  else if (myRole === 'manager') await useMyManager().ensureManager(user.value.id)
+  if (myRole === 'creator') await useMyInfluencer().ensureInfluencer(user.id)
+  else if (myRole === 'client') await useMyBrandClient().ensureBrandClient(user.id)
+  else if (myRole === 'manager') await useMyManager().ensureManager(user.id)
 
   if (to.path === '/login') {
     return navigateTo(roleMeta[myRole].home)

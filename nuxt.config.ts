@@ -57,6 +57,18 @@ export default defineNuxtConfig({
     }
   },
 
+  runtimeConfig: {
+    // Privado: solo visible en el servidor (rutas de server/api), nunca en
+    // el bundle del cliente — por eso no lleva prefijo NUXT_PUBLIC_.
+    stripeSecretKey: process.env.STRIPE_SECRET_KEY,
+    stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET,
+    public: {
+      // Pública a propósito: la usa el navegador para cargar Stripe.js antes
+      // del Checkout. Nunca pongas aquí la secret key.
+      stripePublishableKey: process.env.STRIPE_PUBLISHABLE_KEY
+    }
+  },
+
   supabase: {
     // El módulo por defecto lee SUPABASE_URL/SUPABASE_KEY; nuestro .env usa
     // SUPABASE_ANON_KEY (así quedó documentado en docs/6-SUPABASE-SETUP.md),

@@ -63,10 +63,10 @@ Somos 2 personas. Para no pisarnos y no perdernos, el proyecto se hace **en este
 ### FASE 3 — Pagos (Stripe)
 **Por qué va aquí y no antes:** no tiene sentido montar cobros hasta que haya usuarios reales guardados (Fase 2).
 
-- [ ] Crear cuenta de Stripe en modo de pruebas (test mode), con Connect activado desde el principio (hace falta para pagar a influencers/managers, no solo para la suscripción) — pasos en [`docs/7-STRIPE-SETUP.md`](./docs/7-STRIPE-SETUP.md).
-- [ ] Suscripciones: el Manager y el Influencer pagan una cuota mensual por usar el panel.
-- [ ] Stripe Connect: cuando una marca contrata a un influencer a través de la plataforma, FEEDMA se queda automáticamente con una comisión.
-- [ ] Webhooks de Stripe para que el estado de pago en la app esté siempre al día.
+- [x] Crear cuenta de Stripe en modo de pruebas (test mode), con Connect activado — pasos en [`docs/7-STRIPE-SETUP.md`](./docs/7-STRIPE-SETUP.md). Claves `STRIPE_SECRET_KEY`/`STRIPE_PUBLISHABLE_KEY` ya en `.env`.
+- [ ] **Suscripciones** (código hecho, falta verificar en vivo): el Manager y el Influencer ya pueden pulsar "Mejorar a Pro/Agencia" en su perfil → Stripe Checkout → `server/api/stripe/webhook.post.ts` guarda la suscripción real. Falta: aplicar `supabase/migrations/20261020090000_stripe_connect_accounts.sql` (`npx supabase db push`), rellenar `STRIPE_WEBHOOK_SECRET` (`stripe listen`, ver guía) y probar el pago completo con una tarjeta de prueba.
+- [ ] **Stripe Connect, solo la mitad** (código hecho, falta verificar en vivo): un influencer/manager ya puede conectar su cuenta de Stripe desde su perfil (`server/api/stripe/connect/account-link.post.ts`) y queda marcada como "verificada" vía webhook. **Lo que falta de verdad**: el cobro en sí — que cuando una marca contrata a través de la plataforma, el dinero salga de la marca y llegue al influencer/manager menos la comisión de FEEDMA (`application_fee_amount` de Connect). Hoy no hay ningún sitio en la app donde una marca introduzca un importe y pague — eso es trabajo nuevo, no solo "falta probarlo".
+- [x] Webhooks de Stripe (`server/api/stripe/webhook.post.ts`, firma verificada) — falta el mismo paso de `STRIPE_WEBHOOK_SECRET` de arriba para probarlos en vivo.
 
 ### FASE 4 — Apagar los "mocks": funciones de verdad
 **Por qué va aquí:** hasta este punto, varias cosas de la app son simulaciones (datos de mentira o botones que no hacen nada de verdad). Esta fase las sustituye una a una por la función real.

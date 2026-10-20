@@ -2,6 +2,7 @@ export interface MyManager {
   id: string
   agencyName: string
   focus: string | null
+  stripeConnectOnboarded: boolean
 }
 
 /**
@@ -15,20 +16,23 @@ export function useMyManager() {
   async function ensureManager(userId?: string) {
     if (manager.value !== undefined) return manager.value
 
-    const id = userId ?? useSupabaseUser().value?.id
+    const client = useSupabaseClient()
+    // `getUser()` en vez de `useSupabaseUser().value`: ver role-guard.global.ts.
+    const id = userId ?? (await client.auth.getUser()).data.user?.id
     if (!id) {
       manager.value = null
       return null
     }
 
-    const client = useSupabaseClient()
     const { data } = await client
       .from('managers')
-      .select('id, agency_name, focus')
+      .select('id, agency_name, focus, stripe_connect_onboarded')
       .eq('profile_id', id)
-      .maybeSingle<{ id: string; agency_name: string; focus: string | null }>()
+      .maybeSingle<{ id: string; agency_name: string; focus: string | null; stripe_connect_onboarded: boolean }>()
 
-    manager.value = data ? { id: data.id, agencyName: data.agency_name, focus: data.focus } : null
+    manager.value = data
+      ? { id: data.id, agencyName: data.agency_name, focus: data.focus, stripeConnectOnboarded: data.stripe_connect_onboarded }
+      : null
     return manager.value
   }
 

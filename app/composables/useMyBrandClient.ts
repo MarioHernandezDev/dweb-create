@@ -15,13 +15,14 @@ export function useMyBrandClient() {
   async function ensureBrandClient(userId?: string) {
     if (brandClient.value !== undefined) return brandClient.value
 
-    const id = userId ?? useSupabaseUser().value?.id
+    const client = useSupabaseClient()
+    // `getUser()` en vez de `useSupabaseUser().value`: ver role-guard.global.ts.
+    const id = userId ?? (await client.auth.getUser()).data.user?.id
     if (!id) {
       brandClient.value = null
       return null
     }
 
-    const client = useSupabaseClient()
     const { data } = await client
       .from('brand_clients')
       .select('id, company_name, industry')
