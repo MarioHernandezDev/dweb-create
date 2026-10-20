@@ -49,5 +49,13 @@ export const localPhotos = {
   socials: {
     src: '/img/pexels-viralyft-16852355.jpg',
     alt: 'Móvil mostrando una carpeta de apps de redes sociales'
+  },
+  install: {
+    src: '/img/pexels-tracy-le-blanc-67789-607812.jpg',
+    alt: 'Mano sosteniendo un móvil con una carpeta de redes sociales en la pantalla de inicio'
+  },
+  metrics: {
+    src: '/img/pexels-yankrukov-7693745.jpg',
+    alt: 'Dos personas señalando gráficas impresas de métricas sobre una mesa'
   }
 } satisfies Record<string, CoverPhoto>

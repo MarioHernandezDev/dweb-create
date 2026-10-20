@@ -11,7 +11,10 @@ export default defineNuxtConfig({
   components: [{ path: '~/components', pathPrefix: false }],
 
   vite: {
-    plugins: [tailwindcss()]
+    plugins: [tailwindcss()],
+    optimizeDeps: {
+      include: ['gsap', 'gsap/ScrollTrigger']
+    }
   },
 
   app: {
@@ -87,7 +90,7 @@ export default defineNuxtConfig({
       login: '/login',
       callback: '/confirm',
       // Páginas públicas: todo lo demás exige sesión iniciada.
-      exclude: ['/', '/onboarding']
+      exclude: ['/', '/onboarding', '/instalaciones']
     }
   }
 })
