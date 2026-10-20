@@ -5,6 +5,7 @@ import { contentTypeMeta } from '~/utils/status'
 
 const open = defineModel<boolean>({ default: false })
 const { createPost, updatePost } = useMyPosts()
+const { balance: creditBalance, ensureLoaded: ensureCreditsLoaded, setBalance: setCreditBalance } = useMyCredits()
 
 const title = ref('')
 const caption = ref('')
@@ -42,10 +43,15 @@ async function predict() {
     const postId = await saveDraft()
     const prediction = await $fetch('/api/ml/predict', { method: 'POST', body: { postId } })
     result.value = { score: prediction.successScore, confidence: prediction.confidence, suggestions: prediction.suggestions }
+    setCreditBalance(prediction.creditsRemaining)
     stage.value = 'result'
   } catch (err) {
     console.error('[PostComposerSheet] fallo al predecir:', err)
-    error.value = 'No se ha podido predecir. Inténtalo de nuevo.'
+    const statusCode = (err as { statusCode?: number; response?: { status?: number } })?.statusCode
+      ?? (err as { response?: { status?: number } })?.response?.status
+    error.value = statusCode === 402
+      ? 'Sin créditos disponibles. Mejora tu plan para seguir prediciendo.'
+      : 'No se ha podido predecir. Inténtalo de nuevo.'
     stage.value = 'draft'
   }
 }
@@ -72,14 +78,16 @@ function schedule() {
 }
 
 watch(open, (value) => {
-  if (!value) {
-    stage.value = 'draft'
-    title.value = ''
-    caption.value = ''
-    createdPostId.value = null
-    result.value = null
-    error.value = ''
+  if (value) {
+    ensureCreditsLoaded()
+    return
   }
+  stage.value = 'draft'
+  title.value = ''
+  caption.value = ''
+  createdPostId.value = null
+  result.value = null
+  error.value = ''
 })
 </script>
 
@@ -124,11 +132,13 @@ watch(open, (value) => {
           variant="primary" size="lg"
           :icon="stage === 'predicting' ? 'ph:circle-notch-bold' : 'ph:sparkle-fill'" :icon-spin="stage === 'predicting'"
           class="w-full mt-1"
-          :disabled="!title || stage === 'predicting' || stage === 'saving'" @click="predict"
+          :disabled="!title || stage === 'predicting' || stage === 'saving' || creditBalance === 0" @click="predict"
         >
           {{ stage === 'predicting' ? 'Analizando…' : 'Predecir éxito' }}
         </BaseButton>
-        <p class="text-center text-[0.75rem] text-[var(--color-text-faint)] -mt-2">Consume 1 crédito de tu plan</p>
+        <p class="text-center text-[0.75rem] text-[var(--color-text-faint)] -mt-2">
+          {{ creditBalance === 0 ? 'Sin créditos — mejora tu plan para seguir prediciendo' : `Consume 1 crédito · te quedan ${creditBalance ?? '…'}` }}
+        </p>
 
         <BaseButton
           variant="secondary" size="lg"

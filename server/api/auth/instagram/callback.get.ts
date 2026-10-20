@@ -1,0 +1,112 @@
+import { serverSupabaseServiceRole } from '#supabase/server'
+
+/**
+ * GET /api/auth/instagram/callback — a donde Instagram redirige tras el
+ * login (ver docs/9-INSTAGRAM-OAUTH-SETUP.md). Tres llamadas server-to-server
+ * en cadena, todas con `client_secret` de por medio — por eso no se puede
+ * hacer nada de esto desde el navegador:
+ *
+ * 1. `code` -> token de corta duración (api.instagram.com/oauth/access_token).
+ * 2. Token corto -> token de larga duración, 60 días (graph.instagram.com/access_token).
+ * 3. Perfil básico (graph.instagram.com/.../me) con ese token.
+ *
+ * El token final se cifra (`encryptToken`) antes de guardarlo — nunca en
+ * texto plano, ni siquiera con la service_role key de por medio.
+ *
+ * Deliberadamente fuera de esta primera versión: `followers_count` se queda
+ * en su valor por defecto (0) — el scope `instagram_business_basic` no trae
+ * el número de seguidores, haría falta `instagram_business_manage_insights`
+ * (pide permisos de negocio adicionales, no solo identificar la cuenta).
+ */
+
+interface ShortLivedTokenResponse {
+  access_token: string
+  user_id: string
+}
+
+interface LongLivedTokenResponse {
+  access_token: string
+  token_type: string
+  expires_in: number
+}
+
+interface InstagramProfile {
+  id: string
+  username: string
+  account_type?: string
+}
+
+export default defineEventHandler(async (event) => {
+  const query = getQuery(event)
+  const config = useRuntimeConfig(event)
+
+  const redirectWithError = (reason: string) =>
+    sendRedirect(event, `/creator/socials?instagram=error&reason=${encodeURIComponent(reason)}`)
+
+  if (query.error) {
+    const reason = typeof query.error_description === 'string' ? query.error_description : String(query.error)
+    return redirectWithError(reason)
+  }
+
+  const code = query.code
+  const state = query.state
+  if (typeof code !== 'string' || typeof state !== 'string') {
+    return redirectWithError('Falta el código de autorización de Instagram.')
+  }
+
+  const influencerId = verifyOAuthState(state, config.socialTokenEncryptionKey)
+  if (!influencerId) {
+    return redirectWithError('La sesión de conexión caducó o no es válida. Inténtalo otra vez.')
+  }
+
+  try {
+    const shortLived = await $fetch<ShortLivedTokenResponse>('https://api.instagram.com/oauth/access_token', {
+      method: 'POST',
+      body: new URLSearchParams({
+        client_id: config.instagramAppId,
+        client_secret: config.instagramAppSecret,
+        grant_type: 'authorization_code',
+        redirect_uri: config.instagramRedirectUri,
+        code
+      })
+    })
+
+    const longLived = await $fetch<LongLivedTokenResponse>('https://graph.instagram.com/access_token', {
+      params: {
+        grant_type: 'ig_exchange_token',
+        client_secret: config.instagramAppSecret,
+        access_token: shortLived.access_token
+      }
+    })
+
+    const profile = await $fetch<InstagramProfile>('https://graph.instagram.com/v21.0/me', {
+      params: { fields: 'id,username,account_type', access_token: longLived.access_token }
+    })
+
+    const encrypted = encryptToken(longLived.access_token, config.socialTokenEncryptionKey)
+    const expiresAt = new Date(Date.now() + longLived.expires_in * 1000).toISOString()
+
+    const client = serverSupabaseServiceRole(event)
+    const { error } = await client
+      .from('social_accounts')
+      .upsert({
+        influencer_id: influencerId,
+        platform: 'instagram',
+        handle: profile.username,
+        access_token_encrypted: encrypted,
+        // Instagram no da un refresh_token aparte: el propio token de larga
+        // duración se "refresca" contra sí mismo (grant_type=ig_refresh_token).
+        // Se guarda igual en las dos columnas para no inventar un esquema
+        // nuevo solo para esta plataforma.
+        refresh_token_encrypted: encrypted,
+        token_expires_at: expiresAt,
+        connected_at: new Date().toISOString()
+      } as never, { onConflict: 'influencer_id,platform' })
+    if (error) throw error
+
+    return sendRedirect(event, '/creator/socials?instagram=connected')
+  } catch (err) {
+    console.error('[auth/instagram/callback] fallo al completar el OAuth:', err)
+    return redirectWithError('No se ha podido completar la conexión con Instagram. Inténtalo otra vez.')
+  }
+})

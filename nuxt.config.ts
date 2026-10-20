@@ -71,6 +71,17 @@ export default defineNuxtConfig({
     // `meta-llama/llama-3.3-70b-instruct:free` desapareció del catálogo
     // gratuito de OpenRouter (404) — ver docs/CHANGELOG.md.
     openrouterModel: process.env.OPENROUTER_MODEL || 'nvidia/nemotron-3-super-120b-a12b:free',
+    // OAuth real de Instagram (Fase 4) — ver docs/9-INSTAGRAM-OAUTH-SETUP.md.
+    // Los 3 son necesarios para que "Conectar" en Redes funcione de verdad;
+    // sin ellos, server/api/auth/instagram/start.get.ts devuelve un 500 claro
+    // en vez de dejar que el usuario entre a un flujo roto.
+    instagramAppId: process.env.INSTAGRAM_APP_ID,
+    instagramAppSecret: process.env.INSTAGRAM_APP_SECRET,
+    instagramRedirectUri: process.env.INSTAGRAM_REDIRECT_URI,
+    // Clave simétrica (32 bytes en base64) para cifrar los tokens de redes
+    // sociales en `social_accounts` y para firmar el `state` del OAuth. Ver
+    // docs/9-INSTAGRAM-OAUTH-SETUP.md para cómo generarla.
+    socialTokenEncryptionKey: process.env.SOCIAL_TOKEN_ENCRYPTION_KEY,
     public: {
       // Pública a propósito: la usa el navegador para cargar Stripe.js antes
       // del Checkout. Nunca pongas aquí ninguna de las claves de arriba.
