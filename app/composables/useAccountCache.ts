@@ -25,6 +25,7 @@ export function resetAccountCaches() {
   useState('client-posts', () => []).value = []
   useState<boolean>('client-posts-loaded', () => false).value = false
   useMyRoster().reset()
+  useMyTrends().reset()
 
   useState<unknown>('my-subscription', () => null).value = null
   useState<boolean>('my-subscription-loaded', () => false).value = false

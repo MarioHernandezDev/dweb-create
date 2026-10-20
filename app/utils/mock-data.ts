@@ -2,8 +2,7 @@ import type {
   MetricSummary,
   Platform,
   SparklinePoint,
-  Suggestion,
-  TrendSuggestion
+  Suggestion
 } from '~/types'
 
 export const metricsByPlatform: MetricSummary[] = [
@@ -21,13 +20,6 @@ export const engagementSeries: SparklinePoint[] = [
   { label: 'V', value: 74 },
   { label: 'S', value: 63 },
   { label: 'D', value: 81 }
-]
-
-export const trendSuggestions: TrendSuggestion[] = [
-  { id: 't1', platform: 'tiktok', topic: 'Rutinas de escritorio en 60 segundos', trendScore: 88, growthPct: 34, hashtags: ['#desksetup', '#productividad'], format: 'Reel con transición rápida' },
-  { id: 't2', platform: 'instagram', topic: 'Comparativas de precio real vs. percibido', trendScore: 81, growthPct: 21, hashtags: ['#dineroreal'], format: 'Carrusel con capturas' },
-  { id: 't3', platform: 'youtube', topic: 'Un día en la vida sin editar', trendScore: 76, growthPct: 19, hashtags: ['#dayinmylife'], format: 'Vlog de 8-12 minutos' },
-  { id: 't4', platform: 'tiktok', topic: 'Mitos desmentidos en 3 frases', trendScore: 72, growthPct: 15, hashtags: ['#mitos'], format: 'Texto en pantalla + voz en off' }
 ]
 
 export const suggestionsForDraft: Suggestion[] = [

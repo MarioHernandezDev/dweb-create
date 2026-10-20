@@ -59,12 +59,16 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     // Privado: solo visible en el servidor (rutas de server/api), nunca en
-    // el bundle del cliente — por eso no lleva prefijo NUXT_PUBLIC_.
+    // el bundle del cliente — por eso no llevan prefijo NUXT_PUBLIC_.
     stripeSecretKey: process.env.STRIPE_SECRET_KEY,
     stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET,
+    // Las sugerencias de IA se piden desde /api/ml/predict, nunca desde el
+    // navegador — ver docs/8-AI-SUGGESTIONS-SETUP.md.
+    openrouterApiKey: process.env.OPENROUTER_API_KEY,
+    openrouterModel: process.env.OPENROUTER_MODEL || 'meta-llama/llama-3.3-70b-instruct:free',
     public: {
       // Pública a propósito: la usa el navegador para cargar Stripe.js antes
-      // del Checkout. Nunca pongas aquí la secret key.
+      // del Checkout. Nunca pongas aquí ninguna de las claves de arriba.
       stripePublishableKey: process.env.STRIPE_PUBLISHABLE_KEY
     }
   },

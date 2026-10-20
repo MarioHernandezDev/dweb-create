@@ -17,12 +17,13 @@ export function useMyManager() {
     if (manager.value !== undefined) return manager.value
 
     const client = useSupabaseClient()
-    // `getUser()` en vez de `useSupabaseUser().value`: ver role-guard.global.ts.
+    // `getUser()` en vez de `useSupabaseUser().value`: ver useMyInfluencer.ts
+    // y role-guard.global.ts para el detalle del fallo que esto evita.
     const id = userId ?? (await client.auth.getUser()).data.user?.id
-    if (!id) {
-      manager.value = null
-      return null
-    }
+    // No cachear `null` aquí si solo falta el id todavía (ver el mismo caso
+    // en useMyRole.ts/useMyInfluencer.ts) — se dejaría atascado el resto de
+    // la sesión de pestaña en vez de poder reintentarlo.
+    if (!id) return null
 
     const { data } = await client
       .from('managers')

@@ -54,18 +54,21 @@ async function advanceStatus() {
   if (post.value && nextStatus.value) await updatePost(post.value.id, { status: nextStatus.value })
 }
 
-// Primera versión real del motor de ML (Fase 1 MVP, ver
-// docs/3-ML-PIPELINE.md §3.5): modelo heurístico servido por
-// /api/ml/predict, que SÍ persiste en `ml_predictions` (con service_role,
-// el cliente no tiene permiso de escritura ahí — ver RLS). El
-// enriquecimiento con LLM queda para cuando haya clave de API configurada.
+// Motor de ML real (ver docs/3-ML-PIPELINE.md §3.5): modelo heurístico +
+// sugerencias opcionales de un LLM gratuito, servido por /api/ml/predict,
+// que SÍ persiste en `ml_predictions` (con service_role, el cliente no
+// tiene permiso de escritura ahí — ver RLS).
 const predicting = ref(false)
 async function predict() {
   if (!post.value) return
   predicting.value = true
   try {
     const result = await $fetch('/api/ml/predict', { method: 'POST', body: { postId: post.value.id } })
-    if (post.value) post.value.successScore = result.successScore
+    if (post.value) {
+      post.value.successScore = result.successScore
+      post.value.confidence = result.confidence
+      post.value.suggestions = result.suggestions.length ? result.suggestions : undefined
+    }
   } catch (err) {
     console.error('[creator/post/:id] fallo al predecir:', err)
   } finally {
@@ -126,7 +129,10 @@ async function predict() {
       </div>
 
       <section class="mt-6 lg:mt-0">
-        <SuccessScoreCard v-if="post.successScore" :score="post.successScore" :confidence="0.82" :suggestions="suggestionsForDraft" />
+        <SuccessScoreCard
+          v-if="post.successScore" :score="post.successScore" :confidence="post.confidence ?? 0.82"
+          :suggestions="post.suggestions ?? suggestionsForDraft"
+        />
         <BaseCard v-else radius="lg" padding="lg" class="flex items-center justify-between gap-4 lg:flex-col lg:items-start">
           <div>
             <p class="text-[0.9375rem] text-[var(--color-text)]">Todavía no has predicho el éxito de esta publicación</p>

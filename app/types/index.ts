@@ -69,6 +69,8 @@ export interface Post {
   hashtags: string[]
   cover: CoverArt
   successScore?: number
+  confidence?: number
+  suggestions?: Suggestion[]
 }
 
 export interface MetricSummary {
