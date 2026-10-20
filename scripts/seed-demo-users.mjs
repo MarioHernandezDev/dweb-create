@@ -104,30 +104,60 @@ async function main() {
 
   // Los relacionamos: una colaboración en curso + un post esperando revisión,
   // para que de entrada haya algo real que aprobar/editar en cada vista.
-  const { data: collaboration, error: collabError } = await admin
+  // `collaborations`/`posts` no tienen una clave natural con la que hacer
+  // upsert, así que comprobamos a mano si ya existen antes de insertar —
+  // si no, cada vez que se vuelve a correr el script (p.ej. en otra máquina
+  // del equipo) se duplica la colaboración y el post de demo.
+  let collaboration
+  const { data: existingCollaboration, error: existingCollabError } = await admin
     .from('collaborations')
-    .insert({
-      brand_client_id: brandClient.id,
-      manager_id: manager.id,
-      influencer_id: influencer.id,
-      status: 'in_progress',
-      brief: 'Campaña de lanzamiento de la nueva línea de skincare.'
-    })
     .select()
-    .single()
-  if (collabError) throw collabError
+    .eq('brand_client_id', brandClient.id)
+    .eq('influencer_id', influencer.id)
+    .maybeSingle()
+  if (existingCollabError) throw existingCollabError
 
-  const { error: postError } = await admin.from('posts').insert({
-    influencer_id: influencer.id,
-    collaboration_id: collaboration.id,
-    title: 'Reel: rutina skincare nocturna',
-    caption: 'Cuatro pasos, cinco minutos, piel lista para mañana.',
-    content_type: 'reel',
-    platform: 'instagram',
-    status: 'ready_for_review',
-    due_date: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString()
-  })
-  if (postError) throw postError
+  if (existingCollaboration) {
+    collaboration = existingCollaboration
+    console.log('↪ La colaboración de demo ya existía, reutilizándola')
+  } else {
+    const { data: newCollaboration, error: collabError } = await admin
+      .from('collaborations')
+      .insert({
+        brand_client_id: brandClient.id,
+        manager_id: manager.id,
+        influencer_id: influencer.id,
+        status: 'in_progress',
+        brief: 'Campaña de lanzamiento de la nueva línea de skincare.'
+      })
+      .select()
+      .single()
+    if (collabError) throw collabError
+    collaboration = newCollaboration
+  }
+
+  const { data: existingPost, error: existingPostError } = await admin
+    .from('posts')
+    .select('id')
+    .eq('collaboration_id', collaboration.id)
+    .maybeSingle()
+  if (existingPostError) throw existingPostError
+
+  if (existingPost) {
+    console.log('↪ El post de demo ya existía, no se crea otro')
+  } else {
+    const { error: postError } = await admin.from('posts').insert({
+      influencer_id: influencer.id,
+      collaboration_id: collaboration.id,
+      title: 'Reel: rutina skincare nocturna',
+      caption: 'Cuatro pasos, cinco minutos, piel lista para mañana.',
+      content_type: 'reel',
+      platform: 'instagram',
+      status: 'ready_for_review',
+      due_date: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString()
+    })
+    if (postError) throw postError
+  }
 
   console.log('\nListo. 3 cuentas de prueba, ya relacionadas entre sí:\n')
   console.log('  manager@feedma.test     (Manager — Estudio Nova)')

@@ -63,7 +63,7 @@ Somos 2 personas. Para no pisarnos y no perdernos, el proyecto se hace **en este
 ### FASE 3 — Pagos (Stripe)
 **Por qué va aquí y no antes:** no tiene sentido montar cobros hasta que haya usuarios reales guardados (Fase 2).
 
-- [ ] Crear cuenta de Stripe en modo de pruebas (test mode).
+- [ ] Crear cuenta de Stripe en modo de pruebas (test mode), con Connect activado desde el principio (hace falta para pagar a influencers/managers, no solo para la suscripción) — pasos en [`docs/7-STRIPE-SETUP.md`](./docs/7-STRIPE-SETUP.md).
 - [ ] Suscripciones: el Manager y el Influencer pagan una cuota mensual por usar el panel.
 - [ ] Stripe Connect: cuando una marca contrata a un influencer a través de la plataforma, FEEDMA se queda automáticamente con una comisión.
 - [ ] Webhooks de Stripe para que el estado de pago en la app esté siempre al día.
@@ -71,9 +71,9 @@ Somos 2 personas. Para no pisarnos y no perdernos, el proyecto se hace **en este
 ### FASE 4 — Apagar los "mocks": funciones de verdad
 **Por qué va aquí:** hasta este punto, varias cosas de la app son simulaciones (datos de mentira o botones que no hacen nada de verdad). Esta fase las sustituye una a una por la función real.
 
-- [ ] Conectar redes sociales de verdad (Instagram, TikTok, YouTube...) usando sus APIs oficiales.
-- [ ] Motor de Machine Learning real para la predicción de éxito y las tendencias — ver [`docs/3-ML-PIPELINE.md`](./docs/3-ML-PIPELINE.md).
-- [ ] Que el botón "Contactar" de la página Descubrir mande una solicitud de verdad (hoy es una simulación que no se guarda en ningún sitio).
+- [ ] Conectar redes sociales de verdad (Instagram, TikTok, YouTube...) usando sus APIs oficiales — hoy "Conectar" en Redes solo crea la fila en `social_accounts`, sin OAuth real detrás.
+- [ ] Motor de Machine Learning real para la predicción de éxito y las tendencias — ver [`docs/3-ML-PIPELINE.md`](./docs/3-ML-PIPELINE.md). Ya hay una primera versión heurística real en `/api/ml/predict` (puntúa y guarda de verdad); falta el enriquecimiento con LLM y el motor de tendencias.
+- [ ] Sugerencias de IA (copy/hashtags/horario) junto a la predicción — hoy es texto fijo (`suggestionsForDraft`).
 
 ### FASE 5 — Salir a buscar usuarios reales
 **Por qué va al final:** no tiene sentido invitar a nadie hasta que el pago y los datos reales funcionen sin errores.
@@ -95,7 +95,8 @@ Cada fase de arriba tiene su detalle técnico en [`docs/`](./docs):
 4. [**Roadmap y Tareas**](./docs/4-ROADMAP-AND-TASKS.md) — checklist semana a semana más detallado que las fases de arriba.
 5. [**Reparto de trabajo del frontend**](./docs/5-FRONTEND-WORK-SPLIT.md) — cómo dividir el frontend actual entre dos personas y flujo de git para fusionar sin conflictos.
 6. [**Poner en marcha Supabase**](./docs/6-SUPABASE-SETUP.md) — guía paso a paso para crear el proyecto real, aplicar las migraciones y generar las 3 cuentas de prueba.
-7. [**Changelog de sesiones**](./docs/CHANGELOG.md) — qué se hizo en cada sesión de desarrollo, por qué, y qué queda por verificar. Léelo antes de retomar el proyecto después de un tiempo sin tocarlo.
+7. [**Poner en marcha Stripe**](./docs/7-STRIPE-SETUP.md) — guía paso a paso para crear la cuenta de pruebas con Connect activado, antes de empezar la Fase 3.
+8. [**Changelog de sesiones**](./docs/CHANGELOG.md) — qué se hizo en cada sesión de desarrollo, por qué, y qué queda por verificar. Léelo antes de retomar el proyecto después de un tiempo sin tocarlo.
 
 ## 🚀 Guía de Inicio Rápido
 

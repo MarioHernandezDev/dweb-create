@@ -92,12 +92,12 @@ export default defineEventHandler(async (event) => {
     .from('ml_predictions')
     .insert({ post_id: post.id, success_score: successScore, confidence, model_version: MODEL_VERSION } as never)
     .select('success_score, confidence, model_version, created_at')
-    .single()
+    .single<{ success_score: number; confidence: number; model_version: string; created_at: string }>()
   if (insertError) throw createError({ statusCode: 500, statusMessage: insertError.message })
 
   return {
-    successScore: prediction.success_score as number,
-    confidence: prediction.confidence as number,
-    modelVersion: prediction.model_version as string
+    successScore: prediction.success_score,
+    confidence: prediction.confidence,
+    modelVersion: prediction.model_version
   }
 })

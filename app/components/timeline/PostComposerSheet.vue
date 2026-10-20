@@ -4,7 +4,7 @@ import type { ContentType, Platform } from '~/types'
 import { contentTypeMeta } from '~/utils/status'
 
 const open = defineModel<boolean>({ default: false })
-const { createPost } = useMyPosts()
+const { createPost, updatePost } = useMyPosts()
 
 const title = ref('')
 const caption = ref('')
@@ -14,27 +14,41 @@ const platform = ref<Platform>('instagram')
 const contentTypes = Object.keys(contentTypeMeta) as ContentType[]
 const platforms = Object.entries(platformMeta).map(([value, meta]) => ({ value: value as Platform, label: meta.label }))
 
-type Stage = 'draft' | 'loading' | 'result' | 'saving'
+type Stage = 'draft' | 'loading' | 'result'
 const stage = ref<Stage>('draft')
 const result = ref<{ score: number; confidence: number } | null>(null)
+const error = ref('')
 
-function predict() {
+// El post se crea de verdad (estado "idea") en el primer "Predecir éxito" —
+// /api/ml/predict solo puede puntuar algo que ya existe en `posts` (ahí es
+// donde se guarda la predicción). Si se vuelve a "Editar" y se predice otra
+// vez, se actualiza ese mismo post en vez de crear uno duplicado.
+const createdPostId = ref<string | null>(null)
+
+async function predict() {
   stage.value = 'loading'
-  setTimeout(() => {
-    const base = 52 + Math.min(title.value.length, 20) + (caption.value.length > 40 ? 10 : 0)
-    result.value = { score: Math.min(96, base), confidence: 0.74 + Math.random() * 0.15 }
+  error.value = ''
+  try {
+    if (!createdPostId.value) {
+      const created = await createPost({ title: title.value, caption: caption.value, contentType: contentType.value, platform: platform.value })
+      createdPostId.value = created.id
+    } else {
+      await updatePost(createdPostId.value, { title: title.value, caption: caption.value })
+    }
+
+    const prediction = await $fetch('/api/ml/predict', { method: 'POST', body: { postId: createdPostId.value } })
+    result.value = { score: prediction.successScore, confidence: prediction.confidence }
     stage.value = 'result'
-  }, 900)
+  } catch (err) {
+    console.error('[PostComposerSheet] fallo al predecir:', err)
+    error.value = 'No se ha podido predecir. Inténtalo de nuevo.'
+    stage.value = 'draft'
+  }
 }
 
-async function schedule() {
-  stage.value = 'saving'
-  try {
-    await createPost({ title: title.value, caption: caption.value, contentType: contentType.value, platform: platform.value })
-    open.value = false
-  } finally {
-    stage.value = 'result'
-  }
+function schedule() {
+  // El post ya quedó guardado de verdad al predecir — aquí solo se cierra.
+  open.value = false
 }
 
 watch(open, (value) => {
@@ -42,6 +56,9 @@ watch(open, (value) => {
     stage.value = 'draft'
     title.value = ''
     caption.value = ''
+    createdPostId.value = null
+    result.value = null
+    error.value = ''
   }
 })
 </script>
@@ -81,6 +98,8 @@ watch(open, (value) => {
           </div>
         </div>
 
+        <p v-if="error" class="text-[0.8125rem] text-[var(--color-status-alert)] -mt-1">{{ error }}</p>
+
         <BaseButton
           variant="primary" size="lg"
           :icon="stage === 'loading' ? 'ph:circle-notch-bold' : 'ph:sparkle-fill'" :icon-spin="stage === 'loading'"
@@ -95,13 +114,8 @@ watch(open, (value) => {
       <div v-else-if="result" key="result">
         <SuccessScoreCard :score="result.score" :confidence="result.confidence" :suggestions="suggestionsForDraft" />
         <div class="flex gap-2.5 mt-5">
-          <BaseButton variant="secondary" class="flex-1" :disabled="stage === 'saving'" @click="stage = 'draft'">Editar</BaseButton>
-          <BaseButton
-            variant="primary" class="flex-1" icon="ph:calendar-plus-fill" :icon-spin="stage === 'saving'" :disabled="stage === 'saving'"
-            @click="schedule"
-          >
-            {{ stage === 'saving' ? 'Guardando…' : 'Programar' }}
-          </BaseButton>
+          <BaseButton variant="secondary" class="flex-1" @click="stage = 'draft'">Editar</BaseButton>
+          <BaseButton variant="primary" class="flex-1" icon="ph:calendar-plus-fill" @click="schedule">Programar</BaseButton>
         </div>
       </div>
     </Transition>
