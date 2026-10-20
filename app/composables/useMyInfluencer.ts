@@ -18,13 +18,25 @@ export function useMyInfluencer() {
   async function ensureInfluencer(userId?: string) {
     if (influencer.value !== undefined) return influencer.value
 
-    const id = userId ?? useSupabaseUser().value?.id
-    if (!id) {
-      influencer.value = null
-      return null
-    }
-
     const client = useSupabaseClient()
+    let id = userId ?? useSupabaseUser().value?.id
+    if (!id) {
+      // `useSupabaseUser()` lo actualiza un listener aparte
+      // (`onAuthStateChange`) y puede ir un paso por detrás de la sesión
+      // real. `getSession()` espera a que el cliente termine de leerla de
+      // verdad (cookies/localStorage) antes de resolver, así que es más
+      // fiable que fiarse del ref reactivo justo tras cargar la página o
+      // iniciar sesión.
+      const { data: sessionData } = await client.auth.getSession()
+      id = sessionData.session?.user.id
+    }
+    // Si de verdad no hay id ni en la sesión, NO se cachea `null` aquí —
+    // sería indistinguible de "este usuario de verdad no tiene ficha" y, al
+    // ser `useState`, quedaría atascado el resto de la sesión de pestaña. Se
+    // deja `influencer.value` en `undefined` para que la siguiente llamada
+    // lo reintente de verdad en vez de darlo por perdido.
+    if (!id) return null
+
     const { data } = await client
       .from('influencers')
       .select('id, display_name, niche, manager_id, managers(agency_name)')

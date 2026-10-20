@@ -57,6 +57,13 @@ export default defineNuxtConfig({
     }
   },
 
+  runtimeConfig: {
+    // Solo servidor (no va bajo `public`): las sugerencias de IA se piden
+    // desde /api/ml/predict, nunca desde el navegador. Ver docs/8-AI-SUGGESTIONS-SETUP.md.
+    openrouterApiKey: process.env.OPENROUTER_API_KEY,
+    openrouterModel: process.env.OPENROUTER_MODEL || 'meta-llama/llama-3.3-70b-instruct:free'
+  },
+
   supabase: {
     // El módulo por defecto lee SUPABASE_URL/SUPABASE_KEY; nuestro .env usa
     // SUPABASE_ANON_KEY (así quedó documentado en docs/6-SUPABASE-SETUP.md),

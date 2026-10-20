@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { suggestionsForDraft, platformMeta } from '~/utils/mock-data'
-import type { ContentType, Platform } from '~/types'
+import type { ContentType, Platform, Suggestion } from '~/types'
 import { contentTypeMeta } from '~/utils/status'
 
 const open = defineModel<boolean>({ default: false })
@@ -16,7 +16,7 @@ const platforms = Object.entries(platformMeta).map(([value, meta]) => ({ value: 
 
 type Stage = 'draft' | 'loading' | 'result'
 const stage = ref<Stage>('draft')
-const result = ref<{ score: number; confidence: number } | null>(null)
+const result = ref<{ score: number; confidence: number; suggestions: Suggestion[] } | null>(null)
 const error = ref('')
 
 // El post se crea de verdad (estado "idea") en el primer "Predecir éxito" —
@@ -37,7 +37,7 @@ async function predict() {
     }
 
     const prediction = await $fetch('/api/ml/predict', { method: 'POST', body: { postId: createdPostId.value } })
-    result.value = { score: prediction.successScore, confidence: prediction.confidence }
+    result.value = { score: prediction.successScore, confidence: prediction.confidence, suggestions: prediction.suggestions }
     stage.value = 'result'
   } catch (err) {
     console.error('[PostComposerSheet] fallo al predecir:', err)
@@ -112,7 +112,7 @@ watch(open, (value) => {
       </div>
 
       <div v-else-if="result" key="result">
-        <SuccessScoreCard :score="result.score" :confidence="result.confidence" :suggestions="suggestionsForDraft" />
+        <SuccessScoreCard :score="result.score" :confidence="result.confidence" :suggestions="result.suggestions.length ? result.suggestions : suggestionsForDraft" />
         <div class="flex gap-2.5 mt-5">
           <BaseButton variant="secondary" class="flex-1" @click="stage = 'draft'">Editar</BaseButton>
           <BaseButton variant="primary" class="flex-1" icon="ph:calendar-plus-fill" @click="schedule">Programar</BaseButton>

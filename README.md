@@ -72,8 +72,8 @@ Somos 2 personas. Para no pisarnos y no perdernos, el proyecto se hace **en este
 **Por qué va aquí:** hasta este punto, varias cosas de la app son simulaciones (datos de mentira o botones que no hacen nada de verdad). Esta fase las sustituye una a una por la función real.
 
 - [ ] Conectar redes sociales de verdad (Instagram, TikTok, YouTube...) usando sus APIs oficiales — hoy "Conectar" en Redes solo crea la fila en `social_accounts`, sin OAuth real detrás.
-- [ ] Motor de Machine Learning real para la predicción de éxito y las tendencias — ver [`docs/3-ML-PIPELINE.md`](./docs/3-ML-PIPELINE.md). Ya hay una primera versión heurística real en `/api/ml/predict` (puntúa y guarda de verdad); falta el enriquecimiento con LLM y el motor de tendencias.
-- [ ] Sugerencias de IA (copy/hashtags/horario) junto a la predicción — hoy es texto fijo (`suggestionsForDraft`).
+- [x] Motor de Machine Learning real para la predicción de éxito — ver [`docs/3-ML-PIPELINE.md`](./docs/3-ML-PIPELINE.md). `/api/ml/predict` calcula el score con un modelo heurístico y lo guarda de verdad en `ml_predictions`. Falta el motor de tendencias (`creator/trends.vue` sigue mock).
+- [x] Sugerencias de IA (copy/hashtags/horario) junto a la predicción — `/api/ml/predict` las pide a un LLM gratuito vía OpenRouter cuando hay `OPENROUTER_API_KEY` configurada (ver [`docs/8-AI-SUGGESTIONS-SETUP.md`](./docs/8-AI-SUGGESTIONS-SETUP.md)); si no, cae en el texto fijo de siempre sin romper nada.
 
 ### FASE 5 — Salir a buscar usuarios reales
 **Por qué va al final:** no tiene sentido invitar a nadie hasta que el pago y los datos reales funcionen sin errores.
@@ -96,7 +96,8 @@ Cada fase de arriba tiene su detalle técnico en [`docs/`](./docs):
 5. [**Reparto de trabajo del frontend**](./docs/5-FRONTEND-WORK-SPLIT.md) — cómo dividir el frontend actual entre dos personas y flujo de git para fusionar sin conflictos.
 6. [**Poner en marcha Supabase**](./docs/6-SUPABASE-SETUP.md) — guía paso a paso para crear el proyecto real, aplicar las migraciones y generar las 3 cuentas de prueba.
 7. [**Poner en marcha Stripe**](./docs/7-STRIPE-SETUP.md) — guía paso a paso para crear la cuenta de pruebas con Connect activado, antes de empezar la Fase 3.
-8. [**Changelog de sesiones**](./docs/CHANGELOG.md) — qué se hizo en cada sesión de desarrollo, por qué, y qué queda por verificar. Léelo antes de retomar el proyecto después de un tiempo sin tocarlo.
+8. [**Activar las sugerencias de IA**](./docs/8-AI-SUGGESTIONS-SETUP.md) — cómo conseguir una clave gratis de OpenRouter para que `/api/ml/predict` enriquezca la puntuación con sugerencias reales.
+9. [**Changelog de sesiones**](./docs/CHANGELOG.md) — qué se hizo en cada sesión de desarrollo, por qué, y qué queda por verificar. Léelo antes de retomar el proyecto después de un tiempo sin tocarlo.
 
 ## 🚀 Guía de Inicio Rápido
 

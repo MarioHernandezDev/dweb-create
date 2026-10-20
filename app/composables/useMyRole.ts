@@ -29,15 +29,24 @@ export function useMyRole() {
   async function ensureRole(userId?: string) {
     if (role.value !== undefined) return role.value
 
-    const id = userId ?? useSupabaseUser().value?.id
+    const client = useSupabaseClient()
+    let id = userId ?? useSupabaseUser().value?.id
     if (!id) {
-      role.value = null
-      return null
+      // Ver el mismo caso en useMyInfluencer.ts: `useSupabaseUser()` puede
+      // ir un paso por detrás de la sesión real justo tras cargar la
+      // página o iniciar sesión. `getSession()` espera a la sesión de
+      // verdad en vez de fiarse del ref reactivo.
+      const { data: sessionData } = await client.auth.getSession()
+      id = sessionData.session?.user.id
     }
+    // No cachear `null` aquí si simplemente no había id todavía — se
+    // confundiría con "esta cuenta de verdad no tiene rol" y quedaría
+    // atascado el resto de la sesión de pestaña (useState no se reintenta
+    // solo). Se deja `role.value` en `undefined` para poder reintentarlo.
+    if (!id) return null
 
     // Sin tipos generados de la base de datos todavía (`supabase gen types`,
     // más adelante), así que tipamos la fila a mano en este único punto.
-    const client = useSupabaseClient()
     const { data } = await client.from('profiles').select('role').eq('id', id).single<{ role: string }>()
     role.value = (data?.role ? dbRoleToAppRole[data.role] : undefined) ?? null
     return role.value

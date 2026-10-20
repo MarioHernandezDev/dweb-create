@@ -1,4 +1,4 @@
-import type { ContentType, Platform, Post, PostStatus } from '~/types'
+import type { ContentType, Platform, Post, PostStatus, Suggestion } from '~/types'
 
 interface PostRow {
   id: string
@@ -10,7 +10,7 @@ interface PostRow {
   status: PostStatus
   due_date: string
   metadata: { hashtags?: string[] } | null
-  ml_predictions: { success_score: number; created_at: string }[] | null
+  ml_predictions: { success_score: number; confidence: number | null; suggestions: Suggestion[] | null; created_at: string }[] | null
 }
 
 // El esquema no guarda gradiente de portada (es puro adorno visual): se
@@ -27,13 +27,14 @@ function coverFromId(id: string) {
   return { from: `hsl(${hue} 78% 54%)`, to: `hsl(${(hue + 36) % 360} 70% 40%)`, angle: 135 }
 }
 
-function latestScore(predictions: PostRow['ml_predictions']): number | undefined {
+function latestPrediction(predictions: PostRow['ml_predictions']) {
   if (!predictions?.length) return undefined
-  return [...predictions].sort((a, b) => b.created_at.localeCompare(a.created_at))[0]?.success_score
+  return [...predictions].sort((a, b) => b.created_at.localeCompare(a.created_at))[0]
 }
 
 function mapRow(row: PostRow): Post {
   const dueInDays = Math.round((new Date(row.due_date).getTime() - Date.now()) / 86_400_000)
+  const prediction = latestPrediction(row.ml_predictions)
   return {
     id: row.id,
     influencerId: row.influencer_id,
@@ -45,7 +46,12 @@ function mapRow(row: PostRow): Post {
     dueInDays,
     hashtags: row.metadata?.hashtags ?? [],
     cover: coverFromId(row.id),
-    successScore: latestScore(row.ml_predictions)
+    successScore: prediction?.success_score,
+    confidence: prediction?.confidence ?? undefined,
+    // La IA que enriquece la predicción es opcional (ver docs/8-AI-SUGGESTIONS-SETUP.md):
+    // si no había OPENROUTER_API_KEY cuando se predijo, esto llega vacío y la
+    // pantalla cae en el texto fijo de `suggestionsForDraft`.
+    suggestions: prediction?.suggestions?.length ? prediction.suggestions : undefined
   }
 }
 
@@ -78,7 +84,7 @@ export function useMyPosts() {
     loading.value = true
     const { data, error } = await client
       .from('posts')
-      .select('*, ml_predictions(success_score, created_at)')
+      .select('*, ml_predictions(success_score, confidence, suggestions, created_at)')
       .eq('influencer_id', me.id)
       .order('due_date', { ascending: true })
     loading.value = false
@@ -134,7 +140,7 @@ export function useMyPosts() {
         status: 'idea',
         due_date: dueDate.toISOString()
       } as never)
-      .select('*, ml_predictions(success_score, created_at)')
+      .select('*, ml_predictions(success_score, confidence, suggestions, created_at)')
       .single<PostRow>()
     if (error) throw error
 
