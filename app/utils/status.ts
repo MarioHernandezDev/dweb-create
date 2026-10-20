@@ -1,4 +1,5 @@
-import type { ContentType, PostStatus } from '~/types'
+import type { CollaborationStatus, ContentType, PostStatus } from '~/types'
+import type { RosterRequestStatus } from '~/composables/useRosterRequests'
 
 // El icono de cada estado vive en StatusGlyph.vue (set propio, no icon-font).
 export const statusMeta: Record<PostStatus, { label: string; color: string }> = {
@@ -8,6 +9,20 @@ export const statusMeta: Record<PostStatus, { label: string; color: string }> = 
   scheduled: { label: 'Programado', color: 'var(--color-status-scheduled)' },
   published: { label: 'Publicado', color: 'var(--color-status-published)' },
   overdue: { label: 'Fuera de plazo', color: 'var(--color-status-alert)' }
+}
+
+export const collaborationStatusMeta: Record<CollaborationStatus, { label: string; color: string }> = {
+  requested: { label: 'Pendiente de respuesta', color: 'var(--color-status-review)' },
+  accepted: { label: 'Aceptada', color: 'var(--color-status-scheduled)' },
+  in_progress: { label: 'En curso', color: 'var(--color-status-production)' },
+  completed: { label: 'Completada', color: 'var(--color-status-published)' },
+  declined: { label: 'Rechazada', color: 'var(--color-status-alert)' }
+}
+
+export const rosterRequestStatusMeta: Record<RosterRequestStatus, { label: string; color: string }> = {
+  requested: { label: 'Pendiente de respuesta', color: 'var(--color-status-review)' },
+  accepted: { label: 'Aceptada', color: 'var(--color-status-published)' },
+  declined: { label: 'Rechazada', color: 'var(--color-status-alert)' }
 }
 
 export const contentTypeMeta: Record<ContentType, { label: string; icon: string }> = {

@@ -2,7 +2,10 @@
 useHead({ title: 'Resumen' })
 
 const { influencers, posts, ensureLoaded } = useMyRoster()
-await ensureLoaded()
+const { pendingCount: pendingRequests, ensureLoaded: ensureRequestsLoaded } = useCollabRequests()
+const { pendingCount: pendingRosterRequests, ensureLoaded: ensureRosterRequestsLoaded } = useRosterRequests()
+// En paralelo, no en serie — tres consultas independientes.
+await Promise.all([ensureLoaded(), ensureRequestsLoaded(), ensureRosterRequestsLoaded()])
 
 const postsByInfluencer = computed(() => {
   const map = new Map<string, typeof posts.value>()
@@ -47,6 +50,24 @@ const quickActions = computed(() => [
         <Icon name="ph:check-circle-fill" class="size-4" />
         {{ totalPublishedWeek }} entregas publicadas esta semana
       </p>
+    </section>
+
+    <section v-if="pendingRequests" class="mb-7">
+      <BaseCard radius="md" padding="md" class="flex items-center gap-3 border-[var(--color-status-review)]/30 bg-[var(--color-status-review)]/[0.08]">
+        <Icon name="ph:handshake-fill" class="size-5 text-[var(--color-status-review)] shrink-0" />
+        <p class="text-[0.875rem] text-[var(--color-text)]">
+          Tienes {{ pendingRequests }} solicitud{{ pendingRequests > 1 ? 'es' : '' }} de colaboración nueva{{ pendingRequests > 1 ? 's' : '' }}. <NuxtLink to="/manager/requests" class="font-medium underline underline-offset-2">Ver</NuxtLink>
+        </p>
+      </BaseCard>
+    </section>
+
+    <section v-if="pendingRosterRequests" class="mb-7">
+      <BaseCard radius="md" padding="md" class="flex items-center gap-3 border-[var(--color-status-review)]/30 bg-[var(--color-status-review)]/[0.08]">
+        <Icon name="ph:users-three-fill" class="size-5 text-[var(--color-status-review)] shrink-0" />
+        <p class="text-[0.875rem] text-[var(--color-text)]">
+          {{ pendingRosterRequests }} influencer{{ pendingRosterRequests > 1 ? 's' : '' }} pide{{ pendingRosterRequests > 1 ? 'n' : '' }} unirse a tu plantilla. <NuxtLink to="/manager/roster-requests" class="font-medium underline underline-offset-2">Ver</NuxtLink>
+        </p>
+      </BaseCard>
     </section>
 
     <section class="mb-6">

@@ -31,11 +31,13 @@ export const roleNav: Record<Role, NavItem[]> = {
   manager: [
     { to: '/manager', label: 'Resumen', icon: 'ph:squares-four-fill' },
     { to: '/manager/timeline', label: 'Tablero', icon: 'ph:kanban-fill' },
+    { to: '/manager/requests', label: 'Solicitudes', icon: 'ph:handshake-fill' },
     { to: '/manager/metrics', label: 'Métricas', icon: 'ph:chart-line-up-fill' }
   ],
   creator: [
     { to: '/creator', label: 'Hoy', icon: 'ph:house-fill' },
     { to: '/creator/timeline', label: 'Tablero', icon: 'ph:kanban-fill' },
+    { to: '/creator/requests', label: 'Solicitudes', icon: 'ph:handshake-fill' },
     { to: '/creator/socials', label: 'Redes', icon: 'ph:share-network-fill' },
     { to: '/creator/trends', label: 'Tendencias', icon: 'ph:flame-fill' },
     { to: '/creator/metrics', label: 'Métricas', icon: 'ph:chart-line-up-fill' }

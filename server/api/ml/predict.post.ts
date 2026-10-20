@@ -171,6 +171,17 @@ export default defineEventHandler(async (event) => {
   }
   if (!authorized) throw createError({ statusCode: 403, statusMessage: 'No tienes permiso sobre esta publicación.' })
 
+  // Créditos (ver README Fase 4 — "Consumo de créditos" y
+  // supabase/migrations/20261020160000_credit_grants.sql): se comprueba
+  // ANTES de llamar al LLM, para no gastar esa llamada en una cuenta sin
+  // saldo. `credit_ledger` es un libro de movimientos (positivos = concedidos,
+  // negativos = gastados) — el saldo es su suma, no hay columna cacheada.
+  const { data: ledgerRows } = await client.from('credit_ledger').select('amount').eq('influencer_id', post.influencer_id)
+  const creditBalance = (ledgerRows ?? []).reduce((sum, row) => sum + row.amount, 0)
+  if (creditBalance <= 0) {
+    throw createError({ statusCode: 402, statusMessage: 'Sin créditos disponibles. Mejora tu plan para seguir prediciendo.' })
+  }
+
   const structural = structuralScore(post)
   const confidence = Number((0.7 + Math.random() * 0.15).toFixed(3))
 
@@ -195,10 +206,21 @@ export default defineEventHandler(async (event) => {
     .single<{ success_score: number; confidence: number; model_version: string; suggestions: AiSuggestion[]; created_at: string }>()
   if (insertError) throw createError({ statusCode: 500, statusMessage: insertError.message })
 
+  // Se descuenta DESPUÉS de guardar la predicción con éxito, no antes — si
+  // algo falla guardando, no se cobra un crédito por nada. Si esta segunda
+  // escritura fallara (poco probable, misma base de datos), la predicción
+  // ya quedó guardada igualmente: se prefiere un crédito de más a perder el
+  // resultado ya calculado.
+  const { error: ledgerError } = await client
+    .from('credit_ledger')
+    .insert({ influencer_id: post.influencer_id, amount: -1, reason: 'ml_prediction', related_post_id: post.id } as never)
+  if (ledgerError) console.error('[ml/predict] fallo al descontar el crédito (la predicción ya se guardó igual):', ledgerError.message)
+
   return {
     successScore: prediction.success_score,
     confidence: prediction.confidence,
     modelVersion: prediction.model_version,
-    suggestions: prediction.suggestions ?? []
+    suggestions: prediction.suggestions ?? [],
+    creditsRemaining: creditBalance - 1
   }
 })

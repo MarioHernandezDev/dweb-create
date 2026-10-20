@@ -14,9 +14,13 @@ interface SocialAccountRow {
  * conectar) — aquí se completa con el resto de plataformas del catálogo
  * para que la pantalla siga mostrando las 6, conectadas o no, como antes.
  *
- * Conectar de verdad vía OAuth es Fase 4 (ver docs/3-ML-PIPELINE.md); por
- * ahora "Conectar" crea la fila (sin token) y "..." la borra, que ya es un
- * camino de escritura real contra Supabase, no una simulación local.
+ * Conectar de verdad vía OAuth es Fase 4 (ver docs/3-ML-PIPELINE.md). Para
+ * Instagram ya está hecho (ver docs/9-INSTAGRAM-OAUTH-SETUP.md): "Conectar"
+ * manda el navegador entero a `/api/auth/instagram/start`, que termina
+ * escribiendo la fila de verdad (con token cifrado) tras el OAuth. Para el
+ * resto de plataformas, sin OAuth todavía, "Conectar" sigue creando la fila
+ * sin token y "..." la borra — un camino de escritura real contra Supabase,
+ * pero sin cuenta de verdad detrás.
  */
 export function useMySocialAccounts() {
   const client = useSupabaseClient()
@@ -62,6 +66,13 @@ export function useMySocialAccounts() {
   }
 
   async function connect(platform: SocialAccount['platform']) {
+    if (platform === 'instagram') {
+      // Sale de la app entera hacia instagram.com — no es un fetch, es una
+      // navegación real (ver server/api/auth/instagram/start.get.ts).
+      await navigateTo('/api/auth/instagram/start', { external: true })
+      return
+    }
+
     const me = influencer.value ?? (await ensureInfluencer())
     if (!me) return
 

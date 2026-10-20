@@ -6,6 +6,7 @@ const { logout } = useLogout()
 
 const route = useRoute()
 const { subscription, connectOnboarded, redirecting, ensureLoaded, refresh: refreshBilling, subscribe, connectPayouts } = useMyBilling()
+const { influencer } = useMyInfluencer()
 
 // Al volver de Stripe (Checkout o Connect) los datos ya cambiaron en el
 // servidor vía webhook — hay que refrescar de verdad, no fiarse de la
@@ -51,6 +52,13 @@ const planLabel = computed(() => {
           <NuxtLink to="/creator/socials" class="flex items-center justify-between px-5 py-4">
             <span class="text-[0.9375rem] text-[var(--color-text)]">Redes conectadas</span>
             <Icon name="ph:caret-right-bold" class="size-4 text-[var(--color-text-faint)]" />
+          </NuxtLink>
+          <NuxtLink to="/creator/discover" class="flex items-center justify-between px-5 py-4">
+            <span class="text-[0.9375rem] text-[var(--color-text)]">Agencia</span>
+            <span class="flex items-center gap-2">
+              <span class="text-[0.8125rem] text-[var(--color-text-faint)]">{{ influencer?.managerName ?? 'Trabajas solo' }}</span>
+              <Icon name="ph:caret-right-bold" class="size-4 text-[var(--color-text-faint)]" />
+            </span>
           </NuxtLink>
           <div class="flex items-center justify-between px-5 py-4">
             <span class="text-[0.9375rem] text-[var(--color-text)]">Créditos de predicción</span>

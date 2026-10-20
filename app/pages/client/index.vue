@@ -8,8 +8,8 @@ const { brandClient } = useMyBrandClient()
 const { collaborations, ensureLoaded: ensureCollaborationsLoaded } = useMyCollaborations()
 const { posts, ensureLoaded: ensurePostsLoaded, approvePost, requestChanges: requestPostChanges } = useClientPosts()
 
-await ensureCollaborationsLoaded()
-await ensurePostsLoaded()
+// En paralelo, no en serie — dos consultas independientes.
+await Promise.all([ensureCollaborationsLoaded(), ensurePostsLoaded()])
 
 // La demo de mock-data asumía una sola colaboración; en real puede haber
 // varias (una marca puede trabajar con más de un influencer a la vez) — de

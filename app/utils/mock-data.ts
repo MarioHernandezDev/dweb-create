@@ -41,3 +41,8 @@ export const platformMeta: Record<Platform, { label: string; icon: string; color
 export function formatCompactNumber(value: number): string {
   return new Intl.NumberFormat('es-ES', { notation: 'compact', maximumFractionDigits: 1 }).format(value)
 }
+
+export function formatEuros(cents: number | null): string {
+  if (!cents) return 'Sin presupuesto'
+  return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(cents / 100)
+}

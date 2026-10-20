@@ -76,7 +76,7 @@ onMounted(() => {
             Entrar a FEEDMA
           </BaseButton>
           <NuxtLink to="/onboarding" class="text-[0.875rem] text-white/60 hover:text-white underline underline-offset-4 decoration-white/30">
-            Ver cómo registrarte
+            Crear una cuenta
           </NuxtLink>
         </div>
       </div>

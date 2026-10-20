@@ -3,6 +3,7 @@ import type { ContentType, Platform, Post, PostStatus, Suggestion } from '~/type
 interface PostRow {
   id: string
   influencer_id: string
+  collaboration_id: string | null
   title: string
   caption: string | null
   content_type: ContentType
@@ -38,6 +39,7 @@ function mapRow(row: PostRow): Post {
   return {
     id: row.id,
     influencerId: row.influencer_id,
+    collaborationId: row.collaboration_id,
     title: row.title,
     caption: row.caption ?? '',
     contentType: row.content_type,
@@ -61,6 +63,8 @@ export interface NewPostInput {
   contentType: ContentType
   platform: Platform
   dueInDays?: number
+  /** Colaboración activa a la que pertenece — opcional, contenido propio si no se indica. */
+  collaborationId?: string | null
 }
 
 /**
@@ -133,6 +137,7 @@ export function useMyPosts() {
       .from('posts')
       .insert({
         influencer_id: me.id,
+        collaboration_id: input.collaborationId ?? null,
         title: input.title,
         caption: input.caption,
         content_type: input.contentType,

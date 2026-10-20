@@ -14,6 +14,12 @@ function sectionOf(path: string): Role | null {
  * rol, aunque esté logueada. Si alguien con rol "cliente" visita /manager,
  * lo mandamos a /client, no le dejamos ver nada de ahí.
  */
+// Cuánto nos fiamos de la última verificación de `getUser()` antes de
+// repetirla. Ver el comentario dentro del middleware para el razonamiento
+// completo de por qué esto no reabre el bug de sesión de las entradas (4)
+// y (5) del CHANGELOG.
+const USER_CACHE_TTL_MS = 30_000
+
 export default defineNuxtRouteMiddleware(async (to) => {
   // OJO: `useSupabaseUser().value` es un ref que un listener aparte
   // (`onAuthStateChange`) rellena de forma asíncrona — en una recarga
@@ -21,7 +27,27 @@ export default defineNuxtRouteMiddleware(async (to) => {
   // middleware corre (visto de verdad: vacío de forma intermitente, no
   // siempre). `getUser()` lo resuelve activamente contra Supabase en vez
   // de fiarse de ese ref, así que es fiable aunque el listener vaya tarde.
-  const { data: { user } } = await useSupabaseClient().auth.getUser()
+  //
+  // Pero este middleware corre en CADA navegación dentro de la app, y
+  // `getUser()` sale a red cada vez (~300-450ms contra el proyecto real,
+  // medido; hasta 1.6s si el proyecto llevaba un rato inactivo) — eso es
+  // lo que hacía sentir la app lenta al navegar, no un problema de
+  // render. La solución no es volver al ref (eso fue exactamente el bug
+  // original): es cachear el resultado YA VERIFICADO contra servidor
+  // durante una ventana corta, para no repetir la llamada en cada clic.
+  // Una recarga completa de página siempre arranca con la caché vacía, así
+  // que el caso que de verdad arregló el bug (sesión recién creada, ref
+  // todavía no actualizado) sigue yendo siempre por la red, sin cambios.
+  const cachedUser = useState<{ id: string } | null>('role-guard-user-cache', () => null)
+  const cachedAt = useState<number>('role-guard-user-cache-at', () => 0)
+
+  let user = cachedUser.value
+  if (!user || Date.now() - cachedAt.value > USER_CACHE_TTL_MS) {
+    const { data } = await useSupabaseClient().auth.getUser()
+    user = data.user
+    cachedUser.value = user
+    cachedAt.value = Date.now()
+  }
   if (!user) return
 
   const { ensureRole } = useMyRole()

@@ -4,6 +4,194 @@ Registro de qué se hizo, por qué, y qué queda pendiente de verificar — pens
 
 ---
 
+## 2026-10-21 (17) — La app se sentía lenta al navegar: dos causas reales, medidas
+
+El usuario reportó que "la web va lentísima". Medido contra el proyecto real (`curl` directo a Supabase, 3 intentos): cada ida y vuelta ronda **300-450ms**, con un pico de 1.6s si el proyecto llevaba un rato inactivo (cold start del free tier). Con eso confirmado, se repasó qué hace la app en cada navegación.
+
+### Causa 1 — `role-guard.global.ts` salía a red en cada clic, no solo al cargar
+
+Este middleware corre en **toda** navegación dentro de la app (es `.global.ts`) y llamaba a `client.auth.getUser()` sin condición — una ida y vuelta a Supabase de ~300-450ms en cada cambio de pantalla, para siempre, incluso con todo lo demás ya en caché. No es un despiste: se eligió `getUser()` a propósito (ver entradas "Fallo de raíz" y "(5)" más abajo) porque `useSupabaseUser().value` podía ir desactualizado justo tras iniciar sesión — así que **no se ha vuelto a ese ref**, que reabriría ese bug.
+
+En su lugar, se cachea el resultado YA verificado contra servidor durante 30s (`USER_CACHE_TTL_MS` en `role-guard.global.ts`). Una recarga completa de página siempre arranca con la caché vacía (sigue yendo a red de inmediato, igual que antes — el caso que arregló el bug original no cambia), pero navegar varias veces dentro de esos 30s ya no repite la llamada. La caché se vacía también en `resetAccountCaches()` (logout / cambio de cuenta demo), para que una cuenta nueva no herede por error el usuario verificado de la anterior en la misma pestaña.
+
+### Causa 2 — consultas independientes esperadas en serie en vez de en paralelo
+
+Varias páginas hacían `await a(); await b(); await c()` para datos que no dependen entre sí — cada `await` suma su propia latencia de red en vez de solaparse. Cambiado a `Promise.all([...])` en: `creator/index.vue`, `manager/index.vue` (3 consultas → 1 ronda), `manager/profile.vue`, `client/index.vue`, `creator/post/[id].vue`.
+
+### Qué NO se tocó (y por qué)
+
+- Las fotos de portada (`localPhotos`/`coverPhotos` en `utils/images.ts`, algunas de 2-3MB en `public/img/`) ya pasan por `<NuxtImg>` con `width`/`height`/`quality`/`format=webp` (ver `CoverImage.vue`) — @nuxt/image las redimensiona y comprime de verdad antes de servirlas, no es el cuello de botella.
+- Esto es `npm run dev` (modo desarrollo) — Vite/Nuxt en dev es siempre más lento que una build de producción (sin minificar, sin code-splitting cacheado, SSR compilado al vuelo). Para sentir la velocidad real: `npm run build && npm run preview`.
+
+### Verificado / sin verificar
+
+- `npx vue-tsc --noEmit` limpio.
+- Servidor de pruebas sano (`/`, `/login` responden 200).
+- **Sin medir en navegador real cuánto baja el tiempo percibido** — las dos causas están confirmadas con `curl`/lectura de código, pero falta que el usuario confirme la sensación de velocidad navegando de verdad.
+
+## 2026-10-20 (16) — Bandeja de entrada (icono junto al perfil)
+
+Petición directa: un icono de bandeja al lado del avatar de perfil, con avisos tipo "Has iniciado sesión" y notificaciones de invitaciones a colaborar. Pensado como base para más adelante (chat entre usuarios, o puente a email) — por ahora es de un solo sentido: el sistema avisa, el usuario lee.
+
+### Qué se construyó
+
+- **`supabase/migrations/20261021110000_notifications.sql`** (nueva, sin aplicar todavía): tabla `notifications` (profile_id, type, title, body, link, read_at) con RLS de solo lectura/marcar-como-leída propia — nunca se inserta desde el cliente, solo desde triggers `security definer` (mismo criterio que `metrics`/`subscriptions`: sin policy de insert para "authenticated" = bloqueado del todo). Función helper `public.notify(...)` y los triggers que la usan:
+  - **Alta de cuenta** → se añade a `handle_new_user()` (redefinida entera, mismo cuerpo que ya tenía + el aviso).
+  - **Inicio de sesión** → trigger nuevo sobre `auth.users` cuando cambia `last_sign_in_at` (eso solo pasa en un inicio de sesión real — password, magic link, confirmación de email — nunca en un refresco de token, así que no hay spam en cada recarga).
+  - **Colaboración nueva / aceptada / rechazada / asignada por el manager** → dos triggers nuevos sobre `collaborations` (insert y update).
+  - **Solicitud de plantilla nueva / aceptada / rechazada** → trigger nuevo sobre `roster_requests` (insert) + `handle_roster_request_accepted()` redefinida para avisar en los dos sentidos, no solo mover `manager_id`.
+- **`app/composables/useNotifications.ts`** (nuevo): lee las últimas 30, `unreadCount`, `markRead`/`markAllRead`.
+- **`app/components/layout/TopBar.vue`**: icono de bandeja (`ph:tray-fill`) a la izquierda del avatar, con contador de no leídas — se recarga en cada visita a cualquier pantalla (no solo la primera vez), para que el número se note fresco al navegar.
+- **`app/pages/inbox.vue`** (nueva): lista de avisos, tocar uno lo marca como leído y navega a su `link` si tiene. Vive fuera de `/manager`, `/creator`, `/client` a propósito — una sola pantalla sirve a los 3 roles, resuelve el rol con `useMyRole()` solo para que `AppShell` pinte la barra lateral/de navegación correcta.
+
+### Qué queda fuera (a propósito, lo dijo el propio usuario: "más adelante pensaremos")
+
+- Sin chat entre usuarios, sin puente a email/push — solo en la base de datos de FEEDMA.
+- Sin Realtime: no llega sola sin recargar/navegar (se refresca al visitar cualquier pantalla, no con websocket). Si se quiere instantáneo, es una ampliación sobre esta misma tabla con `supabase.channel(...).on('postgres_changes', ...)`.
+
+### Verificado / sin verificar
+
+- `npx vue-tsc --noEmit` limpio.
+- Servidor de pruebas sano; `/inbox` responde 302 sin sesión, como el resto de rutas protegidas.
+- **Falta aplicar la migración** y **probar en navegador real**: iniciar sesión y ver el aviso "Has iniciado sesión", contactar desde Descubrir y ver llegar el aviso al influencer/manager, aceptar/rechazar y ver llegar el aviso a la marca.
+
+## 2026-10-20 (15) — La relación manager↔influencer no tenía ninguna forma de crearse
+
+Mario (como manager) probó la app y no le aparecía ningún influencer en su roster. No era un bug de visualización: `influencers.manager_id` existe desde el esquema inicial, pero **no había ni una sola pantalla en toda la app que lo rellenase**. El paso "¿trabajas solo o con un manager?" de `onboarding.vue` era puramente decorativo (el propio comentario del código lo admitía: "Unirte al roster de una agencia es un paso aparte, todavía manual") — en la práctica, un manager nunca podía tener roster salvo tocando la base de datos a mano.
+
+Importante distinguir esto de las "colaboraciones" (Nivel 2, entrada 14): esas son encargos puntuales marca→influencer/manager con brief y presupuesto. Manager↔influencer es otra cosa — representación/pertenencia a plantilla — y no encajaba en esa tabla (`collaborations.brand_client_id` es obligatorio).
+
+### Qué se construyó
+
+- **`supabase/migrations/20261021090000_roster_requests.sql`** (nueva, sin aplicar todavía): tabla `roster_requests` (influencer_id, manager_id, status `requested`/`accepted`/`declined`) con su RLS — el influencer crea la solicitud, el manager la acepta/rechaza. Un trigger (`handle_roster_request_accepted`, security definer) es quien de verdad mueve `influencers.manager_id` al aceptar — hacía falta porque la policy `influencers_update_self_or_manager` exige que el manager YA sea el manager del influencer para poder tocar su ficha (paradoja del huevo y la gallina en el primer ingreso).
+- **`app/composables/useRosterRequests.ts`** (nuevo): mismo patrón que `useCollabRequests` (`resolveOwner` detecta si pregunta un influencer o un manager); `sendRequest(managerId)` para pedir unirse, `accept`/`decline` para el manager.
+- **`app/pages/creator/discover.vue`** (nueva): directorio de agencias (mismo estilo que `client/discover.vue`), botón "Pedir unirme" por agencia, con el estado de la solicitud si ya existe una.
+- **`app/pages/manager/roster-requests.vue`** (nueva): bandeja de solicitudes entrantes, aceptar/rechazar.
+- **Puntos de entrada**: fila "Agencia" en `creator/profile.vue` (muestra el nombre del manager actual o "Trabajas solo"); fila "Solicitudes de plantilla" con contador en `manager/profile.vue`; banner en `manager/index.vue` cuando hay solicitudes pendientes (mismo patrón que el de colaboraciones).
+- **`rosterRequestStatusMeta`** en `utils/status.ts`.
+- Al aceptar, se invalida la caché de `useMyRoster()` para que el roster del manager se vea actualizado en la siguiente visita sin tener que recargar a mano.
+
+### Qué queda fuera
+
+- No hay forma de que un influencer "deje" a su manager (quitarse el `manager_id`) ni de que el manager lo expulse — solo alta, no baja. Pulido para otra sesión si hace falta.
+- Sin notificaciones reales, igual que en el resto de bandejas de solicitudes.
+
+### Verificado / sin verificar
+
+- `npx vue-tsc --noEmit` limpio.
+- Servidor de pruebas sano; `/creator/discover` y `/manager/roster-requests` responden 302 sin sesión, como el resto de rutas protegidas.
+- **Falta aplicar la migración** en Supabase (SQL Editor) y **probar en navegador real**: un influencer pide unirse → el manager lo ve en `/manager/roster-requests` → acepta → el influencer aparece en el roster del manager en `/manager`.
+
+## 2026-10-20 (14) — Cierra el circuito marca↔creador (Nivel 2 de la hoja de ruta)
+
+Tras un repaso a fondo del proyecto ("¿qué le faltaría a alguien usando la web ahora mismo?"), salió el hallazgo más importante de toda esta sesión: el marketplace tenía un circuito **abierto a la mitad**. `client/discover.vue` ya creaba una colaboración real (`status: 'requested'`) al "Contactar", pero ni el influencer ni el manager tenían ninguna pantalla para verla — cero resultados grepeando "collaboration" en todo `app/pages/creator/` y `app/pages/manager/`. Y aunque la hubieran visto, nada vinculaba un post a esa colaboración al crearlo, así que el calendario de aprobación de la marca (ya construido, con `approve_post`/`request_post_changes` funcionando) nunca iba a tener nada real que mostrar. Encima, "Pagar" se podía pulsar con la colaboración todavía sin aceptar por nadie.
+
+Buena noticia encontrada al mirar el esquema: la RLS de `collaborations` ya estaba pensada para esto desde el principio (`collaborations_update_involved_parties`, con un comentario explícito: *"la marca crea la solicitud; el manager (si aplica) la asigna; cualquiera de las tres partes implicadas puede actualizarla"*) — no hizo falta ninguna migración, solo construir la pantalla que faltaba.
+
+### Qué se construyó
+
+- **`app/composables/useCollabRequests.ts`** (nuevo): solicitudes dirigidas al influencer o manager logueado. `acceptAsInfluencer`/`decline` para solicitudes directas a un influencer; `acceptAsManager(id, influencerId)` para las dirigidas a una agencia — acepta y asigna a alguien de la plantilla en el mismo gesto, porque la fila todavía no tiene ningún `influencer_id` concreto hasta ese momento.
+- **`app/pages/creator/requests.vue`** y **`app/pages/manager/requests.vue`** (nuevas): bandeja de solicitudes con aceptar/rechazar. La de manager añade el selector de a quién de su roster asignarla.
+- **Nav + aviso en el home**: nueva entrada "Solicitudes" en `roleNav` (creator y manager) y una tarjeta tipo la que ya usaba `client/index.vue` ("Tienes N solicitudes nuevas") en ambos `index.vue`.
+- **`PostComposerSheet.vue`**: nuevo selector "Colaboración" (solo aparece si hay alguna `accepted`/`in_progress`) — si se elige una, el post se crea con `collaboration_id` de verdad. `useMyPosts.ts`/`NewPostInput`/`Post` actualizados para llevarlo.
+- **Gatear "Pagar"**: `client/profile.vue` ya no muestra el botón si el estado no es `accepted`/`in_progress`/`completed` (antes se podía pagar una solicitud que la otra parte ni sabía que existía) — y por si alguien se salta la UI, `server/api/stripe/pay-collaboration.post.ts` ahora rechaza el pago en el servidor con el mismo criterio.
+- **`CollaborationStatus`** (nuevo en `~/types`) + `collaborationStatusMeta` (en `utils/status.ts`) y `formatEuros` (movido de `client/profile.vue` a `utils/mock-data.ts`, ahora compartido por las 3 pantallas nuevas/tocadas).
+
+### Qué queda fuera
+
+- **Sin notificaciones de verdad** — el aviso es solo un contador en el home, no hay push/email cuando llega una solicitud nueva.
+- **"Pagar" sigue sin comprobar si el influencer/manager tiene Connect verificado** antes de dejar pulsar el botón (el servidor sí lo comprueba y lo rechaza, pero la marca no se entera hasta que lo intenta) — pulido para otra sesión.
+
+### Verificado / sin verificar
+
+- `npx vue-tsc --noEmit` limpio.
+- Servidor de pruebas sano; `/creator/requests` y `/manager/requests` responden (302 sin sesión, como el resto de rutas protegidas).
+- **Sin probar en navegador real** el flujo completo: marca contacta → influencer/manager ve la solicitud y acepta (o manager asigna) → el creador crea un post vinculado → la marca lo ve en su calendario y lo aprueba → ahora sí puede pagar.
+
+## 2026-10-20 (13) — Registro real: el hueco más grave de todos
+
+Pedido explícitamente por el usuario tras un repaso general del estado del proyecto (ver esa conversación): "si alguien usara la web ahora mismo, ¿qué le faltaría?". La respuesta más importante no era ninguna de las fases en curso — era que **no existía ninguna forma real de darse de alta**. `/onboarding` tenía toda la pinta de un registro (selector de rol, pasos, animaciones) pero nunca llamaba a `signUp()`: el botón final solo navegaba a la home del rol elegido, sin sesión ni ficha creada — el guard de rutas lo habría devuelto a `/login` igual. El propio enlace en `login.vue` ya lo admitía: *"Mira cómo sería el registro"*. La landing nueva de Mario enlaza "Crear cuenta" directamente a esa maqueta.
+
+### Causa de fondo
+
+`handle_new_user()` (el trigger que corre al crear un usuario en `auth.users`) solo insertaba en `profiles` — nunca en `influencers`/`managers`/`brand_clients`. Aunque alguien hubiera llamado a `signUp()` a mano, se habría quedado con una cuenta a medias (rol sabido, pero sin ficha con la que ningún composable de la app sabe trabajar).
+
+### Arreglo
+
+- **`supabase/migrations/20261020180000_real_signup.sql`**: `handle_new_user()` ahora también crea la ficha del rol, leyendo de `raw_user_meta_data` (`role`, `full_name`, `name` → display_name/agency_name/company_name según el rol, `detail` → niche/focus/industry, opcional). Se hace en el trigger (`security definer`) y no desde el cliente tras el `signUp()` porque el proyecto exige confirmar el email (`mailer_autoconfirm: false`, comprobado contra el proyecto real) — en ese momento todavía no hay sesión con la que cumplir las policies `..._insert_own` de esas 3 tablas.
+- **`app/pages/onboarding.vue`**: mismos pasos de siempre (elegir rol, solo/manager para influencer) + un paso 3 real — nombre, nombre de agencia/empresa si aplica, campo opcional (nicho/especialidad/sector), email, contraseña — que llama a `supabase.auth.signUp()` de verdad. Paso final honesto: "revisa tu email", no "ya estás dentro" (porque no lo está todavía, hasta confirmar).
+- **`app/pages/confirm.vue`** (nuevo): a donde Supabase redirige tras confirmar el email (`redirectOptions.callback` en `nuxt.config.ts`, ya apuntaba aquí pero la página no existía — habría dado 404). Resuelve el rol y manda a cada uno a su home, igual que hace `login.vue` tras iniciar sesión.
+- **`login.vue` / landing (`LandingHero.vue`, `LandingCta.vue`)**: texto corregido — ya no dice "mira cómo sería"/"ver cómo registrarte", ahora es real.
+
+### Qué queda fuera
+
+- **"Busco un manager" sigue sin acción real** — no existe ningún mecanismo para unirse al roster de una agencia desde la app (ni para que una agencia invite). Ese paso del formulario es solo para ajustar expectativas, no persiste nada. Es trabajo aparte.
+- **La app sigue sin desplegar en ningún sitio público** — esto resuelve "cualquiera puede registrarse", no "cualquiera puede llegar a la web". Sigue siendo el otro bloqueante gordo (ver recomendación de hoja de ruta en la conversación).
+
+### Verificado / sin verificar
+
+- `npx vue-tsc --noEmit` limpio.
+- `mailer_autoconfirm`/`disable_signup` comprobados contra el proyecto real vía la API de Supabase (confirmación requerida, alta permitida).
+- **Sin aplicar la migración al proyecto real todavía** — pendiente, mismo camino de siempre (SQL Editor, sin CLI logueada en esta máquina).
+- **Sin probar en navegador real**: registrarse de verdad, recibir el email (Supabase con el envío por defecto tiene un límite bajo de correos/hora en el plan gratis — si se prueban muchas altas seguidas puede dar "rate limit exceeded", no es un bug), confirmar, y comprobar que `/confirm` resuelve bien el rol y aterriza en la home correcta con la ficha ya creada.
+
+## 2026-10-20 (12) — Consumo de créditos por predicción
+
+Instagram se quedó en pausa (bloqueado en la verificación por SMS de Meta — se retoma más adelante). Mientras tanto, siguiente hueco de Fase 4 que no depende de ninguna app externa ni del trabajo de Mario: el composer ya decía "Consume 1 crédito de tu plan" desde hace tiempo, pero `/api/ml/predict` nunca tocaba `credit_ledger` — era puro texto decorativo. `docs/3-ML-PIPELINE.md`/`4-ROADMAP-AND-TASKS.md` ya dejaban esto como decisión pendiente ("definir número de créditos gratis/mes por plan"), así que se decidió con el usuario antes de tocar código.
+
+### Decisión de producto (confirmada con el usuario)
+
+- **Free**: 3 créditos de regalo, una sola vez al crear la ficha de influencer. Sin recarga mensual todavía (ver "qué queda fuera" abajo).
+- **Pro** (influencer, 19,99€/mes) y **Agencia** (manager, 49,99€/mes): 20 créditos en cada cobro con éxito de Stripe (primer pago y cada renovación). En Agencia, **cada influencer de la plantilla del manager recibe sus 20 por separado** — no es un pozo común que se reparte.
+
+### Qué se construyó
+
+- **`supabase/migrations/20261020160000_credit_grants.sql`**: trigger `grant_welcome_credits()` que concede los 3 créditos al crear una fila en `influencers`, + backfill para las fichas que ya existían (las 3 cuentas demo) y que sin esto se habrían quedado atascadas en 0 para siempre.
+- **`server/utils/stripe-plans.ts`**: `monthlyCredits` por plan (20/20).
+- **`server/api/stripe/webhook.post.ts`**: nuevo handler para `invoice.paid` (no `checkout.session.completed`, a propósito — así el primer cobro y las renovaciones comparten un único camino de código en vez de desincronizarse). Si el titular es un influencer, concede directo; si es un manager (Agencia), reparte entre toda su plantilla actual.
+- **`server/api/ml/predict.post.ts`**: antes de llamar al LLM, suma `credit_ledger` del influencer — si el saldo es ≤ 0, `402` ("Sin créditos disponibles..."). Tras guardar la predicción con éxito, descuenta 1 crédito (`reason: 'ml_prediction'`, `related_post_id`). Devuelve `creditsRemaining` para que el cliente no tenga que recargar para ver el saldo nuevo.
+- **`app/composables/useMyCredits.ts`** (nuevo): mismo patrón `useState`/`ensureLoaded` que el resto — lee `credit_ledger` directo (ya hay policy de select para el propio influencer), suma en el cliente. Registrado en `resetAccountCaches()`.
+- **`PostComposerSheet.vue` / `creator/post/[id].vue`**: el texto fijo de "1 crédito" se sustituyó por el saldo real; el botón de predecir se deshabilita a 0 créditos; el error 402 se distingue del resto ("Sin créditos disponibles. Mejora tu plan...") en vez del genérico "no se ha podido predecir".
+
+### Qué queda fuera de esta primera versión
+
+- **El plan Free no se recarga solo cada mes** — los 3 créditos son un regalo único. Añadir una recarga mensual para Free necesitaría un cron (Supabase Scheduled Function o similar), que no existe todavía en el proyecto.
+- **`/api/ml/trends` no consume créditos** — el `reason: 'trend_generation'` ya existe en el esquema pero no se usa: las ideas de tendencia se cachean 24h por nicho (recurso compartido, no "1 acción = 1 crédito" tan limpio como una predicción), así que se dejó fuera a propósito en vez de improvisar una regla.
+- **Sin UI de "comprar créditos sueltos"** — solo se recarga vía suscripción.
+
+### Verificado / sin verificar
+
+- `npx vue-tsc --noEmit` limpio.
+- Servidor de pruebas sano; ruta sin sesión sigue devolviendo `401`.
+- **Sin aplicar la migración al proyecto real todavía** (misma limitación de siempre: sin `supabase login` en esta máquina) — pendiente que el usuario la ejecute en el SQL Editor de Supabase.
+- **Sin verificar en navegador real**: que el regalo de bienvenida llegue a las cuentas demo tras el backfill, que predecir descuente de verdad, que el botón se bloquee a 0, y que una renovación de Stripe (con `stripe listen` + `STRIPE_WEBHOOK_SECRET`) recargue el saldo.
+
+## 2026-10-20 (11) — OAuth real de Instagram: código listo, falta la app de Meta
+
+Siguiente hueco libre de Fase 4 tras el merge con Mario (Stripe es su terreno, la landing la va a tocar él también — ver conversación). De las redes sociales, solo Instagram por ahora; verificado contra la documentación oficial de Meta (`developers.facebook.com`, vía búsqueda web, no solo memoria) antes de escribir nada, porque este tipo de API cambia de nombre/endpoints con cierta frecuencia.
+
+### Qué se construyó
+
+- **`server/utils/token-crypto.ts`**: cifra/descifra con AES-256-GCM (IV aleatorio por cifrado, todo empaquetado en una sola cadena base64) — probado a mano con un script suelto (roundtrip correcto, manipular el texto cifrado se detecta y falla al descifrar).
+- **`server/utils/oauth-state.ts`**: el parámetro `state` del OAuth lleva el `influencerId` firmado con HMAC-SHA256 (mismo secreto que el cifrado) en vez de depender de una tabla o cookie nueva — caduca a los 10 minutos. Probado a mano (firma válida, secreto incorrecto, texto manipulado).
+- **`server/api/auth/instagram/start.get.ts`**: resuelve el influencer logueado, construye la URL de autorización de `instagram.com` con el scope mínimo (`instagram_business_basic` — solo identificar la cuenta, nada de publicar/mensajes/comentarios) y redirige el navegador entero (no es un fetch).
+- **`server/api/auth/instagram/callback.get.ts`**: cadena de 3 llamadas server-to-server (código → token corto → token largo de 60 días → perfil básico), cifra el token y hace `upsert` en `social_accounts`. Nunca guarda el token en texto plano. Vuelve a `/creator/socials?instagram=connected` o `...=error&reason=...`.
+- **`nuxt.config.ts` / `.env` / `.env.example`**: `INSTAGRAM_APP_ID`/`INSTAGRAM_APP_SECRET`/`INSTAGRAM_REDIRECT_URI` (vacíos, hay que rellenarlos — ver `docs/9-INSTAGRAM-OAUTH-SETUP.md`) y `SOCIAL_TOKEN_ENCRYPTION_KEY` (generada ya para este equipo, 32 bytes en base64).
+- **`useMySocialAccounts.ts`**: `connect('instagram')` ahora navega a `/api/auth/instagram/start` en vez de insertar una fila de mentira; el resto de plataformas sigue igual que antes (sin OAuth todavía).
+- **`creator/socials.vue`**: mensaje de éxito/error al volver del OAuth, leído de la query de la URL.
+- **`docs/9-INSTAGRAM-OAUTH-SETUP.md`** (nuevo, estilo de `docs/6`/`docs/7`/`docs/8`): cómo crear la app en Meta for Developers, registrar el redirect URI, y qué cuentas pueden probarlo sin pasar por App Review.
+
+### Qué es real y qué no
+
+No se pide el número de seguidores (necesitaría `instagram_business_manage_insights`, un permiso más) ni se refresca el token solo (dura 60 días, se puede refrescar pero no hay ningún cron que lo haga todavía). Conectar la cuenta es el primer paso — todavía no hay ninguna llamada que traiga métricas reales con ese token (`creator/metrics.vue` sigue mock, es trabajo aparte).
+
+### Verificado / sin verificar
+
+- `npx vue-tsc --noEmit` limpio.
+- Lógica de cifrado y de firma del `state` probada de forma aislada (scripts sueltos, fuera de la app) — funciona como se espera.
+- Ruta sin sesión devuelve `401` (probado con `curl`), igual que el resto de rutas de servidor de este proyecto.
+- **Sin verificar el flujo completo todavía**: hace falta que alguien cree la app en Meta for Developers (no se puede hacer desde aquí, necesita una cuenta de Facebook del equipo) y pruebe "Conectar" de verdad con una cuenta de Instagram profesional. Pendiente de confirmación en vivo.
+
 ## 2026-10-20 (10) — Merge con la rama estable de Mario (Stripe + su propio arreglo de `useSupabaseUser()`)
 
 `git pull` reveló que las dos sesiones en paralelo habían divergido desde el mismo punto (justo después de "Migracion supabase public.trend") sin llegar a verse: Mario subió Stripe (suscripciones + Connect) y, de forma completamente independiente, encontró y arregló **el mismo fallo de raíz** en `useSupabaseUser()` que las entradas (4)/(5) de abajo documentan desde este lado — ver su propia entrada "(merge) — Mario y Alejandro encontraron el mismo fallo por separado" más abajo para el detalle de cómo lo resolvió él (usó `getUser()` en vez de `getSession()`).

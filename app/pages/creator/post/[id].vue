@@ -6,8 +6,10 @@ import type { PostStatus } from '~/types'
 const route = useRoute()
 const router = useRouter()
 const { posts, ensureLoaded, updatePost, deletePost } = useMyPosts()
+const { balance: creditBalance, ensureLoaded: ensureCreditsLoaded, setBalance: setCreditBalance } = useMyCredits()
 
-await ensureLoaded()
+// En paralelo, no en serie — dos consultas independientes.
+await Promise.all([ensureLoaded(), ensureCreditsLoaded()])
 
 const post = computed(() => posts.value.find((p) => p.id === route.params.id))
 
@@ -59,9 +61,11 @@ async function advanceStatus() {
 // que SÍ persiste en `ml_predictions` (con service_role, el cliente no
 // tiene permiso de escritura ahí — ver RLS).
 const predicting = ref(false)
+const predictError = ref('')
 async function predict() {
   if (!post.value) return
   predicting.value = true
+  predictError.value = ''
   try {
     const result = await $fetch('/api/ml/predict', { method: 'POST', body: { postId: post.value.id } })
     if (post.value) {
@@ -69,8 +73,14 @@ async function predict() {
       post.value.confidence = result.confidence
       post.value.suggestions = result.suggestions.length ? result.suggestions : undefined
     }
+    setCreditBalance(result.creditsRemaining)
   } catch (err) {
     console.error('[creator/post/:id] fallo al predecir:', err)
+    const statusCode = (err as { statusCode?: number; response?: { status?: number } })?.statusCode
+      ?? (err as { response?: { status?: number } })?.response?.status
+    predictError.value = statusCode === 402
+      ? 'Sin créditos disponibles. Mejora tu plan para seguir prediciendo.'
+      : 'No se ha podido predecir. Inténtalo de nuevo.'
   } finally {
     predicting.value = false
   }
@@ -136,9 +146,15 @@ async function predict() {
         <BaseCard v-else radius="lg" padding="lg" class="flex items-center justify-between gap-4 lg:flex-col lg:items-start">
           <div>
             <p class="text-[0.9375rem] text-[var(--color-text)]">Todavía no has predicho el éxito de esta publicación</p>
-            <p class="text-[0.8125rem] text-[var(--color-text-muted)] mt-0.5">Consume 1 crédito de tu plan</p>
+            <p class="text-[0.8125rem] text-[var(--color-text-muted)] mt-0.5">
+              {{ creditBalance === 0 ? 'Sin créditos — mejora tu plan para seguir prediciendo' : `Consume 1 crédito · te quedan ${creditBalance ?? '…'}` }}
+            </p>
+            <p v-if="predictError" class="text-[0.8125rem] text-[var(--color-status-alert)] mt-1">{{ predictError }}</p>
           </div>
-          <BaseButton variant="primary" icon="ph:sparkle-fill" :icon-spin="predicting" :disabled="predicting" class="shrink-0 lg:w-full" @click="predict">
+          <BaseButton
+            variant="primary" icon="ph:sparkle-fill" :icon-spin="predicting" :disabled="predicting || creditBalance === 0"
+            class="shrink-0 lg:w-full" @click="predict"
+          >
             {{ predicting ? 'Analizando…' : 'Predecir' }}
           </BaseButton>
         </BaseCard>

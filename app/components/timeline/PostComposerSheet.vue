@@ -5,11 +5,18 @@ import { contentTypeMeta } from '~/utils/status'
 
 const open = defineModel<boolean>({ default: false })
 const { createPost, updatePost } = useMyPosts()
+const { balance: creditBalance, ensureLoaded: ensureCreditsLoaded, setBalance: setCreditBalance } = useMyCredits()
+const { requests: collabRequests, ensureLoaded: ensureCollabRequestsLoaded } = useCollabRequests()
+
+// Solo las colaboraciones ya aceptadas tienen sentido aquí — pedir vincular
+// una "requested" sería prometerle algo a la marca que todavía no acordó.
+const activeCollaborations = computed(() => collabRequests.value.filter((r) => r.status === 'accepted' || r.status === 'in_progress'))
 
 const title = ref('')
 const caption = ref('')
 const contentType = ref<ContentType>('reel')
 const platform = ref<Platform>('instagram')
+const collaborationId = ref('')
 
 const contentTypes = Object.keys(contentTypeMeta) as ContentType[]
 const platforms = Object.entries(platformMeta).map(([value, meta]) => ({ value: value as Platform, label: meta.label }))
@@ -27,7 +34,13 @@ const createdPostId = ref<string | null>(null)
 
 async function saveDraft(): Promise<string> {
   if (!createdPostId.value) {
-    const created = await createPost({ title: title.value, caption: caption.value, contentType: contentType.value, platform: platform.value })
+    const created = await createPost({
+      title: title.value,
+      caption: caption.value,
+      contentType: contentType.value,
+      platform: platform.value,
+      collaborationId: collaborationId.value || null
+    })
     createdPostId.value = created.id
   } else {
     await updatePost(createdPostId.value, { title: title.value, caption: caption.value })
@@ -42,10 +55,15 @@ async function predict() {
     const postId = await saveDraft()
     const prediction = await $fetch('/api/ml/predict', { method: 'POST', body: { postId } })
     result.value = { score: prediction.successScore, confidence: prediction.confidence, suggestions: prediction.suggestions }
+    setCreditBalance(prediction.creditsRemaining)
     stage.value = 'result'
   } catch (err) {
     console.error('[PostComposerSheet] fallo al predecir:', err)
-    error.value = 'No se ha podido predecir. Inténtalo de nuevo.'
+    const statusCode = (err as { statusCode?: number; response?: { status?: number } })?.statusCode
+      ?? (err as { response?: { status?: number } })?.response?.status
+    error.value = statusCode === 402
+      ? 'Sin créditos disponibles. Mejora tu plan para seguir prediciendo.'
+      : 'No se ha podido predecir. Inténtalo de nuevo.'
     stage.value = 'draft'
   }
 }
@@ -72,14 +90,18 @@ function schedule() {
 }
 
 watch(open, (value) => {
-  if (!value) {
-    stage.value = 'draft'
-    title.value = ''
-    caption.value = ''
-    createdPostId.value = null
-    result.value = null
-    error.value = ''
+  if (value) {
+    ensureCreditsLoaded()
+    ensureCollabRequestsLoaded()
+    return
   }
+  stage.value = 'draft'
+  title.value = ''
+  caption.value = ''
+  collaborationId.value = ''
+  createdPostId.value = null
+  result.value = null
+  error.value = ''
 })
 </script>
 
@@ -103,6 +125,17 @@ watch(open, (value) => {
           />
         </div>
 
+        <div v-if="activeCollaborations.length">
+          <label class="block text-[0.8125rem] font-medium text-[var(--color-text-muted)] mb-1.5" for="post-collab">Colaboración</label>
+          <select
+            id="post-collab" v-model="collaborationId"
+            class="w-full h-11 px-3 rounded-[var(--radius-sm)] bg-[var(--color-ink-overlay)] border border-[var(--color-hairline)] text-[0.875rem] text-[var(--color-text)]"
+          >
+            <option value="">Contenido propio</option>
+            <option v-for="c in activeCollaborations" :key="c.id" :value="c.id">{{ c.brandName }}</option>
+          </select>
+        </div>
+
         <div class="grid grid-cols-2 gap-3">
           <div>
             <p class="block text-[0.8125rem] font-medium text-[var(--color-text-muted)] mb-1.5">Formato</p>
@@ -124,11 +157,13 @@ watch(open, (value) => {
           variant="primary" size="lg"
           :icon="stage === 'predicting' ? 'ph:circle-notch-bold' : 'ph:sparkle-fill'" :icon-spin="stage === 'predicting'"
           class="w-full mt-1"
-          :disabled="!title || stage === 'predicting' || stage === 'saving'" @click="predict"
+          :disabled="!title || stage === 'predicting' || stage === 'saving' || creditBalance === 0" @click="predict"
         >
           {{ stage === 'predicting' ? 'Analizando…' : 'Predecir éxito' }}
         </BaseButton>
-        <p class="text-center text-[0.75rem] text-[var(--color-text-faint)] -mt-2">Consume 1 crédito de tu plan</p>
+        <p class="text-center text-[0.75rem] text-[var(--color-text-faint)] -mt-2">
+          {{ creditBalance === 0 ? 'Sin créditos — mejora tu plan para seguir prediciendo' : `Consume 1 crédito · te quedan ${creditBalance ?? '…'}` }}
+        </p>
 
         <BaseButton
           variant="secondary" size="lg"

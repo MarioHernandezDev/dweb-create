@@ -8,6 +8,8 @@ export type PostStatus =
   | 'published'
   | 'overdue'
 
+export type CollaborationStatus = 'requested' | 'accepted' | 'in_progress' | 'completed' | 'declined'
+
 export type ContentType = 'video' | 'reel' | 'carousel' | 'image' | 'story'
 
 export type Platform = 'instagram' | 'tiktok' | 'youtube' | 'x' | 'facebook' | 'linkedin'
@@ -60,6 +62,7 @@ export interface CoverArt {
 export interface Post {
   id: string
   influencerId: string
+  collaborationId?: string | null
   title: string
   caption: string
   contentType: ContentType

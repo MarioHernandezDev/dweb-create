@@ -21,6 +21,7 @@ interface CollaborationRow {
   manager_id: string | null
   budget_cents: number | null
   paid_at: string | null
+  status: string
 }
 
 export default defineEventHandler(async (event) => {
@@ -41,13 +42,18 @@ export default defineEventHandler(async (event) => {
 
   const { data: collaboration } = await client
     .from('collaborations')
-    .select('id, brand_client_id, influencer_id, manager_id, budget_cents, paid_at')
+    .select('id, brand_client_id, influencer_id, manager_id, budget_cents, paid_at, status')
     .eq('id', body.collaborationId)
     .maybeSingle<CollaborationRow>()
   if (!collaboration || collaboration.brand_client_id !== brandClient.id) {
     throw createError({ statusCode: 404, statusMessage: 'Colaboración no encontrada.' })
   }
   if (collaboration.paid_at) throw createError({ statusCode: 400, statusMessage: 'Esta colaboración ya está pagada.' })
+  // La otra parte tiene que haber aceptado antes de poder cobrar — si no,
+  // ni siquiera sabe todavía que existe la solicitud (ver useCollabRequests.ts).
+  if (!['accepted', 'in_progress', 'completed'].includes(collaboration.status)) {
+    throw createError({ statusCode: 400, statusMessage: 'Esta colaboración todavía no ha sido aceptada.' })
+  }
   if (!collaboration.budget_cents || collaboration.budget_cents <= 0) {
     throw createError({ statusCode: 400, statusMessage: 'Esta colaboración no tiene presupuesto definido.' })
   }

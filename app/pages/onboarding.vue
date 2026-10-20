@@ -3,18 +3,28 @@ import { roleMeta } from '~/utils/nav'
 import { localPhotos } from '~/utils/images'
 import type { Role } from '~/types'
 
-useHead({ title: 'Bienvenida' })
+useHead({ title: 'Crear cuenta' })
 
 const banner = localPhotos.onboarding
+const supabase = useSupabaseClient()
 
 type WorkMode = 'solo' | 'manager'
+type Stage = 'form' | 'sent'
+
+// El rol del frontend ('creator') no es el mismo valor que guarda la base de
+// datos ('influencer') — ver dbRoleToAppRole en useMyRole.ts, esto es el
+// mapeo inverso, solo hace falta aquí.
+const dbRole: Record<Role, string> = { creator: 'influencer', manager: 'manager', client: 'client' }
 
 const roles: Role[] = ['manager', 'creator', 'client']
 const selectedRole = ref<Role | null>(null)
 const workMode = ref<WorkMode | null>(null)
+const stage = ref<Stage>('form')
 
 // El influencer tiene un paso extra (solo/con manager); los otros dos roles
-// van directos del paso 1 al de bienvenida.
+// van directos del paso 1 al formulario. El paso "solo/manager" todavía no
+// hace nada de verdad (no hay forma de unirse al roster de una agencia
+// todavía) — solo ajusta el texto de después, como antes.
 const needsWorkModeStep = computed(() => selectedRole.value === 'creator')
 const step = computed(() => {
   if (!selectedRole.value) return 1
@@ -33,18 +43,54 @@ function back() {
   else selectedRole.value = null
 }
 
-const welcomeCopy = computed(() => {
-  if (selectedRole.value === 'manager') {
-    return 'A partir de aquí verás el resumen de tu roster: cuántas entregas quedan esta semana y de quién.'
-  }
-  if (selectedRole.value === 'client') {
-    return 'Desde aquí puedes contactar a un influencer o a una agencia, y aprobar su contenido cuando esté listo.'
-  }
-  if (workMode.value === 'manager') {
-    return 'Te llevamos a tu calendario. Cuando una agencia te acepte en su roster, lo verás reflejado en tu perfil.'
-  }
-  return 'Te llevamos a tu calendario. Puedes conectar tus redes cuando quieras desde "Redes".'
+const fullName = ref('')
+const orgName = ref('') // nombre de agencia/empresa — solo manager/client
+const detail = ref('') // niche/focus/industry, opcional
+const email = ref('')
+const password = ref('')
+const loading = ref(false)
+const error = ref('')
+
+const needsOrgName = computed(() => selectedRole.value === 'manager' || selectedRole.value === 'client')
+const orgLabel = computed(() => (selectedRole.value === 'manager' ? 'Nombre de tu agencia' : 'Nombre de la empresa'))
+const detailLabel = computed(() => {
+  if (selectedRole.value === 'manager') return 'Especialidad (opcional)'
+  if (selectedRole.value === 'client') return 'Sector (opcional)'
+  return 'Nicho (opcional)'
 })
+
+async function register() {
+  if (!selectedRole.value) return
+  loading.value = true
+  error.value = ''
+
+  resetAccountCaches()
+
+  const { error: signUpError } = await supabase.auth.signUp({
+    email: email.value,
+    password: password.value,
+    options: {
+      data: {
+        role: dbRole[selectedRole.value],
+        full_name: fullName.value,
+        // Para influencer (sin campo de empresa), el display_name es el
+        // propio nombre — ver handle_new_user() en la migración.
+        name: needsOrgName.value ? orgName.value : fullName.value,
+        detail: detail.value || null
+      }
+    }
+  })
+
+  loading.value = false
+  if (signUpError) {
+    error.value = signUpError.message === 'User already registered'
+      ? 'Ya existe una cuenta con ese email — intenta acceder en vez de registrarte.'
+      : signUpError.message
+    return
+  }
+
+  stage.value = 'sent'
+}
 </script>
 
 <template>
@@ -56,7 +102,7 @@ const welcomeCopy = computed(() => {
 
     <main class="flex-1 flex items-center">
       <div class="w-full max-w-xl mx-auto px-5 md:px-10 py-8">
-        <div class="flex items-center gap-1.5 mb-6">
+        <div v-if="stage === 'form'" class="flex items-center gap-1.5 mb-6">
           <button
             v-if="step > 1" type="button" aria-label="Volver" class="-ml-1 mr-1 size-8 flex items-center justify-center rounded-full text-[var(--color-text-muted)] hover:bg-[var(--color-ink-overlay)]"
             @click="back"
@@ -75,7 +121,7 @@ const welcomeCopy = computed(() => {
           mode="out-in"
         >
           <!-- Paso 1: elegir rol -->
-          <div v-if="step === 1" key="role">
+          <div v-if="stage === 'form' && step === 1" key="role">
             <div class="relative h-36 md:h-44 rounded-[var(--radius-lg)] overflow-hidden mb-6">
               <CoverImage :photo="banner" :width="640" :height="360" scrim="tint" class="absolute inset-0" />
             </div>
@@ -98,7 +144,7 @@ const welcomeCopy = computed(() => {
           </div>
 
           <!-- Paso 2 (solo influencer): solo o con manager -->
-          <div v-else-if="step === 2" key="workmode">
+          <div v-else-if="stage === 'form' && step === 2" key="workmode">
             <h1 class="font-display text-[1.875rem] md:text-[2.25rem] leading-[1.1] text-[var(--color-text)] mb-2">¿Trabajas solo o con un manager?</h1>
             <p class="text-[0.9375rem] text-[var(--color-text-muted)] mb-7">Puedes cambiarlo más adelante — esto solo decide quién puede gestionar tus entregas además de ti.</p>
             <div class="flex flex-col gap-3">
@@ -120,23 +166,79 @@ const welcomeCopy = computed(() => {
                   </span>
                   <div class="min-w-0 flex-1">
                     <p class="font-display text-[1.1875rem] text-[var(--color-text)]">Busco un manager</p>
-                    <p class="mt-0.5 text-[0.8125rem] text-[var(--color-text-muted)] leading-relaxed">Una agencia reparte el trabajo por ti y negocia con las marcas.</p>
+                    <p class="mt-0.5 text-[0.8125rem] text-[var(--color-text-muted)] leading-relaxed">Una agencia reparte el trabajo por ti y negocia con las marcas. Unirte al roster de una agencia es un paso aparte, todavía manual.</p>
                   </div>
                 </BaseCard>
               </button>
             </div>
           </div>
 
-          <!-- Paso final: bienvenida -->
-          <div v-else key="done" class="text-center py-6">
-            <span class="inline-flex items-center justify-center size-16 rounded-full bg-[var(--color-status-published)]/15 text-[var(--color-status-published)] mb-5">
-              <Icon name="ph:check-fill" class="size-7" />
-            </span>
-            <h1 class="font-display text-[1.875rem] md:text-[2.25rem] leading-[1.1] text-[var(--color-text)] mb-2">Todo listo</h1>
-            <p class="text-[0.9375rem] text-[var(--color-text-muted)] max-w-[34ch] mx-auto mb-7">{{ welcomeCopy }}</p>
-            <BaseButton v-if="selectedRole" :to="roleMeta[selectedRole].home" variant="primary" size="lg" icon="ph:arrow-right-bold">
-              Entrar a {{ roleMeta[selectedRole].label }}
+          <!-- Paso 3: formulario real de registro -->
+          <form v-else-if="stage === 'form'" key="register" class="flex flex-col gap-4" @submit.prevent="register">
+            <h1 class="font-display text-[1.875rem] md:text-[2.25rem] leading-[1.1] text-[var(--color-text)] mb-1">Crea tu cuenta</h1>
+            <p class="text-[0.9375rem] text-[var(--color-text-muted)] mb-2">Como {{ selectedRole ? roleMeta[selectedRole].label : '' }}.</p>
+
+            <div>
+              <label class="block text-[0.8125rem] font-medium text-[var(--color-text-muted)] mb-1.5" for="full-name">Tu nombre</label>
+              <input
+                id="full-name" v-model="fullName" type="text" required autocomplete="name"
+                class="w-full h-11 px-3.5 rounded-[var(--radius-sm)] bg-[var(--color-ink-overlay)] border border-[var(--color-hairline)] text-[0.9375rem] text-[var(--color-text)] focus:outline-none focus:border-[var(--color-primary-500)]/60"
+              >
+            </div>
+
+            <div v-if="needsOrgName">
+              <label class="block text-[0.8125rem] font-medium text-[var(--color-text-muted)] mb-1.5" for="org-name">{{ orgLabel }}</label>
+              <input
+                id="org-name" v-model="orgName" type="text" required
+                class="w-full h-11 px-3.5 rounded-[var(--radius-sm)] bg-[var(--color-ink-overlay)] border border-[var(--color-hairline)] text-[0.9375rem] text-[var(--color-text)] focus:outline-none focus:border-[var(--color-primary-500)]/60"
+              >
+            </div>
+
+            <div>
+              <label class="block text-[0.8125rem] font-medium text-[var(--color-text-muted)] mb-1.5" for="detail">{{ detailLabel }}</label>
+              <input
+                id="detail" v-model="detail" type="text"
+                class="w-full h-11 px-3.5 rounded-[var(--radius-sm)] bg-[var(--color-ink-overlay)] border border-[var(--color-hairline)] text-[0.9375rem] text-[var(--color-text)] focus:outline-none focus:border-[var(--color-primary-500)]/60"
+              >
+            </div>
+
+            <div>
+              <label class="block text-[0.8125rem] font-medium text-[var(--color-text-muted)] mb-1.5" for="signup-email">Email</label>
+              <input
+                id="signup-email" v-model="email" type="email" required autocomplete="email"
+                class="w-full h-11 px-3.5 rounded-[var(--radius-sm)] bg-[var(--color-ink-overlay)] border border-[var(--color-hairline)] text-[0.9375rem] text-[var(--color-text)] focus:outline-none focus:border-[var(--color-primary-500)]/60"
+              >
+            </div>
+
+            <div>
+              <label class="block text-[0.8125rem] font-medium text-[var(--color-text-muted)] mb-1.5" for="signup-password">Contraseña</label>
+              <input
+                id="signup-password" v-model="password" type="password" required minlength="8" autocomplete="new-password"
+                class="w-full h-11 px-3.5 rounded-[var(--radius-sm)] bg-[var(--color-ink-overlay)] border border-[var(--color-hairline)] text-[0.9375rem] text-[var(--color-text)] focus:outline-none focus:border-[var(--color-primary-500)]/60"
+              >
+              <p class="mt-1 text-[0.75rem] text-[var(--color-text-faint)]">Al menos 8 caracteres.</p>
+            </div>
+
+            <p v-if="error" class="text-[0.8125rem] text-[var(--color-status-alert)]">{{ error }}</p>
+
+            <BaseButton
+              type="submit" variant="primary" size="lg" class="w-full mt-1" :icon-spin="loading"
+              :icon="loading ? 'ph:circle-notch-bold' : 'ph:arrow-right-bold'" :disabled="loading"
+            >
+              {{ loading ? 'Creando cuenta…' : 'Crear cuenta' }}
             </BaseButton>
+          </form>
+
+          <!-- Confirmación de email -->
+          <div v-else key="sent" class="text-center py-6">
+            <span class="inline-flex items-center justify-center size-16 rounded-full bg-[var(--color-status-published)]/15 text-[var(--color-status-published)] mb-5">
+              <Icon name="ph:envelope-simple-open-fill" class="size-7" />
+            </span>
+            <h1 class="font-display text-[1.875rem] md:text-[2.25rem] leading-[1.1] text-[var(--color-text)] mb-2">Revisa tu email</h1>
+            <p class="text-[0.9375rem] text-[var(--color-text-muted)] max-w-[38ch] mx-auto mb-7">
+              Te hemos enviado un enlace a <strong class="text-[var(--color-text)]">{{ email }}</strong> para confirmar tu cuenta. En cuanto lo confirmes, ya puedes entrar con tu email y contraseña.
+            </p>
+            <BaseButton to="/login" variant="secondary" size="lg" icon="ph:arrow-left-bold">Volver a acceder</BaseButton>
           </div>
         </Transition>
       </div>

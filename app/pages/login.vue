@@ -111,7 +111,7 @@ function loginAsDemo(demoEmail: string) {
           </form>
 
           <p class="mt-8 text-[0.8125rem] text-[var(--color-text-faint)] text-center">
-            ¿No tienes cuenta todavía? <NuxtLink to="/onboarding" class="text-[var(--color-text-muted)] hover:text-[var(--color-text)] underline underline-offset-2">Mira cómo sería el registro</NuxtLink>
+            ¿No tienes cuenta todavía? <NuxtLink to="/onboarding" class="text-[var(--color-text-muted)] hover:text-[var(--color-text)] underline underline-offset-2">Crea una cuenta</NuxtLink>
           </p>
 
           <div class="mt-10 pt-6 border-t border-[var(--color-hairline)]">

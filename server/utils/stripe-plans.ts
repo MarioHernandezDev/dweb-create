@@ -11,11 +11,18 @@ export interface PlanConfig {
   unitAmount: number // céntimos de EUR
   /** A qué tipo de cuenta se le ofrece este plan. */
   for: 'influencer' | 'manager'
+  /**
+   * Créditos de `/api/ml/predict` que concede cada ciclo de facturación
+   * (ver `server/api/stripe/webhook.post.ts`, evento `invoice.paid`). En
+   * el plan Agencia, cada influencer de la plantilla del manager recibe
+   * esta cantidad por separado — no es un pozo común.
+   */
+  monthlyCredits: number
 }
 
 export const plans: Record<string, PlanConfig> = {
-  pro: { id: 'pro', label: 'FEEDMA Pro', unitAmount: 1999, for: 'influencer' },
-  agency: { id: 'agency', label: 'FEEDMA Agencia', unitAmount: 4999, for: 'manager' }
+  pro: { id: 'pro', label: 'FEEDMA Pro', unitAmount: 1999, for: 'influencer', monthlyCredits: 20 },
+  agency: { id: 'agency', label: 'FEEDMA Agencia', unitAmount: 4999, for: 'manager', monthlyCredits: 20 }
 }
 
 /**
