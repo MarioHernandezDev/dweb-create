@@ -12,6 +12,12 @@ export function useGsap() {
   if (!registered) {
     gsap.registerPlugin(ScrollTrigger)
     registered = true
+    // Snasm es una fuente local: si un trigger se crea antes de que termine
+    // de cargar, GSAP mide las posiciones con las métricas de la fuente de
+    // respaldo. El reflow al intercambiarla no dispara un "resize", así que
+    // sin este refresh esas secciones quedan con coordenadas obsoletas y su
+    // animación de scroll no llega a dispararse nunca.
+    document.fonts.ready.then(() => ScrollTrigger.refresh())
   }
   return { gsap, ScrollTrigger }
 }

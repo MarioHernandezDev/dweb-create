@@ -37,10 +37,10 @@ onMounted(() => {
 </script>
 
 <template>
-  <section ref="root" class="bg-[var(--color-ink)] px-5 md:px-10 lg:px-16 pb-20 md:pb-28">
+  <section ref="root" class="bg-[var(--color-ink)] px-5 md:px-10 lg:px-16 py-20 md:py-28">
     <div class="max-w-6xl mx-auto">
-      <p class="text-[0.8125rem] font-medium text-[var(--color-primary-500)] mb-2">El rodaje, paso a paso</p>
-      <h3 class="font-display font-light text-[clamp(1.5rem,3.2vw,2.25rem)] text-[var(--color-text)] max-w-[32ch] mb-12 md:mb-16">
+    
+      <h3 class="font-display font-light text-[clamp(1.75rem,3.6vw,2.5rem)] leading-[1.15] text-black max-w-[32ch] mb-14 md:mb-20">
         Las cinco fases por las que pasa cada entrega.
       </h3>
 

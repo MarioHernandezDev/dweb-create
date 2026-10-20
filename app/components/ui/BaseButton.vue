@@ -37,7 +37,7 @@ const variantClasses: Record<string, string> = {
     :to="to"
     :type="!to ? type : undefined"
     :disabled="!to ? disabled : undefined"
-    class="inline-flex items-center justify-center font-medium rounded-[var(--radius-xs)] transition-[background-color,border-color,color,box-shadow,transform] duration-200 ease-[var(--ease-spring)] active:scale-[0.97] disabled:opacity-40 disabled:pointer-events-none disabled:active:scale-100 select-none"
+    class="inline-flex items-center justify-center font-medium rounded-full transition-[background-color,border-color,color,box-shadow,transform] duration-200 ease-[var(--ease-spring)] active:scale-[0.97] disabled:opacity-40 disabled:pointer-events-none disabled:active:scale-100 select-none"
     :class="[sizeClasses[size], variantClasses[variant], iconOnly && 'px-0 aspect-square']"
   >
     <Icon v-if="icon" :name="icon" class="shrink-0" :class="[size === 'sm' ? 'size-4' : 'size-[1.15em]', iconSpin && 'animate-spin']" />

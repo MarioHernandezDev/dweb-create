@@ -11,7 +11,30 @@ onMounted(() => {
 </script>
 
 <template>
-  <section id="redes" ref="root" class="bg-[var(--color-ink-overlay)] px-5 md:px-10 lg:px-16 py-20 md:py-28">
+  <section id="redes" ref="root" class="relative isolate overflow-hidden bg-[var(--color-ink-overlay)] px-5 md:px-10 lg:px-16 py-20 md:py-28">
+    <svg aria-hidden="true" class="pointer-events-none absolute inset-0 -z-10 h-full w-full" viewBox="0 0 1200 500" preserveAspectRatio="none">
+      <defs>
+        <symbol id="nx-ant-integrations" viewBox="0 0 20 12">
+          <g fill="none" stroke="var(--color-primary-600)" stroke-width="1" stroke-linecap="round">
+            <path d="M9 7 L6 10.5 M9 7 L7 3 M12 7 L13 10.5 M12 7 L13 3" />
+            <path d="M15.5 4.8 L18.5 3 M15.5 5.6 L18.8 6.2" />
+          </g>
+          <ellipse cx="5" cy="6" rx="3.6" ry="3" fill="var(--color-primary-500)" />
+          <ellipse cx="10.3" cy="6" rx="2.3" ry="2.1" fill="var(--color-primary-500)" />
+          <ellipse cx="14.6" cy="6" rx="1.9" ry="1.9" fill="var(--color-primary-500)" />
+        </symbol>
+      </defs>
+
+      <path
+        d="M -40 430 C 140 395, 260 460, 440 425 S 760 380, 900 420 S 1100 455, 1240 410"
+        fill="none" stroke="var(--color-logo-amber)" stroke-width="2.5" stroke-linecap="round"
+        stroke-dasharray="1 13" opacity="0.5"
+      />
+
+      <use href="#nx-ant-integrations" class="nx-ant" width="22" height="13" transform="translate(-11 -6.5)" style="animation-delay: 0s" />
+      <use href="#nx-ant-integrations" class="nx-ant" width="22" height="13" transform="translate(-11 -6.5)" style="animation-delay: -10s" />
+    </svg>
+
     <div class="max-w-6xl mx-auto">
       <p class="text-[0.8125rem] font-medium text-[var(--color-primary-500)] mb-2">Conecta tus redes</p>
       <h3 class="font-display font-light text-[clamp(1.5rem,3.2vw,2.25rem)] text-[var(--color-text)] max-w-[32ch] mb-3">
@@ -49,3 +72,23 @@ onMounted(() => {
     </div>
   </section>
 </template>
+
+<style scoped>
+.nx-ant {
+  offset-path: path('M -40 430 C 140 395, 260 460, 440 425 S 760 380, 900 420 S 1100 455, 1240 410');
+  offset-rotate: auto;
+  animation: nx-ant-walk 22s linear infinite;
+}
+
+@keyframes nx-ant-walk {
+  from { offset-distance: 0%; }
+  to { offset-distance: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nx-ant {
+    animation: none;
+    offset-distance: 0%;
+  }
+}
+</style>

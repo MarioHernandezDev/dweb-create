@@ -6,7 +6,6 @@ useHead({ title: 'Estudio de contenido' })
   <div>
     <LandingNav />
     <LandingHero />
-    <LandingStatement />
     <LandingPipeline />
     <LandingFilmstrip />
     <LandingRoles />

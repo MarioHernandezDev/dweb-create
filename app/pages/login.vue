@@ -9,6 +9,7 @@ const { ensureRole } = useMyRole()
 const email = ref('')
 const password = ref('')
 const loading = ref(false)
+const activeDemo = ref('')
 const error = ref('')
 
 const demoAccounts = [
@@ -51,14 +52,17 @@ function submit() {
 function loginAsDemo(demoEmail: string) {
   email.value = demoEmail
   password.value = demoPassword
+  activeDemo.value = demoEmail
   login(demoEmail, demoPassword)
 }
 </script>
 
 <template>
-  <div class="min-h-dvh bg-[var(--color-ink)] md:flex">
+  <div class="min-h-dvh bg-[var(--color-ink)] pt-16 md:pt-[4.5rem] md:flex">
+    <LandingNav />
+
     <!-- Panel de marca: solo en escritorio, el móvil va directo al formulario -->
-    <div class="hidden md:flex md:flex-col md:justify-between md:w-[42%] lg:w-[38%] shrink-0 relative overflow-hidden">
+    <div class="hidden md:flex md:flex-col md:justify-center md:w-[42%] lg:w-[38%] shrink-0 relative overflow-hidden">
       <div class="absolute inset-0 bg-gradient-to-br from-[var(--color-primary-900)] via-[#150c34] to-[#0a0812]" />
       <div
         aria-hidden="true"
@@ -66,12 +70,7 @@ function loginAsDemo(demoEmail: string) {
         style="background: radial-gradient(circle, var(--color-logo-teal), var(--color-primary-500) 55%, transparent 72%)"
       />
 
-      <header class="relative z-10 flex items-center gap-2.5 px-10 py-8">
-        <NuxtImg src="/img/logo-svg.png" alt="" width="28" height="28" class="size-7" />
-        <span class="font-display text-white/90 text-[1.0625rem] tracking-[0.02em]">FEEDMA</span>
-      </header>
-
-      <div class="relative z-10 px-10 pb-14">
+      <div class="relative z-10 px-10">
         <p aria-hidden="true" class="nx-feedma-shimmer font-display font-light leading-[0.82] tracking-tight text-[clamp(3rem,6.5vw,5rem)] mb-5">
           FEEDMA
         </p>
@@ -83,11 +82,6 @@ function loginAsDemo(demoEmail: string) {
 
     <!-- Formulario -->
     <div class="flex-1 flex flex-col">
-      <header class="md:hidden flex items-center gap-2.5 px-5 py-5 w-full">
-        <NuxtImg src="/img/logo-svg.png" alt="" width="28" height="28" class="size-7" />
-        <span class="font-display text-[1.0625rem] text-[var(--color-text)]">FEEDMA</span>
-      </header>
-
       <main class="flex-1 flex items-center justify-center px-5 md:px-10">
         <div class="w-full max-w-sm py-8">
           <h1 class="font-display text-[1.875rem] text-[var(--color-text)] mb-1.5">Accede a tu cuenta</h1>
@@ -128,7 +122,7 @@ function loginAsDemo(demoEmail: string) {
                 class="flex-1 flex flex-col items-center gap-1.5 py-3 rounded-[var(--radius-sm)] border border-[var(--color-hairline)] text-[var(--color-text-muted)] hover:border-[var(--color-hairline-strong)] hover:text-[var(--color-text)] disabled:opacity-40 transition-colors"
                 @click="loginAsDemo(demo.email)"
               >
-                <Icon :name="demo.icon" class="size-4" />
+                <Icon :name="activeDemo === demo.email && loading ? 'ph:spinner-gap-bold' : demo.icon" class="size-4" :class="activeDemo === demo.email && loading && 'animate-spin'" />
                 <span class="text-[0.6875rem] font-medium">{{ demo.label }}</span>
               </button>
             </div>
