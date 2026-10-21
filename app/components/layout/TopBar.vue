@@ -18,6 +18,9 @@ const { unreadCount: chatUnreadCount, refreshUnreadCount: refreshChatUnread, sta
 refreshChatUnread()
 startRealtime()
 startTypingListener()
+
+// Ya en caché desde role-guard.global.ts — sin parpadeo.
+const { avatarUrl, initials: myInitials, hue: myHue } = useMyAvatar()
 </script>
 
 <template>
@@ -59,7 +62,7 @@ startTypingListener()
     </NuxtLink>
 
     <NuxtLink :to="`/${role}/profile`" aria-label="Tu perfil" class="shrink-0">
-      <BaseAvatar initials="TU" :hue="266" size="sm" />
+      <BaseAvatar :initials="myInitials" :src="avatarUrl" :hue="myHue" size="sm" />
     </NuxtLink>
   </header>
 </template>

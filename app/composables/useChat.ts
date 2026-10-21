@@ -37,6 +37,7 @@ export interface ConversationSummary {
   otherFichaId: string | null
   otherRole: Role
   otherName: string
+  otherAvatarUrl: string | null
   lastMessagePreview: string | null
   lastMessageAt: string | null
   unread: boolean
@@ -105,12 +106,12 @@ export function useChat() {
   }
 
   async function resolveNames(profileIds: string[]) {
-    const names: Record<string, { name: string; role: Role; fichaId: string | null }> = {}
+    const names: Record<string, { name: string; role: Role; fichaId: string | null; avatarUrl: string | null }> = {}
     if (!profileIds.length) return names
 
-    const { data: profiles } = await client.from('profiles').select('id, role, full_name').in('id', profileIds)
-    const rows = (profiles ?? []) as { id: string; role: Role; full_name: string | null }[]
-    for (const p of rows) names[p.id] = { name: p.full_name || 'Usuario', role: p.role, fichaId: null }
+    const { data: profiles } = await client.from('profiles').select('id, role, full_name, avatar_url').in('id', profileIds)
+    const rows = (profiles ?? []) as { id: string; role: Role; full_name: string | null; avatar_url: string | null }[]
+    for (const p of rows) names[p.id] = { name: p.full_name || 'Usuario', role: p.role, fichaId: null, avatarUrl: p.avatar_url }
 
     const creatorIds = rows.filter((p) => p.role === 'creator').map((p) => p.id)
     const partnerIds = rows.filter((p) => p.role === 'partner').map((p) => p.id)
@@ -188,6 +189,7 @@ export function useChat() {
         otherFichaId: names[otherId]?.fichaId ?? null,
         otherRole: names[otherId]?.role ?? 'creator',
         otherName: names[otherId]?.name ?? 'Usuario',
+        otherAvatarUrl: names[otherId]?.avatarUrl ?? null,
         lastMessagePreview: last ? (last.kind === 'offer' ? 'Oferta enviada' : last.body) : null,
         lastMessageAt: c.last_message_at,
         unread: unreadCount > 0,
@@ -232,6 +234,7 @@ export function useChat() {
       otherFichaId: names[otherId]?.fichaId ?? null,
       otherRole: names[otherId]?.role ?? 'creator',
       otherName: names[otherId]?.name ?? 'Usuario',
+      otherAvatarUrl: names[otherId]?.avatarUrl ?? null,
       lastMessagePreview: existing?.lastMessagePreview ?? null,
       lastMessageAt: data.last_message_at,
       unread: existing?.unread ?? false,

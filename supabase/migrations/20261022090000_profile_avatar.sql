@@ -1,0 +1,14 @@
+-- ============================================================================
+-- FEEDMA — Foto de perfil de la cuenta.
+--
+-- Hasta ahora el avatar era un "TU" fijo en TopBar/SideRail/Perfil para
+-- cualquier cuenta — ninguna tenía una foto real, ni para ti ni para quien
+-- te ve en el chat o en tu perfil público. Vive en `profiles` (no en
+-- `creators`/`partners`): es de la cuenta, no de la ficha de rol.
+--
+-- No hace falta ninguna policy nueva: `profiles_select_public_directory`
+-- (lectura, cualquier autenticado) y `profiles_update_own` (escritura, solo
+-- tu propia fila) ya cubren esta columna igual que cubren `chat_privacy`
+-- desde la migración de chat — RLS en Postgres es por fila, no por columna.
+-- ============================================================================
+alter table public.profiles add column if not exists avatar_url text;

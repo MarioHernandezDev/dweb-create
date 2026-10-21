@@ -57,11 +57,15 @@ export default defineNuxtRouteMiddleware(async (to) => {
   // con el trigger de la migración, pero por si acaso no lo dejamos colgado).
   if (!myRole) return
 
-  // Deja lista la ficha de rol (creator/partner) antes de montar cualquier
-  // página de esa sección — así ninguna página necesita su propio
-  // "cargando…" solo para saber quién es el usuario.
-  if (myRole === 'creator') await useMyCreator().ensureCreator(user.id)
-  else await useMyPartner().ensurePartner(user.id)
+  // Deja lista la ficha de rol (creator/partner) y la foto de perfil de la
+  // cuenta antes de montar cualquier página — así TopBar.vue/SideRail.vue la
+  // leen ya en caché, sin parpadeo, y ninguna página necesita su propio
+  // "cargando…" solo para saber quién es el usuario. Las dos son
+  // independientes entre sí, en paralelo.
+  await Promise.all([
+    myRole === 'creator' ? useMyCreator().ensureCreator(user.id) : useMyPartner().ensurePartner(user.id),
+    useMyAvatar().ensureAvatar(user.id)
+  ])
 
   if (to.path === '/login') {
     return navigateTo(roleMeta[myRole].home)

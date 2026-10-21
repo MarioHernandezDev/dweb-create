@@ -9,6 +9,9 @@ const items = computed(() => roleNav[props.role])
 function isActive(to: string) {
   return to === items.value[0]?.to ? route.path === to : route.path.startsWith(to)
 }
+
+// Ya en caché desde role-guard.global.ts — sin parpadeo.
+const { avatarUrl, initials: myInitials, hue: myHue } = useMyAvatar()
 </script>
 
 <template>
@@ -33,7 +36,7 @@ function isActive(to: string) {
 
     <div class="mt-auto pt-5 border-t border-[var(--color-hairline)]">
       <NuxtLink :to="`/${role}/profile`" class="flex items-center gap-3 px-2 py-2 rounded-[var(--radius-sm)] hover:bg-[var(--color-ink-overlay)]/60 transition-colors">
-        <BaseAvatar initials="TU" :hue="266" size="sm" />
+        <BaseAvatar :initials="myInitials" :src="avatarUrl" :hue="myHue" size="sm" />
         <div class="min-w-0">
           <p class="text-sm font-medium text-[var(--color-text)] truncate">Tu cuenta</p>
           <p class="text-[0.75rem] text-[var(--color-text-faint)] truncate">{{ roleMeta[role].label }}</p>

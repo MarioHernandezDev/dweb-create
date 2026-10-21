@@ -22,8 +22,18 @@ const connectResult = route.query.instagram === 'connected'
 const busyPlatform = ref<SocialAccount['platform'] | null>(null)
 const syncingPlatform = ref<SocialAccount['platform'] | null>(null)
 const syncError = ref('')
+const { confirm } = useConfirm()
 
 async function toggle(acc: SocialAccount) {
+  if (acc.connected) {
+    const ok = await confirm({
+      title: `¿Desconectar ${acc.platform}?`,
+      message: 'Dejarás de ver sus seguidores y de poder usarla para predicciones hasta que la vuelvas a conectar.',
+      confirmLabel: 'Desconectar', tone: 'danger', icon: 'ph:plugs-fill'
+    })
+    if (!ok) return
+  }
+
   busyPlatform.value = acc.platform
   try {
     if (acc.connected) await disconnect(acc.platform)

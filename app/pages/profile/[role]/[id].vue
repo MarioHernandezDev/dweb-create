@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { initialsFromName, hueFromString } from '~/utils/avatar'
 import { formatEuros } from '~/utils/mock-data'
 import type { Role } from '~/types'
 import type { Package } from '~/composables/usePackages'
@@ -65,34 +64,21 @@ const rangeLabel = computed(() => {
   return `${profile!.minCents ? formatEuros(profile!.minCents) : '…'}–${profile!.maxCents ? formatEuros(profile!.maxCents) : '…'}`
 })
 
-const packagesSectionTitle = computed(() => (targetRole === 'creator' ? 'Paquetes' : 'Necesidades'))
+const packagesSectionTitle = computed(() => (targetRole === 'creator' ? 'Catálogo' : 'Necesidades'))
+const catalogCountLabel = computed(() => (targetRole === 'creator' ? 'paquetes publicados' : 'necesidades publicadas'))
 </script>
 
 <template>
   <AppShell :role="myRole ?? 'creator'" title="Perfil">
     <div class="md:max-w-xl">
-      <section class="flex items-center gap-4 mb-6">
-        <BaseAvatar :initials="initialsFromName(profile.name)" :hue="hueFromString(profile.name)" size="lg" />
-        <div class="min-w-0 flex-1">
-          <p class="font-display text-[1.25rem] text-[var(--color-text)] truncate">{{ profile.name }}</p>
-          <p class="text-[0.875rem] text-[var(--color-text-muted)]">{{ targetRole === 'creator' ? 'Creador de contenido' : 'Partner' }}</p>
-        </div>
-      </section>
-
-      <p v-if="profile.bio" class="text-[0.9375rem] text-[var(--color-text)] leading-relaxed mb-5">{{ profile.bio }}</p>
-
-      <div v-if="profile.categories.length" class="flex flex-wrap gap-1.5 mb-5">
-        <span v-for="cat in profile.categories" :key="cat" class="px-2.5 h-7 flex items-center rounded-full text-[0.75rem] font-medium bg-[var(--color-ink-overlay)] text-[var(--color-text-muted)] border border-[var(--color-hairline)]">
-          {{ cat }}
-        </span>
-      </div>
-
-      <BaseCard v-if="rangeLabel || profile.lookingFor" radius="lg" padding="md" class="mb-6 flex flex-col gap-2">
-        <p v-if="rangeLabel" class="text-[0.875rem] text-[var(--color-text)]">
-          {{ targetRole === 'creator' ? 'Tarifa orientativa' : 'Presupuesto' }}: <span class="font-medium">{{ rangeLabel }}</span>
-        </p>
-        <p v-if="profile.lookingFor" class="text-[0.8125rem] text-[var(--color-text-muted)]">{{ profile.lookingFor }}</p>
-      </BaseCard>
+      <ProfileHeaderCard
+        :name="profile.name" :role-label="targetRole === 'creator' ? 'Creador de contenido' : 'Partner'"
+        :avatar-url="profile.avatarUrl" :cover-url="profile.coverUrl" :cover-seed="profile.profileId"
+        :categories="profile.categories" :bio="profile.bio" :range-label="rangeLabel"
+        :range-field-label="targetRole === 'creator' ? 'Tarifa orientativa' : 'Presupuesto'"
+        :looking-for="profile.lookingFor" :verified-socials="profile.verifiedSocials"
+        :member-since="profile.createdAt" :catalog-count="packages.length" :catalog-label="catalogCountLabel"
+      />
 
       <template v-if="!isOwnProfile">
         <div class="flex flex-col gap-2 mb-7">
@@ -106,7 +92,7 @@ const packagesSectionTitle = computed(() => (targetRole === 'creator' ? 'Paquete
         </div>
 
         <section>
-          <h2 class="font-display text-[1.125rem] text-[var(--color-text)] mb-3">{{ packagesSectionTitle }}</h2>
+          <h2 class="text-[0.6875rem] font-semibold uppercase tracking-wide text-[var(--color-text-faint)] mb-2.5">{{ packagesSectionTitle }}</h2>
           <EmptyState
             v-if="!packages.length"
             icon="ph:package" title="Sin paquetes publicados"

@@ -190,7 +190,7 @@ async function send() {
   <AppShell :role="myRole" :title="conversation?.otherName ?? 'Chat'" full-width>
     <div class="flex flex-col h-[calc(100dvh-7.5rem)] md:h-[calc(100dvh-9rem)] md:max-w-2xl">
       <div v-if="conversation" class="flex items-center gap-3 pb-4 mb-2 border-b border-[var(--color-hairline)] shrink-0">
-        <BaseAvatar :initials="initialsFromName(conversation.otherName)" :hue="hueFromString(conversation.otherName)" size="sm" />
+        <BaseAvatar :initials="initialsFromName(conversation.otherName)" :src="conversation.otherAvatarUrl" :hue="hueFromString(conversation.otherName)" size="sm" />
         <NuxtLink
           v-if="conversation.otherFichaId" :to="`/profile/${conversation.otherRole}/${conversation.otherFichaId}`"
           class="text-[0.9375rem] font-medium text-[var(--color-text)] hover:text-[var(--color-primary-500)]"

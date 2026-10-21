@@ -19,6 +19,7 @@ const { collaborations, paying, ensureLoaded, refresh: refreshCollaborations, pa
 const user = useSupabaseUser()
 const { logout } = useLogout()
 const { resolveMyProfileId } = useMyProfileId()
+const { avatarUrl, uploadAvatar } = useMyAvatar()
 
 // `user.value?.id` puede seguir vacío justo al cargar la página (ver
 // role-guard.global.ts) — se resuelve de forma fiable con useMyProfileId.
@@ -37,6 +38,18 @@ await Promise.all([
   ensureChatPrivacy()
 ])
 
+// Secciones de "Tu Perfil" — antes era un único scroll larguísimo con 6
+// bloques seguidos, cada uno marcado solo con una etiqueta gris diminuta.
+// Agrupadas así se navega directo a lo que se busca, en vez de bajar todo.
+const tabs = [
+  { id: 'account', label: 'Cuenta', icon: 'ph:user-circle-fill' },
+  { id: 'ficha', label: 'Ficha pública', icon: 'ph:identification-card-fill' },
+  { id: 'needs', label: 'Necesidades', icon: 'ph:package-fill' },
+  { id: 'collabs', label: 'Colaboraciones', icon: 'ph:handshake-fill' },
+  { id: 'privacy', label: 'Privacidad', icon: 'ph:shield-check-fill' }
+] as const
+const activeTab = ref<(typeof tabs)[number]['id']>('account')
+
 const packageSheetOpen = ref(false)
 const editingPackage = ref<Package | null>(null)
 
@@ -48,6 +61,31 @@ function openNewPackage() {
 function openEditPackage(pkg: Package) {
   editingPackage.value = pkg
   packageSheetOpen.value = true
+}
+
+const { confirm } = useConfirm()
+
+async function confirmDeletePackage(pkg: Package) {
+  const ok = await confirm({
+    title: `¿Borrar "${pkg.title}"?`,
+    message: 'Se borrará permanentemente, junto con cualquier oferta que se haya hecho sobre ella.',
+    confirmLabel: 'Borrar', tone: 'danger', icon: 'ph:trash-fill'
+  })
+  if (ok) await deletePackage(pkg.id)
+}
+
+async function confirmLogout() {
+  const ok = await confirm({ title: '¿Cerrar sesión?', confirmLabel: 'Cerrar sesión' })
+  if (ok) await logout()
+}
+
+async function confirmPay(collaborationId: string) {
+  const ok = await confirm({
+    title: '¿Confirmar el pago?',
+    message: 'Se abrirá Stripe para completar el cobro de esta colaboración.',
+    confirmLabel: 'Ir a pagar'
+  })
+  if (ok) await payForCollaboration(collaborationId)
 }
 
 const chatPrivacyOptions: { value: ChatPrivacy; label: string; description: string }[] = [
@@ -67,6 +105,34 @@ const ficha = reactive({
 const savingFicha = ref(false)
 const fichaSaved = ref(false)
 const coverArt = computed(() => coverArtFromString(partner.value?.id ?? 'partner'))
+
+// Vista previa en vivo (columna derecha en escritorio, dentro de "Ficha
+// pública") — usa el MISMO componente que pinta /profile/[role]/[id], así
+// nunca puede desincronizarse de cómo se ve el perfil de verdad. Lee los
+// campos del formulario sin guardar todavía: es intencionado, para que se
+// note el cambio mientras escribes, no solo después de "Guardar ficha".
+const previewName = computed(() => partner.value?.name || user.value?.email || 'Tu empresa')
+const previewRangeLabel = computed(() => {
+  if (!ficha.minBudgetEuros && !ficha.maxBudgetEuros) return null
+  const min = ficha.minBudgetEuros ? formatEuros(Math.round(ficha.minBudgetEuros * 100)) : '…'
+  const max = ficha.maxBudgetEuros ? formatEuros(Math.round(ficha.maxBudgetEuros * 100)) : '…'
+  return `${min}–${max}`
+})
+
+// Barra de "ficha completa al X%" — anima a rellenar lo que de verdad
+// mejora el matching (mismo motivo que ya explica el texto de esta sección).
+const completionPercent = computed(() => {
+  const checks = [
+    !!avatarUrl.value,
+    !!partner.value?.coverUrl,
+    !!ficha.bio.trim(),
+    ficha.categories.length > 0,
+    !!(ficha.minBudgetEuros || ficha.maxBudgetEuros),
+    !!ficha.lookingFor.trim(),
+    (myPackages.value?.length ?? 0) > 0
+  ]
+  return Math.round((checks.filter(Boolean).length / checks.length) * 100)
+})
 
 function toggleFichaCategory(cat: string) {
   const i = ficha.categories.indexOf(cat)
@@ -94,173 +160,207 @@ async function saveFicha() {
 
 <template>
   <AppShell role="partner" title="Perfil">
-    <div class="md:max-w-lg">
-      <section class="flex items-center gap-4 mb-8">
-        <BaseAvatar v-if="partner" :initials="initialsFromName(partner.name)" :hue="hueFromString(partner.name)" size="lg" />
-        <div>
-          <p class="font-display text-[1.25rem] text-[var(--color-text)]">{{ partner?.name }}</p>
-          <p class="text-[0.9375rem] text-[var(--color-text-muted)]">{{ user?.email ?? 'Cuenta de partner' }}</p>
-        </div>
-      </section>
-
-      <BaseCard v-if="route.query.payment" radius="md" padding="md" class="flex items-center gap-3 mb-6">
-        <Icon
-          :name="route.query.payment === 'success' ? 'ph:check-circle-fill' : 'ph:info-fill'" class="size-5 shrink-0"
-          :class="route.query.payment === 'success' ? 'text-[var(--color-status-published)]' : 'text-[var(--color-text-muted)]'"
-        />
-        <p class="text-[0.875rem] text-[var(--color-text)]">
-          {{ route.query.payment === 'success' ? 'Pago enviado.' : 'Pago cancelado, no se ha cobrado nada.' }}
-        </p>
-      </BaseCard>
-
-      <section class="mb-6">
-        <p class="text-[0.8125rem] font-medium text-[var(--color-text-muted)] mb-2 px-1">Tu ficha pública</p>
-        <p class="text-[0.75rem] text-[var(--color-text-faint)] mb-3 px-1">Esto es lo que ve un creador en "Descubrir" — cuanto más completa, mejor encajan los resultados.</p>
-        <BaseCard radius="lg" padding="md" class="flex flex-col gap-4">
-          <CoverPhotoUploader
-            :cover-url="partner?.coverUrl ?? null" :cover-art="coverArt" icon="ph:storefront-fill" :upload="uploadCoverPhoto"
+    <div class="md:max-w-5xl">
+      <div class="md:max-w-lg">
+        <section class="flex items-center gap-4 mb-6">
+          <AvatarUploader
+            v-if="partner" :avatar-url="avatarUrl" :initials="initialsFromName(partner.name)" :hue="hueFromString(partner.name)"
+            :upload="uploadAvatar"
           />
-
           <div>
-            <label class="block text-[0.8125rem] font-medium text-[var(--color-text-muted)] mb-1.5" for="ficha-bio">Bio</label>
-            <textarea
-              id="ficha-bio" v-model="ficha.bio" rows="3" placeholder="Quién eres y qué tipo de campañas haces…"
-              class="w-full px-3.5 py-2.5 rounded-[var(--radius-sm)] bg-[var(--color-ink-overlay)] border border-[var(--color-hairline)] text-[0.875rem] text-[var(--color-text)] placeholder:text-[var(--color-text-faint)] focus:outline-none focus:border-[var(--color-primary-500)]/60 resize-none"
-            />
+            <p class="font-display text-[1.25rem] text-[var(--color-text)]">{{ partner?.name }}</p>
+            <p class="text-[0.9375rem] text-[var(--color-text-muted)]">{{ user?.email ?? 'Cuenta de partner' }}</p>
           </div>
+        </section>
 
-          <div>
-            <p class="block text-[0.8125rem] font-medium text-[var(--color-text-muted)] mb-1.5">Categorías que buscas</p>
-            <div class="flex flex-wrap gap-1.5">
-              <button
-                v-for="cat in DISCOVERY_CATEGORIES" :key="cat" type="button"
-                class="px-2.5 h-7 rounded-full text-[0.75rem] font-medium border transition-colors duration-150"
-                :class="ficha.categories.includes(cat)
-                  ? 'bg-[var(--color-primary-500)]/15 border-[var(--color-primary-500)]/50 text-[var(--color-primary-500)]'
-                  : 'bg-[var(--color-ink-overlay)] border-[var(--color-hairline)] text-[var(--color-text-muted)]'"
-                @click="toggleFichaCategory(cat)"
-              >
-                {{ cat }}
-              </button>
-            </div>
-          </div>
-
-          <div class="flex items-center gap-2.5">
-            <div class="flex-1">
-              <label class="block text-[0.8125rem] font-medium text-[var(--color-text-muted)] mb-1.5" for="ficha-min-budget">Presupuesto desde (€)</label>
-              <input
-                id="ficha-min-budget" v-model.number="ficha.minBudgetEuros" type="number" min="0" step="1"
-                class="w-full h-10 px-3 rounded-[var(--radius-sm)] bg-[var(--color-ink-overlay)] border border-[var(--color-hairline)] text-[0.875rem] text-[var(--color-text)] focus:outline-none focus:border-[var(--color-primary-500)]/60"
-              >
-            </div>
-            <div class="flex-1">
-              <label class="block text-[0.8125rem] font-medium text-[var(--color-text-muted)] mb-1.5" for="ficha-max-budget">hasta (€)</label>
-              <input
-                id="ficha-max-budget" v-model.number="ficha.maxBudgetEuros" type="number" min="0" step="1"
-                class="w-full h-10 px-3 rounded-[var(--radius-sm)] bg-[var(--color-ink-overlay)] border border-[var(--color-hairline)] text-[0.875rem] text-[var(--color-text)] focus:outline-none focus:border-[var(--color-primary-500)]/60"
-              >
-            </div>
-          </div>
-
-          <div>
-            <label class="block text-[0.8125rem] font-medium text-[var(--color-text-muted)] mb-1.5" for="ficha-looking-for">Qué tipo de creador buscas</label>
-            <textarea
-              id="ficha-looking-for" v-model="ficha.lookingFor" rows="2" placeholder="Ej. creadores de fitness con audiencia en España…"
-              class="w-full px-3.5 py-2.5 rounded-[var(--radius-sm)] bg-[var(--color-ink-overlay)] border border-[var(--color-hairline)] text-[0.875rem] text-[var(--color-text)] placeholder:text-[var(--color-text-faint)] focus:outline-none focus:border-[var(--color-primary-500)]/60 resize-none"
-            />
-          </div>
-
-          <div class="flex items-center gap-3">
-            <BaseButton variant="secondary" size="sm" :icon-spin="savingFicha" :disabled="savingFicha" @click="saveFicha">
-              {{ savingFicha ? 'Guardando…' : 'Guardar ficha' }}
-            </BaseButton>
-            <span v-if="fichaSaved" class="text-[0.8125rem] text-[var(--color-status-published)]">Guardado.</span>
-          </div>
-        </BaseCard>
-      </section>
-
-      <section class="mb-6">
-        <div class="flex items-center justify-between mb-2 px-1">
-          <p class="text-[0.8125rem] font-medium text-[var(--color-text-muted)]">Tus necesidades</p>
-          <button type="button" class="text-[0.8125rem] font-medium text-[var(--color-primary-500)]" @click="openNewPackage">Añadir</button>
-        </div>
-        <p class="text-[0.75rem] text-[var(--color-text-faint)] mb-3 px-1">Lo que buscas — un creador podrá hacer una oferta ajustándose a tu necesidad.</p>
-        <EmptyState
-          v-if="!myPackages?.length"
-          icon="ph:package" title="Sin necesidades todavía"
-          description="Publica qué necesitas para que un creador pueda ofertar ajustándose a ello."
-        />
-        <div v-else class="flex flex-col gap-2.5">
-          <PackageCard
-            v-for="pkg in myPackages" :key="pkg.id" :pkg="pkg" editable
-            @edit="openEditPackage" @delete="deletePackage(pkg.id)"
+        <BaseCard v-if="route.query.payment" radius="md" padding="md" class="flex items-center gap-3 mb-6">
+          <Icon
+            :name="route.query.payment === 'success' ? 'ph:check-circle-fill' : 'ph:info-fill'" class="size-5 shrink-0"
+            :class="route.query.payment === 'success' ? 'text-[var(--color-status-published)]' : 'text-[var(--color-text-muted)]'"
           />
-        </div>
-        <PackageFormSheet v-if="myProfileId" v-model="packageSheetOpen" :profile-id="myProfileId" role="partner" :editing="editingPackage" />
-      </section>
-
-      <section class="mb-6">
-        <p class="text-[0.8125rem] font-medium text-[var(--color-text-muted)] mb-2 px-1">Privacidad del chat</p>
-        <BaseCard radius="lg" padding="none" class="divide-y divide-[var(--color-hairline)] overflow-hidden">
-          <button
-            v-for="opt in chatPrivacyOptions" :key="opt.value" type="button"
-            class="w-full flex items-start gap-3 px-5 py-4 text-left"
-            @click="setChatPrivacy(opt.value)"
-          >
-            <span
-              class="mt-0.5 shrink-0 size-4 rounded-full border-2 flex items-center justify-center"
-              :class="chatPrivacy === opt.value ? 'border-[var(--color-primary-500)]' : 'border-[var(--color-hairline-strong)]'"
-            >
-              <span v-if="chatPrivacy === opt.value" class="size-2 rounded-full bg-[var(--color-primary-500)]" />
-            </span>
-            <span>
-              <p class="text-[0.9375rem] text-[var(--color-text)]">{{ opt.label }}</p>
-              <p class="text-[0.75rem] text-[var(--color-text-faint)] mt-0.5">{{ opt.description }}</p>
-            </span>
-          </button>
+          <p class="text-[0.875rem] text-[var(--color-text)]">
+            {{ route.query.payment === 'success' ? 'Pago enviado.' : 'Pago cancelado, no se ha cobrado nada.' }}
+          </p>
         </BaseCard>
-      </section>
 
-      <section class="mb-6">
-        <div class="flex items-center justify-between mb-2 px-1">
-          <p class="text-[0.8125rem] font-medium text-[var(--color-text-muted)]">Tus colaboraciones</p>
-          <NuxtLink to="/partner/discover" class="text-[0.8125rem] font-medium text-[var(--color-primary-500)]">Descubrir más</NuxtLink>
-        </div>
+        <ProfileCompletionBar :percent="completionPercent" />
+      </div>
 
-        <EmptyState
-          v-if="!collaborations.length"
-          icon="ph:handshake" title="Ninguna todavía"
-          description="Contacta a un creador de contenido desde 'Descubrir' para empezar."
-        />
-        <div v-else class="flex flex-col gap-2.5">
-          <BaseCard v-for="collab in collaborations" :key="collab.id" radius="lg" padding="md">
-            <div class="flex items-center justify-between gap-3 mb-1">
-              <p class="text-[0.9375rem] font-medium text-[var(--color-text)] truncate">
-                {{ collab.creatorName ?? 'Sin asignar' }}
-              </p>
-              <span class="text-[0.9375rem] font-medium text-[var(--color-text)] shrink-0">{{ formatEuros(collab.budgetCents) }}</span>
+      <div class="md:flex md:gap-10">
+        <ProfileSettingsNav v-model="activeTab" :tabs="[...tabs]" />
+
+        <div class="flex-1 min-w-0">
+          <div v-show="activeTab === 'account'" class="md:max-w-lg">
+            <BaseButton variant="secondary" icon="ph:sign-out-bold" class="w-full" @click="confirmLogout">Cerrar sesión</BaseButton>
+          </div>
+
+          <div v-show="activeTab === 'ficha'" class="md:flex md:gap-8 md:items-start">
+            <div class="md:flex-1 md:min-w-0 md:max-w-lg">
+              <p class="text-[0.75rem] text-[var(--color-text-faint)] mb-3">Esto es lo que ve un creador en "Descubrir" — cuanto más completa, mejor encajan los resultados.</p>
+              <BaseCard radius="lg" padding="md" class="flex flex-col gap-4">
+                <CoverPhotoUploader
+                  :cover-url="partner?.coverUrl ?? null" :cover-art="coverArt" icon="ph:storefront-fill" :upload="uploadCoverPhoto"
+                />
+
+                <div>
+                  <label class="block text-[0.8125rem] font-medium text-[var(--color-text-muted)] mb-1.5" for="ficha-bio">Bio</label>
+                  <textarea
+                    id="ficha-bio" v-model="ficha.bio" rows="3" placeholder="Quién eres y qué tipo de campañas haces…"
+                    class="w-full px-3.5 py-2.5 rounded-[var(--radius-sm)] bg-[var(--color-ink-overlay)] border border-[var(--color-hairline)] text-[0.875rem] text-[var(--color-text)] placeholder:text-[var(--color-text-faint)] focus:outline-none focus:border-[var(--color-primary-500)]/60 resize-none"
+                  />
+                </div>
+
+                <div>
+                  <p class="block text-[0.8125rem] font-medium text-[var(--color-text-muted)] mb-1.5">Categorías que buscas</p>
+                  <div class="flex flex-wrap gap-1.5">
+                    <button
+                      v-for="cat in DISCOVERY_CATEGORIES" :key="cat" type="button"
+                      class="px-2.5 h-7 rounded-full text-[0.75rem] font-medium border transition-colors duration-150"
+                      :class="ficha.categories.includes(cat)
+                        ? 'bg-[var(--color-primary-500)]/15 border-[var(--color-primary-500)]/50 text-[var(--color-primary-500)]'
+                        : 'bg-[var(--color-ink-overlay)] border-[var(--color-hairline)] text-[var(--color-text-muted)]'"
+                      @click="toggleFichaCategory(cat)"
+                    >
+                      {{ cat }}
+                    </button>
+                  </div>
+                </div>
+
+                <div class="flex items-center gap-2.5">
+                  <div class="flex-1">
+                    <label class="block text-[0.8125rem] font-medium text-[var(--color-text-muted)] mb-1.5" for="ficha-min-budget">Presupuesto desde (€)</label>
+                    <input
+                      id="ficha-min-budget" v-model.number="ficha.minBudgetEuros" type="number" min="0" step="1"
+                      class="w-full h-10 px-3 rounded-[var(--radius-sm)] bg-[var(--color-ink-overlay)] border border-[var(--color-hairline)] text-[0.875rem] text-[var(--color-text)] focus:outline-none focus:border-[var(--color-primary-500)]/60"
+                    >
+                  </div>
+                  <div class="flex-1">
+                    <label class="block text-[0.8125rem] font-medium text-[var(--color-text-muted)] mb-1.5" for="ficha-max-budget">hasta (€)</label>
+                    <input
+                      id="ficha-max-budget" v-model.number="ficha.maxBudgetEuros" type="number" min="0" step="1"
+                      class="w-full h-10 px-3 rounded-[var(--radius-sm)] bg-[var(--color-ink-overlay)] border border-[var(--color-hairline)] text-[0.875rem] text-[var(--color-text)] focus:outline-none focus:border-[var(--color-primary-500)]/60"
+                    >
+                  </div>
+                </div>
+
+                <div>
+                  <label class="block text-[0.8125rem] font-medium text-[var(--color-text-muted)] mb-1.5" for="ficha-looking-for">Qué tipo de creador buscas</label>
+                  <textarea
+                    id="ficha-looking-for" v-model="ficha.lookingFor" rows="2" placeholder="Ej. creadores de fitness con audiencia en España…"
+                    class="w-full px-3.5 py-2.5 rounded-[var(--radius-sm)] bg-[var(--color-ink-overlay)] border border-[var(--color-hairline)] text-[0.875rem] text-[var(--color-text)] placeholder:text-[var(--color-text-faint)] focus:outline-none focus:border-[var(--color-primary-500)]/60 resize-none"
+                  />
+                </div>
+
+                <div class="flex items-center gap-3">
+                  <BaseButton variant="secondary" size="sm" :icon-spin="savingFicha" :disabled="savingFicha" @click="saveFicha">
+                    {{ savingFicha ? 'Guardando…' : 'Guardar ficha' }}
+                  </BaseButton>
+                  <span v-if="fichaSaved" class="text-[0.8125rem] text-[var(--color-status-published)]">Guardado.</span>
+                </div>
+              </BaseCard>
             </div>
-            <p class="text-[0.75rem] mb-3" :style="{ color: collaborationStatusMeta[collab.status].color }">
-              {{ collaborationStatusMeta[collab.status].label }}
-            </p>
 
-            <p v-if="collab.paidAt" class="inline-flex items-center gap-1.5 text-[0.8125rem] text-[var(--color-status-published)]">
-              <Icon name="ph:check-circle-fill" class="size-4" /> Pagado
-            </p>
-            <p v-else-if="!payableStatuses.includes(collab.status)" class="text-[0.75rem] text-[var(--color-text-faint)]">
-              Se podrá pagar cuando acepten la solicitud.
-            </p>
-            <BaseButton
-              v-else variant="primary" size="sm" class="w-full" :disabled="!collab.budgetCents || paying === collab.id"
-              :icon-spin="paying === collab.id" @click="payForCollaboration(collab.id)"
-            >
-              {{ paying === collab.id ? 'Abriendo pago…' : 'Pagar' }}
-            </BaseButton>
-          </BaseCard>
+            <div class="hidden md:block md:w-72 md:shrink-0 md:sticky md:top-24 md:self-start">
+              <p class="text-[0.6875rem] font-semibold uppercase tracking-wide text-[var(--color-text-faint)] mb-2.5">Vista previa</p>
+              <BaseCard radius="lg" padding="md">
+                <ProfileHeaderCard
+                  compact :name="previewName" role-label="Partner" :avatar-url="avatarUrl"
+                  :cover-url="partner?.coverUrl ?? null" :cover-seed="partner?.id ?? 'partner'" :categories="ficha.categories"
+                  :bio="ficha.bio || null" :range-label="previewRangeLabel" range-field-label="Presupuesto"
+                  :looking-for="ficha.lookingFor || null"
+                />
+              </BaseCard>
+            </div>
+          </div>
+
+          <div v-show="activeTab === 'needs'" class="md:max-w-lg">
+            <section>
+              <div class="flex items-center justify-between mb-2 px-1">
+                <p class="text-[0.8125rem] font-medium text-[var(--color-text-muted)]">Tus necesidades</p>
+                <button type="button" class="text-[0.8125rem] font-medium text-[var(--color-primary-500)]" @click="openNewPackage">Añadir</button>
+              </div>
+              <p class="text-[0.75rem] text-[var(--color-text-faint)] mb-3 px-1">Lo que buscas — un creador podrá hacer una oferta ajustándose a tu necesidad.</p>
+              <EmptyState
+                v-if="!myPackages?.length"
+                icon="ph:package" title="Sin necesidades todavía"
+                description="Publica qué necesitas para que un creador pueda ofertar ajustándose a ello."
+              />
+              <div v-else class="flex flex-col gap-2.5">
+                <PackageCard
+                  v-for="pkg in myPackages" :key="pkg.id" :pkg="pkg" editable
+                  @edit="openEditPackage" @delete="confirmDeletePackage(pkg)"
+                />
+              </div>
+              <PackageFormSheet v-if="myProfileId" v-model="packageSheetOpen" :profile-id="myProfileId" role="partner" :editing="editingPackage" />
+            </section>
+          </div>
+
+          <div v-show="activeTab === 'collabs'" class="md:max-w-lg">
+            <section>
+              <div class="flex items-center justify-between mb-2 px-1">
+                <p class="text-[0.8125rem] font-medium text-[var(--color-text-muted)]">Tus colaboraciones</p>
+                <NuxtLink to="/partner/discover" class="text-[0.8125rem] font-medium text-[var(--color-primary-500)]">Descubrir más</NuxtLink>
+              </div>
+
+              <EmptyState
+                v-if="!collaborations.length"
+                icon="ph:handshake" title="Ninguna todavía"
+                description="Contacta a un creador de contenido desde 'Descubrir' para empezar."
+              />
+              <div v-else class="flex flex-col gap-2.5">
+                <BaseCard v-for="collab in collaborations" :key="collab.id" radius="lg" padding="md">
+                  <div class="flex items-center justify-between gap-3 mb-1">
+                    <p class="text-[0.9375rem] font-medium text-[var(--color-text)] truncate">
+                      {{ collab.creatorName ?? 'Sin asignar' }}
+                    </p>
+                    <span class="text-[0.9375rem] font-medium text-[var(--color-text)] shrink-0">{{ formatEuros(collab.budgetCents) }}</span>
+                  </div>
+                  <p class="text-[0.75rem] mb-3" :style="{ color: collaborationStatusMeta[collab.status].color }">
+                    {{ collaborationStatusMeta[collab.status].label }}
+                  </p>
+
+                  <p v-if="collab.paidAt" class="inline-flex items-center gap-1.5 text-[0.8125rem] text-[var(--color-status-published)]">
+                    <Icon name="ph:check-circle-fill" class="size-4" /> Pagado
+                  </p>
+                  <p v-else-if="!payableStatuses.includes(collab.status)" class="text-[0.75rem] text-[var(--color-text-faint)]">
+                    Se podrá pagar cuando acepten la solicitud.
+                  </p>
+                  <BaseButton
+                    v-else variant="primary" size="sm" class="w-full" :disabled="!collab.budgetCents || paying === collab.id"
+                    :icon-spin="paying === collab.id" @click="confirmPay(collab.id)"
+                  >
+                    {{ paying === collab.id ? 'Abriendo pago…' : 'Pagar' }}
+                  </BaseButton>
+                </BaseCard>
+              </div>
+            </section>
+          </div>
+
+          <div v-show="activeTab === 'privacy'" class="md:max-w-lg">
+            <section>
+              <p class="text-[0.8125rem] font-medium text-[var(--color-text-muted)] mb-2 px-1">Privacidad del chat</p>
+              <BaseCard radius="lg" padding="none" class="divide-y divide-[var(--color-hairline)] overflow-hidden">
+                <button
+                  v-for="opt in chatPrivacyOptions" :key="opt.value" type="button"
+                  class="w-full flex items-start gap-3 px-5 py-4 text-left"
+                  @click="setChatPrivacy(opt.value)"
+                >
+                  <span
+                    class="mt-0.5 shrink-0 size-4 rounded-full border-2 flex items-center justify-center"
+                    :class="chatPrivacy === opt.value ? 'border-[var(--color-primary-500)]' : 'border-[var(--color-hairline-strong)]'"
+                  >
+                    <span v-if="chatPrivacy === opt.value" class="size-2 rounded-full bg-[var(--color-primary-500)]" />
+                  </span>
+                  <span>
+                    <p class="text-[0.9375rem] text-[var(--color-text)]">{{ opt.label }}</p>
+                    <p class="text-[0.75rem] text-[var(--color-text-faint)] mt-0.5">{{ opt.description }}</p>
+                  </span>
+                </button>
+              </BaseCard>
+            </section>
+          </div>
         </div>
-      </section>
-
-      <BaseButton variant="secondary" icon="ph:sign-out-bold" class="w-full" @click="logout">Cerrar sesión</BaseButton>
+      </div>
     </div>
   </AppShell>
 </template>

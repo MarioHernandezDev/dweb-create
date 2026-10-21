@@ -5,6 +5,7 @@ import type { Offer } from '~/composables/useOffers'
 const props = defineProps<{ offerId: string; mine: boolean }>()
 
 const { offersById, responding, ensureOffer, respondOffer } = useOffers()
+const { confirm } = useConfirm()
 const { myPackages } = usePackages()
 const { refreshMessages, refreshConversations } = useChat()
 const client = useSupabaseClient()
@@ -55,6 +56,15 @@ async function respond(accept: boolean) {
     respondError.value = e instanceof Error ? e.message : 'No se ha podido responder a la oferta.'
   }
 }
+
+async function declineWithConfirm() {
+  const ok = await confirm({
+    title: '¿Rechazar esta oferta?',
+    message: 'No podrás cambiar de opinión después — la otra persona lo verá al instante.',
+    confirmLabel: 'Rechazar', tone: 'danger'
+  })
+  if (ok) await respond(false)
+}
 </script>
 
 <template>
@@ -70,7 +80,7 @@ async function respond(accept: boolean) {
 
     <div v-if="canRespond" class="flex items-center gap-2 mt-2">
       <BaseButton variant="primary" size="sm" class="flex-1" :icon-spin="responding === offer.id" :disabled="!!responding" @click="respond(true)">Aceptar</BaseButton>
-      <BaseButton variant="secondary" size="sm" class="flex-1" :disabled="!!responding" @click="respond(false)">Rechazar</BaseButton>
+      <BaseButton variant="secondary" size="sm" class="flex-1" :disabled="!!responding" @click="declineWithConfirm">Rechazar</BaseButton>
     </div>
     <p v-if="respondError" class="text-[0.75rem] text-[var(--color-status-alert)] mt-2">{{ respondError }}</p>
   </div>
