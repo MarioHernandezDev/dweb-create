@@ -12,7 +12,7 @@ const myRole = role.value ?? (await ensureRole()) ?? 'creator'
 // Fresco en cada visita (no ensureOnce) — igual que useNotifications en
 // TopBar.vue: es una bandeja de conversaciones, tiene que notarse al día
 // al volver a entrar, no quedarse con la foto de la primera visita.
-const { conversations, refreshConversations } = useChat()
+const { conversations, typingByConversation, refreshConversations } = useChat()
 await refreshConversations()
 
 const router = useRouter()
@@ -35,9 +35,16 @@ function open(id: string) {
           <div class="min-w-0 flex-1">
             <div class="flex items-center justify-between gap-2">
               <p class="text-[0.9375rem] font-medium text-[var(--color-text)] truncate">{{ c.otherName }}</p>
-              <span v-if="c.unread" class="shrink-0 size-2 rounded-full bg-[var(--color-primary-500)]" />
+              <span
+                v-if="c.unreadCount > 1"
+                class="shrink-0 min-w-5 h-5 px-1.5 flex items-center justify-center rounded-full bg-[var(--color-primary-500)] text-[var(--color-on-primary)] text-[0.6875rem] font-semibold"
+              >
+                {{ c.unreadCount > 99 ? '99+' : c.unreadCount }}
+              </span>
+              <span v-else-if="c.unread" class="shrink-0 size-2 rounded-full bg-[var(--color-primary-500)]" />
             </div>
-            <p class="text-[0.8125rem] text-[var(--color-text-muted)] truncate mt-0.5">{{ c.lastMessagePreview ?? 'Sin mensajes todavía' }}</p>
+            <p v-if="typingByConversation[c.id]" class="text-[0.8125rem] font-medium text-[var(--color-primary-500)] animate-pulse mt-0.5">Escribiendo…</p>
+            <p v-else class="text-[0.8125rem] text-[var(--color-text-muted)] truncate mt-0.5">{{ c.lastMessagePreview ?? 'Sin mensajes todavía' }}</p>
           </div>
           <span v-if="c.lastMessageAt" class="shrink-0 text-[0.75rem] text-[var(--color-text-faint)]">{{ relativeTime(c.lastMessageAt) }}</span>
         </BaseCard>

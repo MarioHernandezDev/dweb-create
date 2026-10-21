@@ -16,10 +16,15 @@ const targetId = route.params.id as string
 useHead({ title: 'Perfil' })
 
 const { role: myRole, ensureRole } = useMyRole()
-await ensureRole()
-
 const { loadProfile } = usePublicProfile()
-const profile = await loadProfile(targetRole, targetId)
+// `useSupabaseUser().value` puede seguir vacío justo al cargar la página
+// (ver role-guard.global.ts) — se resuelve una vez de forma fiable en vez
+// de leer el ref directamente, para no mostrar botones de "propio perfil"
+// de forma incorrecta en el primer render.
+const { resolveMyProfileId } = useMyProfileId()
+
+// Las tres son independientes entre sí — en paralelo en vez de en cascada.
+const [, profile, myProfileId] = await Promise.all([ensureRole(), loadProfile(targetRole, targetId), resolveMyProfileId()])
 
 if (!profile) {
   throw createError({ statusCode: 404, statusMessage: 'Perfil no encontrado' })
@@ -28,12 +33,6 @@ if (!profile) {
 const { listPackagesOf } = usePackages()
 const packages = ref<Package[]>(await listPackagesOf(profile.profileId))
 
-// `useSupabaseUser().value` puede seguir vacío justo al cargar la página
-// (ver role-guard.global.ts) — se resuelve una vez de forma fiable en vez
-// de leer el ref directamente, para no mostrar botones de "propio perfil"
-// de forma incorrecta en el primer render.
-const { resolveMyProfileId } = useMyProfileId()
-const myProfileId = await resolveMyProfileId()
 const isOwnProfile = computed(() => profile!.profileId === myProfileId)
 
 const { openConversationWith } = useChat()

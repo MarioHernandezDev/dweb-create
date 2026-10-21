@@ -35,6 +35,22 @@ export function relativeTime(iso: string): string {
   return `hace ${Math.round(hours / 24)} d`
 }
 
+/** Separador de fecha en un hilo de chat — "Hoy"/"Ayer"/fecha completa. */
+export function dateDividerLabel(iso: string): string {
+  const d = new Date(iso)
+  const today = new Date()
+  const yesterday = new Date(today)
+  yesterday.setDate(today.getDate() - 1)
+
+  if (d.toDateString() === today.toDateString()) return 'Hoy'
+  if (d.toDateString() === yesterday.toDateString()) return 'Ayer'
+  return d.toLocaleDateString('es-ES', {
+    day: 'numeric',
+    month: 'long',
+    year: d.getFullYear() !== today.getFullYear() ? 'numeric' : undefined
+  })
+}
+
 export function dueLabel(dueInDays: number): string {
   if (dueInDays < -1) return `Hace ${Math.abs(dueInDays)} días`
   if (dueInDays === -1) return 'Ayer'

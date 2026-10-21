@@ -19,7 +19,22 @@ const { creator, ensureCreator, updateFicha, uploadCoverPhoto } = useMyCreator()
 const myProfileId = await resolveMyProfileId()
 
 const { myPackages, ensureMyPackages, deletePackage } = usePackages()
-if (myProfileId) await ensureMyPackages(myProfileId)
+const { chatPrivacy, ensureChatPrivacy, setChatPrivacy } = useChatSettings()
+
+// Cuatro consultas independientes entre sí — en paralelo en vez de en
+// cascada (lo que antes era: paquetes → privacidad → facturación →
+// ficha, cada una esperando a la anterior sin necesidad; con la latencia
+// de red real eso se notaba mucho al navegar a esta página).
+// Al volver de Stripe (Checkout o Connect) los datos ya cambiaron en el
+// servidor vía webhook — hay que refrescar de verdad, no fiarse de la
+// caché de la visita anterior a esta pantalla (si no, se queda enseñando
+// "sin plan"/"sin conectar" aunque el pago se haya guardado bien).
+await Promise.all([
+  myProfileId ? ensureMyPackages(myProfileId) : Promise.resolve([]),
+  ensureChatPrivacy(),
+  route.query.checkout || route.query.connect ? refreshBilling() : ensureLoaded(),
+  ensureCreator()
+])
 
 const packageSheetOpen = ref(false)
 const editingPackage = ref<Package | null>(null)
@@ -34,21 +49,10 @@ function openEditPackage(pkg: Package) {
   packageSheetOpen.value = true
 }
 
-const { chatPrivacy, ensureChatPrivacy, setChatPrivacy } = useChatSettings()
-await ensureChatPrivacy()
-
 const chatPrivacyOptions: { value: ChatPrivacy; label: string; description: string }[] = [
   { value: 'everyone', label: 'Cualquiera', description: 'Cualquier perfil te puede escribir directamente.' },
   { value: 'accepted_offers_only', label: 'Solo tras oferta aceptada', description: 'Solo podrán escribirte en texto libre quienes ya tengan una oferta aceptada contigo. Aun así, cualquiera te puede mandar una oferta.' }
 ]
-
-// Al volver de Stripe (Checkout o Connect) los datos ya cambiaron en el
-// servidor vía webhook — hay que refrescar de verdad, no fiarse de la
-// caché de la visita anterior a esta pantalla (si no, se queda enseñando
-// "sin plan"/"sin conectar" aunque el pago se haya guardado bien).
-if (route.query.checkout || route.query.connect) await refreshBilling()
-else await ensureLoaded()
-await ensureCreator()
 
 const planLabel = computed(() => {
   if (!subscription.value) return 'Plan gratuito'

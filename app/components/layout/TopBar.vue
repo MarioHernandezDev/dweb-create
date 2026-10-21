@@ -14,9 +14,10 @@ refreshNotifications()
 // Mismo criterio para el chat, y es también el único punto de montaje fijo
 // en toda la app desde el que arrancar la suscripción Realtime una sola vez
 // por sesión de pestaña (ver startRealtime() en useChat.ts).
-const { unreadCount: chatUnreadCount, refreshUnreadCount: refreshChatUnread, startRealtime } = useChat()
+const { unreadCount: chatUnreadCount, refreshUnreadCount: refreshChatUnread, startRealtime, startTypingListener } = useChat()
 refreshChatUnread()
 startRealtime()
+startTypingListener()
 </script>
 
 <template>

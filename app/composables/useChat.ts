@@ -40,6 +40,9 @@ export interface ConversationSummary {
   lastMessagePreview: string | null
   lastMessageAt: string | null
   unread: boolean
+  unreadCount: number
+  /** Marca de tiempo cruda de mi último "leído" en esta conversación — la usa chat/[id].vue para fijar el divisor de "X mensajes nuevos" antes de que markRead() la pise. */
+  myLastReadAt: string | null
 }
 
 function mapMessageRow(row: MessageRow): ChatMessage {
@@ -56,6 +59,22 @@ function mapMessageRow(row: MessageRow): ChatMessage {
 
 const MESSAGE_SELECT = 'id, conversation_id, sender_id, kind, body, offer_id, created_at'
 
+// Indicador de "está escribiendo": Supabase Realtime Broadcast, no
+// Postgres Changes — es un aviso efímero, no tiene sentido guardarlo en una
+// tabla. Un canal por DESTINATARIO (`chat-typing-<profileId>`), no por
+// conversación: así basta con una sola suscripción por sesión (igual que
+// startRealtime()) para enterarse de "me están escribiendo" sin importar en
+// qué conversación sea ni si estás dentro de /chat/[id] o mirando la lista
+// en /chat. Vive fuera de useChat() (no en useState) porque son manejadores
+// de temporizador/canal, no estado para pintar — no tiene sentido que
+// viajen en el payload SSR.
+const typingTimers = new Map<string, ReturnType<typeof setTimeout>>()
+// Canal de envío por destinatario, cacheado para no reabrir/resuscribir en
+// cada pulsación — tipo del canal de Realtime de supabase-js, no vale la
+// pena importarlo solo para esto.
+const typingSendChannels = new Map<string, any>()
+const TYPING_TIMEOUT_MS = 3000
+
 /**
  * Chat 1 a 1 entre perfiles — ver migración 20261021160000_chat_packages_offers.sql.
  * Toda escritura sensible (abrir conversación, enviar texto, marcar leído)
@@ -65,7 +84,6 @@ const MESSAGE_SELECT = 'id, conversation_id, sender_id, kind, body, offer_id, cr
  */
 export function useChat() {
   const client = useSupabaseClient()
-  const user = useSupabaseUser()
   const { resolveMyProfileId } = useMyProfileId()
 
   const conversations = useState<ConversationSummary[]>('chat-conversations', () => [])
@@ -74,6 +92,8 @@ export function useChat() {
   const unreadCount = useState<number>('chat-unread-count', () => 0)
   const realtimeStarted = useState<boolean>('chat-realtime-started', () => false)
   const sending = useState<boolean>('chat-sending', () => false)
+  const typingByConversation = useState<Record<string, boolean>>('chat-typing-by-conversation', () => ({}))
+  const typingListenerStarted = useState<boolean>('chat-typing-listener-started', () => false)
 
   async function refreshUnreadCount() {
     const { data, error } = await client.rpc('my_chat_unread_count' as never)
@@ -137,15 +157,21 @@ export function useChat() {
     const otherIds = rows.map((c) => (c.participant_one_id === me ? c.participant_two_id : c.participant_one_id))
     const names = await resolveNames([...new Set(otherIds)])
 
-    let previews: Record<string, ChatMessage> = {}
+    const previews: Record<string, ChatMessage> = {}
+    // Se agrupa por conversación (no solo el último mensaje) para poder
+    // contar cuántos mensajes hay sin leer, no solo un booleano.
+    const messagesByConv = new Map<string, MessageRow[]>()
     if (rows.length) {
-      const { data: lastMessages } = await client
+      const { data: allMessages } = await client
         .from('messages')
         .select(MESSAGE_SELECT)
         .in('conversation_id', rows.map((c) => c.id))
         .order('created_at', { ascending: false })
-      for (const row of (lastMessages as MessageRow[]) ?? []) {
+      for (const row of (allMessages as MessageRow[]) ?? []) {
         if (!previews[row.conversation_id]) previews[row.conversation_id] = mapMessageRow(row)
+        const arr = messagesByConv.get(row.conversation_id)
+        if (arr) arr.push(row)
+        else messagesByConv.set(row.conversation_id, [row])
       }
     }
 
@@ -153,7 +179,9 @@ export function useChat() {
       const otherId = c.participant_one_id === me ? c.participant_two_id : c.participant_one_id
       const myLastRead = c.participant_one_id === me ? c.participant_one_last_read_at : c.participant_two_last_read_at
       const last = previews[c.id]
-      const unread = !!last && last.senderId !== me && (!myLastRead || last.createdAt > myLastRead)
+      const unreadCount = (messagesByConv.get(c.id) ?? []).filter(
+        (m) => m.sender_id !== me && (!myLastRead || m.created_at > myLastRead)
+      ).length
       return {
         id: c.id,
         otherProfileId: otherId,
@@ -162,7 +190,9 @@ export function useChat() {
         otherName: names[otherId]?.name ?? 'Usuario',
         lastMessagePreview: last ? (last.kind === 'offer' ? 'Oferta enviada' : last.body) : null,
         lastMessageAt: c.last_message_at,
-        unread
+        unread: unreadCount > 0,
+        unreadCount,
+        myLastReadAt: myLastRead
       }
     })
     conversationsLoaded.value = true
@@ -193,6 +223,8 @@ export function useChat() {
 
     const otherId = data.participant_one_id === me ? data.participant_two_id : data.participant_one_id
     const names = await resolveNames([otherId])
+    const myLastRead = data.participant_one_id === me ? data.participant_one_last_read_at : data.participant_two_last_read_at
+    const existing = conversations.value.find((c) => c.id === conversationId)
 
     const summary: ConversationSummary = {
       id: data.id,
@@ -200,9 +232,11 @@ export function useChat() {
       otherFichaId: names[otherId]?.fichaId ?? null,
       otherRole: names[otherId]?.role ?? 'creator',
       otherName: names[otherId]?.name ?? 'Usuario',
-      lastMessagePreview: conversations.value.find((c) => c.id === conversationId)?.lastMessagePreview ?? null,
+      lastMessagePreview: existing?.lastMessagePreview ?? null,
       lastMessageAt: data.last_message_at,
-      unread: false
+      unread: existing?.unread ?? false,
+      unreadCount: existing?.unreadCount ?? 0,
+      myLastReadAt: myLastRead
     }
 
     conversations.value = [summary, ...conversations.value.filter((c) => c.id !== conversationId)]
@@ -251,6 +285,10 @@ export function useChat() {
       if (error) throw error
       const mapped = mapMessageRow(data as MessageRow)
       pushMessage(mapped)
+      // Al instante, sin esperar al eco por Realtime — ese viaje de ida y
+      // vuelta es justo lo que se veía desfasado en /chat (la fila seguía
+      // mostrando el penúltimo mensaje un buen rato tras enviar el último).
+      updateConversationPreview(conversationId, mapped, true)
       return mapped
     } finally {
       sending.value = false
@@ -264,22 +302,57 @@ export function useChat() {
       return
     }
     const conv = conversations.value.find((c) => c.id === conversationId)
-    if (conv) conv.unread = false
+    if (conv) {
+      conv.unread = false
+      conv.unreadCount = 0
+    }
     await refreshUnreadCount()
   }
 
+  /**
+   * Actualiza la fila de /chat de una conversación al vuelo con el mensaje
+   * recién llegado — sin volver a pedir el historial completo de mensajes
+   * de TODAS las conversaciones (lo que hacía refreshConversations() en
+   * cada mensaje, y con listas largas tardaba un buen rato en notarse:
+   * el usuario tenía que recargar la página para ver el recuento al día).
+   * Si la conversación es nueva para esta sesión (aún no estaba en la
+   * lista, p. ej. una oferta que acaba de abrir chat), ahí sí hace falta
+   * ir a buscarla entera.
+   */
+  function updateConversationPreview(conversationId: string, message: ChatMessage, isMine: boolean) {
+    const idx = conversations.value.findIndex((c) => c.id === conversationId)
+    if (idx === -1) return false
+
+    const current = conversations.value[idx]
+    const updated: ConversationSummary = {
+      ...current,
+      lastMessagePreview: message.kind === 'offer' ? 'Oferta enviada' : message.body,
+      lastMessageAt: message.createdAt,
+      unread: isMine ? current.unread : true,
+      unreadCount: isMine ? current.unreadCount : current.unreadCount + 1
+    }
+    conversations.value = [updated, ...conversations.value.filter((_, i) => i !== idx)]
+    return true
+  }
+
+  function applyIncomingMessage(row: MessageRow, me: string | null) {
+    const mapped = mapMessageRow(row)
+    if (!updateConversationPreview(row.conversation_id, mapped, row.sender_id === me)) refreshConversations()
+  }
+
   /** Suscripción Realtime global — una sola vez por sesión de pestaña (ver TopBar.vue). */
-  function startRealtime() {
+  async function startRealtime() {
     if (realtimeStarted.value) return
     realtimeStarted.value = true
+    const me = await resolveMyProfileId()
 
     client
       .channel('chat-messages-global')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
         const row = payload.new as MessageRow
         pushMessage(mapMessageRow(row))
-        refreshConversations()
-        if (row.sender_id !== user.value?.id) refreshUnreadCount()
+        applyIncomingMessage(row, me)
+        if (row.sender_id !== me) refreshUnreadCount()
       })
       .subscribe()
 
@@ -289,6 +362,53 @@ export function useChat() {
         useOffers().setOffer(useOffers().mapOfferRow(payload.new as never))
       })
       .subscribe()
+  }
+
+  /**
+   * Escucha "me están escribiendo" dirigida a MÍ — una sola vez por sesión
+   * (ver TopBar.vue, mismo sitio que startRealtime()). Al recibir un aviso
+   * se marca esa conversación como "escribiendo" durante unos segundos; si
+   * no llega ninguno nuevo en ese tiempo, se da por hecho que ha parado
+   * (no hay un evento explícito de "he dejado de escribir").
+   */
+  async function startTypingListener() {
+    if (typingListenerStarted.value) return
+    const me = await resolveMyProfileId()
+    if (!me) return
+    typingListenerStarted.value = true
+
+    client
+      .channel(`chat-typing-${me}`)
+      .on('broadcast', { event: 'typing' }, (payload) => {
+        const conversationId = (payload.payload as { conversationId: string }).conversationId
+        if (!conversationId) return
+
+        typingByConversation.value = { ...typingByConversation.value, [conversationId]: true }
+
+        const existing = typingTimers.get(conversationId)
+        if (existing) clearTimeout(existing)
+        typingTimers.set(
+          conversationId,
+          setTimeout(() => {
+            typingByConversation.value = { ...typingByConversation.value, [conversationId]: false }
+          }, TYPING_TIMEOUT_MS)
+        )
+      })
+      .subscribe()
+  }
+
+  /** Avisa al OTRO participante de que estás escribiendo — se llama con throttling desde el input de chat/[id].vue, nunca en cada pulsación. */
+  async function sendTypingPing(conversationId: string, otherProfileId: string) {
+    const me = await resolveMyProfileId()
+    if (!me) return
+
+    let channel = typingSendChannels.get(otherProfileId)
+    if (!channel) {
+      channel = client.channel(`chat-typing-${otherProfileId}`)
+      channel.subscribe()
+      typingSendChannels.set(otherProfileId, channel)
+    }
+    channel.send({ type: 'broadcast', event: 'typing', payload: { conversationId, fromProfileId: me } })
   }
 
   return {
@@ -306,6 +426,9 @@ export function useChat() {
     openConversationWith,
     sendMessage,
     markRead,
-    startRealtime
+    startRealtime,
+    typingByConversation,
+    startTypingListener,
+    sendTypingPing
   }
 }

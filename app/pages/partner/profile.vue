@@ -16,10 +16,6 @@ const route = useRoute()
 const { partner, ensurePartner, updateFicha, uploadCoverPhoto } = useMyPartner()
 const { collaborations, paying, ensureLoaded, refresh: refreshCollaborations, payForCollaboration } = useMyCollaborations()
 
-if (route.query.payment) await refreshCollaborations()
-else await ensureLoaded()
-await ensurePartner()
-
 const user = useSupabaseUser()
 const { logout } = useLogout()
 const { resolveMyProfileId } = useMyProfileId()
@@ -29,7 +25,17 @@ const { resolveMyProfileId } = useMyProfileId()
 const myProfileId = await resolveMyProfileId()
 
 const { myPackages, ensureMyPackages, deletePackage } = usePackages()
-if (myProfileId) await ensureMyPackages(myProfileId)
+const { chatPrivacy, ensureChatPrivacy, setChatPrivacy } = useChatSettings()
+
+// Cuatro consultas independientes entre sí — en paralelo en vez de en
+// cascada (antes cada una esperaba a la anterior sin necesidad, y con la
+// latencia de red real eso se notaba mucho al navegar a esta página).
+await Promise.all([
+  route.query.payment ? refreshCollaborations() : ensureLoaded(),
+  ensurePartner(),
+  myProfileId ? ensureMyPackages(myProfileId) : Promise.resolve([]),
+  ensureChatPrivacy()
+])
 
 const packageSheetOpen = ref(false)
 const editingPackage = ref<Package | null>(null)
@@ -43,9 +49,6 @@ function openEditPackage(pkg: Package) {
   editingPackage.value = pkg
   packageSheetOpen.value = true
 }
-
-const { chatPrivacy, ensureChatPrivacy, setChatPrivacy } = useChatSettings()
-await ensureChatPrivacy()
 
 const chatPrivacyOptions: { value: ChatPrivacy; label: string; description: string }[] = [
   { value: 'everyone', label: 'Cualquiera', description: 'Cualquier perfil te puede escribir directamente.' },

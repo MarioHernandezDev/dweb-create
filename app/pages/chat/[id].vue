@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { initialsFromName, hueFromString } from '~/utils/avatar'
+import { dateDividerLabel } from '~/utils/status'
+import type { ChatMessage } from '~/composables/useChat'
 
 // Fuera de /creator y /partner a propósito, igual que inbox.vue y chat/index.vue.
 const route = useRoute()
@@ -18,39 +20,147 @@ const myRole = role.value ?? (await ensureRole()) ?? 'creator'
 const { resolveMyProfileId } = useMyProfileId()
 const myProfileId = await resolveMyProfileId()
 
-const { conversations, messagesByConversation, loadConversationSummary, refreshMessages, sendMessage, markRead } = useChat()
+const { conversations, messagesByConversation, typingByConversation, loadConversationSummary, refreshMessages, sendMessage, markRead, sendTypingPing } = useChat()
 
 // Siempre en fresco (no ensureOnce): puede llegarse aquí directo desde un
 // enlace (notificación, oferta recién aceptada) sin haber pasado antes por
 // /chat en esta sesión de pestaña — ensureConversations() por sí solo no
 // garantizaría que ESTA conversación concreta ya estuviera cacheada.
-const summary = await loadConversationSummary(conversationId)
-await refreshMessages(conversationId)
+// Las dos consultas son independientes entre sí — en paralelo en vez de en
+// cascada, que es parte de lo que hacía sentir la página lenta al abrir un chat.
+const [summary] = await Promise.all([loadConversationSummary(conversationId), refreshMessages(conversationId)])
 
 const conversation = computed(() => conversations.value.find((c) => c.id === conversationId))
 
-await markRead(conversationId)
+// Se captura ANTES de marcar como leído (markRead pisaría esta marca). Con
+// ella se fija, una sola vez, a partir de qué mensaje empieza lo no leído
+// de esta visita — igual que el divisor de WhatsApp, no se mueve aunque
+// luego sigas leyendo o lleguen mensajes nuevos en tiempo real.
+const unreadDivider = (() => {
+  const lastReadBeforeVisit = summary?.myLastReadAt ?? null
+  if (!lastReadBeforeVisit) return null
+  const list = messagesByConversation.value[conversationId] ?? []
+  const unread = list.filter((m) => m.senderId && m.senderId !== myProfileId && m.createdAt > lastReadBeforeVisit)
+  return unread.length ? { beforeMessageId: unread[0].id, count: unread.length } : null
+})()
 
-// Paquetes del OTRO perfil — el botón "+" solo deja ofertar sobre paquetes
-// reales que ya existan (nunca se inventa una oferta, ver create_offer en
-// la migración). Si no tiene ninguno publicado, el botón queda deshabilitado.
+// Ninguna de las dos bloquea el primer pintado del hilo: marcar como leído
+// y traer los paquetes del otro perfil (solo hacen falta para el botón "+")
+// no tienen por qué retrasar ver los mensajes.
+markRead(conversationId)
+
 const { listPackagesOf } = usePackages()
-const otherPackages = ref(summary ? await listPackagesOf(summary.otherProfileId) : [])
+const otherPackages = ref<Awaited<ReturnType<typeof listPackagesOf>>>([])
+if (summary) listPackagesOf(summary.otherProfileId).then((pkgs) => { otherPackages.value = pkgs })
 const offerSheetOpen = ref(false)
 
+// Agrupa mensajes consecutivos del mismo emisor (menos de 5 min entre sí) y
+// mete un separador de fecha entre días — igual que cualquier chat decente:
+// no hace falta repetir la hora en cada burbuja de una racha, solo en la
+// última, y un "Ayer"/"Hoy" en vez de ir contando "hace X horas" a ojo.
+const GROUP_WINDOW_MS = 5 * 60_000
+
+type ChatListItem =
+  | { type: 'divider'; key: string; label: string }
+  | { type: 'unread'; key: string; count: number }
+  | { type: 'message'; key: string; message: ChatMessage; groupStart: boolean; showTime: boolean }
+
+function sameGroup(a: ChatMessage, b: ChatMessage) {
+  return (
+    a.senderId === b.senderId &&
+    a.kind === 'text' &&
+    b.kind === 'text' &&
+    new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime() < GROUP_WINDOW_MS
+  )
+}
+
+const chatItems = computed<ChatListItem[]>(() => {
+  const list = messagesByConversation.value[conversationId] ?? []
+  const items: ChatListItem[] = []
+  let prevDateKey: string | null = null
+
+  list.forEach((m, i) => {
+    const dateKey = new Date(m.createdAt).toDateString()
+    if (dateKey !== prevDateKey) {
+      items.push({ type: 'divider', key: `divider-${m.id}`, label: dateDividerLabel(m.createdAt) })
+      prevDateKey = dateKey
+    }
+    if (unreadDivider && m.id === unreadDivider.beforeMessageId) {
+      items.push({ type: 'unread', key: 'unread-divider', count: unreadDivider.count })
+    }
+
+    const prevMessage = list[i - 1]
+    const nextMessage = list[i + 1]
+    const groupStart = dateKey !== (prevMessage && new Date(prevMessage.createdAt).toDateString()) || !prevMessage || !sameGroup(prevMessage, m)
+    const showTime = !nextMessage || !sameGroup(m, nextMessage)
+
+    items.push({ type: 'message', key: m.id, message: m, groupStart, showTime })
+  })
+
+  return items
+})
+
 const scrollEl = ref<HTMLElement | null>(null)
+// Si ya estabas cerca del final, los mensajes nuevos te siguen empujando
+// hacia abajo como siempre; si habías subido a leer el historial, NO se te
+// tira al final de golpe — aparece un aviso flotante para ir tú cuando quieras.
+const nearBottom = ref(true)
+const newMessagesBanner = ref(false)
+
+function isScrollNearBottom() {
+  const el = scrollEl.value
+  if (!el) return true
+  return el.scrollHeight - el.scrollTop - el.clientHeight < 150
+}
+
+function onScroll() {
+  nearBottom.value = isScrollNearBottom()
+  if (nearBottom.value) newMessagesBanner.value = false
+}
+
 function scrollToBottom() {
   requestAnimationFrame(() => {
     if (scrollEl.value) scrollEl.value.scrollTop = scrollEl.value.scrollHeight
   })
 }
 
-watch(() => messagesByConversation.value[conversationId]?.length, () => scrollToBottom())
+function jumpToBottom() {
+  scrollToBottom()
+  newMessagesBanner.value = false
+}
+
+const isOtherTyping = computed(() => !!typingByConversation.value[conversationId])
+
+watch(() => messagesByConversation.value[conversationId]?.length, () => {
+  const list = messagesByConversation.value[conversationId]
+  const last = list?.[list.length - 1]
+  if (last?.senderId === myProfileId || nearBottom.value) {
+    scrollToBottom()
+    newMessagesBanner.value = false
+  } else {
+    newMessagesBanner.value = true
+  }
+})
+watch(isOtherTyping, (typing) => {
+  if (typing && nearBottom.value) scrollToBottom()
+})
 onMounted(() => scrollToBottom())
 
 const draft = ref('')
 const sendError = ref('')
 const { sending } = useChat()
+
+// Aviso de "estoy escribiendo" al otro participante, con cooldown — nunca
+// en cada pulsación, saturaría el canal para nada (el receptor solo
+// necesita un aviso cada pocos segundos mientras sigues escribiendo).
+let lastTypingPingAt = 0
+watch(draft, (value) => {
+  if (!value.trim() || !conversation.value) return
+  const now = Date.now()
+  if (now - lastTypingPingAt < 1500) return
+  lastTypingPingAt = now
+  sendTypingPing(conversationId, conversation.value.otherProfileId)
+})
 
 const offerHint = ref('')
 function clickOfferButton() {
@@ -90,15 +200,44 @@ async function send() {
         <span v-else class="text-[0.9375rem] font-medium text-[var(--color-text)]">{{ conversation.otherName }}</span>
       </div>
 
-      <div ref="scrollEl" class="flex-1 overflow-y-auto nx-scroll flex flex-col gap-2.5 py-2">
-        <EmptyState
-          v-if="!messagesByConversation[conversationId]?.length"
-          icon="ph:chat-circle-dots" title="Empieza la conversación"
-          description="Escribe un mensaje o, con el botón '+', manda una oferta sobre uno de sus paquetes."
-        />
-        <MessageBubble
-          v-for="m in messagesByConversation[conversationId]" :key="m.id" :message="m" :mine="m.senderId === myProfileId"
-        />
+      <div class="relative flex-1 min-h-0">
+        <div ref="scrollEl" class="h-full overflow-y-auto nx-scroll flex flex-col py-2" @scroll="onScroll">
+          <EmptyState
+            v-if="!messagesByConversation[conversationId]?.length"
+            icon="ph:chat-circle-dots" title="Empieza la conversación"
+            description="Escribe un mensaje o, con el botón '+', manda una oferta sobre uno de sus paquetes."
+          />
+          <template v-for="item in chatItems" :key="item.key">
+            <div v-if="item.type === 'divider'" class="flex justify-center my-3">
+              <span class="text-[0.6875rem] font-medium text-[var(--color-text-faint)] bg-[var(--color-ink-overlay)] px-3 py-1 rounded-full">{{ item.label }}</span>
+            </div>
+            <div v-else-if="item.type === 'unread'" class="flex items-center gap-2 my-3">
+              <span class="h-px flex-1 bg-[var(--color-primary-500)]/25" />
+              <span class="text-[0.6875rem] font-medium text-[var(--color-primary-500)] px-2.5 py-1 rounded-full bg-[var(--color-primary-500)]/10">
+                {{ item.count === 1 ? '1 mensaje nuevo' : `${item.count} mensajes nuevos` }}
+              </span>
+              <span class="h-px flex-1 bg-[var(--color-primary-500)]/25" />
+            </div>
+            <MessageBubble
+              v-else :message="item.message" :mine="item.message.senderId === myProfileId"
+              :group-start="item.groupStart" :show-time="item.showTime"
+            />
+          </template>
+          <TypingDots v-if="isOtherTyping" />
+        </div>
+
+        <Transition
+          enter-active-class="transition-[opacity,transform] duration-200 ease-[var(--ease-spring)]" enter-from-class="opacity-0 translate-y-2"
+          leave-active-class="transition-[opacity,transform] duration-150 ease-[var(--ease-spring)]" leave-to-class="opacity-0 translate-y-2"
+        >
+          <button
+            v-if="newMessagesBanner" type="button"
+            class="absolute z-10 bottom-3 left-1/2 -translate-x-1/2 inline-flex items-center gap-1.5 h-9 px-4 rounded-full bg-[var(--color-primary-500)] text-[var(--color-on-primary)] text-[0.8125rem] font-medium shadow-[var(--shadow-float)]"
+            @click="jumpToBottom"
+          >
+            <Icon name="ph:arrow-down-bold" class="size-3.5" /> Nuevos mensajes
+          </button>
+        </Transition>
       </div>
 
       <div class="shrink-0 pt-3">
