@@ -2,8 +2,8 @@
 import type { SocialAccount } from '~/types'
 import { platformMeta, formatCompactNumber } from '~/utils/mock-data'
 
-defineProps<{ account: SocialAccount; busy?: boolean }>()
-defineEmits<{ connect: []; disconnect: [] }>()
+defineProps<{ account: SocialAccount; busy?: boolean; syncing?: boolean }>()
+defineEmits<{ connect: []; disconnect: []; sync: [] }>()
 </script>
 
 <template>
@@ -31,6 +31,11 @@ defineEmits<{ connect: []; disconnect: [] }>()
       +{{ account.deltaPct }}%
     </span>
 
+    <BaseButton
+      v-if="account.connected && account.platform === 'instagram'" variant="ghost" size="sm" icon="ph:arrows-clockwise-bold" icon-only
+      :icon-spin="syncing" :disabled="busy || syncing"
+      aria-label="Actualizar seguidores" @click="$emit('sync')"
+    />
     <BaseButton
       v-if="account.connected" variant="ghost" size="sm" icon="ph:x-bold" icon-only :disabled="busy"
       aria-label="Desconectar" @click="$emit('disconnect')"

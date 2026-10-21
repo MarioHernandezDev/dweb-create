@@ -9,6 +9,7 @@ export interface MyCollaboration {
   budgetCents: number | null
   paidAt: string | null
   createdAt: string
+  initiatedBy: 'creator' | 'partner'
 }
 
 interface CollaborationRow {
@@ -19,6 +20,7 @@ interface CollaborationRow {
   budget_cents: number | null
   paid_at: string | null
   created_at: string
+  initiated_by: 'creator' | 'partner'
   creators: { display_name: string } | null
 }
 
@@ -42,7 +44,7 @@ export function useMyCollaborations() {
 
     const { data, error } = await client
       .from('collaborations')
-      .select('id, status, creator_id, brief, budget_cents, paid_at, created_at, creators(display_name)')
+      .select('id, status, creator_id, brief, budget_cents, paid_at, created_at, initiated_by, creators(display_name)')
       .eq('partner_id', me.id)
       .order('created_at', { ascending: false })
     if (error) {
@@ -58,7 +60,8 @@ export function useMyCollaborations() {
       brief: r.brief,
       budgetCents: r.budget_cents,
       paidAt: r.paid_at,
-      createdAt: r.created_at
+      createdAt: r.created_at,
+      initiatedBy: r.initiated_by
     }))
     loaded.value = true
   }

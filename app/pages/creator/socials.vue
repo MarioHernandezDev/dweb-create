@@ -6,7 +6,7 @@ useHead({ title: 'Redes' })
 
 const banner = localPhotos.socials
 
-const { accounts, ensureLoaded, connect, disconnect } = useMySocialAccounts()
+const { accounts, ensureLoaded, connect, disconnect, syncInstagram } = useMySocialAccounts()
 await ensureLoaded()
 
 const route = useRoute()
@@ -20,6 +20,8 @@ const connectResult = route.query.instagram === 'connected'
     : null
 
 const busyPlatform = ref<SocialAccount['platform'] | null>(null)
+const syncingPlatform = ref<SocialAccount['platform'] | null>(null)
+const syncError = ref('')
 
 async function toggle(acc: SocialAccount) {
   busyPlatform.value = acc.platform
@@ -28,6 +30,19 @@ async function toggle(acc: SocialAccount) {
     else await connect(acc.platform)
   } finally {
     busyPlatform.value = null
+  }
+}
+
+async function sync(acc: SocialAccount) {
+  syncingPlatform.value = acc.platform
+  syncError.value = ''
+  try {
+    await syncInstagram()
+  } catch (err) {
+    console.error('[creator/socials] fallo al sincronizar Instagram:', err)
+    syncError.value = 'No se han podido actualizar los seguidores. Si la conexión es antigua, reconecta la cuenta.'
+  } finally {
+    syncingPlatform.value = null
   }
 }
 
@@ -55,10 +70,13 @@ const connectedCount = computed(() => accounts.value.filter((a) => a.connected).
       {{ connectResult.reason }}
     </p>
 
+    <p v-if="syncError" class="mb-4 text-[0.8125rem] text-[var(--color-status-alert)] md:max-w-xl">{{ syncError }}</p>
+
     <div class="flex flex-col gap-2.5 md:max-w-xl">
       <SocialAccountRow
         v-for="acc in accounts" :key="acc.platform" :account="acc" :busy="busyPlatform === acc.platform"
-        @connect="toggle(acc)" @disconnect="toggle(acc)"
+        :syncing="syncingPlatform === acc.platform"
+        @connect="toggle(acc)" @disconnect="toggle(acc)" @sync="sync(acc)"
       />
     </div>
   </AppShell>

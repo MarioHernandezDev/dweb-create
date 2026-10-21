@@ -13,10 +13,11 @@ import { serverSupabaseServiceRole } from '#supabase/server'
  * El token final se cifra (`encryptToken`) antes de guardarlo — nunca en
  * texto plano, ni siquiera con la service_role key de por medio.
  *
- * Deliberadamente fuera de esta primera versión: `followers_count` se queda
- * en su valor por defecto (0) — el scope `instagram_business_basic` no trae
- * el número de seguidores, haría falta `instagram_business_manage_insights`
- * (pide permisos de negocio adicionales, no solo identificar la cuenta).
+ * Con el scope `instagram_business_manage_insights` ya pedido (ver
+ * start.get.ts), `followers_count` viene en el mismo `/me` que el perfil —
+ * no hace falta una llamada aparte para esto. Métricas más allá de
+ * seguidores (alcance, interacciones...) sí viven en su propia ruta, ver
+ * server/api/social/instagram-sync.post.ts.
  */
 
 interface ShortLivedTokenResponse {
@@ -34,6 +35,7 @@ interface InstagramProfile {
   id: string
   username: string
   account_type?: string
+  followers_count?: number
 }
 
 export default defineEventHandler(async (event) => {
@@ -79,8 +81,13 @@ export default defineEventHandler(async (event) => {
       }
     })
 
+    // `followers_count` solo lo da de verdad el campo si el token tiene
+    // `instagram_business_manage_insights` — si el usuario autorizó sin ese
+    // permiso (versión vieja de la pantalla de consentimiento ya aceptada
+    // antes de añadirlo), Instagram simplemente omite el campo en vez de
+    // dar error; se queda en `undefined` y el upsert de abajo no lo pisa.
     const profile = await $fetch<InstagramProfile>('https://graph.instagram.com/v21.0/me', {
-      params: { fields: 'id,username,account_type', access_token: longLived.access_token }
+      params: { fields: 'id,username,account_type,followers_count', access_token: longLived.access_token }
     })
 
     const encrypted = encryptToken(longLived.access_token, config.socialTokenEncryptionKey)
@@ -93,6 +100,7 @@ export default defineEventHandler(async (event) => {
         creator_id: creatorId,
         platform: 'instagram',
         handle: profile.username,
+        ...(profile.followers_count !== undefined ? { followers_count: profile.followers_count } : {}),
         access_token_encrypted: encrypted,
         // Instagram no da un refresh_token aparte: el propio token de larga
         // duración se "refresca" contra sí mismo (grant_type=ig_refresh_token).

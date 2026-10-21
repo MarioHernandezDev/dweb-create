@@ -30,13 +30,13 @@ function openDetail(req: CollabRequest) {
 </script>
 
 <template>
-  <AppShell role="creator" title="Solicitudes" subtitle="Colaboraciones que te han propuesto partners">
+  <AppShell role="creator" title="Solicitudes" subtitle="Tus colaboraciones con partners">
     <SegmentedTabs v-model="tab" :options="tabs" class="mb-5" />
 
     <EmptyState
       v-if="!visible.length && tab === 'pending'"
       icon="ph:handshake" title="Sin solicitudes pendientes"
-      description="Cuando un partner te contacte desde 'Descubrir', aparecerá aquí."
+      description="Cuando contactes a un partner (o te contacten a ti) desde 'Descubrir', aparecerá aquí."
     />
     <EmptyState
       v-else-if="!visible.length"
@@ -106,7 +106,7 @@ function openDetail(req: CollabRequest) {
 
         <NegotiationPanel
           :collaboration-id="detailReq.id" :initial-budget-cents="detailReq.budgetCents" :status="detailReq.status"
-          my-role="creator"
+          my-role="creator" :initiated-by="detailReq.initiatedBy"
           @accept="(amount) => { accept(detailReq!.id, amount); detailOpen = false }"
           @decline="() => { decline(detailReq!.id); detailOpen = false }"
         />

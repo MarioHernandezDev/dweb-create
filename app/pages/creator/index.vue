@@ -27,8 +27,7 @@ const goalPct = computed(() => (posts.value.length ? Math.min(100, Math.round((p
 const quickActions = [
   { label: 'Publicar', icon: 'ph:pencil-simple-fill', action: () => { composerOpen.value = true } },
   { label: 'Tablero', icon: 'ph:kanban-fill', to: '/creator/timeline' },
-  { label: 'Redes', icon: 'ph:share-network-fill', to: '/creator/socials' },
-  { label: 'Tendencias', icon: 'ph:flame-fill', to: '/creator/trends' }
+  { label: 'Redes', icon: 'ph:share-network-fill', to: '/creator/socials' }
 ]
 </script>
 

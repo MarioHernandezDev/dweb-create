@@ -71,6 +71,13 @@ El DDL completo y probado está en [`supabase/migrations/`](../supabase/migratio
 | `subscriptions` | El plan de pago de un creador (`creator_id` obligatorio). |
 | `credit_ledger` | Consumo de créditos de ML, por creador. |
 | `notifications` | Bandeja de entrada del usuario (icono junto al perfil) — login, alta de cuenta, solicitudes de colaboración. Solo la escriben triggers (`security definer`), nunca el cliente. |
+| `discovery_searches` | Cada búsqueda hecha en "Descubrir" (filtros normales o IA) — materia prima de la vista de analíticas del admin ("qué pide la gente"). Sin ninguna policy de insert/select para el cliente: solo la escribe el servidor con `service_role`, igual que `metrics`/`ml_predictions`. |
+
+### 2.2.1 "Descubrir" bidireccional (migración `20261021150000_discovery_bidireccional.sql`)
+
+Tanto `creators` como `partners` ganaron los mismos campos de ficha para que el matching tenga sentido en los dos sentidos: `bio`, `categories` (`text[]`, taxonomía fija en `app/utils/categories.ts`), un rango económico (`min_rate_cents`/`max_rate_cents` en creators, `min_budget_cents`/`max_budget_cents` en partners) y `looking_for` (texto libre). `partners` pasó a ser directorio público de solo lectura, igual que ya era `creators` — necesario para que un creador pueda listar partners desde `/creator/discover`.
+
+`collaborations` ganó `initiated_by` (`'creator'|'partner'`): antes solo el partner podía iniciar (`collaborations_insert_by_partner`); ahora un creador también puede proponer una colaboración a un partner desde `/creator/discover`, y la policy de insert y el aviso de notificación (`notify_collaboration_created`) se generalizaron para avisar a quien no inició, sea quien sea.
 
 ## 2.3 Funciones auxiliares de seguridad
 
@@ -86,7 +93,7 @@ Definidas en [`supabase/migrations/20261019120100_rls_policies.sql`](../supabase
 - **`creators` es un directorio público** (de solo lectura, solo para usuarios logueados): cualquiera puede *ver* el nombre y el nicho de un creador para poder contactarlo desde "Descubrir" — pero solo el propio creador puede *editar* su ficha.
 - **`posts` es la tabla más delicada.** Un partner **nunca** ve todo el contenido de un creador: solo los posts cuyo `collaboration_id` apunta a una colaboración suya. Esto se comprobó de verdad (no en teoría) consultando como cada rol vía la API REST de Supabase — ver el checklist de verificación en [`6-SUPABASE-SETUP.md`](./6-SUPABASE-SETUP.md#5-probar-que-la-seguridad-funciona-opcional-pero-recomendado).
 - **Un partner no tiene `UPDATE` directo sobre `posts`.** Si lo tuviera, podría cambiar el título, la fecha, cualquier columna. En vez de eso, aprobar o pedir cambios pasa por dos funciones estrechas (`approve_post`, `request_post_changes`, ver 2.5) que solo mueven el `status`, y solo si el post de verdad pertenece a una colaboración suya y está esperando revisión.
-- **`metrics`, `ml_predictions`, `subscriptions` y `notifications` no tienen política de `insert`/`update` para usuarios normales.** Sin política no hay permiso — es la forma correcta de decir "esto solo lo toca el servidor" (vía `service_role`, que salta RLS, o un trigger `security definer`): jobs de sincronización de métricas, el motor de ML, el webhook de Stripe, y los avisos de la bandeja de entrada.
+- **`metrics`, `ml_predictions`, `subscriptions`, `notifications` y `discovery_searches` no tienen política de `insert`/`update` para usuarios normales.** Sin política no hay permiso — es la forma correcta de decir "esto solo lo toca el servidor" (vía `service_role`, que salta RLS, o un trigger `security definer`): jobs de sincronización de métricas, el motor de ML, el webhook de Stripe, y los avisos de la bandeja de entrada.
 
 ## 2.5 Funciones y triggers de soporte
 

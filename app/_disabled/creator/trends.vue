@@ -1,3 +1,11 @@
+<!--
+  Aparcada a propósito (fuera de app/pages, así Nuxt no la registra como
+  ruta): la IA de /api/ml/trends todavía no está lo bastante conectada a
+  tendencias reales como para que esto aporte de verdad. El código se deja
+  intacto para retomarlo más adelante — para reactivarla, mover este
+  archivo de vuelta a app/pages/creator/trends.vue y restaurar el enlace en
+  app/utils/nav.ts y el quickAction de app/pages/creator/index.vue.
+-->
 <script setup lang="ts">
 import type { ContentType, Platform, TrendSuggestion } from '~/types'
 import { platformMeta } from '~/utils/mock-data'

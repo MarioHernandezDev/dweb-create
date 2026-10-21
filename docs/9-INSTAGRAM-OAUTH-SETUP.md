@@ -2,6 +2,24 @@
 
 Versión "para tontos" de esta pieza de Fase 4, igual que [`6-SUPABASE-SETUP.md`](./6-SUPABASE-SETUP.md), [`7-STRIPE-SETUP.md`](./7-STRIPE-SETUP.md) y [`8-AI-SUGGESTIONS-SETUP.md`](./8-AI-SUGGESTIONS-SETUP.md) lo fueron para sus piezas.
 
+> ## 📍 Dónde lo dejamos (2026-10-21) — retomar aquí
+>
+> **Hecho:**
+> - El código ya pide el permiso de seguidores de verdad: `server/api/auth/instagram/start.get.ts` pide scope `instagram_business_basic,instagram_business_manage_insights` (antes solo el básico).
+> - `callback.get.ts` ya guarda `followers_count` real al conectar (viene en el mismo `/me`, sin llamada aparte).
+> - Botón "Actualizar" (↻) en Redes para refrescar el nº de seguidores a mano — `server/api/social/instagram-sync.post.ts` (no hay cron, es manual a propósito).
+> - `creator/metrics.vue` ya no es mock: muestra seguidores reales por red, con aviso honesto de que alcance/interacciones todavía no están conectados.
+> - El usuario cambió **su cuenta personal de Instagram a Profesional** (Ajustes → Tipo de cuenta y herramientas → Cuenta profesional → Creador) — paso 1 de la sección 1 de abajo, ya hecho.
+>
+> **Bloqueado ahora mismo:** Facebook no le dejó crear una cuenta nueva para entrar en developers.facebook.com en el momento de intentarlo. Sin cuenta de Facebook no se puede crear la app de Meta (paso 2 de abajo).
+>
+> **Para retomar, en este orden:**
+> 1. Conseguir una cuenta de Facebook que funcione (la del usuario, la de su compañero de equipo, o reintentar más tarde — a veces el bloqueo de alta es temporal/por IP/dispositivo).
+> 2. Seguir la sección 2 de abajo: crear la app en Meta for Developers, producto Instagram, copiar App ID/Secret, poner la redirect URI (`http://localhost:3000/api/auth/instagram/callback`), y **añadir la cuenta de Instagram personal ya profesional como tester** (en la misma pantalla "API setup with Instagram login" — hay que aceptar la invitación de tester desde la propia app de Instagram, en el móvil).
+> 3. Rellenar `.env` (sección 3) y reiniciar `npm run dev`.
+> 4. Iniciar sesión en FEEDMA con una cuenta de creador que sea la persona dueña de esa cuenta de Instagram (no necesariamente `creator@feedma.test`, que es de Nora Blake) y pulsar "Conectar" en Redes.
+> 5. Importante: **no hace falta ninguna revisión de Meta (App Review) ni verificación de empresa para este paso** — eso solo hace falta el día que se quiera que cualquier desconocido (no añadido a mano como tester) pueda conectar su cuenta. Para probarlo con cuentas propias o de amigos, el modo Desarrollo de la app de Meta ya es suficiente, hoy mismo.
+
 ## 0. Qué hace esto y qué no
 
 Hoy, "Conectar" en Redes solo crea una fila en `social_accounts` sin ningún token detrás — es de mentira. Esta pieza lo sustituye por un OAuth real contra Instagram: el creador autoriza de verdad, y la app guarda su token (cifrado) para poder leer sus datos más adelante.
@@ -52,11 +70,13 @@ Reinicia `npm run dev` para que recoja las variables nuevas.
 
 ## 5. Qué queda fuera de esta primera versión
 
-- **Número de seguidores**: necesita `instagram_business_manage_insights`, no pedido todavía.
+- **Número de seguidores**: ✅ ya pedido (`instagram_business_manage_insights`) y guardado al conectar — ver el aviso de arriba. Hace falta probarlo en vivo con la app de Meta creada.
+- **Refrescar seguidores solo**: hay un botón manual (↻ en Redes), pero no hay cron — si no lo pulsas, el número se queda congelado desde la última vez.
 - **Refrescar el token automáticamente**: el token dura 60 días y se puede refrescar (`grant_type=ig_refresh_token`) si tiene más de 24h de vida — no hay ningún cron/job que lo haga solo todavía, así que a los 60 días sin uso la cuenta se desconecta sola (hay que volver a pulsar "Conectar").
-- **Leer métricas reales** (`creator/metrics.vue` sigue mock): conectar la cuenta es el primer paso, pero todavía no hay ninguna llamada que traiga vistas/likes/comentarios reales con este token.
+- **Alcance, interacciones, evolución semanal real**: eso es la API de Insights de verdad (`/insights`, métricas tipo `reach`/`profile_views`), que todavía no se ha escrito — solo tenemos seguidores. `creator/metrics.vue` ya es honesto sobre esto (no finge con datos de mentira).
 - **TikTok y YouTube**: mismo patrón pendiente de construir, con sus propios flujos de OAuth (distintos de Instagram).
-- **Advanced Access de Meta** (conectar cuentas que no sean la tuya/las de prueba): pide App Review + verificación de negocio — trabajo para cuando haya usuarios reales, no antes.
+- **Publicar contenido desde la app**: decisión de producto tomada — no se va a construir. El tablero de FEEDMA es seguimiento interno de lo que el creador publica a mano en cada red, nunca ha subido ni va a subir nada de verdad vía API (eso es mucho más complejo/restringido que leer métricas).
+- **Advanced Access de Meta** (conectar cuentas que no sean la tuya/las de prueba): pide App Review + verificación de negocio — trabajo para cuando haya usuarios reales, no antes. Para probar con cuentas propias o de amigos (modo Desarrollo + testers), no hace falta nada de esto.
 
 ## Próximos pasos relacionados
 

@@ -33,10 +33,12 @@ export default defineEventHandler(async (event) => {
   authorizeUrl.searchParams.set('client_id', config.instagramAppId)
   authorizeUrl.searchParams.set('redirect_uri', config.instagramRedirectUri)
   authorizeUrl.searchParams.set('response_type', 'code')
-  // `instagram_business_basic` es lo mínimo para identificar la cuenta y
-  // poder refrescar el token más adelante — no se pide nada de publicar ni
-  // de mensajes/comentarios, que esta app no usa.
-  authorizeUrl.searchParams.set('scope', 'instagram_business_basic')
+  // `instagram_business_basic` identifica la cuenta y permite refrescar el
+  // token. `instagram_business_manage_insights` es lo que de verdad trae
+  // seguidores y métricas (ver callback.get.ts e
+  // instagram-metrics.post.ts) — nada de publicar ni de mensajes/comentarios,
+  // que esta app no usa.
+  authorizeUrl.searchParams.set('scope', 'instagram_business_basic,instagram_business_manage_insights')
   authorizeUrl.searchParams.set('state', state)
 
   return sendRedirect(event, authorizeUrl.toString())

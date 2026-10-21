@@ -9,6 +9,7 @@ const props = defineProps<{
   initialBudgetCents: number | null
   status: CollaborationStatus
   myRole: Role
+  initiatedBy: Role
 }>()
 
 const emit = defineEmits<{ accept: [budgetCents: number | null]; decline: [] }>()
@@ -22,16 +23,17 @@ const { reporting, reportCollaboration } = useReports()
 onMounted(() => ensureOffers(props.collaborationId))
 const offers = computed(() => offersByCollaboration.value[props.collaborationId] ?? [])
 
-// La propuesta inicial siempre es del partner (es quien contacta primero,
-// ver partner/discover.vue) — a partir de ahí, cada fila de `offers` es un
-// turno alternado.
+// La propuesta inicial es de quien contactó primero (`initiatedBy` — puede
+// ser cualquiera de los dos desde /creator/discover y /partner/discover) —
+// a partir de ahí, cada fila de `offers` es un turno alternado.
 const currentAmount = computed(() => {
   const last = offers.value.at(-1)
   return last ? last.budgetCents : props.initialBudgetCents
 })
-const currentProposer = computed<Role>(() => offers.value.at(-1)?.proposedBy ?? 'partner')
+const currentProposer = computed<Role>(() => offers.value.at(-1)?.proposedBy ?? props.initiatedBy)
 const myTurn = computed(() => props.status === 'requested' && currentProposer.value !== props.myRole)
 const otherRoleLabel = computed(() => (props.myRole === 'creator' ? 'el partner' : 'el creador'))
+const initiatorLabel = computed(() => (props.initiatedBy === 'partner' ? 'partner' : 'creador'))
 
 const countering = ref(false)
 const counterEuros = ref<number | null>(null)
@@ -75,7 +77,7 @@ async function sendReport() {
   <div>
     <div class="flex flex-col gap-2 mb-5">
       <div class="flex items-center justify-between rounded-[var(--radius-sm)] bg-[var(--color-ink-overlay)] px-3 py-2 text-[0.8125rem]">
-        <span class="text-[var(--color-text-muted)]">Propuesta inicial (partner)</span>
+        <span class="text-[var(--color-text-muted)]">Propuesta inicial ({{ initiatorLabel }})</span>
         <span class="font-medium text-[var(--color-text)]">{{ initialBudgetCents ? formatEuros(initialBudgetCents) : 'Sin fijar' }}</span>
       </div>
 

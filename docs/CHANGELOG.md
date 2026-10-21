@@ -4,6 +4,91 @@ Registro de qué se hizo, por qué, y qué queda pendiente de verificar — pens
 
 ---
 
+## 2026-10-21 (20) — "Descubrir" bidireccional (creador <-> partner) + buscador con IA + analíticas de admin
+
+Decisión tomada en `docs/10-ROADMAP-FUTURO.md` (sección 0, "decisión pendiente para la próxima sesión"): entre mejorar el descubrimiento y meter los packs recurrentes, se eligió descubrimiento. Hasta ahora `partner/discover.vue` era un `select *` plano sin filtros, y **no existía ningún "descubrir" para el creador** — solo el partner podía iniciar una colaboración.
+
+### Base de datos (`supabase/migrations/20261021150000_discovery_bidireccional.sql`) — **sin aplicar todavía al proyecto real, ver abajo**
+
+- `creators`/`partners` ganan los mismos campos de ficha en los dos lados: `bio`, `categories` (`text[]`, taxonomía fija nueva en `app/utils/categories.ts` — 18 nichos, la misma lista para ambos para que el cruce tenga sentido), rango económico (`min_rate_cents`/`max_rate_cents` en creators, `min_budget_cents`/`max_budget_cents` en partners) y `looking_for` (texto libre). Backfill de `categories` a partir de `niche`/`industry` para no partir de cero.
+- `partners` pasa a ser **directorio público de solo lectura**, igual que ya era `creators` (se retira `partners_select_own`, cubierta por la nueva policy) — sin esto un creador no puede listar partners.
+- `collaborations` gana `initiated_by` (`'creator'|'partner'`): ahora un creador puede proponer una colaboración a un partner, no solo al revés. Se generaliza `collaborations_insert_by_partner` → `collaborations_insert_by_initiator`, y `notify_collaboration_created()` avisa a quien NO inició, sea quien sea.
+- Tabla nueva `discovery_searches`: cada búsqueda (filtros o IA) deja un registro. A diferencia de `reports`, aquí ni siquiera hay policy de insert para el cliente — solo escribe `server/api/discover/search.post.ts` con la `service_role` (mismo criterio que `metrics`/`ml_predictions`: sin política no hay permiso). El admin la lee vía `service_role` igual que el resto.
+
+### Backend
+
+- `server/api/discover/search.post.ts` (nuevo): motor único para las dos direcciones — mira de qué tabla (`creators`/`partners`) es dueño quien llama para decidir sola qué buscar, nunca se fía de un `role` mandado por el cliente. Modo `filters` (solapamiento de categorías + rango de presupuesto) siempre funciona sin IA; modo `ai` además manda los candidatos + la búsqueda en lenguaje natural al mismo LLM gratuito de OpenRouter que ya usa `/api/ml/predict`, pidiendo puntuación + motivo de 1 frase por candidato — si no hay clave o falla, cae en el orden por filtros (mismo patrón de resiliencia que `predict.post.ts`). Cada llamada deja su fila en `discovery_searches`.
+- `server/api/admin/discovery-analytics.get.ts` (nuevo): agrega `discovery_searches` de las últimas 8 semanas — volumen por semana, filtros vs. IA, creador vs. partner, búsquedas sin ningún resultado, categorías más pedidas, y las últimas 20 búsquedas en texto libre para leerlas a mano.
+
+### Frontend
+
+- `app/pages/partner/discover.vue` rediseñada: toggle Filtros/IA, chips de categoría, rango de presupuesto, textarea de búsqueda en modo IA, y el motivo de la IA mostrado en cada resultado.
+- `app/pages/creator/discover.vue` (nuevo, y añadido a la navegación del creador): lo mismo pero para que un creador encuentre partners y les proponga una colaboración directamente (antes no existía ningún camino para esto).
+- `app/composables/useMyCreator.ts`/`useMyPartner.ts`: ganan los campos nuevos + `updateFicha()`. `app/pages/creator/profile.vue`/`partner/profile.vue` ganan una sección "Tu ficha pública" para rellenarlos (bio, categorías, rango, qué busco) — sin esto los campos nuevos no se podrían rellenar nunca desde la UI.
+- `NegotiationPanel.vue` ya no asume que la propuesta inicial es siempre del partner — nuevo prop `initiatedBy`, usado tanto para "a quién le toca responder" si no hay contraofertas todavía como para la etiqueta "Propuesta inicial (…)". `useMyCollaborations`/`useCollabRequests` exponen `initiatedBy`; los textos de `creator/requests.vue`/`partner/requests.vue` se suavizaron (ya no dicen "colaboraciones que te han propuesto partners", ahora es neutral en dirección).
+- Panel de admin (`/admin`, pestaña Analíticas): nueva sección "Descubrir — qué pide la gente" con los datos de arriba.
+
+### Pendiente / importante para la próxima sesión
+
+- **La migración NO se ha aplicado al proyecto real de Supabase en esta sesión** — aplicar bases de datos compartidas sin confirmación explícita no es algo que deba hacerse solo. Aplicarla con `npx supabase db push` (o pegando el SQL en el SQL Editor del dashboard) antes de probar nada de esto en el navegador.
+- Sin verificar en navegador real (no hubo uno disponible en esta sesión): el flujo completo recomendado es — rellenar la ficha pública de un creador y de un partner de prueba, buscar desde los dos "Descubrir" (filtros e IA), proponer una colaboración desde `/creator/discover`, comprobar que llega al partner en `/partner/requests` con `NegotiationPanel` mostrando bien quién propuso primero, y revisar la pestaña Analíticas del admin tras un par de búsquedas.
+- La barra de navegación inferior del creador pasa de 5 a 6 iconos (se añadió "Descubrir") — en pantallas de móvil muy estrechas puede ir algo apretada; revisar a mano si hace falta recortar o reordenar.
+- Quedó fuera a propósito, para no mezclar dos decisiones grandes en la misma sesión: los "packs mensuales"/recurrentes (sección 0 del roadmap) y la política de cuándo se paga (🔴 en `docs/10-ROADMAP-FUTURO.md`) — siguen pendientes, y la segunda sigue siendo más urgente que casi todo lo demás.
+
+---
+
+## 2026-10-21 (19) — Tablero estilo Trello, negociación por contraoferta, panel de admin, y primer paso de métricas reales
+
+Sesión larga con el usuario (Mario), con varias piezas grandes. La mayoría ya está commiteada en `2608a50 "Subida archivos content"` (sin detalle en este changelog hasta ahora); lo de Instagram/Métricas de esta misma entrada sigue sin commitear al cerrar la sesión.
+
+### Tablero de contenido (`creator/timeline.vue`) — de lista por fecha a Kanban de verdad
+
+- `app/components/timeline/PhaseBoard.vue` (nuevo): columnas por fase (Idea → En producción → Para revisar → Programado → Publicado), arrastrables con `vuedraggable` (nueva dependencia — SortableJS por debajo, con soporte táctil real). Auto-scroll al arrastrar cerca del borde. Cada card tiene además un `<select>` de fase como atajo sin arrastrar.
+- Responsive: en móvil las fases se apilan verticalmente (antes scroll horizontal, incómodo); en desktop, grid a ancho completo (`AppShell` ganó un prop `full-width` para esta página, el resto sigue con el `max-w` de siempre).
+- `app/components/timeline/BoardCard.vue` (nuevo): card simplificada para el tablero — foto (o degradado si no hay), título, icono de red, y el selector de fase como botón grande de color. Sustituye a `DeliverableCard` solo aquí (esa sigue usándose en `creator/index.vue`/`partner/index.vue`).
+- **Fotos de portada reales**: bucket de Storage `post-media` (público, una carpeta por creador vía RLS) — `supabase/migrations/20261021130000_post_media_bucket.sql`. `app/components/timeline/CoverUploader.vue` (nuevo) sube la foto desde la página de edición del post; `posts.media_url` (ya existía en el esquema, sin usar) ahora se lee/escribe de verdad.
+- Pendiente: añadir la foto también al crear el post desde cero (`PostComposerSheet`), ahora mismo solo se puede añadir editando un post ya creado.
+
+### Solicitudes → negociación por contraoferta + reportes
+
+- `supabase/migrations/20261021140000_collaboration_offers_and_reports.sql` (nueva): tabla `collaboration_offers` (historial append-only de ofertas, con quién la hizo) y tabla `reports` (solo insert desde el cliente — sin policy de select, a propósito, se revisan a mano).
+- `app/components/collab/NegotiationPanel.vue` (nuevo, compartido entre creador y partner): historial de ofertas, calcula a quién le toca responder, botones Aceptar/Rechazar (con confirmación)/Contraoferta, y un enlace "Reportar esta solicitud" con motivo + detalle.
+- `app/pages/partner/requests.vue` (nueva): el partner **no tenía ninguna pantalla** para ver ni responder a una contraoferta del creador — ahora tiene su propia bandeja (Pendientes/Historial, como la del creador), añadida a su navegación.
+- `app/pages/creator/requests.vue` rediseñada: pestañas Pendientes/Historial (`SegmentedTabs`), avatar del partner, tiempo relativo, y el detalle (hoja inferior) ahora usa `NegotiationPanel` en vez de un simple Aceptar/Rechazar.
+- Al aceptar una oferta, `collaborations.budget_cents` se sincroniza con el importe acordado — importante porque el cobro de Stripe lee esa columna directamente.
+- Pendiente: nada aplicado/probado todavía queda por aplicar aquí — la migración y el flujo completo ya se probaron en el proyecto real durante la sesión.
+
+### Panel de administración (`/admin`) — nuevo, completo
+
+- Autenticación propia, **sin cuenta de Supabase de por medio a propósito**: contraseña única en `ADMIN_PASSWORD` (comparación en tiempo constante) + cookie de sesión sellada (`useSession` de h3) con `ADMIN_SESSION_SECRET`. Ambas ya generadas y puestas en el `.env` de este equipo durante la sesión.
+- `/admin/login` + `/admin` (4 pestañas): **Usuarios** (listar, bloquear/desbloquear con el baneo nativo de Supabase Auth, dar Pro manual con meses + créditos de golpe — `stripe_subscription_id: null` los distingue de un Pro pagado de verdad), **Actividad** (feed cronológico montado leyendo tablas existentes, sin tabla de eventos propia), **Analíticas** (gráficas de barras semana/mes: registros, colaboraciones nuevas, ingresos, Pro pagado vs. regalado — `app/components/charts/BarChart.vue` nuevo, no existía ninguno de barras), **Reportes** (lee la tabla `reports` de arriba).
+- `nuxt.config.ts`: `/admin`, `/admin/*` añadidos al `exclude` de `@nuxtjs/supabase` (si no, el módulo los mandaba a `/login` antes de que nuestra propia comprobación de contraseña entrara en juego).
+- Pendiente de verdad: nada — probado en vivo contra el proyecto real (login, listar, bloquear/desbloquear, dar Pro, ver actividad/analíticas), con las pruebas deshechas al terminar para no dejar las cuentas demo tocadas.
+- Importante para desplegar: `ADMIN_PASSWORD`/`ADMIN_SESSION_SECRET` tienen que estar también en las variables de entorno del hosting en producción, o `/admin` da un 500 en vez de dejar pasar a cualquiera (no es un fallo de seguridad, es el comportamiento querido).
+
+### Tendencias — aparcada
+
+- `creator/trends.vue` se movió a `app/_disabled/creator/trends.vue` (fuera de `app/pages`, así Nuxt no la registra como ruta) — decisión del usuario: la IA de `/api/ml/trends` no aportaba ideas lo bastante buenas todavía. Código intacto, con una nota arriba de cómo reactivarla. Quitados sus 2 enlaces (`utils/nav.ts`, acceso rápido de `creator/index.vue`).
+- Antes de aparcarla se le habían añadido mejoras (botón "Buscar más ideas" que salta la caché de 24h, filtro por plataforma, "usar esta idea" → abre el composer con título/hashtags/red ya rellenados, descartar) — se quedan en el código aparcado, no se perdieron.
+- De paso, `PostComposerSheet.vue` ganó un campo de hashtags (antes no se podían poner hashtags al crear un post a mano) y un prop `prefill` reutilizable para cualquier futura pantalla que quiera abrir el composer con datos ya puestos.
+
+### Métricas — primer paso real (seguidores de Instagram)
+
+- Decisión de producto importante, aclarada con el usuario tras confusión inicial: **crear la app en Meta/developers.facebook.com es trabajo del equipo, una sola vez — nunca de cada creador.** Para un creador final, "Conectar" siempre ha sido (y sigue siendo) un simple botón → login de Instagram → autorizar. Lo que de verdad hace falta una sola vez por parte del equipo es: app de Meta creada + (más adelante, para abrir la puerta a desconocidos) App Review/verificación de empresa — para probarlo con cuentas propias/de amigos, con modo Desarrollo + "tester" ya sobra, sin ninguna revisión.
+- También decisión de producto: **no se va a construir publicar contenido desde la app** — el tablero de FEEDMA es seguimiento interno, nunca ha subido nada a redes vía API y no es el plan. Queda documentado para que no se intente sin querer más adelante.
+- `server/api/auth/instagram/start.get.ts`: scope ahora `instagram_business_basic,instagram_business_manage_insights` (antes solo el básico) — es lo que de verdad trae seguidores.
+- `server/api/auth/instagram/callback.get.ts`: guarda `followers_count` real al conectar (mismo `/me`, un campo más, sin llamada aparte).
+- `server/api/social/instagram-sync.post.ts` (nuevo) + botón ↻ en `SocialAccountRow.vue`/`creator/socials.vue`: refresco manual de seguidores — no hay cron todavía.
+- `creator/metrics.vue` reescrita: seguidores reales (totales y por red, `PlatformBreakdown` reutilizado con seguidores en vez de vistas) en lugar de `mock-data.ts`; aviso honesto de que alcance/interacciones/evolución semanal siguen sin conectar (eso es la API de Insights de verdad, aparte de solo seguidores).
+- **Bloqueado al cerrar la sesión**: el usuario cambió su Instagram personal a cuenta Profesional (hecho), pero Facebook no le dejó crear la cuenta para developers.facebook.com en ese momento — sin eso no se puede crear la app de Meta ni rellenar `INSTAGRAM_APP_ID`/`INSTAGRAM_APP_SECRET`/`INSTAGRAM_REDIRECT_URI`. Ver el aviso "📍 Dónde lo dejamos" al principio de `docs/9-INSTAGRAM-OAUTH-SETUP.md` para los pasos exactos de cómo retomar.
+- Sin commitear al cerrar: `README.md`, `docs/9-INSTAGRAM-OAUTH-SETUP.md`, `app/pages/creator/{metrics,socials,index}.vue`, `app/composables/useMySocialAccounts.ts`, `app/components/social/SocialAccountRow.vue`, `server/api/auth/instagram/{start,callback}.get.ts`, `server/api/social/instagram-sync.post.ts` (nuevo), `app/utils/nav.ts`, el movimiento de `trends.vue`.
+
+### Verificado / sin verificar (de toda la sesión)
+
+- `npx vue-tsc --noEmit` limpio en cada paso.
+- Probado en vivo contra el proyecto real: tablero (drag & drop, fotos), seed de datos de demo (colaboraciones en varias fases + contraoferta de ejemplo), panel de admin completo, negociación por contraoferta.
+- **Sin probar en vivo todavía**: el flujo de Instagram con la app de Meta de verdad (bloqueado, ver arriba) y, por tanto, `creator/metrics.vue` con datos que no sean "0 conectadas".
+
 ## 2026-10-21 (18) — Se elimina el rol Manager; Influencer → "Creador de contenido", Cliente → "Partner" (renombrado completo)
 
 Decisión de producto del usuario: un manager, en la práctica, sería un partner más (contrata/organiza trabajo) — categorizarlo como un tercer rol aparte no tenía sentido. Se centralizan las relaciones en **creator ↔ partner**, y de paso se renombran los otros dos roles. A petición explícita, el renombrado es **completo y destructivo**: no solo etiquetas de UI, también tablas, columnas, funciones, políticas RLS, rutas y tipos — y se borra de verdad lo que queda sin uso (no se deja en desuso). Posible porque el proyecto sigue sin desplegarse (sin usuarios reales en producción todavía).

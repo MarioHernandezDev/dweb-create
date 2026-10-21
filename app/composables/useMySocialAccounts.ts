@@ -81,6 +81,14 @@ export function useMySocialAccounts() {
     await refresh()
   }
 
+  // Sin cron todavía que lo haga solo (ver docs/9-INSTAGRAM-OAUTH-SETUP.md
+  // §5) — este es el único sitio donde el nº de seguidores se refresca tras
+  // la conexión inicial.
+  async function syncInstagram() {
+    await $fetch('/api/social/instagram-sync', { method: 'POST' })
+    await refresh()
+  }
+
   async function disconnect(platform: SocialAccount['platform']) {
     const me = creator.value ?? (await ensureCreator())
     if (!me) return
@@ -90,5 +98,5 @@ export function useMySocialAccounts() {
     await refresh()
   }
 
-  return { accounts, loaded, refresh, ensureLoaded, connect, disconnect }
+  return { accounts, loaded, refresh, ensureLoaded, connect, disconnect, syncInstagram }
 }

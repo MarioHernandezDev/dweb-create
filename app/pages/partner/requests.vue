@@ -32,13 +32,13 @@ function openDetail(collab: MyCollaboration) {
 </script>
 
 <template>
-  <AppShell role="partner" title="Solicitudes" subtitle="Tus propuestas a creadores de contenido">
+  <AppShell role="partner" title="Solicitudes" subtitle="Tus colaboraciones con creadores de contenido">
     <SegmentedTabs v-model="tab" :options="tabs" class="mb-5" />
 
     <EmptyState
       v-if="!visible.length && tab === 'pending'"
       icon="ph:handshake" title="Sin solicitudes pendientes"
-      description="Contacta a un creador de contenido desde 'Descubrir' para empezar."
+      description="Contacta a un creador de contenido desde 'Descubrir', o espera a que te encuentren ellos."
     />
     <EmptyState
       v-else-if="!visible.length"
@@ -107,7 +107,7 @@ function openDetail(collab: MyCollaboration) {
 
         <NegotiationPanel
           :collaboration-id="detailCollab.id" :initial-budget-cents="detailCollab.budgetCents" :status="detailCollab.status"
-          my-role="partner"
+          my-role="partner" :initiated-by="detailCollab.initiatedBy"
           @accept="(amount) => { accept(detailCollab!.id, amount); detailOpen = false }"
           @decline="() => { decline(detailCollab!.id); detailOpen = false }"
         />

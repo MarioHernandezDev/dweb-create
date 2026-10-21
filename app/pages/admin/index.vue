@@ -45,6 +45,17 @@ interface AnalyticsData {
   proGifted: number[]
 }
 
+interface DiscoveryAnalyticsData {
+  labels: string[]
+  volume: number[]
+  totalSearches: number
+  byMode: { filters: number; ai: number }
+  byRole: { creator: number; partner: number }
+  zeroResultCount: number
+  topCategories: { category: string; count: number }[]
+  recentQueries: { queryText: string | null; role: string; resultsCount: number; createdAt: string }[]
+}
+
 const activityIcons: Record<string, string> = {
   signup: 'ph:user-plus-fill',
   collaboration_created: 'ph:handshake-fill',
@@ -124,12 +135,29 @@ async function loadAnalytics() {
   }
 }
 
+const discoveryAnalytics = ref<DiscoveryAnalyticsData | null>(null)
+const loadingDiscoveryAnalytics = ref(false)
+async function loadDiscoveryAnalytics() {
+  loadingDiscoveryAnalytics.value = true
+  try {
+    discoveryAnalytics.value = await $fetch('/api/admin/discovery-analytics')
+  } finally {
+    loadingDiscoveryAnalytics.value = false
+  }
+}
+
 watch(tab, (value) => {
   if (value === 'reports' && !reportsLoaded) loadReports()
   if (value === 'activity' && !activityLoaded) loadActivity()
   if (value === 'analytics' && !analytics.value) loadAnalytics()
+  if (value === 'analytics' && !discoveryAnalytics.value) loadDiscoveryAnalytics()
 })
 watch(analyticsUnit, loadAnalytics)
+
+const discoveryVolumeSeries = computed(() => [{
+  label: 'Búsquedas', color: 'var(--color-logo-amber)', values: discoveryAnalytics.value?.volume ?? []
+}])
+const maxCategoryCount = computed(() => Math.max(1, ...(discoveryAnalytics.value?.topCategories.map((c) => c.count) ?? [1])))
 
 const euroFormatter = new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 })
 const formatEuroValue = (v: number) => euroFormatter.format(v)
@@ -274,6 +302,60 @@ function formatDate(iso: string | null) {
         <BaseCard radius="lg" padding="lg">
           <p class="text-[0.8125rem] font-medium text-[var(--color-text-muted)] mb-4">Inicios de Pro — pagado vs. regalado</p>
           <BarChart v-if="analytics" :labels="analytics.labels" :series="proSeries" :format-value="formatIntValue" />
+        </BaseCard>
+
+        <p class="font-display text-[1.0625rem] text-[var(--color-text)] -mb-2">Descubrir — qué pide la gente</p>
+
+        <div v-if="discoveryAnalytics" class="grid grid-cols-2 gap-3">
+          <BaseCard radius="lg" padding="md">
+            <p class="text-[0.75rem] text-[var(--color-text-faint)] mb-1">Búsquedas (8 semanas)</p>
+            <p class="font-display text-[1.375rem] text-[var(--color-text)]">{{ discoveryAnalytics.totalSearches }}</p>
+          </BaseCard>
+          <BaseCard radius="lg" padding="md">
+            <p class="text-[0.75rem] text-[var(--color-text-faint)] mb-1">Sin ningún resultado</p>
+            <p class="font-display text-[1.375rem] text-[var(--color-text)]">{{ discoveryAnalytics.zeroResultCount }}</p>
+          </BaseCard>
+          <BaseCard radius="lg" padding="md">
+            <p class="text-[0.75rem] text-[var(--color-text-faint)] mb-1">Filtros vs. IA</p>
+            <p class="font-display text-[1.0625rem] text-[var(--color-text)]">{{ discoveryAnalytics.byMode.filters }} / {{ discoveryAnalytics.byMode.ai }}</p>
+          </BaseCard>
+          <BaseCard radius="lg" padding="md">
+            <p class="text-[0.75rem] text-[var(--color-text-faint)] mb-1">Creadores vs. partners</p>
+            <p class="font-display text-[1.0625rem] text-[var(--color-text)]">{{ discoveryAnalytics.byRole.creator }} / {{ discoveryAnalytics.byRole.partner }}</p>
+          </BaseCard>
+        </div>
+
+        <BaseCard radius="lg" padding="lg">
+          <p class="text-[0.8125rem] font-medium text-[var(--color-text-muted)] mb-4">Volumen de búsquedas por semana</p>
+          <BarChart v-if="discoveryAnalytics" :labels="discoveryAnalytics.labels" :series="discoveryVolumeSeries" :format-value="formatIntValue" />
+        </BaseCard>
+
+        <BaseCard radius="lg" padding="lg">
+          <p class="text-[0.8125rem] font-medium text-[var(--color-text-muted)] mb-4">Categorías más pedidas</p>
+          <EmptyState v-if="discoveryAnalytics && !discoveryAnalytics.topCategories.length" icon="ph:tag" title="Sin categorías todavía" />
+          <div v-else-if="discoveryAnalytics" class="flex flex-col gap-2">
+            <div v-for="c in discoveryAnalytics.topCategories" :key="c.category" class="flex items-center gap-2.5">
+              <span class="w-28 shrink-0 text-[0.8125rem] text-[var(--color-text-muted)] truncate">{{ c.category }}</span>
+              <div class="flex-1 h-2 rounded-full bg-[var(--color-ink-overlay)] overflow-hidden">
+                <div class="h-full rounded-full bg-[var(--color-primary-500)]" :style="{ width: `${(c.count / maxCategoryCount) * 100}%` }" />
+              </div>
+              <span class="w-6 shrink-0 text-right text-[0.75rem] text-[var(--color-text-faint)]">{{ c.count }}</span>
+            </div>
+          </div>
+        </BaseCard>
+
+        <BaseCard radius="lg" padding="lg">
+          <p class="text-[0.8125rem] font-medium text-[var(--color-text-muted)] mb-4">Búsquedas recientes con IA (texto libre)</p>
+          <EmptyState v-if="discoveryAnalytics && !discoveryAnalytics.recentQueries.length" icon="ph:sparkle" title="Nadie ha usado la búsqueda por IA todavía" />
+          <div v-else-if="discoveryAnalytics" class="flex flex-col gap-2">
+            <div v-for="(q, i) in discoveryAnalytics.recentQueries" :key="i" class="flex items-start justify-between gap-3 py-2 border-b border-[var(--color-hairline)] last:border-0">
+              <div class="min-w-0">
+                <p class="text-[0.8125rem] text-[var(--color-text)]">"{{ q.queryText }}"</p>
+                <p class="text-[0.75rem] text-[var(--color-text-faint)] mt-0.5">{{ q.role === 'creator' ? 'Creador' : 'Partner' }} · {{ relativeTime(q.createdAt) }}</p>
+              </div>
+              <span class="shrink-0 text-[0.75rem] text-[var(--color-text-faint)]">{{ q.resultsCount }} resultado{{ q.resultsCount === 1 ? '' : 's' }}</span>
+            </div>
+          </div>
         </BaseCard>
       </div>
 

@@ -25,9 +25,9 @@ export const roleNav: Record<Role, NavItem[]> = {
   creator: [
     { to: '/creator', label: 'Hoy', icon: 'ph:house-fill' },
     { to: '/creator/timeline', label: 'Tablero', icon: 'ph:kanban-fill' },
+    { to: '/creator/discover', label: 'Descubrir', icon: 'ph:compass-fill' },
     { to: '/creator/requests', label: 'Solicitudes', icon: 'ph:handshake-fill' },
     { to: '/creator/socials', label: 'Redes', icon: 'ph:share-network-fill' },
-    { to: '/creator/trends', label: 'Tendencias', icon: 'ph:flame-fill' },
     { to: '/creator/metrics', label: 'Métricas', icon: 'ph:chart-line-up-fill' }
   ],
   partner: [
