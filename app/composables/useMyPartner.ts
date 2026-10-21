@@ -7,6 +7,7 @@ export interface MyPartner {
   minBudgetCents: number | null
   maxBudgetCents: number | null
   lookingFor: string | null
+  coverUrl: string | null
 }
 
 interface PartnerFichaRow {
@@ -18,9 +19,10 @@ interface PartnerFichaRow {
   min_budget_cents: number | null
   max_budget_cents: number | null
   looking_for: string | null
+  cover_url: string | null
 }
 
-const PARTNER_SELECT = 'id, company_name, industry, bio, categories, min_budget_cents, max_budget_cents, looking_for'
+const PARTNER_SELECT = 'id, company_name, industry, bio, categories, min_budget_cents, max_budget_cents, looking_for, cover_url'
 
 function mapPartnerRow(data: PartnerFichaRow): MyPartner {
   return {
@@ -31,7 +33,8 @@ function mapPartnerRow(data: PartnerFichaRow): MyPartner {
     categories: data.categories ?? [],
     minBudgetCents: data.min_budget_cents,
     maxBudgetCents: data.max_budget_cents,
-    lookingFor: data.looking_for
+    lookingFor: data.looking_for,
+    coverUrl: data.cover_url
   }
 }
 
@@ -91,9 +94,39 @@ export function useMyPartner() {
     return partner.value
   }
 
+  /**
+   * Foto de portada de la ficha — la que se ve grande en las cards de
+   * /creator/discover. Mismo patrón que `useMyCreator.uploadCoverPhoto`,
+   * reutilizando el bucket `post-media` (sus policies solo miran la carpeta
+   * `<auth.uid()>`, no el rol).
+   */
+  async function uploadCoverPhoto(file: File) {
+    const me = partner.value ?? (await ensurePartner())
+    if (!me) throw new Error('No hay ficha de partner que actualizar.')
+
+    const client = useSupabaseClient()
+    const { data: userData, error: userError } = await client.auth.getUser()
+    if (userError || !userData.user) throw userError ?? new Error('No hay sesión activa.')
+
+    const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg'
+    const path = `${userData.user.id}/profile-cover.${ext}`
+
+    const { error: uploadError } = await client.storage.from('post-media').upload(path, file, { upsert: true, contentType: file.type })
+    if (uploadError) throw uploadError
+
+    const { data: publicUrlData } = client.storage.from('post-media').getPublicUrl(path)
+    const coverUrl = `${publicUrlData.publicUrl}?v=${Date.now()}`
+
+    const { data, error } = await client.from('partners').update({ cover_url: coverUrl } as never).eq('id', me.id).select(PARTNER_SELECT).single<PartnerFichaRow>()
+    if (error) throw error
+
+    partner.value = mapPartnerRow(data)
+    return coverUrl
+  }
+
   function reset() {
     partner.value = undefined
   }
 
-  return { partner, ensurePartner, updateFicha, reset }
+  return { partner, ensurePartner, updateFicha, uploadCoverPhoto, reset }
 }

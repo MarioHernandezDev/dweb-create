@@ -14,3 +14,15 @@ export function hueFromString(value: string): number {
   for (let i = 0; i < value.length; i++) hash = (hash * 31 + value.charCodeAt(i)) >>> 0
   return hash % 360
 }
+
+/**
+ * Degradado grande derivado del nombre — mismo truco que `coverFromId()` en
+ * useMyPosts.ts (código duplicado hasta ahora, unificado aquí), usado donde
+ * hace falta una "foto" vistosa de fondo sin tener una real todavía: cards
+ * de /creator/discover y /partner/discover cuando el creador/partner no ha
+ * subido foto de portada a su ficha.
+ */
+export function coverArtFromString(value: string): { from: string; to: string; angle: number } {
+  const hue = hueFromString(value)
+  return { from: `hsl(${hue} 78% 54%)`, to: `hsl(${(hue + 36) % 360} 70% 40%)`, angle: 135 }
+}

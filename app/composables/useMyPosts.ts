@@ -1,3 +1,4 @@
+import { coverArtFromString } from '~/utils/avatar'
 import type { ContentType, Platform, Post, PostStatus, Suggestion } from '~/types'
 
 interface PostRow {
@@ -13,20 +14,6 @@ interface PostRow {
   media_url: string | null
   metadata: { hashtags?: string[] } | null
   ml_predictions: { success_score: number; confidence: number | null; suggestions: Suggestion[] | null; created_at: string }[] | null
-}
-
-// El esquema no guarda gradiente de portada (es puro adorno visual): se
-// deriva del id del post, así cada tarjeta tiene un color estable entre
-// recargas sin necesitar una columna para ello.
-function hashHue(id: string): number {
-  let hash = 0
-  for (let i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) >>> 0
-  return hash % 360
-}
-
-function coverFromId(id: string) {
-  const hue = hashHue(id)
-  return { from: `hsl(${hue} 78% 54%)`, to: `hsl(${(hue + 36) % 360} 70% 40%)`, angle: 135 }
 }
 
 function latestPrediction(predictions: PostRow['ml_predictions']) {
@@ -48,7 +35,7 @@ function mapRow(row: PostRow): Post {
     status: row.status,
     dueInDays,
     hashtags: row.metadata?.hashtags ?? [],
-    cover: coverFromId(row.id),
+    cover: coverArtFromString(row.id),
     mediaUrl: row.media_url,
     successScore: prediction?.success_score,
     confidence: prediction?.confidence ?? undefined,

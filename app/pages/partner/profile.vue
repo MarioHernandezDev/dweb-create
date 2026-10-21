@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { initialsFromName, hueFromString } from '~/utils/avatar'
+import { initialsFromName, hueFromString, coverArtFromString } from '~/utils/avatar'
 import { formatEuros } from '~/utils/mock-data'
 import { collaborationStatusMeta } from '~/utils/status'
 import { DISCOVERY_CATEGORIES } from '~/utils/categories'
@@ -11,7 +11,7 @@ const payableStatuses = ['accepted', 'in_progress', 'completed']
 useHead({ title: 'Perfil' })
 
 const route = useRoute()
-const { partner, ensurePartner, updateFicha } = useMyPartner()
+const { partner, ensurePartner, updateFicha, uploadCoverPhoto } = useMyPartner()
 const { collaborations, paying, ensureLoaded, refresh: refreshCollaborations, payForCollaboration } = useMyCollaborations()
 
 if (route.query.payment) await refreshCollaborations()
@@ -32,6 +32,7 @@ const ficha = reactive({
 })
 const savingFicha = ref(false)
 const fichaSaved = ref(false)
+const coverArt = computed(() => coverArtFromString(partner.value?.id ?? 'partner'))
 
 function toggleFichaCategory(cat: string) {
   const i = ficha.categories.indexOf(cat)
@@ -82,6 +83,10 @@ async function saveFicha() {
         <p class="text-[0.8125rem] font-medium text-[var(--color-text-muted)] mb-2 px-1">Tu ficha pública</p>
         <p class="text-[0.75rem] text-[var(--color-text-faint)] mb-3 px-1">Esto es lo que ve un creador en "Descubrir" — cuanto más completa, mejor encajan los resultados.</p>
         <BaseCard radius="lg" padding="md" class="flex flex-col gap-4">
+          <CoverPhotoUploader
+            :cover-url="partner?.coverUrl ?? null" :cover-art="coverArt" icon="ph:storefront-fill" :upload="uploadCoverPhoto"
+          />
+
           <div>
             <label class="block text-[0.8125rem] font-medium text-[var(--color-text-muted)] mb-1.5" for="ficha-bio">Bio</label>
             <textarea

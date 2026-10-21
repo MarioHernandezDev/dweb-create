@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { DISCOVERY_CATEGORIES } from '~/utils/categories'
+import { coverArtFromString } from '~/utils/avatar'
 
 useHead({ title: 'Perfil' })
 
@@ -8,7 +9,7 @@ const { logout } = useLogout()
 
 const route = useRoute()
 const { subscription, connectOnboarded, redirecting, ensureLoaded, refresh: refreshBilling, subscribe, connectPayouts } = useMyBilling()
-const { creator, ensureCreator, updateFicha } = useMyCreator()
+const { creator, ensureCreator, updateFicha, uploadCoverPhoto } = useMyCreator()
 
 // Al volver de Stripe (Checkout o Connect) los datos ya cambiaron en el
 // servidor vía webhook — hay que refrescar de verdad, no fiarse de la
@@ -37,6 +38,7 @@ const ficha = reactive({
 })
 const savingFicha = ref(false)
 const fichaSaved = ref(false)
+const coverArt = computed(() => coverArtFromString(creator.value?.id ?? 'creator'))
 
 function toggleFichaCategory(cat: string) {
   const i = ficha.categories.indexOf(cat)
@@ -104,6 +106,10 @@ async function saveFicha() {
         <p class="text-[0.8125rem] font-medium text-[var(--color-text-muted)] mb-2 px-1">Tu ficha pública</p>
         <p class="text-[0.75rem] text-[var(--color-text-faint)] mb-3 px-1">Esto es lo que ve un partner en "Descubrir" — cuanto más completa, mejor encajan los resultados.</p>
         <BaseCard radius="lg" padding="md" class="flex flex-col gap-4">
+          <CoverPhotoUploader
+            :cover-url="creator?.coverUrl ?? null" :cover-art="coverArt" icon="ph:image-fill" :upload="uploadCoverPhoto"
+          />
+
           <div>
             <label class="block text-[0.8125rem] font-medium text-[var(--color-text-muted)] mb-1.5" for="ficha-bio">Bio</label>
             <textarea

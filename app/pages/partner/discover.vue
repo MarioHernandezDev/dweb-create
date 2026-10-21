@@ -1,13 +1,8 @@
 <script setup lang="ts">
-import { formatCompactNumber, formatEuros } from '~/utils/mock-data'
-import { initialsFromName, hueFromString } from '~/utils/avatar'
-import { localPhotos } from '~/utils/images'
 import { DISCOVERY_CATEGORIES } from '~/utils/categories'
 import type { DiscoveryResult } from '~/composables/useDiscover'
 
 useHead({ title: 'Descubrir' })
-
-const banner = localPhotos.discover
 
 const client = useSupabaseClient()
 const { partner } = useMyPartner()
@@ -19,6 +14,7 @@ const queryText = ref('')
 const selectedCategories = ref<string[]>([])
 const minBudgetEuros = ref<number | null>(null)
 const maxBudgetEuros = ref<number | null>(null)
+const filtersOpen = ref(false)
 
 function toggleCategory(cat: string) {
   const i = selectedCategories.value.indexOf(cat)
@@ -77,16 +73,20 @@ async function send() {
 </script>
 
 <template>
-  <AppShell role="partner" title="Descubrir" subtitle="Contacta directo con un creador de contenido">
-    <div class="relative h-36 md:h-48 rounded-[var(--radius-lg)] overflow-hidden mb-7">
-      <CoverImage :photo="banner" :width="900" :height="400" scrim="bottom" class="absolute inset-0" />
-      <div class="relative h-full flex flex-col justify-end p-5">
-        <p class="font-display text-white text-[1.375rem] leading-snug max-w-[26ch]">Encuentra tu próxima colaboración</p>
+  <AppShell role="partner" title="Descubrir" subtitle="Contacta directo con un creador de contenido" full-width>
+    <section class="mb-6 max-w-[1100px]">
+      <div class="flex items-center gap-2.5 mb-3.5">
+        <SegmentedTabs v-model="mode" :options="modeOptions" />
+        <button
+          type="button"
+          class="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-[var(--radius-xs)] text-[0.8125rem] font-medium border border-[var(--color-hairline)] text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors"
+          @click="filtersOpen = !filtersOpen"
+        >
+          <Icon name="ph:sliders-horizontal-bold" class="size-4" />
+          Filtros
+          <span v-if="selectedCategories.length || minBudgetEuros || maxBudgetEuros" class="size-1.5 rounded-full bg-[var(--color-primary-500)]" />
+        </button>
       </div>
-    </div>
-
-    <section class="mb-6">
-      <SegmentedTabs v-model="mode" :options="modeOptions" class="mb-3.5" />
 
       <div v-if="mode === 'ai'" class="mb-3.5">
         <textarea
@@ -96,32 +96,34 @@ async function send() {
         />
       </div>
 
-      <div class="flex flex-wrap gap-1.5 mb-3.5">
-        <button
-          v-for="cat in DISCOVERY_CATEGORIES" :key="cat" type="button"
-          class="px-3 h-8 rounded-full text-[0.8125rem] font-medium border transition-colors duration-150"
-          :class="selectedCategories.includes(cat)
-            ? 'bg-[var(--color-primary-500)]/15 border-[var(--color-primary-500)]/50 text-[var(--color-primary-500)]'
-            : 'bg-[var(--color-ink-overlay)] border-[var(--color-hairline)] text-[var(--color-text-muted)]'"
-          @click="toggleCategory(cat)"
-        >
-          {{ cat }}
-        </button>
-      </div>
+      <div v-if="filtersOpen" class="mb-3.5 p-3.5 rounded-[var(--radius-md)] bg-[var(--color-ink-overlay)]/60 border border-[var(--color-hairline)]">
+        <div class="flex flex-wrap gap-1.5 mb-3">
+          <button
+            v-for="cat in DISCOVERY_CATEGORIES" :key="cat" type="button"
+            class="px-3 h-8 rounded-full text-[0.8125rem] font-medium border transition-colors duration-150"
+            :class="selectedCategories.includes(cat)
+              ? 'bg-[var(--color-primary-500)]/15 border-[var(--color-primary-500)]/50 text-[var(--color-primary-500)]'
+              : 'bg-[var(--color-ink-raised)] border-[var(--color-hairline)] text-[var(--color-text-muted)]'"
+            @click="toggleCategory(cat)"
+          >
+            {{ cat }}
+          </button>
+        </div>
 
-      <div class="flex items-center gap-2.5 mb-3.5">
-        <input
-          v-model.number="minBudgetEuros" type="number" min="0" step="1" placeholder="Presupuesto desde (€)"
-          class="w-full h-10 px-3 rounded-[var(--radius-sm)] bg-[var(--color-ink-overlay)] border border-[var(--color-hairline)] text-[0.8125rem] text-[var(--color-text)] placeholder:text-[var(--color-text-faint)] focus:outline-none focus:border-[var(--color-primary-500)]/60"
-        >
-        <input
-          v-model.number="maxBudgetEuros" type="number" min="0" step="1" placeholder="hasta (€)"
-          class="w-full h-10 px-3 rounded-[var(--radius-sm)] bg-[var(--color-ink-overlay)] border border-[var(--color-hairline)] text-[0.8125rem] text-[var(--color-text)] placeholder:text-[var(--color-text-faint)] focus:outline-none focus:border-[var(--color-primary-500)]/60"
-        >
+        <div class="flex items-center gap-2.5">
+          <input
+            v-model.number="minBudgetEuros" type="number" min="0" step="1" placeholder="Presupuesto desde (€)"
+            class="w-full h-10 px-3 rounded-[var(--radius-sm)] bg-[var(--color-ink-raised)] border border-[var(--color-hairline)] text-[0.8125rem] text-[var(--color-text)] placeholder:text-[var(--color-text-faint)] focus:outline-none focus:border-[var(--color-primary-500)]/60"
+          >
+          <input
+            v-model.number="maxBudgetEuros" type="number" min="0" step="1" placeholder="hasta (€)"
+            class="w-full h-10 px-3 rounded-[var(--radius-sm)] bg-[var(--color-ink-raised)] border border-[var(--color-hairline)] text-[0.8125rem] text-[var(--color-text)] placeholder:text-[var(--color-text-faint)] focus:outline-none focus:border-[var(--color-primary-500)]/60"
+          >
+        </div>
       </div>
 
       <BaseButton
-        variant="primary" size="md" class="w-full" :icon-spin="loading" :disabled="loading"
+        variant="primary" size="md" :icon-spin="loading" :disabled="loading"
         :icon="mode === 'ai' ? 'ph:sparkle-fill' : 'ph:magnifying-glass-bold'" @click="runSearch"
       >
         {{ loading ? 'Buscando…' : mode === 'ai' ? 'Buscar con IA' : 'Buscar' }}
@@ -129,35 +131,17 @@ async function send() {
       <p v-if="error" class="text-[0.8125rem] text-[var(--color-status-alert)] mt-2">{{ error }}</p>
     </section>
 
-    <section>
-      <h2 class="font-display text-[1.25rem] text-[var(--color-text)] mb-1">Creadores de contenido</h2>
-      <p class="text-[0.8125rem] text-[var(--color-text-muted)] mb-3.5">Contacta directo con quien quieras trabajar.</p>
-      <EmptyState
-        v-if="searched && !results.length"
-        icon="ph:user-circle" title="Ningún creador encaja con esta búsqueda"
-        description="Prueba a quitar algún filtro o a reformular tu búsqueda."
+    <EmptyState
+      v-if="searched && !results.length"
+      icon="ph:user-circle" title="Ningún creador encaja con esta búsqueda"
+      description="Prueba a quitar algún filtro o a reformular tu búsqueda."
+    />
+    <div v-else class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+      <DiscoveryCard
+        v-for="creator in results" :key="creator.id" :result="creator" kind="creator" cta-label="Contactar"
+        @contact="openContact(creator)"
       />
-      <div v-else class="flex flex-col gap-2.5 lg:grid lg:grid-cols-2 lg:gap-3">
-        <BaseCard v-for="creator in results" :key="creator.id" radius="md" padding="md">
-          <div class="flex items-center gap-4">
-            <BaseAvatar :initials="initialsFromName(creator.name)" :hue="hueFromString(creator.name)" />
-            <div class="min-w-0 flex-1">
-              <p class="text-[0.9375rem] font-medium text-[var(--color-text)] truncate">{{ creator.name }}</p>
-              <p class="text-[0.8125rem] text-[var(--color-text-muted)] truncate">
-                {{ creator.categories.join(', ') || 'Sin especificar' }} · {{ formatCompactNumber(creator.followers) }} seguidores
-              </p>
-              <p v-if="creator.minCents || creator.maxCents" class="text-[0.75rem] text-[var(--color-text-faint)] mt-0.5">
-                Tarifa orientativa: {{ creator.minCents ? formatEuros(creator.minCents) : '…' }}–{{ creator.maxCents ? formatEuros(creator.maxCents) : '…' }}
-              </p>
-            </div>
-            <BaseButton variant="secondary" size="sm" class="shrink-0" @click="openContact(creator)">Contactar</BaseButton>
-          </div>
-          <p v-if="creator.reason" class="mt-3 pt-3 border-t border-[var(--color-hairline)] text-[0.8125rem] text-[var(--color-primary-500)] flex items-start gap-1.5">
-            <Icon name="ph:sparkle-fill" class="size-4 shrink-0 mt-0.5" /> {{ creator.reason }}
-          </p>
-        </BaseCard>
-      </div>
-    </section>
+    </div>
 
     <BottomSheet v-model="sheetOpen" :title="target ? `Contactar a ${target.name}` : 'Contactar'">
       <template v-if="sheetStage === 'form'">

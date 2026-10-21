@@ -8,7 +8,8 @@
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
-    "db:seed-users": "node --env-file=.env scripts/seed-demo-users.mjs"
+    "db:seed-users": "node --env-file=.env scripts/seed-demo-users.mjs",
+    "db:seed-discover": "node --env-file=.env scripts/seed-discover-demo.mjs"
   },
   "dependencies": {
     "@iconify-json/ph": "^1.2.2",

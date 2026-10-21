@@ -8,6 +8,7 @@ export interface MyCreator {
   minRateCents: number | null
   maxRateCents: number | null
   lookingFor: string | null
+  coverUrl: string | null
 }
 
 interface CreatorFichaRow {
@@ -20,9 +21,10 @@ interface CreatorFichaRow {
   min_rate_cents: number | null
   max_rate_cents: number | null
   looking_for: string | null
+  cover_url: string | null
 }
 
-const CREATOR_SELECT = 'id, display_name, niche, stripe_connect_onboarded, bio, categories, min_rate_cents, max_rate_cents, looking_for'
+const CREATOR_SELECT = 'id, display_name, niche, stripe_connect_onboarded, bio, categories, min_rate_cents, max_rate_cents, looking_for, cover_url'
 
 function mapCreatorRow(data: CreatorFichaRow): MyCreator {
   return {
@@ -34,7 +36,8 @@ function mapCreatorRow(data: CreatorFichaRow): MyCreator {
     categories: data.categories ?? [],
     minRateCents: data.min_rate_cents,
     maxRateCents: data.max_rate_cents,
-    lookingFor: data.looking_for
+    lookingFor: data.looking_for,
+    coverUrl: data.cover_url
   }
 }
 
@@ -100,9 +103,40 @@ export function useMyCreator() {
     return creator.value
   }
 
+  /**
+   * Foto de portada de la ficha — la que se ve grande en las cards de
+   * /partner/discover. Reutiliza el bucket `post-media` (ver
+   * `useMyPosts.uploadCover` y la migración `20261021160000_discovery_cover_photos.sql`):
+   * mismo patrón, nombre de archivo estable (`profile-cover.<ext>`, `upsert`)
+   * con un `?v=` para evitar que el navegador sirva la versión cacheada.
+   */
+  async function uploadCoverPhoto(file: File) {
+    const me = creator.value ?? (await ensureCreator())
+    if (!me) throw new Error('No hay ficha de creador que actualizar.')
+
+    const client = useSupabaseClient()
+    const { data: userData, error: userError } = await client.auth.getUser()
+    if (userError || !userData.user) throw userError ?? new Error('No hay sesión activa.')
+
+    const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg'
+    const path = `${userData.user.id}/profile-cover.${ext}`
+
+    const { error: uploadError } = await client.storage.from('post-media').upload(path, file, { upsert: true, contentType: file.type })
+    if (uploadError) throw uploadError
+
+    const { data: publicUrlData } = client.storage.from('post-media').getPublicUrl(path)
+    const coverUrl = `${publicUrlData.publicUrl}?v=${Date.now()}`
+
+    const { data, error } = await client.from('creators').update({ cover_url: coverUrl } as never).eq('id', me.id).select(CREATOR_SELECT).single<CreatorFichaRow>()
+    if (error) throw error
+
+    creator.value = mapCreatorRow(data)
+    return coverUrl
+  }
+
   function reset() {
     creator.value = undefined
   }
 
-  return { creator, ensureCreator, updateFicha, reset }
+  return { creator, ensureCreator, updateFicha, uploadCoverPhoto, reset }
 }

@@ -42,6 +42,7 @@ export interface DiscoveryResult {
   minCents: number | null
   maxCents: number | null
   followers: number
+  coverUrl: string | null
   score: number
   reason: string | null
 }
@@ -54,6 +55,7 @@ interface CreatorCandidateRow {
   looking_for: string | null
   min_rate_cents: number | null
   max_rate_cents: number | null
+  cover_url: string | null
   social_accounts: { followers_count: number }[] | null
 }
 
@@ -65,6 +67,7 @@ interface PartnerCandidateRow {
   looking_for: string | null
   min_budget_cents: number | null
   max_budget_cents: number | null
+  cover_url: string | null
 }
 
 const CANDIDATE_POOL_LIMIT = 200
@@ -137,16 +140,33 @@ Devuelve ÚNICAMENTE un objeto JSON (sin texto adicional, sin markdown) con esta
 {"ranked": [{"id": "uuid del candidato", "score": 0-100, "reason": "1 frase breve en español explicando el porqué"}], "extracted_categories": ["categorías que detectas en la búsqueda, de una lista cerrada típica de nichos (moda, fitness, belleza, gaming, viajes, tecnología, etc.)"], "summary": "resumen de 1 frase de qué está pidiendo la persona, para analíticas internas"}`
 
   try {
-    const response = await $fetch<{ choices?: { message?: { content?: string } }[] }>('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-      body: { model, messages: [{ role: 'user', content: prompt }], temperature: 0.4, max_tokens: 1200 },
-      timeout: 20_000
-    })
+    const response = await $fetch<{ choices?: { message?: { content?: string } }[]; error?: { message?: string } }>(
+      'https://openrouter.ai/api/v1/chat/completions',
+      {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+        // `max_tokens` generoso a propósito (igual que predict.post.ts, pero
+        // más alto): los modelos gratuitos de OpenRouter son "reasoning"
+        // (gastan tokens pensando antes de escribir la respuesta) y aquí se
+        // les pide puntuar y justificar varios candidatos a la vez, no uno
+        // solo — con un límite bajo el JSON llega cortado a mitad del
+        // razonamiento, antes de escribirse de verdad.
+        body: { model, messages: [{ role: 'user', content: prompt }], temperature: 0.4, max_tokens: 3000 },
+        timeout: 30_000
+      }
+    )
+
+    if (response.error) {
+      console.error('[discover/search] el LLM devolvió un error (se sigue solo con el orden por filtros):', response.error.message)
+      return { ranked: [], extractedCategories: [], summary: null }
+    }
 
     const raw = response.choices?.[0]?.message?.content ?? ''
     const jsonMatch = raw.match(/\{[\s\S]*\}/)
-    if (!jsonMatch) return { ranked: [], extractedCategories: [], summary: null }
+    if (!jsonMatch) {
+      console.error(`[discover/search] la respuesta del LLM no traía JSON reconocible (se sigue solo con el orden por filtros). Longitud de la respuesta: ${raw.length}.`)
+      return { ranked: [], extractedCategories: [], summary: null }
+    }
 
     const parsed = JSON.parse(jsonMatch[0]) as Record<string, unknown>
     const ranked = Array.isArray(parsed.ranked)
@@ -195,7 +215,7 @@ export default defineEventHandler(async (event) => {
   if (viewerRole === 'creator') {
     const { data, error } = await client
       .from('partners')
-      .select('id, company_name, bio, categories, looking_for, min_budget_cents, max_budget_cents')
+      .select('id, company_name, bio, categories, looking_for, min_budget_cents, max_budget_cents, cover_url')
       .limit(CANDIDATE_POOL_LIMIT)
     if (error) throw createError({ statusCode: 500, statusMessage: error.message })
 
@@ -216,13 +236,14 @@ export default defineEventHandler(async (event) => {
       minCents: r.min_budget_cents,
       maxCents: r.max_budget_cents,
       followers: 0,
+      coverUrl: r.cover_url,
       score: heuristicScore(r.categories ?? [], filterCategories),
       reason: null
     }))
   } else {
     const { data, error } = await client
       .from('creators')
-      .select('id, display_name, bio, categories, looking_for, min_rate_cents, max_rate_cents, social_accounts(followers_count)')
+      .select('id, display_name, bio, categories, looking_for, min_rate_cents, max_rate_cents, cover_url, social_accounts(followers_count)')
       .limit(CANDIDATE_POOL_LIMIT)
     if (error) throw createError({ statusCode: 500, statusMessage: error.message })
 
@@ -243,6 +264,7 @@ export default defineEventHandler(async (event) => {
       minCents: r.min_rate_cents,
       maxCents: r.max_rate_cents,
       followers: (r.social_accounts ?? []).reduce((sum, s) => sum + (s.followers_count ?? 0), 0),
+      coverUrl: r.cover_url,
       score: heuristicScore(r.categories ?? [], filterCategories),
       reason: null
     }))
@@ -270,7 +292,11 @@ export default defineEventHandler(async (event) => {
           })
           .sort((a, b) => b.score - a.score)
         aiExtracted = { categories: evaluation.extractedCategories, summary: evaluation.summary }
+      } else {
+        console.error('[discover/search] el LLM no devolvió ningún candidato puntuado (se sigue solo con el orden por filtros).')
       }
+    } else {
+      console.error('[discover/search] modo IA pedido pero no hay OPENROUTER_API_KEY configurada (se sigue solo con el orden por filtros).')
     }
   }
 
