@@ -10,6 +10,13 @@ const showBack = computed(() => route.path.split('/').filter(Boolean).length > 1
 // pegado al valor de la primera vez que se montó esta barra.
 const { unreadCount, refresh: refreshNotifications } = useNotifications()
 refreshNotifications()
+
+// Mismo criterio para el chat, y es también el único punto de montaje fijo
+// en toda la app desde el que arrancar la suscripción Realtime una sola vez
+// por sesión de pestaña (ver startRealtime() en useChat.ts).
+const { unreadCount: chatUnreadCount, refreshUnreadCount: refreshChatUnread, startRealtime } = useChat()
+refreshChatUnread()
+startRealtime()
 </script>
 
 <template>
@@ -27,6 +34,18 @@ refreshNotifications()
       <h1 class="font-display text-[1.375rem] md:text-[1.75rem] text-[var(--color-text)] truncate">{{ title }}</h1>
       <p v-if="subtitle" class="text-[0.8125rem] text-[var(--color-text-muted)] truncate">{{ subtitle }}</p>
     </div>
+
+    <ProfileSearchBar />
+
+    <NuxtLink to="/chat" aria-label="Chat" class="relative shrink-0 size-9 flex items-center justify-center rounded-full text-[var(--color-text-muted)] hover:bg-[var(--color-ink-overlay)] hover:text-[var(--color-text)]">
+      <Icon name="ph:chat-circle-fill" class="size-[1.15rem]" />
+      <span
+        v-if="chatUnreadCount"
+        class="absolute top-1 right-1 min-w-[0.9375rem] h-[0.9375rem] px-1 rounded-full bg-[var(--color-status-alert)] text-white text-[0.625rem] font-semibold leading-[0.9375rem] text-center"
+      >
+        {{ chatUnreadCount > 9 ? '9+' : chatUnreadCount }}
+      </span>
+    </NuxtLink>
 
     <NuxtLink to="/inbox" aria-label="Bandeja de entrada" class="relative shrink-0 size-9 flex items-center justify-center rounded-full text-[var(--color-text-muted)] hover:bg-[var(--color-ink-overlay)] hover:text-[var(--color-text)]">
       <Icon name="ph:tray-fill" class="size-[1.15rem]" />

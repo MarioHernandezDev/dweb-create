@@ -1,15 +1,46 @@
 <script setup lang="ts">
 import { DISCOVERY_CATEGORIES } from '~/utils/categories'
 import { coverArtFromString } from '~/utils/avatar'
+import type { Package } from '~/composables/usePackages'
+import type { ChatPrivacy } from '~/types'
 
 useHead({ title: 'Perfil' })
 
 const user = useSupabaseUser()
 const { logout } = useLogout()
+const { resolveMyProfileId } = useMyProfileId()
 
 const route = useRoute()
 const { subscription, connectOnboarded, redirecting, ensureLoaded, refresh: refreshBilling, subscribe, connectPayouts } = useMyBilling()
 const { creator, ensureCreator, updateFicha, uploadCoverPhoto } = useMyCreator()
+
+// `user.value?.id` puede seguir vacío justo al cargar la página (ver
+// role-guard.global.ts) — se resuelve de forma fiable con useMyProfileId.
+const myProfileId = await resolveMyProfileId()
+
+const { myPackages, ensureMyPackages, deletePackage } = usePackages()
+if (myProfileId) await ensureMyPackages(myProfileId)
+
+const packageSheetOpen = ref(false)
+const editingPackage = ref<Package | null>(null)
+
+function openNewPackage() {
+  editingPackage.value = null
+  packageSheetOpen.value = true
+}
+
+function openEditPackage(pkg: Package) {
+  editingPackage.value = pkg
+  packageSheetOpen.value = true
+}
+
+const { chatPrivacy, ensureChatPrivacy, setChatPrivacy } = useChatSettings()
+await ensureChatPrivacy()
+
+const chatPrivacyOptions: { value: ChatPrivacy; label: string; description: string }[] = [
+  { value: 'everyone', label: 'Cualquiera', description: 'Cualquier perfil te puede escribir directamente.' },
+  { value: 'accepted_offers_only', label: 'Solo tras oferta aceptada', description: 'Solo podrán escribirte en texto libre quienes ya tengan una oferta aceptada contigo. Aun así, cualquiera te puede mandar una oferta.' }
+]
 
 // Al volver de Stripe (Checkout o Connect) los datos ya cambiaron en el
 // servidor vía webhook — hay que refrescar de verdad, no fiarse de la
@@ -165,6 +196,48 @@ async function saveFicha() {
             </BaseButton>
             <span v-if="fichaSaved" class="text-[0.8125rem] text-[var(--color-status-published)]">Guardado.</span>
           </div>
+        </BaseCard>
+      </section>
+
+      <section class="mb-6">
+        <div class="flex items-center justify-between mb-2 px-1">
+          <p class="text-[0.8125rem] font-medium text-[var(--color-text-muted)]">Tus paquetes</p>
+          <button type="button" class="text-[0.8125rem] font-medium text-[var(--color-primary-500)]" @click="openNewPackage">Añadir</button>
+        </div>
+        <p class="text-[0.75rem] text-[var(--color-text-faint)] mb-3 px-1">Lo que ofreces — un partner podrá hacer una oferta sobre cualquiera de ellos.</p>
+        <EmptyState
+          v-if="!myPackages?.length"
+          icon="ph:package" title="Sin paquetes todavía"
+          description="Crea tu primer paquete para que los partners puedan ofertar sobre él."
+        />
+        <div v-else class="flex flex-col gap-2.5">
+          <PackageCard
+            v-for="pkg in myPackages" :key="pkg.id" :pkg="pkg" editable
+            @edit="openEditPackage" @delete="deletePackage(pkg.id)"
+          />
+        </div>
+        <PackageFormSheet v-if="myProfileId" v-model="packageSheetOpen" :profile-id="myProfileId" role="creator" :editing="editingPackage" />
+      </section>
+
+      <section class="mb-6">
+        <p class="text-[0.8125rem] font-medium text-[var(--color-text-muted)] mb-2 px-1">Privacidad del chat</p>
+        <BaseCard radius="lg" padding="none" class="divide-y divide-[var(--color-hairline)] overflow-hidden">
+          <button
+            v-for="opt in chatPrivacyOptions" :key="opt.value" type="button"
+            class="w-full flex items-start gap-3 px-5 py-4 text-left"
+            @click="setChatPrivacy(opt.value)"
+          >
+            <span
+              class="mt-0.5 shrink-0 size-4 rounded-full border-2 flex items-center justify-center"
+              :class="chatPrivacy === opt.value ? 'border-[var(--color-primary-500)]' : 'border-[var(--color-hairline-strong)]'"
+            >
+              <span v-if="chatPrivacy === opt.value" class="size-2 rounded-full bg-[var(--color-primary-500)]" />
+            </span>
+            <span>
+              <p class="text-[0.9375rem] text-[var(--color-text)]">{{ opt.label }}</p>
+              <p class="text-[0.75rem] text-[var(--color-text-faint)] mt-0.5">{{ opt.description }}</p>
+            </span>
+          </button>
         </BaseCard>
       </section>
 

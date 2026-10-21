@@ -1,5 +1,7 @@
 export type Role = 'creator' | 'partner'
 
+export type ChatPrivacy = 'everyone' | 'accepted_offers_only'
+
 export type PostStatus =
   | 'idea'
   | 'in_production'

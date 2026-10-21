@@ -11,6 +11,11 @@ const props = defineProps<{
 
 defineEmits<{ contact: [] }>()
 
+const router = useRouter()
+function openProfile() {
+  router.push(`/profile/${props.kind}/${props.result.id}`)
+}
+
 const coverArt = computed(() => coverArtFromString(props.result.id))
 const icon = computed(() => (props.kind === 'creator' ? 'ph:user-focus' : 'ph:storefront-fill'))
 const topCategories = computed(() => props.result.categories.slice(0, 3))
@@ -24,7 +29,7 @@ const budgetLabel = computed(() => {
 </script>
 
 <template>
-  <BaseCard radius="lg" padding="none" class="overflow-hidden flex flex-col">
+  <BaseCard radius="lg" padding="none" interactive class="overflow-hidden flex flex-col" @click="openProfile">
     <div class="relative h-52">
       <img v-if="result.coverUrl" :src="result.coverUrl" alt="" class="absolute inset-0 size-full object-cover">
       <div
@@ -70,7 +75,7 @@ const budgetLabel = computed(() => {
         <Icon name="ph:sparkle-fill" class="size-4 shrink-0 mt-0.5" /> {{ result.reason }}
       </p>
 
-      <BaseButton variant="secondary" size="sm" class="w-full mt-auto" @click="$emit('contact')">{{ ctaLabel }}</BaseButton>
+      <BaseButton variant="secondary" size="sm" class="w-full mt-auto" @click.stop="$emit('contact')">{{ ctaLabel }}</BaseButton>
     </div>
   </BaseCard>
 </template>
