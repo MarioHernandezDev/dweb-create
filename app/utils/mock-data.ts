@@ -1,16 +1,9 @@
 import type {
-  MetricSummary,
   Platform,
+  SocialAccount,
   SparklinePoint,
   Suggestion
 } from '~/types'
-
-export const metricsByPlatform: MetricSummary[] = [
-  { platform: 'tiktok', views: 512_900, likes: 48_760, comments: 3_410, shares: 5_220, deltaPct: 24.1 },
-  { platform: 'youtube', views: 68_200, likes: 4_120, comments: 540, shares: 210, deltaPct: -3.6 },
-  { platform: 'x', views: 31_500, likes: 1_890, comments: 320, shares: 410, deltaPct: 5.2 },
-  { platform: 'instagram', views: 284_300, likes: 21_540, comments: 1_280, shares: 960, deltaPct: 12.4 }
-]
 
 export const engagementSeries: SparklinePoint[] = [
   { label: 'L', value: 42 },
@@ -22,13 +15,25 @@ export const engagementSeries: SparklinePoint[] = [
   { label: 'D', value: 81 }
 ]
 
+// Consejos GENÉRICOS, sin ninguna cifra ni dato inventado — se usan solo
+// cuando la IA opcional (ver docs/8-AI-SUGGESTIONS-SETUP.md) no está
+// configurada o falló, así que no hay sugerencias de verdad para ESTE post.
+// Antes incluían estadísticas concretas fabricadas ("18% más de alcance en
+// tu nicho", "tu franja de mayor engagement histórico") que parecían datos
+// reales sin serlo — SuccessScoreCard.vue las marca además como "Consejos
+// generales" para que quede claro que no son un análisis de esta publicación.
 export const suggestionsForDraft: Suggestion[] = [
-  { kind: 'caption', text: 'Abre con una pregunta directa: "¿Cuántas apps crees que necesitas para ser productivo?"' },
-  { kind: 'caption', text: 'Cierra con una invitación clara a guardar el post, no solo a comentar.' },
-  { kind: 'hashtag', text: 'Añade #rutinamatutina, tiene un 18% más de alcance esta semana en tu nicho.' },
-  { kind: 'schedule', text: 'Publica el jueves entre 18:00 y 20:00: es tu franja de mayor engagement histórico.' }
+  { kind: 'caption', text: 'Abre con una pregunta directa para generar curiosidad desde la primera línea.' },
+  { kind: 'caption', text: 'Cierra con una invitación clara a guardar o compartir el post, no solo a comentar.' },
+  { kind: 'hashtag', text: 'Combina 2-3 hashtags de nicho con 1-2 más genéricos — ayuda al descubrimiento sin perder relevancia.' },
+  { kind: 'schedule', text: 'Publica en la franja horaria donde suele estar más activa tu audiencia habitual.' }
 ]
 
+// Orden fijo (ver main.css, "Paleta categórica validada") — nunca
+// reordenar: define cómo se listan las redes en Redes/Métricas y en qué
+// orden se comparan entre sí. `useMySocialAccounts.merge()` depende de este
+// mismo orden (`Object.keys(platformMeta)`) para que las 6 salgan siempre
+// igual, conectadas o no.
 export const platformMeta: Record<Platform, { label: string; icon: string; colorVar: string }> = {
   tiktok: { label: 'TikTok', icon: 'ph:tiktok-logo-fill', colorVar: 'var(--color-platform-tiktok)' },
   youtube: { label: 'YouTube', icon: 'ph:youtube-logo-fill', colorVar: 'var(--color-platform-youtube)' },
@@ -36,6 +41,21 @@ export const platformMeta: Record<Platform, { label: string; icon: string; color
   instagram: { label: 'Instagram', icon: 'ph:instagram-logo-fill', colorVar: 'var(--color-platform-instagram)' },
   facebook: { label: 'Facebook', icon: 'ph:facebook-logo-fill', colorVar: 'var(--color-platform-facebook)' },
   linkedin: { label: 'LinkedIn', icon: 'ph:linkedin-logo-fill', colorVar: 'var(--color-platform-linkedin)' }
+}
+
+// Las únicas plataformas con OAuth real detrás (ver useMySocialAccounts.ts,
+// docs/9-INSTAGRAM-OAUTH-SETUP.md y docs/10-YOUTUBE-OAUTH-SETUP.md). El
+// resto, aunque aparezcan "conectadas", son un marcador sin verificar —
+// centralizado aquí para no repetir la lista en cada pantalla que necesite
+// distinguirlas (Redes, Métricas).
+export const VERIFIED_SOCIAL_PLATFORMS: Platform[] = ['instagram', 'youtube']
+
+export type SocialAccountState = 'connected' | 'unverified' | 'disconnected'
+
+/** El mismo trío de estados que ya usan SocialAccountRow.vue y PlatformStatCard.vue — centralizado para no repetirlo. */
+export function socialAccountState(acc: SocialAccount): SocialAccountState {
+  if (!acc.connected) return 'disconnected'
+  return VERIFIED_SOCIAL_PLATFORMS.includes(acc.platform) ? 'connected' : 'unverified'
 }
 
 export function formatCompactNumber(value: number): string {

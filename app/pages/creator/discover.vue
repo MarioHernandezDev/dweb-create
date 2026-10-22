@@ -77,7 +77,7 @@ async function send() {
         <SegmentedTabs v-model="mode" :options="modeOptions" />
         <button
           type="button"
-          class="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-[var(--radius-xs)] text-[0.8125rem] font-medium border border-[var(--color-hairline)] text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors"
+          class="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-[var(--radius-xs)] text-[0.8125rem] font-medium border border-[var(--color-hairline)] text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:border-[var(--color-hairline-strong)] hover:bg-[var(--color-ink-overlay)] transition-colors"
           @click="filtersOpen = !filtersOpen"
         >
           <Icon name="ph:sliders-horizontal-bold" class="size-4" />
@@ -101,7 +101,7 @@ async function send() {
             class="px-3 h-8 rounded-full text-[0.8125rem] font-medium border transition-colors duration-150"
             :class="selectedCategories.includes(cat)
               ? 'bg-[var(--color-primary-500)]/15 border-[var(--color-primary-500)]/50 text-[var(--color-primary-500)]'
-              : 'bg-[var(--color-ink-raised)] border-[var(--color-hairline)] text-[var(--color-text-muted)]'"
+              : 'bg-[var(--color-ink-raised)] border-[var(--color-hairline)] text-[var(--color-text-muted)] hover:border-[var(--color-primary-500)]/40 hover:text-[var(--color-primary-600)]'"
             @click="toggleCategory(cat)"
           >
             {{ cat }}

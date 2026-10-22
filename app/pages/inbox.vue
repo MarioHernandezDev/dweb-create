@@ -56,7 +56,7 @@ async function open(n: AppNotification) {
     <div v-else class="flex flex-col gap-2 md:max-w-xl">
       <button v-for="n in notifications" :key="n.id" type="button" class="text-left" @click="open(n)">
         <BaseCard
-          radius="lg" padding="md" class="flex items-start gap-3"
+          radius="lg" padding="md" interactive class="flex items-start gap-3"
           :class="!n.readAt && 'border-[var(--color-primary-500)]/30 bg-[var(--color-primary-500)]/[0.06]'"
         >
           <span class="flex items-center justify-center size-9 rounded-full bg-[var(--color-ink-overlay)] text-[var(--color-primary-500)] shrink-0">

@@ -23,9 +23,36 @@ const visible = computed(() => (tab.value === 'pending' ? pending.value : histor
 
 const detailOpen = ref(false)
 const detailReq = ref<CollabRequest | null>(null)
+const actionError = ref('')
 function openDetail(req: CollabRequest) {
   detailReq.value = req
+  actionError.value = ''
   detailOpen.value = true
+}
+
+// Antes `accept`/`decline` se llamaban sin esperar su resultado y la hoja
+// se cerraba al instante — si el update a Supabase fallaba, parecía que
+// había funcionado sin haber cambiado nada de verdad.
+async function handleAccept(amount: number | null) {
+  if (!detailReq.value) return
+  actionError.value = ''
+  try {
+    await accept(detailReq.value.id, amount)
+    detailOpen.value = false
+  } catch (e) {
+    actionError.value = e instanceof Error ? e.message : 'No se ha podido aceptar la solicitud. Inténtalo de nuevo.'
+  }
+}
+
+async function handleDecline() {
+  if (!detailReq.value) return
+  actionError.value = ''
+  try {
+    await decline(detailReq.value.id)
+    detailOpen.value = false
+  } catch (e) {
+    actionError.value = e instanceof Error ? e.message : 'No se ha podido rechazar la solicitud. Inténtalo de nuevo.'
+  }
 }
 </script>
 
@@ -107,9 +134,9 @@ function openDetail(req: CollabRequest) {
         <NegotiationPanel
           :collaboration-id="detailReq.id" :initial-budget-cents="detailReq.budgetCents" :status="detailReq.status"
           my-role="creator" :initiated-by="detailReq.initiatedBy"
-          @accept="(amount) => { accept(detailReq!.id, amount); detailOpen = false }"
-          @decline="() => { decline(detailReq!.id); detailOpen = false }"
+          @accept="handleAccept" @decline="handleDecline"
         />
+        <p v-if="actionError" class="text-[0.8125rem] text-[var(--color-status-alert)] mt-3">{{ actionError }}</p>
       </template>
     </BottomSheet>
   </AppShell>

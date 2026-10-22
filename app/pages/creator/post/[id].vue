@@ -21,22 +21,31 @@ useHead({ title: post.value.title })
 
 const title = ref(post.value.title)
 const caption = ref(post.value.caption)
-const dirty = computed(() => title.value !== post.value?.title || caption.value !== post.value?.caption)
+const dueDate = ref(post.value.dueDate)
+const dirty = computed(() => title.value !== post.value?.title || caption.value !== post.value?.caption || dueDate.value !== post.value?.dueDate)
 const saving = ref(false)
+const todayIso = new Date().toISOString().slice(0, 10)
 
 async function save() {
   if (!post.value) return
   saving.value = true
   try {
-    await updatePost(post.value.id, { title: title.value, caption: caption.value })
+    await updatePost(post.value.id, { title: title.value, caption: caption.value, dueDate: dueDate.value })
   } finally {
     saving.value = false
   }
 }
 
+const { confirm } = useConfirm()
 const deleting = ref(false)
 async function remove() {
   if (!post.value) return
+  const ok = await confirm({
+    title: `¿Borrar "${post.value.title}"?`,
+    message: 'Se borrará permanentemente, junto con su predicción de éxito si la tenía.',
+    confirmLabel: 'Borrar', tone: 'danger', icon: 'ph:trash-fill'
+  })
+  if (!ok) return
   deleting.value = true
   try {
     await deletePost(post.value.id)
@@ -123,6 +132,13 @@ async function predict() {
               class="w-full px-3.5 py-2.5 rounded-[var(--radius-sm)] bg-[var(--color-ink-overlay)] border border-[var(--color-hairline)] text-[0.9375rem] text-[var(--color-text)] focus:outline-none focus:border-[var(--color-primary-500)]/60 resize-none"
             />
           </div>
+          <div>
+            <label class="block text-[0.8125rem] font-medium text-[var(--color-text-muted)] mb-1.5" for="post-due-date">Fecha de entrega</label>
+            <input
+              id="post-due-date" v-model="dueDate" type="date" :min="todayIso"
+              class="w-full h-11 px-3.5 rounded-[var(--radius-sm)] bg-[var(--color-ink-overlay)] border border-[var(--color-hairline)] text-[0.9375rem] text-[var(--color-text)] focus:outline-none focus:border-[var(--color-primary-500)]/60"
+            >
+          </div>
           <p v-if="post.hashtags.length" class="flex flex-wrap gap-1.5">
             <span v-for="tag in post.hashtags" :key="tag" class="text-[0.8125rem] text-[var(--color-text-faint)]">{{ tag }}</span>
           </p>
@@ -139,7 +155,7 @@ async function predict() {
       <section class="mt-6 lg:mt-0">
         <SuccessScoreCard
           v-if="post.successScore" :score="post.successScore" :confidence="post.confidence ?? 0.82"
-          :suggestions="post.suggestions ?? suggestionsForDraft"
+          :suggestions="post.suggestions ?? suggestionsForDraft" :generic-suggestions="!post.suggestions"
         />
         <BaseCard v-else radius="lg" padding="lg" class="flex items-center justify-between gap-4 lg:flex-col lg:items-start">
           <div>

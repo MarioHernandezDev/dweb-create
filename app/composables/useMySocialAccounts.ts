@@ -15,12 +15,14 @@ interface SocialAccountRow {
  * para que la pantalla siga mostrando las 6, conectadas o no, como antes.
  *
  * Conectar de verdad vía OAuth es Fase 4 (ver docs/3-ML-PIPELINE.md). Para
- * Instagram ya está hecho (ver docs/9-INSTAGRAM-OAUTH-SETUP.md): "Conectar"
- * manda el navegador entero a `/api/auth/instagram/start`, que termina
- * escribiendo la fila de verdad (con token cifrado) tras el OAuth. Para el
- * resto de plataformas, sin OAuth todavía, "Conectar" sigue creando la fila
- * sin token y "..." la borra — un camino de escritura real contra Supabase,
- * pero sin cuenta de verdad detrás.
+ * Instagram (docs/9-INSTAGRAM-OAUTH-SETUP.md) y YouTube
+ * (docs/10-YOUTUBE-OAUTH-SETUP.md) ya está hecho: "Conectar" manda el
+ * navegador entero a `/api/auth/<red>/start`, que termina escribiendo la
+ * fila de verdad (con token cifrado) tras el OAuth. Para TikTok y X, sin
+ * OAuth todavía, "Conectar" sigue creando la fila sin token y "..." la
+ * borra — un camino de escritura real contra Supabase, pero sin cuenta de
+ * verdad detrás (ver el aviso que se le muestra al usuario antes de hacerlo,
+ * en creator/socials.vue).
  */
 export function useMySocialAccounts() {
   const client = useSupabaseClient()
@@ -65,11 +67,18 @@ export function useMySocialAccounts() {
     return accounts.value
   }
 
+  // Plataformas con OAuth real ya montado — "Conectar" sale de la app
+  // entera hacia el proveedor (no es un fetch, es una navegación real) en
+  // vez de insertar una fila vacía. Ver server/api/auth/<red>/start.get.ts.
+  const OAUTH_PLATFORMS: Partial<Record<SocialAccount['platform'], string>> = {
+    instagram: '/api/auth/instagram/start',
+    youtube: '/api/auth/youtube/start'
+  }
+
   async function connect(platform: SocialAccount['platform']) {
-    if (platform === 'instagram') {
-      // Sale de la app entera hacia instagram.com — no es un fetch, es una
-      // navegación real (ver server/api/auth/instagram/start.get.ts).
-      await navigateTo('/api/auth/instagram/start', { external: true })
+    const startUrl = OAUTH_PLATFORMS[platform]
+    if (startUrl) {
+      await navigateTo(startUrl, { external: true })
       return
     }
 
@@ -83,9 +92,16 @@ export function useMySocialAccounts() {
 
   // Sin cron todavía que lo haga solo (ver docs/9-INSTAGRAM-OAUTH-SETUP.md
   // §5) — este es el único sitio donde el nº de seguidores se refresca tras
-  // la conexión inicial.
-  async function syncInstagram() {
-    await $fetch('/api/social/instagram-sync', { method: 'POST' })
+  // la conexión inicial, para las plataformas con OAuth real.
+  const SYNC_ENDPOINTS: Partial<Record<SocialAccount['platform'], string>> = {
+    instagram: '/api/social/instagram-sync',
+    youtube: '/api/social/youtube-sync'
+  }
+
+  async function sync(platform: SocialAccount['platform']) {
+    const endpoint = SYNC_ENDPOINTS[platform]
+    if (!endpoint) return
+    await $fetch(endpoint, { method: 'POST' })
     await refresh()
   }
 
@@ -98,5 +114,5 @@ export function useMySocialAccounts() {
     await refresh()
   }
 
-  return { accounts, loaded, refresh, ensureLoaded, connect, disconnect, syncInstagram }
+  return { accounts, loaded, refresh, ensureLoaded, connect, disconnect, sync }
 }

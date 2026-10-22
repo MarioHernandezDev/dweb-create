@@ -34,6 +34,7 @@ function mapRow(row: PostRow): Post {
     platform: row.platform,
     status: row.status,
     dueInDays,
+    dueDate: row.due_date.slice(0, 10),
     hashtags: row.metadata?.hashtags ?? [],
     cover: coverFromId(row.id),
     mediaUrl: row.media_url

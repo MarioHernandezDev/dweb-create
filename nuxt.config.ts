@@ -78,9 +78,16 @@ export default defineNuxtConfig({
     instagramAppId: process.env.INSTAGRAM_APP_ID,
     instagramAppSecret: process.env.INSTAGRAM_APP_SECRET,
     instagramRedirectUri: process.env.INSTAGRAM_REDIRECT_URI,
+    // OAuth real de YouTube (Fase 4) — ver docs/10-YOUTUBE-OAUTH-SETUP.md.
+    // Mismo criterio que Instagram: sin estos 3, "Conectar" en YouTube da un
+    // 500 claro en vez de un flujo roto.
+    youtubeClientId: process.env.YOUTUBE_CLIENT_ID,
+    youtubeClientSecret: process.env.YOUTUBE_CLIENT_SECRET,
+    youtubeRedirectUri: process.env.YOUTUBE_REDIRECT_URI,
     // Clave simétrica (32 bytes en base64) para cifrar los tokens de redes
     // sociales en `social_accounts` y para firmar el `state` del OAuth. Ver
-    // docs/9-INSTAGRAM-OAUTH-SETUP.md para cómo generarla.
+    // docs/9-INSTAGRAM-OAUTH-SETUP.md para cómo generarla. Compartida entre
+    // todas las plataformas — no una por red.
     socialTokenEncryptionKey: process.env.SOCIAL_TOKEN_ENCRYPTION_KEY,
     // Panel de admin (/admin) — contraseña única compartida por el equipo,
     // sin cuenta de Supabase de por medio a propósito (ver

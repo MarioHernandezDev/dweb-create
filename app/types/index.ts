@@ -57,21 +57,14 @@ export interface Post {
   platform: Platform
   status: PostStatus
   dueInDays: number
+  /** `due_date` en bruto (fecha, "YYYY-MM-DD") — para poder editarla de verdad en un `<input type="date">`; `dueInDays` sigue siendo lo que usa el resto de la UI para agrupar/ordenar. */
+  dueDate: string
   hashtags: string[]
   cover: CoverArt
   mediaUrl?: string | null
   successScore?: number
   confidence?: number
   suggestions?: Suggestion[]
-}
-
-export interface MetricSummary {
-  platform: Platform
-  views: number
-  likes: number
-  comments: number
-  shares: number
-  deltaPct: number
 }
 
 export interface SparklinePoint {

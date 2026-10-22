@@ -23,6 +23,7 @@ export function useMyBilling() {
   const connectOnboarded = useState<boolean>('my-connect-onboarded', () => false)
   const loaded = useState<boolean>('my-subscription-loaded', () => false)
   const redirecting = useState<boolean>('my-billing-redirecting', () => false)
+  const redirectError = useState<string>('my-billing-redirect-error', () => '')
 
   async function refresh() {
     // `getUser()` en vez de `useSupabaseUser().value`: ese ref lo rellena
@@ -68,23 +69,31 @@ export function useMyBilling() {
 
   async function subscribe(planId: 'pro') {
     redirecting.value = true
+    redirectError.value = ''
     try {
       const { url } = await $fetch('/api/stripe/create-checkout-session', { method: 'POST', body: { planId } })
       await navigateTo(url, { external: true })
-    } finally {
+    } catch (err) {
+      console.error('[useMyBilling] fallo al iniciar el checkout:', err)
+      // Antes, si este $fetch fallaba, el botón solo dejaba de girar sin
+      // ningún aviso — parecía que no había pasado nada en vez de un error.
+      redirectError.value = 'No se ha podido abrir el pago. Inténtalo de nuevo.'
       redirecting.value = false
     }
   }
 
   async function connectPayouts() {
     redirecting.value = true
+    redirectError.value = ''
     try {
       const { url } = await $fetch('/api/stripe/connect/account-link', { method: 'POST' })
       await navigateTo(url, { external: true })
-    } finally {
+    } catch (err) {
+      console.error('[useMyBilling] fallo al abrir Stripe Connect:', err)
+      redirectError.value = 'No se ha podido conectar la cuenta de pagos. Inténtalo de nuevo.'
       redirecting.value = false
     }
   }
 
-  return { subscription, loaded, connectOnboarded, redirecting, refresh, ensureLoaded, subscribe, connectPayouts }
+  return { subscription, loaded, connectOnboarded, redirecting, redirectError, refresh, ensureLoaded, subscribe, connectPayouts }
 }

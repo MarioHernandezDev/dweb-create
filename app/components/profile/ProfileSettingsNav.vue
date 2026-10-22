@@ -29,7 +29,7 @@ defineEmits<{ 'update:modelValue': [id: string] }>()
       class="shrink-0 inline-flex items-center gap-1.5 px-3.5 h-9 rounded-full text-[0.8125rem] font-medium border transition-colors duration-150"
       :class="modelValue === tab.id
         ? 'bg-[var(--color-primary-500)]/15 border-[var(--color-primary-500)]/50 text-[var(--color-primary-500)]'
-        : 'bg-[var(--color-ink-overlay)] border-[var(--color-hairline)] text-[var(--color-text-muted)]'"
+        : 'bg-[var(--color-ink-overlay)] border-[var(--color-hairline)] text-[var(--color-text-muted)] hover:border-[var(--color-primary-500)]/40 hover:text-[var(--color-primary-600)]'"
       @click="$emit('update:modelValue', tab.id)"
     >
       <Icon :name="tab.icon" class="size-3.5 shrink-0" />

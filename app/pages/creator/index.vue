@@ -1,21 +1,27 @@
 <script setup lang="ts">
-import { engagementSeries } from '~/utils/mock-data'
+import { formatCompactNumber } from '~/utils/mock-data'
 
 useHead({ title: 'Hoy' })
 
 const router = useRouter()
 const { posts, ensureLoaded } = useMyPosts()
 const { pendingCount: pendingRequests, ensureLoaded: ensureRequestsLoaded } = useCollabRequests()
+// Seguidores reales de tus redes conectadas — mismo dato (y mismo motivo
+// honesto) que ya usa metrics.vue: nada de "interacciones"/"racha" fijas,
+// porque no hay ninguna fuente real detrás todavía (alcance/interacciones
+// necesitan el permiso de insights de Instagram, pendiente de Meta).
+const { accounts: socialAccounts, ensureLoaded: ensureSocialsLoaded } = useMySocialAccounts()
 const composerOpen = ref(false)
 
-// En paralelo, no en serie — son dos consultas independientes, esperarlas
+// En paralelo, no en serie — son tres consultas independientes, esperarlas
 // una tras otra solo suma su latencia de red sin motivo.
-await Promise.all([ensureLoaded(), ensureRequestsLoaded()])
+await Promise.all([ensureLoaded(), ensureRequestsLoaded(), ensureSocialsLoaded()])
 
 const today = computed(() => posts.value.filter((p) => p.dueInDays === 0))
 const upcoming = computed(() => posts.value.filter((p) => p.dueInDays > 0 && p.dueInDays <= 3))
 const overdue = computed(() => posts.value.filter((p) => p.status === 'overdue'))
-const streak = 6
+const connectedFollowers = computed(() => socialAccounts.value.filter((a) => a.connected).reduce((sum, a) => sum + a.followers, 0))
+const hasConnectedSocials = computed(() => socialAccounts.value.some((a) => a.connected))
 
 // El objetivo semanal (nº de publicaciones/semana) es del perfil del
 // creador en Supabase en el futuro; de momento, fijo, como el resto de la
@@ -35,10 +41,6 @@ const quickActions = [
   <AppShell role="creator" title="Hoy">
     <section class="mb-6">
       <h1 class="font-display text-[2rem] md:text-[2.5rem] leading-[1.08] text-[var(--color-text)]">¡Vamos con fuerza hoy!</h1>
-      <p class="mt-1.5 inline-flex items-center gap-1.5 text-[0.9375rem] text-[var(--color-status-production)]">
-        <Icon name="ph:fire-fill" class="size-4" />
-        Racha de {{ streak }} días publicando
-      </p>
     </section>
 
     <section class="mb-6">
@@ -105,14 +107,15 @@ const quickActions = [
 
     <section class="mb-8">
       <h2 class="font-display text-[1.25rem] text-[var(--color-text)] mb-3.5">Resumen de hoy</h2>
-      <div class="grid grid-cols-2 gap-3">
+      <div v-if="hasConnectedSocials" class="grid grid-cols-2 gap-3">
         <div class="nx-stagger-in" style="--stagger-i: 0">
-          <StatTile label="Interacciones, 7 días" value="24.8K" :delta-pct="14.2" :trend="engagementSeries.map((p) => p.value)" />
-        </div>
-        <div class="nx-stagger-in" style="--stagger-i: 1">
-          <StatTile label="Seguidores totales" value="170.5K" :delta-pct="4.1" :trend="engagementSeries.map((p) => p.value * 0.8)" />
+          <StatTile label="Seguidores totales" :value="formatCompactNumber(connectedFollowers)" />
         </div>
       </div>
+      <BaseCard v-else radius="md" padding="md" class="flex items-center justify-between gap-3 md:max-w-md">
+        <p class="text-[0.875rem] text-[var(--color-text-muted)]">Conecta una red para ver tus métricas reales aquí.</p>
+        <BaseButton variant="secondary" size="sm" to="/creator/socials">Conectar</BaseButton>
+      </BaseCard>
     </section>
 
     <section>

@@ -57,6 +57,10 @@ export function useOffers() {
   // — compartido entre todas las OfferCard de un mismo hilo, para no repetir
   // una consulta idéntica por cada tarjeta que referencie el mismo paquete.
   const packageTitleCache = useState<Record<string, string>>('offers-package-title-cache', () => ({}))
+  // Cuántas ofertas pendientes tiene CADA paquete propio — sin esto, saber
+  // si un paquete concreto tiene algo esperando respuesta exigía ir a /chat
+  // y revisar manualmente uno por uno (ver PackageCard.vue, que lo pinta).
+  const pendingCountByPackage = useState<Record<string, number>>('offers-pending-count-by-package', () => ({}))
 
   async function ensureOffer(id: string) {
     if (offersById.value[id]) return offersById.value[id]
@@ -116,5 +120,29 @@ export function useOffers() {
     return title
   }
 
-  return { offersById, responding, creating, ensureOffer, createOffer, respondOffer, setOffer, resolvePackageTitle, mapOfferRow: mapRow }
+  /** Recuenta cuántas ofertas pendientes tiene cada paquete propio — se llama al entrar a la pestaña Paquetes/Necesidades, igual que ensureMyPackages. */
+  async function refreshPendingCounts(myProfileId: string) {
+    const { data, error } = await client.from('offers').select('package_id').eq('to_profile_id', myProfileId).eq('status', 'pending')
+    if (error) {
+      console.error('[useOffers] fallo al contar ofertas pendientes por paquete:', error.message)
+      return
+    }
+    const counts: Record<string, number> = {}
+    for (const row of (data ?? []) as { package_id: string }[]) counts[row.package_id] = (counts[row.package_id] ?? 0) + 1
+    pendingCountByPackage.value = counts
+  }
+
+  return {
+    offersById,
+    responding,
+    creating,
+    pendingCountByPackage,
+    ensureOffer,
+    createOffer,
+    respondOffer,
+    setOffer,
+    resolvePackageTitle,
+    refreshPendingCounts,
+    mapOfferRow: mapRow
+  }
 }

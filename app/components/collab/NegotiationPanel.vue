@@ -43,17 +43,24 @@ const counterMessage = ref('')
 // sin querer desde el pulgar en móvil (ver app/pages/creator/requests.vue).
 const confirmingDecline = ref(false)
 
+const counterError = ref('')
+
 async function sendCounter() {
   if (!counterEuros.value || counterEuros.value <= 0) return
-  await proposeOffer({
-    collaborationId: props.collaborationId,
-    proposedBy: props.myRole,
-    budgetCents: Math.round(counterEuros.value * 100),
-    message: counterMessage.value || undefined
-  })
-  countering.value = false
-  counterEuros.value = null
-  counterMessage.value = ''
+  counterError.value = ''
+  try {
+    await proposeOffer({
+      collaborationId: props.collaborationId,
+      proposedBy: props.myRole,
+      budgetCents: Math.round(counterEuros.value * 100),
+      message: counterMessage.value || undefined
+    })
+    countering.value = false
+    counterEuros.value = null
+    counterMessage.value = ''
+  } catch (e) {
+    counterError.value = e instanceof Error ? e.message : 'No se ha podido enviar la contraoferta. Inténtalo de nuevo.'
+  }
 }
 
 const reportOpen = ref(false)
@@ -67,9 +74,16 @@ const reportReasons: { value: ReportReason; label: string }[] = [
   { value: 'other', label: 'Otro motivo' }
 ]
 
+const reportError = ref('')
+
 async function sendReport() {
-  await reportCollaboration(props.collaborationId, reportReason.value, reportDetail.value || undefined)
-  reportSent.value = true
+  reportError.value = ''
+  try {
+    await reportCollaboration(props.collaborationId, reportReason.value, reportDetail.value || undefined)
+    reportSent.value = true
+  } catch (e) {
+    reportError.value = e instanceof Error ? e.message : 'No se ha podido enviar el reporte. Inténtalo de nuevo.'
+  }
 }
 </script>
 
@@ -116,6 +130,7 @@ async function sendReport() {
               Enviar contraoferta
             </BaseButton>
           </div>
+          <p v-if="counterError" class="text-[0.75rem] text-[var(--color-status-alert)]">{{ counterError }}</p>
         </div>
 
         <div v-else-if="confirmingDecline" class="flex items-center gap-2.5 mb-4">
@@ -131,7 +146,7 @@ async function sendReport() {
               Aceptar{{ currentAmount ? ` · ${formatEuros(currentAmount)}` : '' }}
             </BaseButton>
           </div>
-          <button type="button" class="text-[0.8125rem] font-medium text-[var(--color-primary-500)]" @click="countering = true">
+          <button type="button" class="text-[0.8125rem] font-medium text-[var(--color-primary-500)] hover:text-[var(--color-primary-600)] transition-colors" @click="countering = true">
             Hacer contraoferta
           </button>
         </div>
@@ -139,7 +154,7 @@ async function sendReport() {
     </template>
 
     <div class="pt-3 mt-1 border-t border-[var(--color-hairline)]">
-      <button v-if="!reportOpen && !reportSent" type="button" class="text-[0.75rem] text-[var(--color-text-faint)]" @click="reportOpen = true">
+      <button v-if="!reportOpen && !reportSent" type="button" class="text-[0.75rem] text-[var(--color-text-muted)] hover:text-[var(--color-status-alert)] transition-colors" @click="reportOpen = true">
         Reportar esta solicitud
       </button>
       <p v-else-if="reportSent" class="text-[0.75rem] text-[var(--color-text-muted)]">Gracias, la revisaremos.</p>
@@ -160,6 +175,7 @@ async function sendReport() {
             Enviar reporte
           </BaseButton>
         </div>
+        <p v-if="reportError" class="text-[0.75rem] text-[var(--color-status-alert)]">{{ reportError }}</p>
       </div>
     </div>
   </div>

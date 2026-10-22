@@ -1,21 +1,25 @@
 <script setup lang="ts">
 import { localPhotos } from '~/utils/images'
+import { platformMeta, VERIFIED_SOCIAL_PLATFORMS } from '~/utils/mock-data'
 import type { SocialAccount } from '~/types'
 
 useHead({ title: 'Redes' })
 
 const banner = localPhotos.socials
 
-const { accounts, ensureLoaded, connect, disconnect, syncInstagram } = useMySocialAccounts()
+const { accounts, ensureLoaded, connect, disconnect, sync } = useMySocialAccounts()
 await ensureLoaded()
 
 const route = useRoute()
-// Vuelta del OAuth real de Instagram (server/api/auth/instagram/callback.get.ts
-// redirige aquí con uno de estos dos). No hace falta guardar nada: `accounts`
-// ya se recargó arriba con el resultado real tras el redirect.
-const connectResult = route.query.instagram === 'connected'
-  ? { ok: true as const }
-  : route.query.instagram === 'error'
+// Vuelta del OAuth real de Instagram/YouTube (callback.get.ts de cada red
+// redirige aquí con uno de estos dos, con su propio nombre de query). No
+// hace falta guardar nada: `accounts` ya se recargó arriba con el resultado
+// real tras el redirect.
+const oauthPlatformParam = route.query.instagram ? 'instagram' : route.query.youtube ? 'youtube' : null
+const oauthQueryValue = oauthPlatformParam ? route.query[oauthPlatformParam] : null
+const connectResult = oauthQueryValue === 'connected'
+  ? { ok: true as const, platform: oauthPlatformParam! }
+  : oauthQueryValue === 'error'
     ? { ok: false as const, reason: typeof route.query.reason === 'string' ? route.query.reason : 'No se ha podido conectar.' }
     : null
 
@@ -32,6 +36,15 @@ async function toggle(acc: SocialAccount) {
       confirmLabel: 'Desconectar', tone: 'danger', icon: 'ph:plugs-fill'
     })
     if (!ok) return
+  } else if (!VERIFIED_SOCIAL_PLATFORMS.includes(acc.platform)) {
+    // Para el resto, "conectar" aún no verifica nada de verdad. Mejor
+    // decirlo claro aquí que dejar que parezca una cuenta real conectada.
+    const ok = await confirm({
+      title: 'Esta red todavía no verifica tu cuenta',
+      message: 'Por ahora solo se guarda como "conectada" sin seguidores reales ni datos de verdad — la integración completa todavía no está lista. Instagram y YouTube sí son conexiones reales.',
+      confirmLabel: 'Conectar igualmente', icon: 'ph:info-fill'
+    })
+    if (!ok) return
   }
 
   busyPlatform.value = acc.platform
@@ -43,13 +56,13 @@ async function toggle(acc: SocialAccount) {
   }
 }
 
-async function sync(acc: SocialAccount) {
+async function syncAccount(acc: SocialAccount) {
   syncingPlatform.value = acc.platform
   syncError.value = ''
   try {
-    await syncInstagram()
+    await sync(acc.platform)
   } catch (err) {
-    console.error('[creator/socials] fallo al sincronizar Instagram:', err)
+    console.error(`[creator/socials] fallo al sincronizar ${acc.platform}:`, err)
     syncError.value = 'No se han podido actualizar los seguidores. Si la conexión es antigua, reconecta la cuenta.'
   } finally {
     syncingPlatform.value = null
@@ -72,7 +85,7 @@ const connectedCount = computed(() => accounts.value.filter((a) => a.connected).
     <p
       v-if="connectResult?.ok" class="mb-4 text-[0.8125rem] text-[var(--color-status-published)] md:max-w-xl"
     >
-      Cuenta de Instagram conectada.
+      Cuenta de {{ platformMeta[connectResult.platform].label }} conectada.
     </p>
     <p
       v-else-if="connectResult && !connectResult.ok" class="mb-4 text-[0.8125rem] text-[var(--color-status-alert)] md:max-w-xl"
@@ -86,7 +99,7 @@ const connectedCount = computed(() => accounts.value.filter((a) => a.connected).
       <SocialAccountRow
         v-for="acc in accounts" :key="acc.platform" :account="acc" :busy="busyPlatform === acc.platform"
         :syncing="syncingPlatform === acc.platform"
-        @connect="toggle(acc)" @disconnect="toggle(acc)" @sync="sync(acc)"
+        @connect="toggle(acc)" @disconnect="toggle(acc)" @sync="syncAccount(acc)"
       />
     </div>
   </AppShell>

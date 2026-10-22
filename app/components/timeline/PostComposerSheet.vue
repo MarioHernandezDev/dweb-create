@@ -24,6 +24,14 @@ const platform = ref<Platform>('instagram')
 const collaborationId = ref('')
 const hashtagsInput = ref('')
 
+// Antes esto no se podía elegir en ningún sitio: todo post nacía "a 3 días"
+// a ciegas, sin forma de fijar ni editar una fecha real — ver useMyPosts.ts.
+function defaultDueDate(): string {
+  return new Date(Date.now() + 3 * 86_400_000).toISOString().slice(0, 10)
+}
+const todayIso = new Date().toISOString().slice(0, 10)
+const dueDate = ref(defaultDueDate())
+
 const contentTypes = Object.keys(contentTypeMeta) as ContentType[]
 const platforms = Object.entries(platformMeta).map(([value, meta]) => ({ value: value as Platform, label: meta.label }))
 
@@ -54,11 +62,12 @@ async function saveDraft(): Promise<string> {
       contentType: contentType.value,
       platform: platform.value,
       collaborationId: collaborationId.value || null,
-      hashtags: parsedHashtags()
+      hashtags: parsedHashtags(),
+      dueDate: dueDate.value
     })
     createdPostId.value = created.id
   } else {
-    await updatePost(createdPostId.value, { title: title.value, caption: caption.value, hashtags: parsedHashtags() })
+    await updatePost(createdPostId.value, { title: title.value, caption: caption.value, hashtags: parsedHashtags(), dueDate: dueDate.value })
   }
   return createdPostId.value
 }
@@ -121,6 +130,7 @@ watch(open, (value) => {
   caption.value = ''
   hashtagsInput.value = ''
   collaborationId.value = ''
+  dueDate.value = defaultDueDate()
   createdPostId.value = null
   result.value = null
   error.value = ''
@@ -174,6 +184,14 @@ watch(open, (value) => {
         </div>
 
         <div>
+          <label class="block text-[0.8125rem] font-medium text-[var(--color-text-muted)] mb-1.5" for="post-due-date">Fecha de entrega</label>
+          <input
+            id="post-due-date" v-model="dueDate" type="date" :min="todayIso"
+            class="w-full h-11 px-3.5 rounded-[var(--radius-sm)] bg-[var(--color-ink-overlay)] border border-[var(--color-hairline)] text-[0.9375rem] text-[var(--color-text)] focus:outline-none focus:border-[var(--color-primary-500)]/60"
+          >
+        </div>
+
+        <div>
           <label class="block text-[0.8125rem] font-medium text-[var(--color-text-muted)] mb-1.5" for="post-hashtags">Hashtags</label>
           <input
             id="post-hashtags" v-model="hashtagsInput" type="text" placeholder="#rutina #escritorio #productividad"
@@ -206,7 +224,10 @@ watch(open, (value) => {
       </div>
 
       <div v-else-if="result" key="result">
-        <SuccessScoreCard :score="result.score" :confidence="result.confidence" :suggestions="result.suggestions.length ? result.suggestions : suggestionsForDraft" />
+        <SuccessScoreCard
+          :score="result.score" :confidence="result.confidence"
+          :suggestions="result.suggestions.length ? result.suggestions : suggestionsForDraft" :generic-suggestions="!result.suggestions.length"
+        />
         <div class="flex gap-2.5 mt-5">
           <BaseButton variant="secondary" class="flex-1" @click="stage = 'draft'">Editar</BaseButton>
           <BaseButton variant="primary" class="flex-1" icon="ph:calendar-plus-fill" @click="schedule">Programar</BaseButton>

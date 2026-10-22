@@ -34,6 +34,7 @@ function mapRow(row: PostRow): Post {
     platform: row.platform,
     status: row.status,
     dueInDays,
+    dueDate: row.due_date.slice(0, 10),
     hashtags: row.metadata?.hashtags ?? [],
     cover: coverArtFromString(row.id),
     mediaUrl: row.media_url,
@@ -51,10 +52,19 @@ export interface NewPostInput {
   caption: string
   contentType: ContentType
   platform: Platform
-  dueInDays?: number
+  /** Fecha de entrega ("YYYY-MM-DD", de un `<input type="date">`) — si no se indica, +3 días desde hoy, como antes. */
+  dueDate?: string
   /** Colaboración activa a la que pertenece — opcional, contenido propio si no se indica. */
   collaborationId?: string | null
   hashtags?: string[]
+}
+
+// `T12:00:00`, no medianoche: una fecha sin hora ("2026-10-25") se
+// interpreta como UTC — en zonas con offset negativo, medianoche UTC cae
+// en el día anterior en local, y el date picker mostraría un día distinto
+// al que se eligió. Mediodía evita ese desajuste en cualquier zona horaria real.
+function parseDueDate(dueDate: string | undefined): Date {
+  return dueDate ? new Date(`${dueDate}T12:00:00`) : new Date(Date.now() + 3 * 86_400_000)
 }
 
 /**
@@ -81,6 +91,10 @@ export function useMyPosts() {
       .select('*, ml_predictions(success_score, confidence, suggestions, created_at)')
       .eq('creator_id', me.id)
       .order('due_date', { ascending: true })
+      // Tope de cordura — sin esto la consulta crece sin límite con el
+      // historial acumulado de años; un creador real no gestiona 500
+      // publicaciones a la vez en este tablero.
+      .limit(300)
     loading.value = false
 
     if (error) {
@@ -96,13 +110,17 @@ export function useMyPosts() {
     return posts.value
   }
 
-  async function updatePost(id: string, patch: { title?: string; caption?: string; status?: PostStatus; hashtags?: string[]; mediaUrl?: string | null }) {
+  async function updatePost(
+    id: string,
+    patch: { title?: string; caption?: string; status?: PostStatus; hashtags?: string[]; mediaUrl?: string | null; dueDate?: string }
+  ) {
     const payload: Record<string, unknown> = {}
     if (patch.title !== undefined) payload.title = patch.title
     if (patch.caption !== undefined) payload.caption = patch.caption
     if (patch.status !== undefined) payload.status = patch.status
     if (patch.hashtags !== undefined) payload.metadata = { hashtags: patch.hashtags }
     if (patch.mediaUrl !== undefined) payload.media_url = patch.mediaUrl
+    if (patch.dueDate !== undefined) payload.due_date = parseDueDate(patch.dueDate).toISOString()
 
     // Sin tipos generados de la base de datos todavía (como en useMyRole),
     // el cliente no puede inferir las columnas de `posts` por sí solo.
@@ -110,7 +128,14 @@ export function useMyPosts() {
     if (error) throw error
 
     const local = posts.value.find((p) => p.id === id)
-    if (local) Object.assign(local, patch)
+    if (local) {
+      const { dueDate, ...rest } = patch
+      Object.assign(local, rest)
+      if (dueDate !== undefined) {
+        local.dueDate = dueDate
+        local.dueInDays = Math.round((parseDueDate(dueDate).getTime() - Date.now()) / 86_400_000)
+      }
+    }
   }
 
   // Portada real del post (bucket "post-media", ver
@@ -149,7 +174,6 @@ export function useMyPosts() {
     const me = creator.value ?? (await ensureCreator())
     if (!me) throw new Error('No se ha encontrado tu ficha de creador.')
 
-    const dueDate = new Date(Date.now() + (input.dueInDays ?? 3) * 86_400_000)
     const { data, error } = await client
       .from('posts')
       .insert({
@@ -160,7 +184,7 @@ export function useMyPosts() {
         content_type: input.contentType,
         platform: input.platform,
         status: 'idea',
-        due_date: dueDate.toISOString(),
+        due_date: parseDueDate(input.dueDate).toISOString(),
         metadata: input.hashtags?.length ? { hashtags: input.hashtags } : {}
       } as never)
       .select('*, ml_predictions(success_score, confidence, suggestions, created_at)')

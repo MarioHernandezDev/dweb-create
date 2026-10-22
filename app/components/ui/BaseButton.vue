@@ -24,10 +24,14 @@ const sizeClasses: Record<string, string> = {
 const variantClasses: Record<string, string> = {
   primary:
     'bg-[var(--color-primary-500)] text-[var(--color-on-primary)] hover:bg-[var(--color-primary-400)] active:bg-[var(--color-primary-600)] shadow-[0_8px_20px_-8px_var(--color-primary-500)] hover:shadow-[0_12px_26px_-6px_var(--color-primary-500)]',
+  // Antes el hover solo cambiaba el color del borde — sobre el fondo ya
+  // tenue de `ink-overlay` apenas se notaba. Ahora también sube el fondo a
+  // un lila claro (primary-50) y el texto se tiñe del morado de marca, un
+  // contraste ligero pero inequívoco.
   secondary:
-    'bg-[var(--color-ink-overlay)] text-[var(--color-text)] border border-[var(--color-hairline-strong)] hover:border-[var(--color-primary-500)]/60',
-  ghost: 'bg-transparent text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-ink-overlay)]',
-  danger: 'bg-transparent text-[var(--color-status-alert)] border border-[var(--color-status-alert)]/35 hover:bg-[var(--color-status-alert)]/10'
+    'bg-[var(--color-ink-overlay)] text-[var(--color-text)] border border-[var(--color-hairline-strong)] hover:bg-[var(--color-primary-50)] hover:border-[var(--color-primary-500)]/60 hover:text-[var(--color-primary-600)]',
+  ghost: 'bg-transparent text-[var(--color-text-muted)] hover:text-[var(--color-primary-600)] hover:bg-[var(--color-primary-50)]',
+  danger: 'bg-transparent text-[var(--color-status-alert)] border border-[var(--color-status-alert)]/35 hover:bg-[var(--color-status-alert)]/10 hover:border-[var(--color-status-alert)]/55'
 }
 </script>
 

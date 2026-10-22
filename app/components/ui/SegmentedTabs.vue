@@ -34,7 +34,7 @@ watch(() => props.options, () => nextTick(updateIndicator), { deep: true })
       class="relative z-10 px-3.5 h-8 rounded-[calc(var(--radius-xs)-4px)] text-[0.8125rem] font-medium transition-colors duration-150"
       :class="modelValue === opt.value
         ? 'text-[var(--color-text)]'
-        : 'text-[var(--color-text-muted)] hover:text-[var(--color-text)]'"
+        : 'text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-ink-raised)]/60'"
       @click="$emit('update:modelValue', opt.value)"
     >
       {{ opt.label }}

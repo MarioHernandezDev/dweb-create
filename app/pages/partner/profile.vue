@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import draggable from 'vuedraggable'
 import { initialsFromName, hueFromString, coverArtFromString } from '~/utils/avatar'
 import { formatEuros } from '~/utils/mock-data'
 import { collaborationStatusMeta } from '~/utils/status'
@@ -25,16 +26,18 @@ const { avatarUrl, uploadAvatar, removeAvatar } = useMyAvatar()
 // role-guard.global.ts) — se resuelve de forma fiable con useMyProfileId.
 const myProfileId = await resolveMyProfileId()
 
-const { myPackages, ensureMyPackages, deletePackage } = usePackages()
+const { myPackages, ensureMyPackages, duplicatePackage, updatePackage, reorderPackages, deletePackage } = usePackages()
+const { pendingCountByPackage, refreshPendingCounts } = useOffers()
 const { chatPrivacy, chatPrivacyError, ensureChatPrivacy, setChatPrivacy } = useChatSettings()
 
-// Cuatro consultas independientes entre sí — en paralelo en vez de en
+// Cinco consultas independientes entre sí — en paralelo en vez de en
 // cascada (antes cada una esperaba a la anterior sin necesidad, y con la
 // latencia de red real eso se notaba mucho al navegar a esta página).
 await Promise.all([
   route.query.payment ? refreshCollaborations() : ensureLoaded(),
   ensurePartner(),
   myProfileId ? ensureMyPackages(myProfileId) : Promise.resolve([]),
+  myProfileId ? refreshPendingCounts(myProfileId) : Promise.resolve(),
   ensureChatPrivacy()
 ])
 
@@ -88,6 +91,27 @@ async function confirmDeletePackage(pkg: Package) {
     packageError.value = 'No se ha podido borrar la necesidad. Inténtalo de nuevo.'
   }
 }
+
+async function toggleActivePackage(pkg: Package) {
+  packageError.value = ''
+  try {
+    await updatePackage(pkg.id, { active: !pkg.active })
+  } catch {
+    packageError.value = 'No se ha podido actualizar la necesidad. Inténtalo de nuevo.'
+  }
+}
+
+async function duplicateOnePackage(pkg: Package) {
+  packageError.value = ''
+  try {
+    await duplicatePackage(pkg)
+  } catch {
+    packageError.value = 'No se ha podido duplicar la necesidad. Inténtalo de nuevo.'
+  }
+}
+
+const activePackagesCount = computed(() => (myPackages.value ?? []).filter((p) => p.active).length)
+const pendingOffersTotal = computed(() => Object.values(pendingCountByPackage.value).reduce((sum, n) => sum + n, 0))
 
 async function confirmLogout() {
   const ok = await confirm({ title: '¿Cerrar sesión?', confirmLabel: 'Cerrar sesión' })
@@ -273,7 +297,7 @@ async function saveFicha() {
                       class="px-2.5 h-7 rounded-full text-[0.75rem] font-medium border transition-colors duration-150"
                       :class="ficha.categories.includes(cat)
                         ? 'bg-[var(--color-primary-500)]/15 border-[var(--color-primary-500)]/50 text-[var(--color-primary-500)]'
-                        : 'bg-[var(--color-ink-overlay)] border-[var(--color-hairline)] text-[var(--color-text-muted)]'"
+                        : 'bg-[var(--color-ink-overlay)] border-[var(--color-hairline)] text-[var(--color-text-muted)] hover:border-[var(--color-primary-500)]/40 hover:text-[var(--color-primary-600)]'"
                       @click="toggleFichaCategory(cat)"
                     >
                       {{ cat }}
@@ -341,21 +365,32 @@ async function saveFicha() {
             <section>
               <div class="flex items-center justify-between mb-2 px-1">
                 <p class="text-[0.8125rem] font-medium text-[var(--color-text-muted)]">Tus necesidades</p>
-                <button type="button" class="text-[0.8125rem] font-medium text-[var(--color-primary-500)]" @click="openNewPackage">Añadir</button>
+                <button type="button" class="text-[0.8125rem] font-medium text-[var(--color-primary-500)] hover:text-[var(--color-primary-600)] transition-colors" @click="openNewPackage">Añadir</button>
               </div>
-              <p class="text-[0.75rem] text-[var(--color-text-faint)] mb-3 px-1">Lo que buscas — un creador podrá hacer una oferta ajustándose a tu necesidad.</p>
+              <p class="text-[0.75rem] text-[var(--color-text-faint)] mb-1 px-1">Lo que buscas — un creador podrá hacer una oferta ajustándose a tu necesidad. Arrastra para reordenar.</p>
+              <p v-if="myPackages?.length" class="text-[0.75rem] text-[var(--color-text-faint)] mb-3 px-1">
+                {{ activePackagesCount }} activa{{ activePackagesCount === 1 ? '' : 's' }}
+                <span v-if="pendingOffersTotal"> · {{ pendingOffersTotal }} oferta{{ pendingOffersTotal > 1 ? 's' : '' }} pendiente{{ pendingOffersTotal > 1 ? 's' : '' }}</span>
+              </p>
               <p v-if="packageError" class="text-[0.75rem] text-[var(--color-status-alert)] mb-3 px-1">{{ packageError }}</p>
               <EmptyState
                 v-if="!myPackages?.length"
                 icon="ph:package" title="Sin necesidades todavía"
                 description="Publica qué necesitas para que un creador pueda ofertar ajustándose a ello."
               />
-              <div v-else class="flex flex-col gap-2.5">
-                <PackageCard
-                  v-for="pkg in myPackages" :key="pkg.id" :pkg="pkg" editable
-                  @edit="openEditPackage" @delete="confirmDeletePackage(pkg)"
-                />
-              </div>
+              <draggable
+                v-else v-model="myPackages" item-key="id" :animation="150" :delay="150" :delay-on-touch-only="true"
+                class="flex flex-col gap-2.5" ghost-class="nx-package-ghost"
+                @end="reorderPackages((myPackages ?? []).map((p) => p.id))"
+              >
+                <template #item="{ element }: { element: Package }">
+                  <PackageCard
+                    :pkg="element" editable drag-handle :pending-offers="pendingCountByPackage[element.id]"
+                    @edit="openEditPackage" @delete="confirmDeletePackage(element)"
+                    @toggle-active="toggleActivePackage" @duplicate="duplicateOnePackage"
+                  />
+                </template>
+              </draggable>
               <PackageFormSheet v-if="myProfileId" v-model="packageSheetOpen" :profile-id="myProfileId" role="partner" :editing="editingPackage" />
             </section>
           </div>
@@ -407,7 +442,7 @@ async function saveFicha() {
               <BaseCard radius="lg" padding="none" class="divide-y divide-[var(--color-hairline)] overflow-hidden">
                 <button
                   v-for="opt in chatPrivacyOptions" :key="opt.value" type="button"
-                  class="w-full flex items-start gap-3 px-5 py-4 text-left"
+                  class="w-full flex items-start gap-3 px-5 py-4 text-left transition-colors duration-150 hover:bg-[var(--color-ink-overlay)]"
                   @click="setChatPrivacy(opt.value)"
                 >
                   <span
@@ -430,3 +465,9 @@ async function saveFicha() {
     </div>
   </AppShell>
 </template>
+
+<style scoped>
+.nx-package-ghost {
+  opacity: 0.4;
+}
+</style>

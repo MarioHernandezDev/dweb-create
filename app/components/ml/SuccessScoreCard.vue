@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { Suggestion } from '~/types'
 
-const props = defineProps<{ score: number; confidence: number; suggestions: Suggestion[] }>()
+const props = defineProps<{ score: number; confidence: number; suggestions: Suggestion[]; genericSuggestions?: boolean }>()
 
 const kindMeta: Record<Suggestion['kind'], { icon: string; label: string }> = {
   caption: { icon: 'ph:pencil-simple-fill', label: 'Mejora de texto' },
@@ -30,7 +30,11 @@ const scoreWord = computed(() => (props.score < 45 ? 'bajo' : props.score < 72 ?
       </div>
     </div>
 
-    <ul class="relative mt-6 flex flex-col gap-3">
+    <p v-if="genericSuggestions" class="relative mt-6 inline-flex items-center gap-1.5 text-[0.75rem] font-medium text-[var(--color-text-faint)]">
+      <Icon name="ph:info-fill" class="size-3.5" />
+      Consejos generales — no son un análisis de esta publicación en concreto
+    </p>
+    <ul class="relative flex flex-col gap-3" :class="genericSuggestions ? 'mt-2' : 'mt-6'">
       <li v-for="(s, i) in suggestions" :key="i" class="flex items-start gap-3">
         <span class="flex items-center justify-center size-7 rounded-full bg-[var(--color-ink-raised)] text-[var(--color-text-muted)] shrink-0 mt-0.5">
           <Icon :name="kindMeta[s.kind].icon" class="size-3.5" />

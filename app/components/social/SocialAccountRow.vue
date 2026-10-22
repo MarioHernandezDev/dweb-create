@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { SocialAccount } from '~/types'
-import { platformMeta, formatCompactNumber } from '~/utils/mock-data'
+import { platformMeta, formatCompactNumber, VERIFIED_SOCIAL_PLATFORMS } from '~/utils/mock-data'
 
 defineProps<{ account: SocialAccount; busy?: boolean; syncing?: boolean }>()
 defineEmits<{ connect: []; disconnect: []; sync: [] }>()
@@ -17,8 +17,11 @@ defineEmits<{ connect: []; disconnect: []; sync: [] }>()
 
     <div class="min-w-0 flex-1">
       <p class="text-[0.9375rem] font-medium text-[var(--color-text)]">{{ platformMeta[account.platform].label }}</p>
-      <p v-if="account.connected" class="text-[0.8125rem] text-[var(--color-text-muted)]">
+      <p v-if="account.connected && VERIFIED_SOCIAL_PLATFORMS.includes(account.platform)" class="text-[0.8125rem] text-[var(--color-text-muted)]">
         {{ account.handle }} · {{ formatCompactNumber(account.followers) }} seguidores
+      </p>
+      <p v-else-if="account.connected" class="text-[0.8125rem] text-[var(--color-text-faint)]">
+        Conectada sin verificar · todavía sin datos reales
       </p>
       <p v-else class="text-[0.8125rem] text-[var(--color-text-faint)]">No conectada</p>
     </div>
@@ -32,7 +35,7 @@ defineEmits<{ connect: []; disconnect: []; sync: [] }>()
     </span>
 
     <BaseButton
-      v-if="account.connected && account.platform === 'instagram'" variant="ghost" size="sm" icon="ph:arrows-clockwise-bold" icon-only
+      v-if="account.connected && VERIFIED_SOCIAL_PLATFORMS.includes(account.platform)" variant="ghost" size="sm" icon="ph:arrows-clockwise-bold" icon-only
       :icon-spin="syncing" :disabled="busy || syncing"
       aria-label="Actualizar seguidores" @click="$emit('sync')"
     />

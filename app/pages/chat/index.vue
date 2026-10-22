@@ -51,7 +51,7 @@ function open(id: string) {
     />
     <div v-else class="flex flex-col gap-2 md:max-w-xl">
       <button v-for="c in conversations" :key="c.id" type="button" class="text-left" @click="open(c.id)">
-        <BaseCard radius="lg" padding="md" class="flex items-center gap-3" :class="c.unread && 'border-[var(--color-primary-500)]/30 bg-[var(--color-primary-500)]/[0.06]'">
+        <BaseCard radius="lg" padding="md" interactive class="flex items-center gap-3" :class="c.unread && 'border-[var(--color-primary-500)]/30 bg-[var(--color-primary-500)]/[0.06]'">
           <BaseAvatar :initials="initialsFromName(c.otherName)" :src="c.otherAvatarUrl" :hue="hueFromString(c.otherName)" />
           <div class="min-w-0 flex-1">
             <div class="flex items-center justify-between gap-2">
