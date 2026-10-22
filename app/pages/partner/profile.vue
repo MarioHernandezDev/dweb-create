@@ -48,7 +48,7 @@ const tabs = [
   { id: 'collabs', label: 'Colaboraciones', icon: 'ph:handshake-fill' },
   { id: 'privacy', label: 'Privacidad', icon: 'ph:shield-check-fill' }
 ] as const
-const activeTab = ref<(typeof tabs)[number]['id']>('account')
+const activeTab = ref<(typeof tabs)[number]['id']>('ficha')
 
 const packageSheetOpen = ref(false)
 const editingPackage = ref<Package | null>(null)
@@ -65,6 +65,13 @@ function openEditPackage(pkg: Package) {
 
 const { confirm } = useConfirm()
 
+// Compartir tu propio perfil público sin tener que ir a buscarlo primero.
+const { copied: profileLinkCopied, copy: copyLink } = useClipboard()
+function copyMyProfileLink() {
+  if (!partner.value) return
+  copyLink(`${window.location.origin}/profile/partner/${partner.value.id}`)
+}
+
 async function confirmDeletePackage(pkg: Package) {
   const ok = await confirm({
     title: `¿Borrar "${pkg.title}"?`,
@@ -76,7 +83,14 @@ async function confirmDeletePackage(pkg: Package) {
 
 async function confirmLogout() {
   const ok = await confirm({ title: '¿Cerrar sesión?', confirmLabel: 'Cerrar sesión' })
-  if (ok) await logout()
+  if (!ok) return
+  // Confirmar "cerrar sesión" ya implica descartar cualquier cambio sin
+  // guardar — si no se marca la ficha como "limpia" aquí, el guard de
+  // cambios sin guardar volvería a preguntar justo después de este mismo
+  // diálogo, cuando logout() navegue a /login (y signOut() ya se habría
+  // ejecutado, dejando la sesión a medias si en ese segundo aviso se cancelara).
+  fichaSnapshot.value = JSON.stringify(ficha)
+  await logout()
 }
 
 async function confirmPay(collaborationId: string) {
@@ -106,11 +120,22 @@ const savingFicha = ref(false)
 const fichaSaved = ref(false)
 const coverArt = computed(() => coverArtFromString(partner.value?.id ?? 'partner'))
 
+// Si sales con cambios sin guardar en la ficha (bio/categorías/presupuesto...),
+// se avisa en vez de descartarlos en silencio — ver useUnsavedChangesGuard.ts.
+// La portada y el avatar quedan fuera a propósito: se guardan solos al subir,
+// no forman parte de este formulario con botón "Guardar" aparte.
+const fichaSnapshot = ref(JSON.stringify(ficha))
+const fichaDirty = computed(() => JSON.stringify(ficha) !== fichaSnapshot.value)
+useUnsavedChangesGuard(fichaDirty)
+
 // Vista previa en vivo (columna derecha en escritorio, dentro de "Ficha
 // pública") — usa el MISMO componente que pinta /profile/[role]/[id], así
 // nunca puede desincronizarse de cómo se ve el perfil de verdad. Lee los
 // campos del formulario sin guardar todavía: es intencionado, para que se
 // note el cambio mientras escribes, no solo después de "Guardar ficha".
+// En móvil la columna no cabe (`hidden md:block`) — un botón abre la misma
+// vista previa en una hoja aparte en vez de dejarla invisible del todo.
+const previewSheetOpen = ref(false)
 const previewName = computed(() => partner.value?.name || user.value?.email || 'Tu empresa')
 const previewRangeLabel = computed(() => {
   if (!ficha.minBudgetEuros && !ficha.maxBudgetEuros) return null
@@ -152,6 +177,7 @@ async function saveFicha() {
       lookingFor: ficha.lookingFor || null
     })
     fichaSaved.value = true
+    fichaSnapshot.value = JSON.stringify(ficha)
   } finally {
     savingFicha.value = false
   }
@@ -191,12 +217,32 @@ async function saveFicha() {
 
         <div class="flex-1 min-w-0">
           <div v-show="activeTab === 'account'" class="md:max-w-lg">
+            <section class="mb-6">
+              <BaseCard v-if="partner" radius="lg" padding="none" class="overflow-hidden">
+                <div class="flex items-center justify-between px-5 py-4 gap-3">
+                  <NuxtLink :to="`/profile/partner/${partner.id}`" class="min-w-0 flex-1 text-[0.9375rem] text-[var(--color-text)] truncate">
+                    Tu perfil público
+                  </NuxtLink>
+                  <button
+                    type="button" :aria-label="profileLinkCopied ? 'Enlace copiado' : 'Copiar enlace de tu perfil'"
+                    class="shrink-0 size-8 flex items-center justify-center rounded-full text-[var(--color-text-muted)] hover:bg-[var(--color-ink-overlay)] hover:text-[var(--color-text)]"
+                    @click="copyMyProfileLink"
+                  >
+                    <Icon :name="profileLinkCopied ? 'ph:check-bold' : 'ph:link-simple-bold'" class="size-4" />
+                  </button>
+                </div>
+              </BaseCard>
+            </section>
+
             <BaseButton variant="secondary" icon="ph:sign-out-bold" class="w-full" @click="confirmLogout">Cerrar sesión</BaseButton>
           </div>
 
           <div v-show="activeTab === 'ficha'" class="md:flex md:gap-8 md:items-start">
             <div class="md:flex-1 md:min-w-0 md:max-w-lg">
               <p class="text-[0.75rem] text-[var(--color-text-faint)] mb-3">Esto es lo que ve un creador en "Descubrir" — cuanto más completa, mejor encajan los resultados.</p>
+              <BaseButton variant="secondary" size="sm" icon="ph:eye-fill" class="w-full mb-4 md:hidden" @click="previewSheetOpen = true">
+                Ver vista previa
+              </BaseButton>
               <BaseCard radius="lg" padding="md" class="flex flex-col gap-4">
                 <CoverPhotoUploader
                   :cover-url="partner?.coverUrl ?? null" :cover-art="coverArt" icon="ph:storefront-fill" :upload="uploadCoverPhoto"
@@ -272,6 +318,15 @@ async function saveFicha() {
               </BaseCard>
             </div>
           </div>
+
+          <BottomSheet v-model="previewSheetOpen" title="Vista previa">
+            <ProfileHeaderCard
+              :name="previewName" role-label="Partner" :avatar-url="avatarUrl"
+              :cover-url="partner?.coverUrl ?? null" :cover-seed="partner?.id ?? 'partner'" :categories="ficha.categories"
+              :bio="ficha.bio || null" :range-label="previewRangeLabel" range-field-label="Presupuesto"
+              :looking-for="ficha.lookingFor || null"
+            />
+          </BottomSheet>
 
           <div v-show="activeTab === 'needs'" class="md:max-w-lg">
             <section>

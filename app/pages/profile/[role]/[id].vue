@@ -66,19 +66,38 @@ const rangeLabel = computed(() => {
 
 const packagesSectionTitle = computed(() => (targetRole === 'creator' ? 'Catálogo' : 'Necesidades'))
 const catalogCountLabel = computed(() => (targetRole === 'creator' ? 'paquetes publicados' : 'necesidades publicadas'))
+
+// Copiar el enlace del perfil — no había ninguna forma de compartirlo hasta
+// ahora, ni siquiera el tuyo propio para mandárselo a alguien (ver también
+// el botón "Compartir" en la pestaña Cuenta de creator/profile.vue y
+// partner/profile.vue, que usa este mismo composable).
+const { copied: linkCopied, error: copyError, copy: copyLink } = useClipboard()
+function copyProfileLink() {
+  copyLink(window.location.href)
+}
 </script>
 
 <template>
   <AppShell :role="myRole ?? 'creator'" title="Perfil">
     <div class="md:max-w-xl">
-      <ProfileHeaderCard
-        :name="profile.name" :role-label="targetRole === 'creator' ? 'Creador de contenido' : 'Partner'"
-        :avatar-url="profile.avatarUrl" :cover-url="profile.coverUrl" :cover-seed="profile.profileId"
-        :categories="profile.categories" :bio="profile.bio" :range-label="rangeLabel"
-        :range-field-label="targetRole === 'creator' ? 'Tarifa orientativa' : 'Presupuesto'"
-        :looking-for="profile.lookingFor" :verified-socials="profile.verifiedSocials"
-        :member-since="profile.createdAt" :catalog-count="packages.length" :catalog-label="catalogCountLabel"
-      />
+      <div class="relative">
+        <ProfileHeaderCard
+          :name="profile.name" :role-label="targetRole === 'creator' ? 'Creador de contenido' : 'Partner'"
+          :avatar-url="profile.avatarUrl" :cover-url="profile.coverUrl" :cover-seed="profile.profileId"
+          :categories="profile.categories" :bio="profile.bio" :range-label="rangeLabel"
+          :range-field-label="targetRole === 'creator' ? 'Tarifa orientativa' : 'Presupuesto'"
+          :looking-for="profile.lookingFor" :verified-socials="profile.verifiedSocials"
+          :member-since="profile.createdAt" :catalog-count="packages.length" :catalog-label="catalogCountLabel"
+        />
+        <button
+          type="button" :aria-label="linkCopied ? 'Enlace copiado' : 'Copiar enlace del perfil'"
+          class="absolute top-3 right-3 z-10 size-9 rounded-full bg-black/35 backdrop-blur-sm text-white flex items-center justify-center hover:bg-black/50 transition-colors duration-150"
+          @click="copyProfileLink"
+        >
+          <Icon :name="linkCopied ? 'ph:check-bold' : 'ph:link-simple-bold'" class="size-4" />
+        </button>
+      </div>
+      <p v-if="copyError" class="text-[0.75rem] text-[var(--color-status-alert)] -mt-4 mb-4">No se ha podido copiar el enlace.</p>
 
       <template v-if="!isOwnProfile">
         <div class="flex flex-col gap-2 mb-7">

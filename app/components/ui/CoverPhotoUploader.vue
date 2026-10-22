@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { isFileTooLarge, formatFileSize, resizeImageFile } from '~/utils/image'
+
 /**
  * Botón grande de foto de portada — mismo patrón visual que
  * `timeline/CoverUploader.vue` (degradado + icono si no hay foto, la foto
@@ -20,18 +22,29 @@ const inputEl = ref<HTMLInputElement | null>(null)
 const uploading = ref(false)
 const error = ref('')
 
+// Más ancha que un avatar (banner a todo lo ancho), pero sigue sin hacer
+// falta la resolución completa de una foto de móvil — ver utils/image.ts.
+const MAX_DIMENSION = 1600
+
 async function onChange(event: Event) {
   const file = (event.target as HTMLInputElement).files?.[0]
   if (!file) return
 
-  uploading.value = true
   error.value = ''
+  if (isFileTooLarge(file)) {
+    error.value = `Esa imagen pesa ${formatFileSize(file.size)} — prueba con una de menos de 20 MB.`
+    if (inputEl.value) inputEl.value.value = ''
+    return
+  }
+
+  uploading.value = true
   try {
-    const url = await props.upload(file)
+    const resized = await resizeImageFile(file, MAX_DIMENSION)
+    const url = await props.upload(resized)
     emit('update:coverUrl', url)
   } catch (err) {
     console.error('[CoverPhotoUploader] fallo al subir la foto:', err)
-    error.value = 'No se ha podido subir. Prueba con otra imagen (JPG/PNG/WebP, máx. 8MB).'
+    error.value = 'No se ha podido subir. Prueba con otra imagen (JPG/PNG/WebP).'
   } finally {
     uploading.value = false
     if (inputEl.value) inputEl.value.value = ''

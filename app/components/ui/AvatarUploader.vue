@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { isFileTooLarge, formatFileSize, resizeImageFile } from '~/utils/image'
+
 /**
  * Foto de perfil circular editable — mismo patrón de interacción que
  * CoverPhotoUploader.vue (overlay de "Cambiar foto" al pasar el ratón) pero
@@ -18,18 +20,30 @@ const inputEl = ref<HTMLInputElement | null>(null)
 const uploading = ref(false)
 const error = ref('')
 
+// Un avatar nunca se ve a más de unos pocos cm de lado — se redimensiona en
+// el navegador antes de subir (ver utils/image.ts), así una foto de móvil
+// de varios MB no viaja entera para mostrarse del tamaño de un círculo.
+const MAX_DIMENSION = 800
+
 async function onChange(event: Event) {
   const file = (event.target as HTMLInputElement).files?.[0]
   if (!file) return
 
-  uploading.value = true
   error.value = ''
+  if (isFileTooLarge(file)) {
+    error.value = `Esa imagen pesa ${formatFileSize(file.size)} — prueba con una de menos de 20 MB.`
+    if (inputEl.value) inputEl.value.value = ''
+    return
+  }
+
+  uploading.value = true
   try {
-    const url = await props.upload(file)
+    const resized = await resizeImageFile(file, MAX_DIMENSION)
+    const url = await props.upload(resized)
     emit('update:avatarUrl', url)
   } catch (err) {
     console.error('[AvatarUploader] fallo al subir la foto:', err)
-    error.value = 'No se ha podido subir. Prueba con otra imagen (JPG/PNG/WebP, máx. 8MB).'
+    error.value = 'No se ha podido subir. Prueba con otra imagen (JPG/PNG/WebP).'
   } finally {
     uploading.value = false
     if (inputEl.value) inputEl.value.value = ''

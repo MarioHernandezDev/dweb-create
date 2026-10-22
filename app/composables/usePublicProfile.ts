@@ -66,18 +66,20 @@ interface PartnerRow {
  * app/pages/profile/[role]/[id].vue — reusa los directorios públicos de
  * `creators`/`partners` que ya existían para "Descubrir" (no se toca
  * ese código, solo se lee de las mismas tablas).
+ *
+ * Siempre en fresco: sin caché, a propósito — mismo criterio que
+ * `listPackagesOf` en usePackages.ts. Un `useState` cacheado por perfil se
+ * quedaba pegado a los datos de la primera visita: si entrabas al perfil de
+ * alguien, esa persona actualizaba su bio/foto, y volvías a entrar sin
+ * recargar la página entera, seguías viendo lo viejo.
  */
 export function usePublicProfile() {
   const client = useSupabaseClient()
 
-  const profilesById = useState<Record<string, PublicProfile>>('public-profiles-by-id', () => ({}))
   const loading = useState<boolean>('public-profile-loading', () => false)
 
   /** `id` es el id de la fila `creators`/`partners` (el mismo que usa /creator/discover y /partner/discover). */
   async function loadProfile(role: Role, id: string) {
-    const cacheKey = `${role}:${id}`
-    if (profilesById.value[cacheKey]) return profilesById.value[cacheKey]
-
     loading.value = true
     try {
       if (role === 'creator') {
@@ -112,7 +114,6 @@ export function usePublicProfile() {
             followersCount: r.followers_count
           }))
         }
-        profilesById.value = { ...profilesById.value, [cacheKey]: mapped }
         return mapped
       }
 
@@ -140,12 +141,11 @@ export function usePublicProfile() {
         chatPrivacy: profileRow?.chat_privacy ?? 'everyone',
         verifiedSocials: []
       }
-      profilesById.value = { ...profilesById.value, [cacheKey]: mapped }
       return mapped
     } finally {
       loading.value = false
     }
   }
 
-  return { profilesById, loading, loadProfile }
+  return { loading, loadProfile }
 }
