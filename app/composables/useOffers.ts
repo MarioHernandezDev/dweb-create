@@ -53,6 +53,10 @@ export function useOffers() {
   const offersById = useState<Record<string, Offer>>('offers-by-id', () => ({}))
   const responding = useState<string | null>('offers-responding', () => null)
   const creating = useState<boolean>('offers-creating', () => false)
+  // Título de paquetes ajenos (los que no están en tus propios `myPackages`)
+  // — compartido entre todas las OfferCard de un mismo hilo, para no repetir
+  // una consulta idéntica por cada tarjeta que referencie el mismo paquete.
+  const packageTitleCache = useState<Record<string, string>>('offers-package-title-cache', () => ({}))
 
   async function ensureOffer(id: string) {
     if (offersById.value[id]) return offersById.value[id]
@@ -103,5 +107,14 @@ export function useOffers() {
     offersById.value = { ...offersById.value, [offer.id]: offer }
   }
 
-  return { offersById, responding, creating, ensureOffer, createOffer, respondOffer, setOffer, mapOfferRow: mapRow }
+  /** Título de un paquete ajeno para pintarlo en OfferCard.vue, cacheado por id. */
+  async function resolvePackageTitle(packageId: string) {
+    if (packageTitleCache.value[packageId]) return packageTitleCache.value[packageId]
+    const { data } = await useSupabaseClient().from('packages').select('title').eq('id', packageId).maybeSingle<{ title: string }>()
+    const title = data?.title ?? 'Paquete'
+    packageTitleCache.value = { ...packageTitleCache.value, [packageId]: title }
+    return title
+  }
+
+  return { offersById, responding, creating, ensureOffer, createOffer, respondOffer, setOffer, resolvePackageTitle, mapOfferRow: mapRow }
 }

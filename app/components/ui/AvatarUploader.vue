@@ -12,12 +12,15 @@ const props = defineProps<{
   initials: string
   hue: number
   upload: (file: File) => Promise<string>
+  remove?: () => Promise<void>
 }>()
 
-const emit = defineEmits<{ 'update:avatarUrl': [url: string] }>()
+const emit = defineEmits<{ 'update:avatarUrl': [url: string | null] }>()
 
+const { confirm } = useConfirm()
 const inputEl = ref<HTMLInputElement | null>(null)
 const uploading = ref(false)
+const removing = ref(false)
 const error = ref('')
 
 // Un avatar nunca se ve a más de unos pocos cm de lado — se redimensiona en
@@ -49,20 +52,48 @@ async function onChange(event: Event) {
     if (inputEl.value) inputEl.value.value = ''
   }
 }
+
+async function onRemove() {
+  if (!props.remove) return
+  const ok = await confirm({ title: '¿Quitar foto de perfil?', confirmLabel: 'Quitar', tone: 'danger', icon: 'ph:trash-fill' })
+  if (!ok) return
+
+  error.value = ''
+  removing.value = true
+  try {
+    await props.remove()
+    emit('update:avatarUrl', null)
+  } catch (err) {
+    console.error('[AvatarUploader] fallo al quitar la foto:', err)
+    error.value = 'No se ha podido quitar la foto.'
+  } finally {
+    removing.value = false
+  }
+}
 </script>
 
 <template>
   <div>
-    <button type="button" class="group relative size-16 rounded-full shrink-0" :disabled="uploading" @click="inputEl?.click()">
-      <BaseAvatar :initials="initials" :src="avatarUrl" :hue="hue" size="lg" />
+    <div class="relative size-16 shrink-0">
+      <button type="button" class="group relative size-16 rounded-full block" :disabled="uploading || removing" @click="inputEl?.click()">
+        <BaseAvatar :initials="initials" :src="avatarUrl" :hue="hue" size="lg" />
 
-      <div
-        class="absolute inset-0 flex items-center justify-center rounded-full bg-black/0 text-white opacity-0 transition-[background-color,opacity] duration-200"
-        :class="uploading ? 'bg-black/45 opacity-100' : 'group-hover:bg-black/45 group-hover:opacity-100'"
+        <div
+          class="absolute inset-0 flex items-center justify-center rounded-full bg-black/0 text-white opacity-0 transition-[background-color,opacity] duration-200"
+          :class="uploading ? 'bg-black/45 opacity-100' : 'group-hover:bg-black/45 group-hover:opacity-100'"
+        >
+          <Icon :name="uploading ? 'ph:circle-notch-bold' : 'ph:camera-plus-fill'" class="size-5" :class="uploading && 'animate-spin'" />
+        </div>
+      </button>
+
+      <button
+        v-if="avatarUrl && remove" type="button" aria-label="Quitar foto de perfil"
+        class="absolute -top-0.5 -right-0.5 size-5 rounded-full bg-[var(--color-ink-raised)] border border-[var(--color-hairline)] text-[var(--color-text-muted)] flex items-center justify-center hover:text-[var(--color-status-alert)] hover:border-[var(--color-status-alert)]/40 transition-colors"
+        :disabled="removing" @click="onRemove"
       >
-        <Icon :name="uploading ? 'ph:circle-notch-bold' : 'ph:camera-plus-fill'" class="size-5" :class="uploading && 'animate-spin'" />
-      </div>
-    </button>
+        <Icon name="ph:x-bold" class="size-2.5" />
+      </button>
+    </div>
 
     <input ref="inputEl" type="file" accept="image/jpeg,image/png,image/webp" class="hidden" @change="onChange">
 

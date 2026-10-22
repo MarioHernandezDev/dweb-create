@@ -124,9 +124,20 @@ export function useMyPartner() {
     return coverUrl
   }
 
+  /** Vuelve al degradado de portada por defecto — no borra el archivo del bucket, solo la referencia. */
+  async function removeCoverPhoto() {
+    const me = partner.value ?? (await ensurePartner())
+    if (!me) throw new Error('No hay ficha de partner que actualizar.')
+
+    const { data, error } = await useSupabaseClient().from('partners').update({ cover_url: null } as never).eq('id', me.id).select(PARTNER_SELECT).single<PartnerFichaRow>()
+    if (error) throw error
+
+    partner.value = mapPartnerRow(data)
+  }
+
   function reset() {
     partner.value = undefined
   }
 
-  return { partner, ensurePartner, updateFicha, uploadCoverPhoto, reset }
+  return { partner, ensurePartner, updateFicha, uploadCoverPhoto, removeCoverPhoto, reset }
 }

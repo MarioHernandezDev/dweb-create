@@ -10,20 +10,21 @@ useHead({ title: 'Perfil' })
 const user = useSupabaseUser()
 const { logout } = useLogout()
 const { resolveMyProfileId } = useMyProfileId()
-const { avatarUrl, initials: myInitials, hue: myHue, uploadAvatar } = useMyAvatar()
+const { avatarUrl, initials: myInitials, hue: myHue, uploadAvatar, removeAvatar } = useMyAvatar()
 
 const route = useRoute()
 const { subscription, connectOnboarded, redirecting, ensureLoaded, refresh: refreshBilling, subscribe, connectPayouts } = useMyBilling()
-const { creator, ensureCreator, updateFicha, uploadCoverPhoto } = useMyCreator()
+const { creator, ensureCreator, updateFicha, uploadCoverPhoto, removeCoverPhoto } = useMyCreator()
 
 // `user.value?.id` puede seguir vacío justo al cargar la página (ver
 // role-guard.global.ts) — se resuelve de forma fiable con useMyProfileId.
 const myProfileId = await resolveMyProfileId()
 
 const { myPackages, ensureMyPackages, deletePackage } = usePackages()
-const { chatPrivacy, ensureChatPrivacy, setChatPrivacy } = useChatSettings()
+const { chatPrivacy, chatPrivacyError, ensureChatPrivacy, setChatPrivacy } = useChatSettings()
+const { balance: creditsBalance, ensureLoaded: ensureCredits } = useMyCredits()
 
-// Cuatro consultas independientes entre sí — en paralelo en vez de en
+// Cinco consultas independientes entre sí — en paralelo en vez de en
 // cascada (lo que antes era: paquetes → privacidad → facturación →
 // ficha, cada una esperando a la anterior sin necesidad; con la latencia
 // de red real eso se notaba mucho al navegar a esta página).
@@ -35,7 +36,8 @@ await Promise.all([
   myProfileId ? ensureMyPackages(myProfileId) : Promise.resolve([]),
   ensureChatPrivacy(),
   route.query.checkout || route.query.connect ? refreshBilling() : ensureLoaded(),
-  ensureCreator()
+  ensureCreator(),
+  ensureCredits()
 ])
 
 // Secciones de "Tu Perfil" — antes era un único scroll larguísimo con 7
@@ -71,13 +73,21 @@ function copyMyProfileLink() {
   copyLink(`${window.location.origin}/profile/creator/${creator.value.id}`)
 }
 
+const packageError = ref('')
+
 async function confirmDeletePackage(pkg: Package) {
   const ok = await confirm({
     title: `¿Borrar "${pkg.title}"?`,
     message: 'Se borrará permanentemente, junto con cualquier oferta que se haya hecho sobre él.',
     confirmLabel: 'Borrar', tone: 'danger', icon: 'ph:trash-fill'
   })
-  if (ok) await deletePackage(pkg.id)
+  if (!ok) return
+  packageError.value = ''
+  try {
+    await deletePackage(pkg.id)
+  } catch {
+    packageError.value = 'No se ha podido borrar el paquete. Inténtalo de nuevo.'
+  }
 }
 
 async function confirmLogout() {
@@ -187,7 +197,7 @@ async function saveFicha() {
     <div class="md:max-w-5xl">
       <div class="md:max-w-lg">
         <section class="flex items-center gap-4 mb-6">
-          <AvatarUploader :avatar-url="avatarUrl" :initials="myInitials" :hue="myHue" :upload="uploadAvatar" />
+          <AvatarUploader :avatar-url="avatarUrl" :initials="myInitials" :hue="myHue" :upload="uploadAvatar" :remove="removeAvatar" />
           <div>
             <p class="font-display text-[1.25rem] text-[var(--color-text)]">Tu cuenta</p>
             <p class="text-[0.9375rem] text-[var(--color-text-muted)]">{{ user?.email ?? 'Creador de contenido' }}</p>
@@ -236,7 +246,7 @@ async function saveFicha() {
                 </NuxtLink>
                 <div class="flex items-center justify-between px-5 py-4">
                   <span class="text-[0.9375rem] text-[var(--color-text)]">Créditos de predicción</span>
-                  <span class="text-[0.8125rem] text-[var(--color-text-faint)]">18 restantes</span>
+                  <span class="text-[0.8125rem] text-[var(--color-text-faint)]">{{ creditsBalance === null ? '…' : `${creditsBalance} restantes` }}</span>
                 </div>
               </BaseCard>
             </section>
@@ -253,6 +263,7 @@ async function saveFicha() {
               <BaseCard radius="lg" padding="md" class="flex flex-col gap-4">
                 <CoverPhotoUploader
                   :cover-url="creator?.coverUrl ?? null" :cover-art="coverArt" icon="ph:image-fill" :upload="uploadCoverPhoto"
+                  :remove="removeCoverPhoto"
                 />
 
                 <div>
@@ -342,6 +353,7 @@ async function saveFicha() {
                 <button type="button" class="text-[0.8125rem] font-medium text-[var(--color-primary-500)]" @click="openNewPackage">Añadir</button>
               </div>
               <p class="text-[0.75rem] text-[var(--color-text-faint)] mb-3 px-1">Lo que ofreces — un partner podrá hacer una oferta sobre cualquiera de ellos.</p>
+              <p v-if="packageError" class="text-[0.75rem] text-[var(--color-status-alert)] mb-3 px-1">{{ packageError }}</p>
               <EmptyState
                 v-if="!myPackages?.length"
                 icon="ph:package" title="Sin paquetes todavía"
@@ -378,6 +390,7 @@ async function saveFicha() {
                   </span>
                 </button>
               </BaseCard>
+              <p v-if="chatPrivacyError" class="text-[0.75rem] text-[var(--color-status-alert)] mt-2 px-1">{{ chatPrivacyError }}</p>
             </section>
 
             <section>

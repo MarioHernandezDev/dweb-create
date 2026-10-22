@@ -139,7 +139,9 @@ export function usePackages() {
     const { error } = await client.from('packages').delete().eq('id', id)
     if (error) {
       console.error('[usePackages] fallo al borrar el paquete:', error.message)
-      return
+      // Antes se tragaba el error en silencio: el paquete seguía en la
+      // lista y nadie sabía por qué "Eliminar" no había hecho nada.
+      throw error
     }
     myPackages.value = (myPackages.value ?? []).filter((p) => p.id !== id)
   }

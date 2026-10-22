@@ -20,7 +20,7 @@ const myRole = role.value ?? (await ensureRole()) ?? 'creator'
 const { resolveMyProfileId } = useMyProfileId()
 const myProfileId = await resolveMyProfileId()
 
-const { conversations, messagesByConversation, typingByConversation, loadConversationSummary, refreshMessages, sendMessage, markRead, sendTypingPing } = useChat()
+const { conversations, messagesByConversation, typingByConversation, loadConversationSummary, refreshMessages, sendMessage, markRead, sendTypingPing, activeConversationId } = useChat()
 
 // Siempre en fresco (no ensureOnce): puede llegarse aquí directo desde un
 // enlace (notificación, oferta recién aceptada) sin haber pasado antes por
@@ -29,6 +29,14 @@ const { conversations, messagesByConversation, typingByConversation, loadConvers
 // Las dos consultas son independientes entre sí — en paralelo en vez de en
 // cascada, que es parte de lo que hacía sentir la página lenta al abrir un chat.
 const [summary] = await Promise.all([loadConversationSummary(conversationId), refreshMessages(conversationId)])
+
+// `loadConversationSummary` devuelve null tanto si el id no existe como si
+// no eres uno de los dos participantes (RLS de `conversations` filtra por
+// participante) — en los dos casos no hay nada que mostrar aquí, igual que
+// ya hace profile/[role]/[id].vue con un perfil inexistente.
+if (!summary) {
+  throw createError({ statusCode: 404, statusMessage: 'Conversación no encontrada' })
+}
 
 const conversation = computed(() => conversations.value.find((c) => c.id === conversationId))
 
@@ -48,6 +56,15 @@ const unreadDivider = (() => {
 // y traer los paquetes del otro perfil (solo hacen falta para el botón "+")
 // no tienen por qué retrasar ver los mensajes.
 markRead(conversationId)
+
+// Mientras esta página siga montada, cualquier mensaje que llegue por
+// Realtime para ESTA conversación se trata como ya leído al instante (ver
+// el handler de INSERT en startRealtime(), useChat.ts) — no tiene sentido
+// que salte el icono de chat por algo que ya está delante de tus ojos.
+activeConversationId.value = conversationId
+onUnmounted(() => {
+  if (activeConversationId.value === conversationId) activeConversationId.value = null
+})
 
 const { listPackagesOf } = usePackages()
 const otherPackages = ref<Awaited<ReturnType<typeof listPackagesOf>>>([])

@@ -13,20 +13,20 @@ const payableStatuses = ['accepted', 'in_progress', 'completed']
 useHead({ title: 'Perfil' })
 
 const route = useRoute()
-const { partner, ensurePartner, updateFicha, uploadCoverPhoto } = useMyPartner()
+const { partner, ensurePartner, updateFicha, uploadCoverPhoto, removeCoverPhoto } = useMyPartner()
 const { collaborations, paying, ensureLoaded, refresh: refreshCollaborations, payForCollaboration } = useMyCollaborations()
 
 const user = useSupabaseUser()
 const { logout } = useLogout()
 const { resolveMyProfileId } = useMyProfileId()
-const { avatarUrl, uploadAvatar } = useMyAvatar()
+const { avatarUrl, uploadAvatar, removeAvatar } = useMyAvatar()
 
 // `user.value?.id` puede seguir vacío justo al cargar la página (ver
 // role-guard.global.ts) — se resuelve de forma fiable con useMyProfileId.
 const myProfileId = await resolveMyProfileId()
 
 const { myPackages, ensureMyPackages, deletePackage } = usePackages()
-const { chatPrivacy, ensureChatPrivacy, setChatPrivacy } = useChatSettings()
+const { chatPrivacy, chatPrivacyError, ensureChatPrivacy, setChatPrivacy } = useChatSettings()
 
 // Cuatro consultas independientes entre sí — en paralelo en vez de en
 // cascada (antes cada una esperaba a la anterior sin necesidad, y con la
@@ -72,13 +72,21 @@ function copyMyProfileLink() {
   copyLink(`${window.location.origin}/profile/partner/${partner.value.id}`)
 }
 
+const packageError = ref('')
+
 async function confirmDeletePackage(pkg: Package) {
   const ok = await confirm({
     title: `¿Borrar "${pkg.title}"?`,
     message: 'Se borrará permanentemente, junto con cualquier oferta que se haya hecho sobre ella.',
     confirmLabel: 'Borrar', tone: 'danger', icon: 'ph:trash-fill'
   })
-  if (ok) await deletePackage(pkg.id)
+  if (!ok) return
+  packageError.value = ''
+  try {
+    await deletePackage(pkg.id)
+  } catch {
+    packageError.value = 'No se ha podido borrar la necesidad. Inténtalo de nuevo.'
+  }
 }
 
 async function confirmLogout() {
@@ -191,7 +199,7 @@ async function saveFicha() {
         <section class="flex items-center gap-4 mb-6">
           <AvatarUploader
             v-if="partner" :avatar-url="avatarUrl" :initials="initialsFromName(partner.name)" :hue="hueFromString(partner.name)"
-            :upload="uploadAvatar"
+            :upload="uploadAvatar" :remove="removeAvatar"
           />
           <div>
             <p class="font-display text-[1.25rem] text-[var(--color-text)]">{{ partner?.name }}</p>
@@ -246,6 +254,7 @@ async function saveFicha() {
               <BaseCard radius="lg" padding="md" class="flex flex-col gap-4">
                 <CoverPhotoUploader
                   :cover-url="partner?.coverUrl ?? null" :cover-art="coverArt" icon="ph:storefront-fill" :upload="uploadCoverPhoto"
+                  :remove="removeCoverPhoto"
                 />
 
                 <div>
@@ -335,6 +344,7 @@ async function saveFicha() {
                 <button type="button" class="text-[0.8125rem] font-medium text-[var(--color-primary-500)]" @click="openNewPackage">Añadir</button>
               </div>
               <p class="text-[0.75rem] text-[var(--color-text-faint)] mb-3 px-1">Lo que buscas — un creador podrá hacer una oferta ajustándose a tu necesidad.</p>
+              <p v-if="packageError" class="text-[0.75rem] text-[var(--color-status-alert)] mb-3 px-1">{{ packageError }}</p>
               <EmptyState
                 v-if="!myPackages?.length"
                 icon="ph:package" title="Sin necesidades todavía"
@@ -412,6 +422,7 @@ async function saveFicha() {
                   </span>
                 </button>
               </BaseCard>
+              <p v-if="chatPrivacyError" class="text-[0.75rem] text-[var(--color-status-alert)] mt-2 px-1">{{ chatPrivacyError }}</p>
             </section>
           </div>
         </div>

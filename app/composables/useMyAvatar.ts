@@ -63,9 +63,25 @@ export function useMyAvatar() {
     }
   }
 
+  /** Vuelve al estado "sin foto" (iniciales + matiz) — no borra el archivo del bucket, solo la referencia. */
+  async function removeAvatar() {
+    uploading.value = true
+    try {
+      const { data: userData, error: userError } = await client.auth.getUser()
+      if (userError || !userData.user) throw userError ?? new Error('No hay sesión activa.')
+
+      const { error } = await client.from('profiles').update({ avatar_url: null } as never).eq('id', userData.user.id)
+      if (error) throw error
+
+      info.value = { avatarUrl: null, fullName: info.value?.fullName ?? 'Usuario' }
+    } finally {
+      uploading.value = false
+    }
+  }
+
   const avatarUrl = computed(() => info.value?.avatarUrl ?? null)
   const initials = computed(() => initialsFromName(info.value?.fullName ?? 'Usuario'))
   const hue = computed(() => hueFromString(info.value?.fullName ?? 'Usuario'))
 
-  return { info, avatarUrl, initials, hue, uploading, ensureAvatar, uploadAvatar }
+  return { info, avatarUrl, initials, hue, uploading, ensureAvatar, uploadAvatar, removeAvatar }
 }

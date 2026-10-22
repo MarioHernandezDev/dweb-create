@@ -14,12 +14,15 @@ const props = defineProps<{
   coverArt: { from: string; to: string; angle: number }
   icon: string
   upload: (file: File) => Promise<string>
+  remove?: () => Promise<void>
 }>()
 
-const emit = defineEmits<{ 'update:coverUrl': [url: string] }>()
+const emit = defineEmits<{ 'update:coverUrl': [url: string | null] }>()
 
+const { confirm } = useConfirm()
 const inputEl = ref<HTMLInputElement | null>(null)
 const uploading = ref(false)
+const removing = ref(false)
 const error = ref('')
 
 // Más ancha que un avatar (banner a todo lo ancho), pero sigue sin hacer
@@ -50,28 +53,56 @@ async function onChange(event: Event) {
     if (inputEl.value) inputEl.value.value = ''
   }
 }
+
+async function onRemove() {
+  if (!props.remove) return
+  const ok = await confirm({ title: '¿Quitar foto de portada?', confirmLabel: 'Quitar', tone: 'danger', icon: 'ph:trash-fill' })
+  if (!ok) return
+
+  error.value = ''
+  removing.value = true
+  try {
+    await props.remove()
+    emit('update:coverUrl', null)
+  } catch (err) {
+    console.error('[CoverPhotoUploader] fallo al quitar la foto:', err)
+    error.value = 'No se ha podido quitar la foto.'
+  } finally {
+    removing.value = false
+  }
+}
 </script>
 
 <template>
   <div>
-    <button
-      type="button"
-      class="group relative h-40 w-full rounded-[var(--radius-lg)] overflow-hidden flex items-center justify-center"
-      :style="!coverUrl ? { background: `linear-gradient(${coverArt.angle}deg, ${coverArt.from}, ${coverArt.to})` } : undefined"
-      :disabled="uploading"
-      @click="inputEl?.click()"
-    >
-      <img v-if="coverUrl" :src="coverUrl" alt="" class="absolute inset-0 size-full object-cover">
-      <Icon v-else :name="icon" class="size-10 text-white/90" />
-
-      <div
-        class="absolute inset-0 flex items-center justify-center gap-2 bg-black/0 text-white opacity-0 transition-[background-color,opacity] duration-200"
-        :class="uploading ? 'bg-black/45 opacity-100' : 'group-hover:bg-black/45 group-hover:opacity-100'"
+    <div class="relative">
+      <button
+        type="button"
+        class="group relative h-40 w-full rounded-[var(--radius-lg)] overflow-hidden flex items-center justify-center"
+        :style="!coverUrl ? { background: `linear-gradient(${coverArt.angle}deg, ${coverArt.from}, ${coverArt.to})` } : undefined"
+        :disabled="uploading || removing"
+        @click="inputEl?.click()"
       >
-        <Icon :name="uploading ? 'ph:circle-notch-bold' : 'ph:camera-plus-fill'" class="size-5" :class="uploading && 'animate-spin'" />
-        <span class="text-[0.8125rem] font-medium">{{ uploading ? 'Subiendo…' : coverUrl ? 'Cambiar foto de portada' : 'Añadir foto de portada' }}</span>
-      </div>
-    </button>
+        <img v-if="coverUrl" :src="coverUrl" alt="" class="absolute inset-0 size-full object-cover">
+        <Icon v-else :name="icon" class="size-10 text-white/90" />
+
+        <div
+          class="absolute inset-0 flex items-center justify-center gap-2 bg-black/0 text-white opacity-0 transition-[background-color,opacity] duration-200"
+          :class="uploading ? 'bg-black/45 opacity-100' : 'group-hover:bg-black/45 group-hover:opacity-100'"
+        >
+          <Icon :name="uploading ? 'ph:circle-notch-bold' : 'ph:camera-plus-fill'" class="size-5" :class="uploading && 'animate-spin'" />
+          <span class="text-[0.8125rem] font-medium">{{ uploading ? 'Subiendo…' : coverUrl ? 'Cambiar foto de portada' : 'Añadir foto de portada' }}</span>
+        </div>
+      </button>
+
+      <button
+        v-if="coverUrl && remove" type="button" aria-label="Quitar foto de portada"
+        class="absolute top-2.5 right-2.5 size-7 rounded-full bg-black/35 backdrop-blur-sm text-white flex items-center justify-center hover:bg-black/50 transition-colors"
+        :disabled="removing" @click="onRemove"
+      >
+        <Icon name="ph:x-bold" class="size-3.5" />
+      </button>
+    </div>
 
     <input ref="inputEl" type="file" accept="image/jpeg,image/png,image/webp" class="hidden" @change="onChange">
 

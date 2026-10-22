@@ -123,7 +123,7 @@ function copyProfileLink() {
         </section>
       </template>
 
-      <OfferSheet v-model="offerSheetOpen" :pkg="offerTarget" />
+      <ChatOfferSheet v-model="offerSheetOpen" :packages="offerTarget ? [offerTarget] : []" />
     </div>
   </AppShell>
 </template>

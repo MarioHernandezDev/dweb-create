@@ -4,11 +4,10 @@ import type { Offer } from '~/composables/useOffers'
 
 const props = defineProps<{ offerId: string; mine: boolean }>()
 
-const { offersById, responding, ensureOffer, respondOffer } = useOffers()
+const { offersById, responding, ensureOffer, respondOffer, resolvePackageTitle } = useOffers()
 const { confirm } = useConfirm()
 const { myPackages } = usePackages()
 const { refreshMessages, refreshConversations } = useChat()
-const client = useSupabaseClient()
 
 const offer = computed<Offer | undefined>(() => offersById.value[props.offerId])
 const packageTitle = ref<string | null>(null)
@@ -25,12 +24,10 @@ onMounted(() => {
 watchEffect(async () => {
   if (!offer.value) return
   const local = myPackages.value?.find((p) => p.id === offer.value!.packageId)
-  if (local) {
-    packageTitle.value = local.title
-    return
-  }
-  const { data } = await client.from('packages').select('title').eq('id', offer.value.packageId).maybeSingle<{ title: string }>()
-  packageTitle.value = data?.title ?? 'Paquete'
+  // Si no es un paquete propio, se resuelve vía resolvePackageTitle, que
+  // cachea por id — varias OfferCard sobre el mismo paquete en un mismo
+  // hilo solo disparan una consulta real, no una por tarjeta.
+  packageTitle.value = local ? local.title : await resolvePackageTitle(offer.value.packageId)
 })
 
 const statusMeta: Record<string, { label: string; color: string }> = {

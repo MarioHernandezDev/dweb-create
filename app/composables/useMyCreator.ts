@@ -134,9 +134,20 @@ export function useMyCreator() {
     return coverUrl
   }
 
+  /** Vuelve al degradado de portada por defecto — no borra el archivo del bucket, solo la referencia. */
+  async function removeCoverPhoto() {
+    const me = creator.value ?? (await ensureCreator())
+    if (!me) throw new Error('No hay ficha de creador que actualizar.')
+
+    const { data, error } = await useSupabaseClient().from('creators').update({ cover_url: null } as never).eq('id', me.id).select(CREATOR_SELECT).single<CreatorFichaRow>()
+    if (error) throw error
+
+    creator.value = mapCreatorRow(data)
+  }
+
   function reset() {
     creator.value = undefined
   }
 
-  return { creator, ensureCreator, updateFicha, uploadCoverPhoto, reset }
+  return { creator, ensureCreator, updateFicha, uploadCoverPhoto, removeCoverPhoto, reset }
 }

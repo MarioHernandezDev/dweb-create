@@ -60,6 +60,15 @@ function mapMessageRow(row: MessageRow): ChatMessage {
 
 const MESSAGE_SELECT = 'id, conversation_id, sender_id, kind, body, offer_id, created_at'
 
+// Tope para no traer el historial COMPLETO de TODAS las conversaciones en
+// cada visita a /chat (antes crecía sin límite con el total acumulado desde
+// siempre) — solo hace falta lo más reciente para pintar la preview y
+// contar los no leídos. Si hay más de 500 mensajes muy recientes repartidos
+// entre tus conversaciones, una charla antigua y poco activa podría tardar
+// un poco más en reflejar su contador exacto — mucho mejor que una consulta
+// sin límite que no deja de crecer con los años.
+const MESSAGE_PREVIEW_LIMIT = 500
+
 // Indicador de "está escribiendo": Supabase Realtime Broadcast, no
 // Postgres Changes — es un aviso efímero, no tiene sentido guardarlo en una
 // tabla. Un canal por DESTINATARIO (`chat-typing-<profileId>`), no por
@@ -91,6 +100,11 @@ export function useChat() {
   const conversationsLoaded = useState<boolean>('chat-conversations-loaded', () => false)
   const messagesByConversation = useState<Record<string, ChatMessage[]>>('chat-messages', () => ({}))
   const unreadCount = useState<number>('chat-unread-count', () => 0)
+  // El id de la conversación que tienes abierta en pantalla ahora mismo
+  // (ver chat/[id].vue) — mientras lo esté, un mensaje que llegue para ESA
+  // conversación no debe contar como "no leído" ni hacer saltar el icono
+  // de chat: ya lo estás viendo en directo. `null` si no hay ninguna abierta.
+  const activeConversationId = useState<string | null>('chat-active-conversation-id', () => null)
   const realtimeStarted = useState<boolean>('chat-realtime-started', () => false)
   const sending = useState<boolean>('chat-sending', () => false)
   const typingByConversation = useState<Record<string, boolean>>('chat-typing-by-conversation', () => ({}))
@@ -168,6 +182,7 @@ export function useChat() {
         .select(MESSAGE_SELECT)
         .in('conversation_id', rows.map((c) => c.id))
         .order('created_at', { ascending: false })
+        .limit(MESSAGE_PREVIEW_LIMIT)
       for (const row of (allMessages as MessageRow[]) ?? []) {
         if (!previews[row.conversation_id]) previews[row.conversation_id] = mapMessageRow(row)
         const arr = messagesByConv.get(row.conversation_id)
@@ -322,7 +337,7 @@ export function useChat() {
    * lista, p. ej. una oferta que acaba de abrir chat), ahí sí hace falta
    * ir a buscarla entera.
    */
-  function updateConversationPreview(conversationId: string, message: ChatMessage, isMine: boolean) {
+  function updateConversationPreview(conversationId: string, message: ChatMessage, isMine: boolean, forceRead = false) {
     const idx = conversations.value.findIndex((c) => c.id === conversationId)
     if (idx === -1) return false
 
@@ -331,20 +346,30 @@ export function useChat() {
       ...current,
       lastMessagePreview: message.kind === 'offer' ? 'Oferta enviada' : message.body,
       lastMessageAt: message.createdAt,
-      unread: isMine ? current.unread : true,
-      unreadCount: isMine ? current.unreadCount : current.unreadCount + 1
+      unread: forceRead ? false : isMine ? current.unread : true,
+      unreadCount: forceRead ? 0 : isMine ? current.unreadCount : current.unreadCount + 1
     }
     conversations.value = [updated, ...conversations.value.filter((_, i) => i !== idx)]
     return true
   }
 
-  function applyIncomingMessage(row: MessageRow, me: string | null) {
+  function applyIncomingMessage(row: MessageRow, me: string | null, forceRead = false) {
     const mapped = mapMessageRow(row)
-    if (!updateConversationPreview(row.conversation_id, mapped, row.sender_id === me)) refreshConversations()
+    if (!updateConversationPreview(row.conversation_id, mapped, row.sender_id === me, forceRead)) refreshConversations()
   }
 
   /** Suscripción Realtime global — una sola vez por sesión de pestaña (ver TopBar.vue). */
   async function startRealtime() {
+    // CRÍTICO: nunca en el servidor. TopBar.vue llama a esto en su setup(),
+    // que Nuxt ejecuta también en el SSR de cada página — y `realtimeStarted`
+    // es un useState, que Nuxt serializa al terminar el SSR y el cliente
+    // reutiliza tal cual al hidratar. Sin este guard, la bandera llegaba
+    // puesta a `true` desde el servidor ANTES de que el navegador tuviera
+    // ocasión de abrir el socket de verdad: el cliente se creía "ya
+    // suscrito" y el canal real nunca se llegaba a crear. Por eso nunca
+    // aparecía ni un solo evento de Realtime, en ningún caso — no era un
+    // problema de reconexión, es que jamás se conectaba.
+    if (import.meta.server) return
     if (realtimeStarted.value) return
     realtimeStarted.value = true
     const me = await resolveMyProfileId()
@@ -354,10 +379,34 @@ export function useChat() {
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
         const row = payload.new as MessageRow
         pushMessage(mapMessageRow(row))
-        applyIncomingMessage(row, me)
-        if (row.sender_id !== me) refreshUnreadCount()
+
+        // Si YA tienes esta conversación abierta en pantalla en este mismo
+        // instante (ver activeConversationId, puesto por chat/[id].vue), un
+        // mensaje que llegue para ella no debe contar como "no leído" ni
+        // hacer saltar el icono de chat — la estás viendo en directo. Se
+        // marca como leída también en el servidor (markRead), no solo en
+        // local, para que no vuelva a aparecer como pendiente si recargas.
+        const viewingThisConversation = row.conversation_id === activeConversationId.value
+        applyIncomingMessage(row, me, viewingThisConversation)
+
+        if (row.sender_id !== me) {
+          if (viewingThisConversation) markRead(row.conversation_id)
+          else refreshUnreadCount()
+        }
       })
-      .subscribe()
+      .subscribe((status) => {
+        // Este callback se dispara también tras cada RECONEXIÓN del socket
+        // (red inestable, pestaña en segundo plano, el portátil se
+        // suspende…), no solo la primera vez. supabase-js reconecta el
+        // websocket solo, pero NUNCA reenvía los eventos que pasaron
+        // mientras estuvo desconectado — sin este refetch, la lista de
+        // /chat se podía quedar con la preview vieja en silencio, sin
+        // ningún aviso, hasta la siguiente recarga completa de la página.
+        if (status === 'SUBSCRIBED') {
+          refreshConversations()
+          refreshUnreadCount()
+        }
+      })
 
     client
       .channel('chat-offers-global')
@@ -375,6 +424,8 @@ export function useChat() {
    * (no hay un evento explícito de "he dejado de escribir").
    */
   async function startTypingListener() {
+    // Mismo motivo que el guard de startRealtime() — ver ese comentario.
+    if (import.meta.server) return
     if (typingListenerStarted.value) return
     const me = await resolveMyProfileId()
     if (!me) return
@@ -419,6 +470,7 @@ export function useChat() {
     conversationsLoaded,
     messagesByConversation,
     unreadCount,
+    activeConversationId,
     sending,
     refreshUnreadCount,
     ensureConversations,

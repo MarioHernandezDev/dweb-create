@@ -11,6 +11,7 @@ const title = ref('')
 const description = ref('')
 const priceEuros = ref<number | null>(null)
 const deliverablesText = ref('')
+const errorMsg = ref('')
 
 watch(
   () => props.modelValue,
@@ -20,6 +21,7 @@ watch(
     description.value = props.editing?.description ?? ''
     priceEuros.value = props.editing ? props.editing.priceCents / 100 : null
     deliverablesText.value = props.editing?.deliverables.join('\n') ?? ''
+    errorMsg.value = ''
   }
 )
 
@@ -30,26 +32,31 @@ const sheetTitle = computed(() => {
 
 async function save() {
   if (!title.value || !priceEuros.value) return
+  errorMsg.value = ''
   const deliverables = deliverablesText.value.split('\n').map((d) => d.trim()).filter(Boolean)
 
-  if (props.editing) {
-    await updatePackage(props.editing.id, {
-      title: title.value,
-      description: description.value || null,
-      priceCents: Math.round(priceEuros.value * 100),
-      deliverables
-    })
-  } else {
-    await createPackage({
-      profileId: props.profileId,
-      title: title.value,
-      description: description.value || null,
-      priceCents: Math.round(priceEuros.value * 100),
-      deliverables
-    })
+  try {
+    if (props.editing) {
+      await updatePackage(props.editing.id, {
+        title: title.value,
+        description: description.value || null,
+        priceCents: Math.round(priceEuros.value * 100),
+        deliverables
+      })
+    } else {
+      await createPackage({
+        profileId: props.profileId,
+        title: title.value,
+        description: description.value || null,
+        priceCents: Math.round(priceEuros.value * 100),
+        deliverables
+      })
+    }
+    emit('saved')
+    emit('update:modelValue', false)
+  } catch (e) {
+    errorMsg.value = e instanceof Error ? e.message : 'No se ha podido guardar. Inténtalo de nuevo.'
   }
-  emit('saved')
-  emit('update:modelValue', false)
 }
 </script>
 
@@ -78,6 +85,8 @@ async function save() {
       id="pkg-price" v-model.number="priceEuros" type="number" min="1" step="1" placeholder="Ej. 300"
       class="w-full h-11 px-3.5 rounded-[var(--radius-sm)] bg-[var(--color-ink-overlay)] border border-[var(--color-hairline)] text-[0.9375rem] text-[var(--color-text)] placeholder:text-[var(--color-text-faint)] focus:outline-none focus:border-[var(--color-primary-500)]/60"
     >
+
+    <p v-if="errorMsg" class="text-[0.8125rem] text-[var(--color-status-alert)] mt-3">{{ errorMsg }}</p>
 
     <BaseButton variant="primary" size="lg" class="w-full mt-5" :icon-spin="saving" :disabled="!title || !priceEuros || saving" @click="save">
       {{ saving ? 'Guardando…' : 'Guardar' }}

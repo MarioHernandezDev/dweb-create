@@ -15,6 +15,27 @@ const myRole = role.value ?? (await ensureRole()) ?? 'creator'
 const { conversations, typingByConversation, refreshConversations } = useChat()
 await refreshConversations()
 
+// Red de seguridad: esta lista depende del canal global de Realtime (ver
+// startRealtime() en useChat.ts) para ir actualizando las previews sin
+// recargar — pero ese socket se puede desconectar/reconectar en silencio
+// (red inestable, esta pestaña en segundo plano…) y los eventos de en medio
+// se pierden para siempre, no se reenvían. Mientras estés sentado aquí
+// mirando la lista (sin haber entrado a ningún chat, que sí se refresca
+// solo), se refresca sola cada 20s y también en cuanto esta pestaña vuelve
+// a ponerse visible, para que nunca se quede desactualizada del todo.
+let pollTimer: ReturnType<typeof setInterval> | undefined
+function onVisibilityChange() {
+  if (document.visibilityState === 'visible') refreshConversations()
+}
+onMounted(() => {
+  pollTimer = setInterval(refreshConversations, 20000)
+  document.addEventListener('visibilitychange', onVisibilityChange)
+})
+onUnmounted(() => {
+  if (pollTimer) clearInterval(pollTimer)
+  document.removeEventListener('visibilitychange', onVisibilityChange)
+})
+
 const router = useRouter()
 function open(id: string) {
   router.push(`/chat/${id}`)
