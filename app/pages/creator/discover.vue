@@ -18,7 +18,6 @@ const { requests: myRequests, ensureLoaded: ensureRequestsLoaded } = useCollabRe
 const pendingPartnerIds = computed(() => myRequests.value.filter((r) => r.status === 'requested').map((r) => r.partnerId))
 
 const mode = ref<'filters' | 'ai'>('filters')
-const modeOptions = [{ value: 'filters', label: 'Filtros' }, { value: 'ai', label: 'Buscar con IA' }]
 const queryText = ref('')
 const selectedCategories = ref<string[]>([])
 const minBudgetEuros = ref<number | null>(null)
@@ -37,6 +36,11 @@ const showDeck = computed(() => results.value.length > 0)
 // normal como si ya hubiera terminado. Esto es lo que de verdad decide su
 // aspecto "ocupado" en el botón de abajo.
 const searching = computed(() => loading.value || aiLoading.value)
+// Pedido explícito del usuario: el botón de buscar solo se enseña si hay
+// algo que de verdad buscar — un filtro puesto, o el modo IA activo (ahí
+// se deja ver siempre, pero se desactiva hasta que se escriba algo).
+const showSearchButton = computed(() => hasActiveFilters.value || mode.value === 'ai')
+const searchDisabled = computed(() => searching.value || (mode.value === 'ai' && !queryText.value.trim()))
 // El 50% heurístico por defecto (sin filtros de categoría ni IA) es el
 // mismo para todo el mundo — mostrarlo sería un número sin significado
 // real, así que el badge de puntuación y el título "para ti" solo aparecen
@@ -163,7 +167,22 @@ async function send() {
   <AppShell role="creator" title="Descubrir" subtitle="Encuentra marcas interesadas en tu contenido" full-width>
     <section class="mb-6 max-w-[640px]">
       <div class="flex items-center gap-2.5 mb-3.5">
-        <SegmentedTabs v-model="mode" :options="modeOptions" />
+        <!-- Antes había dos botones que decían "Filtros": esta pestaña (el
+             selector de modo) y el de abajo (el que de verdad abre el panel
+             de filtros). Pedido explícito: se queda solo uno de "Buscar con
+             IA", como un interruptor, no como una pestaña enfrentada a otra
+             que no hacía nada por sí misma. -->
+        <button
+          type="button"
+          class="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-[var(--radius-xs)] text-[0.8125rem] font-medium border transition-colors"
+          :class="mode === 'ai'
+            ? 'border-[var(--color-primary-500)]/50 bg-[var(--color-primary-500)]/12 text-[var(--color-primary-600)]'
+            : 'border-[var(--color-hairline)] text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:border-[var(--color-hairline-strong)] hover:bg-[var(--color-ink-overlay)]'"
+          @click="mode = mode === 'ai' ? 'filters' : 'ai'"
+        >
+          <Icon name="ph:sparkle-fill" class="size-4" />
+          Buscar con IA
+        </button>
         <button
           type="button"
           class="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-[var(--radius-xs)] text-[0.8125rem] font-medium border border-[var(--color-hairline)] text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:border-[var(--color-hairline-strong)] hover:bg-[var(--color-ink-overlay)] transition-colors"
@@ -239,7 +258,8 @@ async function send() {
       </div>
 
       <BaseButton
-        :variant="searching ? 'secondary' : 'primary'" size="md" :icon-spin="searching" :disabled="searching"
+        v-if="showSearchButton"
+        :variant="searching ? 'secondary' : 'primary'" size="md" :icon-spin="searching" :disabled="searchDisabled"
         :icon="mode === 'ai' ? 'ph:sparkle-fill' : 'ph:magnifying-glass-bold'" @click="runSearch"
       >
         {{ searching ? 'Buscando…' : mode === 'ai' ? 'Buscar con IA' : 'Buscar' }}

@@ -4,6 +4,25 @@ Registro de qué se hizo, por qué, y qué queda pendiente de verificar — pens
 
 ---
 
+## 2026-10-23 (45) — Feedback directo del usuario: dos botones "Filtros" en Descubrir, y el botón de buscar siempre visible
+
+### Encontrado
+
+En las dos páginas de Descubrir había, uno junto al otro, **dos controles que decían "Filtros"**: la pestaña izquierda del selector de modo (`SegmentedTabs` con las opciones "Filtros"/"Buscar con IA") y, justo al lado, el botón real de los deslizadores que abre el panel de categorías/presupuesto. La pestaña "Filtros" no hacía nada por sí misma más que volver al modo por defecto — toda la acción de filtrar de verdad pasaba por el otro botón.
+
+### Arreglado
+
+- **Un solo "Filtros"**: la pestaña izquierda desaparece. En su lugar, "Buscar con IA" pasa de ser una opción de un `SegmentedTabs` de dos pestañas a un interruptor independiente (mismo sitio, icono de chispa, resaltado en morado claro cuando está activo) — y el botón de los deslizadores, el que de verdad filtra, se queda exactamente igual.
+- **El botón de buscar ya no está siempre ahí**: antes se veía permanentemente, aunque no hubiera nada que buscar. Ahora solo aparece si hay al menos un filtro puesto (categoría o presupuesto) o si el modo IA está activo. En modo IA, además, el botón **solo se puede pulsar si se ha escrito algo** en el cuadro de búsqueda (antes se podía pulsar "Buscar con IA" vacío).
+
+### Verificado de verdad
+
+`npx vue-tsc --noEmit`: limpio. `npm test -- --run`: 30/30. `npm run build`: limpio. No se repitió `npm run test:integration` en esta entrada — el cambio es puramente de interfaz (ningún archivo de `server/`, composable de datos ni migración tocado), y la sesión ya ha chocado una vez con el límite de autenticación de Supabase por repetir la suite muchas veces seguidas (ver entrada 43).
+
+### Sin verificar
+
+El aspecto real en el navegador — no hay herramienta de navegador en esta sesión.
+
 ## 2026-10-23 (44) — Feedback directo del usuario: el botón de buscar no se veía ocupado mientras la IA pensaba
 
 Pedido explícito tras probar la Fase 4: el botón de "Buscar con IA" debía verse grisáceo mientras busca, el aviso de "Buscando" debía resaltar más, y el porcentaje de coincidencia también.
