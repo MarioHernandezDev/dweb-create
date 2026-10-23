@@ -485,6 +485,27 @@ export function useChat() {
     channel.send({ type: 'broadcast', event: 'typing', payload: { conversationId, fromProfileId: me } })
   }
 
+  // `resetAccountCaches()` nunca llamaba a esto — al saltar de cuenta sin
+  // recarga completa (cuentas demo, o un logout→login normal dentro de la
+  // misma pestaña, ambos navegación de Nuxt sin recargar la página), la
+  // lista de `conversations` se quedaba calculada con el `me` de la cuenta
+  // ANTERIOR: `otherId`/`otherName` acababan siendo los de la cuenta nueva
+  // vista desde fuera, no los de la otra parte real (ver hallazgo N2 de la
+  // auditoría de usabilidad). No se toca `realtimeStarted`/
+  // `typingListenerStarted` aquí a propósito: son guardas de "una sola vez
+  // por pestaña" para no abrir un canal de Realtime duplicado — resetearlas
+  // forzaría una segunda suscripción al mismo canal. La suscripción ya
+  // abierta sigue usando el `me` con el que arrancó; es un problema
+  // relacionado pero distinto, pendiente de una solución propia (cerrar y
+  // reabrir el canal, no solo vaciar estado), no se toca en este cambio.
+  function reset() {
+    conversations.value = []
+    conversationsLoaded.value = false
+    messagesByConversation.value = {}
+    unreadCount.value = 0
+    activeConversationId.value = null
+  }
+
   return {
     conversations,
     conversationsLoaded,
@@ -504,6 +525,7 @@ export function useChat() {
     startRealtime,
     typingByConversation,
     startTypingListener,
-    sendTypingPing
+    sendTypingPing,
+    reset
   }
 }

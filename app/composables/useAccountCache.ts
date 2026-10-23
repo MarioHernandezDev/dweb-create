@@ -38,6 +38,10 @@ export function resetAccountCaches() {
   useSavedProfiles().reset()
   usePostRevisions().reset()
   useCollaborationLog().reset()
+  // Antes no se llamaba — ver el comentario largo en useChat.ts/reset()
+  // (hallazgo N2 de la auditoría de usabilidad: "otherName" se quedaba con
+  // el valor de la cuenta anterior tras saltar de cuenta sin recarga).
+  useChat().reset()
 
   useState<unknown>('my-subscription', () => null).value = null
   useState<boolean>('my-subscription-loaded', () => false).value = false

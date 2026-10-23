@@ -1,4 +1,5 @@
 import { describe, expect, it, beforeAll } from 'vitest'
+import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import { hasSupabaseEnv, creatorSession, partnerSession } from './supabase-setup'
 
 /**
@@ -9,14 +10,33 @@ import { hasSupabaseEnv, creatorSession, partnerSession } from './supabase-setup
  * la acepta, y confirma que aparece una `collaborations` nueva con el
  * importe correcto — igual que ya se vio en el vídeo grabado con Playwright,
  * pero aquí queda como una comprobación repetible, no solo una captura.
+ *
+ * `respond_offer` deja, a propósito, un mensaje de sistema REAL en la
+ * conversación del chat ("Oferta aceptada. Precio acordado: ...") — eso es
+ * justo lo que se prueba. Pero `messages.offer_id` es `on delete set null`,
+ * no `cascade`: borrar el paquete de prueba (que arrastra la oferta) NUNCA
+ * borraba ese mensaje, solo le quitaba la referencia — se quedaba para
+ * siempre, visible, en el chat real entre las cuentas de demo. Esto dejó
+ * 12 mensajes "111.11 €" acumulados a lo largo de esta sesión antes de
+ * detectarse (ver auditoría de usabilidad, hallazgo #3) y limpiarse a mano.
+ * Por eso aquí se captura el id del mensaje justo tras crearlo y se borra
+ * explícitamente con `service_role` (no hay policy de delete para
+ * `authenticated` sobre `messages`) — sin esto, cada ejecución de este test
+ * volvería a dejar un mensaje más.
  */
-describe.skipIf(!hasSupabaseEnv)('offers: create_offer / respond_offer (Supabase real)', () => {
+const SUPABASE_URL = process.env.SUPABASE_URL
+const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
+const hasServiceRole = !!(SUPABASE_URL && SERVICE_ROLE_KEY)
+
+describe.skipIf(!hasSupabaseEnv || !hasServiceRole)('offers: create_offer / respond_offer (Supabase real)', () => {
   let creator: Awaited<ReturnType<typeof creatorSession>>
   let partner: Awaited<ReturnType<typeof partnerSession>>
+  let admin: SupabaseClient
 
   beforeAll(async () => {
     creator = await creatorSession()
     partner = await partnerSession()
+    admin = createClient(SUPABASE_URL!, SERVICE_ROLE_KEY!, { auth: { persistSession: false } })
   })
 
   it('create_offer rechaza un paquete que no existe', async () => {
@@ -43,6 +63,7 @@ describe.skipIf(!hasSupabaseEnv)('offers: create_offer / respond_offer (Supabase
 
   it('ciclo completo: crear paquete -> ofertar -> aceptar -> aparece una collaboration cobrable', async () => {
     if (!creator || !partner) return
+    let systemMessageId: string | undefined
 
     // 1. El creador publica un paquete de prueba (desechable, con un título
     //    que lo identifica como generado por tests).
@@ -80,6 +101,12 @@ describe.skipIf(!hasSupabaseEnv)('offers: create_offer / respond_offer (Supabase
       expect(respondErr).toBeNull()
       expect((responded as { status: string } | null)?.status).toBe('accepted')
 
+      // Captura el mensaje de sistema que respond_offer() acaba de insertar
+      // en el chat real — se borra en el `finally`, antes de que el
+      // cascade del paquete le quite la referencia a `offerId`.
+      const { data: systemMessage } = await admin.from('messages').select('id').eq('offer_id', offerId).eq('kind', 'system').maybeSingle()
+      systemMessageId = (systemMessage as { id: string } | null)?.id
+
       // 4. Debe existir una collaboration nueva, ligada a esa oferta, con el
       //    importe EXACTO que se propuso — el fix central de la Fase 1.
       const { data: collab, error: collabErr } = await creator.client
@@ -114,8 +141,11 @@ describe.skipIf(!hasSupabaseEnv)('offers: create_offer / respond_offer (Supabase
     } finally {
       // Limpieza: borra el paquete de prueba (cascada sobre offers/collaborations
       // vía FK, ver la migración de chat/packages/offers) para no dejar basura
-      // de test mezclada con datos de demo reales.
+      // de test mezclada con datos de demo reales. El mensaje de sistema NO
+      // cascada (messages.offer_id es `on delete set null`) — se borra aparte,
+      // explícitamente, con service_role (sin policy de delete para el cliente).
       await creator.client.from('packages').delete().eq('id', packageId)
+      if (systemMessageId) await admin.from('messages').delete().eq('id', systemMessageId)
     }
   })
 
