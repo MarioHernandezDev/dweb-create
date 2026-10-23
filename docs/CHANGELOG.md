@@ -4,6 +4,29 @@ Registro de qué se hizo, por qué, y qué queda pendiente de verificar — pens
 
 ---
 
+## 2026-10-23 (35) — Fase 0 del traspaso CONTEXT.md: commit del backlog, rama nueva, dos bugs verificados y corregidos
+
+Traspaso técnico recibido de una auditoría de usabilidad hecha en navegador por otra sesión (`CONTEXT.md`, 21+2 hallazgos). Antes de aplicar nada, se verificaron en código real las pistas más críticas, tal y como pide el propio documento ("salen de nombres de archivo, no de leer el código").
+
+### Verificado en código (no solo hipótesis)
+
+- **#3 — Residuos de test en el chat real**: causa raíz confirmada. `messages.offer_id` es `on delete set null`, no `cascade` — el test "ciclo completo" de `offers.spec.ts` dejaba un mensaje de sistema real y permanente en la conversación de las cuentas demo en cada ejecución (el precio de prueba, 111,11 €, coincidía exacto con los ~20 mensajes que reportó la auditoría). Corregido: el test captura el id del mensaje y lo borra explícitamente con `service_role`. Limpiados los 12 mensajes ya acumulados esta sesión.
+- **N2 — "Mensajes sin leer" con el nombre equivocado**: causa raíz confirmada. `resetAccountCaches()` nunca vaciaba el estado de `useChat()` — al cambiar de cuenta sin recarga completa, la lista de conversaciones quedaba calculada con el perfil de la cuenta anterior. Añadido `useChat().reset()`. (No se tocó `realtimeStarted`/el canal de Realtime — resetearlo forzaría una segunda suscripción duplicada; queda como hallazgo relacionado pero distinto, sin corregir todavía.)
+- **N1 — no es un fallo, son dos definiciones distintas**: "Solicitudes pendientes" (Inicio del partner) = solo lo que espera tu respuesta; "Pendientes" (Colaboraciones) = todo lo sin resolver. Ambas correctas, mal nombradas igual.
+
+### Hecho
+
+- Commiteado en `main` todo el backlog acumulado de la sesión (Fase C completa + reorganización de navegación, fases 1-3) — el árbol no estaba limpio, lo que impedía empezar la Fase 0 según el propio documento.
+- Creada la rama `fase0-usabilidad-prep` para este trabajo.
+- Corregidos y verificados los dos bugs anteriores (60/60 tests de integración, 30/30 unitarios, build limpio).
+- `DESIGN.md` aparece borrado en el árbol, sin commitear, de origen desconocido — se ha dejado explícitamente sin tocar hasta confirmar con el usuario.
+
+### Pendiente (depende de decisiones ya tomadas por el usuario, no de código)
+
+- Entorno de pruebas: segundo proyecto de Supabase en la nube — pendiente de que se cree y se compartan sus credenciales; no se puede provisionar desde aquí.
+- Accesos demo solo en desarrollo (`import.meta.dev` o variable de entorno) — Fase 1 del plan de CONTEXT.md, no de la Fase 0.
+- El resto de hallazgos de prioridad media/baja del informe siguen sin tocar, a la espera de las fases siguientes.
+
 ## 2026-10-23 (34) — Reorganización de navegación, Fase 3 (retirada de "Colaboraciones" en Ajustes + fix de enlaces)
 
 Antes de retirar la pestaña antigua, el usuario pidió una auditoría explícita de 4 puntos. Se encontró un hueco real (no cubierto en Fase 2) y, al revisar los enlaces de notificación relacionados, un bug preexistente sin relación con esta reorganización.
