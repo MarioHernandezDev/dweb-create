@@ -11,10 +11,21 @@ useHead({ title: 'Bandeja de entrada' })
 const { role, ensureRole } = useMyRole()
 const myRole = role.value ?? (await ensureRole()) ?? 'creator'
 
-const { notifications, ensureLoaded, markRead, markAllRead } = useNotifications()
+const { important, activity, ensureLoaded, markRead, markAllRead } = useNotifications()
 await ensureLoaded()
 
 const router = useRouter()
+
+// Hallazgo #2: antes era una sola lista, con los inicios de sesión mezclados
+// entre solicitudes/ofertas reales. Separado en dos pestañas, con la de
+// Importantes por delante (la que importa de verdad) y el contador del
+// badge (useNotifications().unreadCount) ya solo cuenta esta.
+const tab = ref<'important' | 'activity'>('important')
+const tabs = computed(() => [
+  { value: 'important', label: important.value.some((n) => !n.readAt) ? `Importantes (${important.value.filter((n) => !n.readAt).length})` : 'Importantes' },
+  { value: 'activity', label: 'Actividad' }
+])
+const visible = computed(() => (tab.value === 'important' ? important.value : activity.value))
 
 const typeIcon: Record<string, string> = {
   welcome: 'ph:hand-waving-fill',
@@ -35,7 +46,7 @@ function iconFor(n: AppNotification) {
   return typeIcon[n.type] ?? 'ph:bell-fill'
 }
 
-const hasUnread = computed(() => notifications.value.some((n) => !n.readAt))
+const hasUnread = computed(() => important.value.some((n) => !n.readAt) || activity.value.some((n) => !n.readAt))
 
 async function open(n: AppNotification) {
   await markRead(n.id)
@@ -51,13 +62,15 @@ async function open(n: AppNotification) {
       </button>
     </div>
 
+    <SegmentedTabs v-model="tab" :options="tabs" class="mb-4" />
+
     <EmptyState
-      v-if="!notifications.length"
-      icon="ph:tray" title="Sin avisos todavía"
-      description="Aquí verás tus inicios de sesión, altas de cuenta y solicitudes de colaboración o de plantilla."
+      v-if="!visible.length"
+      icon="ph:tray" :title="tab === 'important' ? 'Sin avisos importantes' : 'Sin actividad todavía'"
+      :description="tab === 'important' ? 'Aquí verás solicitudes, ofertas, cambios pedidos, aprobaciones y valoraciones.' : 'Aquí verás tus inicios de sesión y la bienvenida de alta de cuenta.'"
     />
     <div v-else class="flex flex-col gap-2 md:max-w-xl">
-      <button v-for="n in notifications" :key="n.id" type="button" class="text-left" @click="open(n)">
+      <button v-for="n in visible" :key="n.id" type="button" class="text-left" @click="open(n)">
         <BaseCard
           radius="lg" padding="md" interactive class="flex items-start gap-3"
           :class="!n.readAt && 'border-[var(--color-primary-500)]/30 bg-[var(--color-primary-500)]/[0.06]'"

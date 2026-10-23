@@ -4,6 +4,33 @@ Registro de qué se hizo, por qué, y qué queda pendiente de verificar — pens
 
 ---
 
+## 2026-10-23 (40) — Fase 2 (#2): la bandeja separa "Importantes" de "Actividad", y el badge deja de contar logins
+
+Última pieza grande de la Fase 2. Al investigar el alcance real, salió algo más grave que "la bandeja está saturada": **`useNotifications` cargaba solo los 30 avisos más recientes en una única lista**, y un aluvión de inicios de sesión (habitual aquí, porque los tests de integración inician sesión de verdad en cada ejecución contra este mismo proyecto — ver entradas 37/38 sobre la decisión del entorno de pruebas) podía ocupar esos 30 huecos enteros. Comprobado contra Supabase real: de los 30 avisos más recientes de la cuenta demo del creador, 9 eran "Has iniciado sesión" intercalados entre solicitudes y ofertas reales — y en una sesión de pruebas más larga, una solicitud real podría quedar completamente fuera de la vista sin que nadie lo notara. Esto no era solo "se ve feo", era "se puede perder un aviso real".
+
+### Arreglado
+
+- **`app/utils/notifications.ts`** (nuevo): `ACTIVITY_NOTIFICATION_TYPES = ['login', 'welcome']` — único sitio que decide qué es "actividad" (ruido de cuenta, no pide ninguna acción) frente a "importante" (solicitudes, ofertas, cambios pedidos, aprobaciones, valoraciones, pagos).
+- **`useNotifications.ts`**: en vez de una lista con `limit(30)`, dos consultas en paralelo — `important` (excluye los tipos de actividad, `limit(50)`) y `activity` (solo esos tipos, `limit(20)`). Los importantes ya no pueden quedar enterrados por mucho que crezca el ruido de logins. `unreadCount` (el número que pintan `TopBar`/`SideRail`/`BottomTabBar` en el badge) ahora solo cuenta `important` — un aluvión de inicios de sesión ya no infla el "9+".
+- **`inbox.vue`**: pestañas "Importantes"/"Actividad" (`SegmentedTabs`, el mismo componente que ya usan Pendientes/Historial — cero componentes nuevos), Importantes por delante. `markAllRead` sigue marcando las dos listas a la vez (una sola acción, como antes); `markRead` busca en ambas.
+
+### Verificado de verdad
+
+- Confirmado contra Supabase real (`service_role`) que el filtro `not('type','in',...)` funciona exactamente como se espera: de los mismos datos reales, "importantes" devuelve solo los 6 tipos accionables y "actividad" solo login/welcome.
+- `npx vue-tsc --noEmit`: limpio. `npm test -- --run`: 30/30. `npm run test:integration`: 62/62 (sin regresiones — nada de esto toca RLS/RPC). `npm run build`: limpio.
+
+### Sin verificar
+
+- El aspecto real de las dos pestañas en el navegador (no hay herramienta de navegador en esta sesión) — se intentó una comprobación SSR con cookies reales de sesión y se abandonó por no encajar con el formato de cookie exacto que usa `@nuxtjs/supabase` v2 en este momento; no se insistió más porque no es indispensable (la consulta ya se verificó directamente contra Supabase real, y el resto es plantilla declarativa ya tipada).
+
+### Lo que queda deliberadamente fuera de este incremento
+
+"Agrupar las solicitudes duplicadas" (la otra parte de #2) se deja para otra vez: con los datos ya mucho más limpios tras las entradas 37/38, no está claro cuánto de "muchas 'Nueva solicitud' de Alma Beauty Co." seguía siendo un problema real de agrupación de UI frente a simple volumen de datos de test — hace falta mirarlo con datos ya estables, no mientras cada ejecución de la suite sigue generando avisos nuevos de verdad contra este mismo proyecto.
+
+### Con esto, la Fase 2 de `CONTEXT.md` queda cerrada (#1, #2, #10, N1, N2 — N2 ya desde la entrada 35)
+
+Sigue la Fase 3 (#5: cerrar sesión, tipografía) — depende de la pregunta abierta 1 (fuente concreta), todavía sin resolver con el usuario.
+
 ## 2026-10-23 (39) — Fase 2 (#1, #10, N1): fuente única para "activa"/"pendiente" y filtro del Tablero legible
 
 Primera pieza de la Fase 2 que no era un bug de datos sino de código — una vez limpiada la fuga de la entrada (38), que probablemente era la causa real de la mayoría de lo que parecía "incoherencia de contadores".

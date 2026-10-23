@@ -1,3 +1,5 @@
+import { ACTIVITY_NOTIFICATION_TYPES } from '~/utils/notifications'
+
 export interface AppNotification {
   id: string
   type: string
@@ -18,6 +20,8 @@ interface NotificationRow {
   created_at: string
 }
 
+const COLUMNS = 'id, type, title, body, link, read_at, created_at'
+
 function mapRow(row: NotificationRow): AppNotification {
   return {
     id: row.id,
@@ -35,36 +39,51 @@ function mapRow(row: NotificationRow): AppNotification {
  * migración 20261021110000_notifications.sql. Todo se escribe desde triggers
  * en la base de datos (login, alta, solicitudes de colaboración/plantilla);
  * este composable solo lee y marca como leído.
+ *
+ * Se cargan en dos consultas separadas, "importantes" y "actividad" (ver
+ * utils/notifications.ts) — antes era una sola lista con `limit(30)`, y un
+ * aluvión de inicios de sesión (p. ej. durante pruebas) podía desplazar
+ * fuera de esos 30 cualquier solicitud u oferta real sin que se notara.
+ * Separarlas en el origen garantiza que lo importante no se entierra,
+ * pase lo que pase con el volumen de actividad.
  */
 export function useNotifications() {
   const client = useSupabaseClient()
 
-  const notifications = useState<AppNotification[]>('my-notifications', () => [])
+  const important = useState<AppNotification[]>('my-notifications-important', () => [])
+  const activity = useState<AppNotification[]>('my-notifications-activity', () => [])
   const loaded = useState<boolean>('my-notifications-loaded', () => false)
 
   async function refresh() {
-    const { data, error } = await client
-      .from('notifications')
-      .select('id, type, title, body, link, read_at, created_at')
-      .order('created_at', { ascending: false })
-      .limit(30)
-    if (error) {
-      console.error('[useNotifications] fallo al cargar la bandeja:', error.message)
+    const [{ data: importantRows, error: e1 }, { data: activityRows, error: e2 }] = await Promise.all([
+      client.from('notifications').select(COLUMNS).not('type', 'in', `(${ACTIVITY_NOTIFICATION_TYPES.join(',')})`).order('created_at', { ascending: false }).limit(50),
+      client.from('notifications').select(COLUMNS).in('type', ACTIVITY_NOTIFICATION_TYPES as unknown as string[]).order('created_at', { ascending: false }).limit(20)
+    ])
+    if (e1 || e2) {
+      console.error('[useNotifications] fallo al cargar la bandeja:', (e1 ?? e2)?.message)
       return
     }
-    notifications.value = (data as NotificationRow[]).map(mapRow)
+    important.value = (importantRows as NotificationRow[]).map(mapRow)
+    activity.value = (activityRows as NotificationRow[]).map(mapRow)
     loaded.value = true
   }
 
   async function ensureLoaded() {
     if (!loaded.value) await refresh()
-    return notifications.value
+    return important.value
   }
 
-  const unreadCount = computed(() => notifications.value.filter((n) => !n.readAt).length)
+  // El contador del badge (TopBar/SideRail/BottomTabBar) solo cuenta lo
+  // importante — un aluvión de inicios de sesión ya no infla el "9+" con
+  // avisos que no piden ninguna acción.
+  const unreadCount = computed(() => important.value.filter((n) => !n.readAt).length)
+
+  function findLocal(id: string) {
+    return important.value.find((n) => n.id === id) ?? activity.value.find((n) => n.id === id)
+  }
 
   async function markRead(id: string) {
-    const local = notifications.value.find((n) => n.id === id)
+    const local = findLocal(id)
     if (local?.readAt) return
 
     const { error } = await client.from('notifications').update({ read_at: new Date().toISOString() } as never).eq('id', id)
@@ -76,7 +95,8 @@ export function useNotifications() {
   }
 
   async function markAllRead() {
-    const unreadIds = notifications.value.filter((n) => !n.readAt).map((n) => n.id)
+    const all = [...important.value, ...activity.value]
+    const unreadIds = all.filter((n) => !n.readAt).map((n) => n.id)
     if (!unreadIds.length) return
 
     const now = new Date().toISOString()
@@ -85,13 +105,14 @@ export function useNotifications() {
       console.error('[useNotifications] fallo al marcar todas como leídas:', error.message)
       return
     }
-    for (const n of notifications.value) if (!n.readAt) n.readAt = now
+    for (const n of all) if (!n.readAt) n.readAt = now
   }
 
   function reset() {
-    notifications.value = []
+    important.value = []
+    activity.value = []
     loaded.value = false
   }
 
-  return { notifications, loaded, unreadCount, refresh, ensureLoaded, markRead, markAllRead, reset }
+  return { important, activity, loaded, unreadCount, refresh, ensureLoaded, markRead, markAllRead, reset }
 }
