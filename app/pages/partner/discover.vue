@@ -102,6 +102,13 @@ async function send() {
           Filtros
           <span v-if="selectedCategories.length || minBudgetEuros || maxBudgetEuros" class="size-1.5 rounded-full bg-[var(--color-primary-500)]" />
         </button>
+        <NuxtLink
+          to="/favorites"
+          class="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-[var(--radius-xs)] text-[0.8125rem] font-medium border border-[var(--color-hairline)] text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:border-[var(--color-hairline-strong)] hover:bg-[var(--color-ink-overlay)] transition-colors"
+        >
+          <Icon name="ph:bookmark-simple-fill" class="size-4" />
+          Guardados
+        </NuxtLink>
       </div>
 
       <div v-if="mode === 'ai'" class="mb-3.5">

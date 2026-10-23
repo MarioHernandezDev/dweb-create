@@ -35,6 +35,7 @@ export function resetAccountCaches() {
   useCollabRequests().reset()
   useNotifications().reset()
   useRatings().reset()
+  useSavedProfiles().reset()
 
   useState<unknown>('my-subscription', () => null).value = null
   useState<boolean>('my-subscription-loaded', () => false).value = false

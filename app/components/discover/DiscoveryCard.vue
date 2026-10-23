@@ -16,6 +16,10 @@ function openProfile() {
   router.push(`/profile/${props.kind}/${props.result.id}`)
 }
 
+const { isSaved, toggleSave, toggling, ensureIdsLoaded } = useSavedProfiles()
+onMounted(() => ensureIdsLoaded())
+const saved = computed(() => isSaved(props.kind, props.result.id))
+
 // Mismo lenguaje que BoardCard/PackageCard/FeaturedDeck: textura de
 // claqueta desaturada en vez de un degradado vistoso, cuando no hay foto.
 const coverArt = computed(() => coverArtFromString(props.result.id))
@@ -53,6 +57,13 @@ const budgetLabel = computed(() => {
       </span>
     </button>
 
+    <button
+      type="button" class="shrink-0 size-9 flex items-center justify-center rounded-full text-[var(--color-text-muted)] hover:bg-[var(--color-ink-overlay)] hover:text-[var(--color-primary-500)] disabled:opacity-50"
+      :disabled="toggling === result.id" :aria-label="saved ? `Quitar a ${result.name} de guardados` : `Guardar a ${result.name}`" :aria-pressed="saved"
+      @click="toggleSave(kind, result.id)"
+    >
+      <Icon :name="saved ? 'ph:bookmark-simple-fill' : 'ph:bookmark-simple'" class="size-[1.1rem]" :class="saved && 'text-[var(--color-primary-500)]'" />
+    </button>
     <BaseButton variant="secondary" size="sm" class="shrink-0" @click="$emit('contact')">{{ ctaLabel }}</BaseButton>
   </div>
 </template>

@@ -22,6 +22,13 @@ function openProfile(result: DiscoveryResult) {
   router.push(`/profile/${props.kind}/${result.id}`)
 }
 
+const { isSaved, toggleSave, toggling, ensureIdsLoaded } = useSavedProfiles()
+onMounted(() => ensureIdsLoaded())
+function onToggleSave(e: MouseEvent, result: DiscoveryResult) {
+  e.stopPropagation()
+  toggleSave(props.kind, result.id)
+}
+
 const icon = computed(() => (props.kind === 'creator' ? 'ph:user-focus' : 'ph:storefront-fill'))
 function coverStyle(result: DiscoveryResult) {
   const art = coverArtFromString(result.id)
@@ -178,8 +185,16 @@ const liveStatus = computed(() => {
           <TransitionGroup tag="div" class="contents" :name="direction === 'forward' ? 'nx-deck' : 'nx-deck-back'">
             <article
               v-for="r in visible" :key="r.id"
-              class="shrink-0 w-64 rounded-[var(--radius-sm)] overflow-hidden border border-[var(--color-hairline)] bg-[var(--color-paper)] flex flex-col"
+              class="relative shrink-0 w-64 rounded-[var(--radius-sm)] overflow-hidden border border-[var(--color-hairline)] bg-[var(--color-paper)] flex flex-col"
             >
+              <button
+                type="button" class="absolute top-3 right-3 z-10 size-9 flex items-center justify-center rounded-full bg-[var(--color-slate)]/70 backdrop-blur-sm disabled:opacity-50"
+                :disabled="toggling === r.id" :aria-label="isSaved(kind, r.id) ? `Quitar a ${r.name} de guardados` : `Guardar a ${r.name}`" :aria-pressed="isSaved(kind, r.id)"
+                @click="onToggleSave($event, r)"
+              >
+                <Icon :name="isSaved(kind, r.id) ? 'ph:bookmark-simple-fill' : 'ph:bookmark-simple'" class="size-[1.1rem]" :class="isSaved(kind, r.id) ? 'text-[var(--color-primary-500)]' : 'text-white'" />
+              </button>
+
               <button type="button" class="relative h-72 w-full text-left" :aria-label="`Ver el perfil de ${r.name}`" @click="openProfile(r)">
                 <img v-if="r.coverUrl" :src="r.coverUrl" alt="" class="absolute inset-0 size-full object-cover">
                 <div v-else class="absolute inset-0" :style="coverStyle(r)">
