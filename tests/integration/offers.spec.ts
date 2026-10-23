@@ -74,6 +74,7 @@ describe.skipIf(!hasSupabaseEnv || !hasServiceRole)('offers: create_offer / resp
     if (!creator || !partner) return
     let systemMessageId: string | undefined
     let offerMessageId: string | undefined
+    let collaborationId: string | undefined
 
     // 1. El creador publica un paquete de prueba (desechable, con un título
     //    que lo identifica como generado por tests).
@@ -127,13 +128,14 @@ describe.skipIf(!hasSupabaseEnv || !hasServiceRole)('offers: create_offer / resp
       //    importe EXACTO que se propuso — el fix central de la Fase 1.
       const { data: collab, error: collabErr } = await creator.client
         .from('collaborations')
-        .select('status, budget_cents, offer_id')
+        .select('id, status, budget_cents, offer_id')
         .eq('offer_id', offerId)
         .maybeSingle()
       expect(collabErr).toBeNull()
       expect(collab).not.toBeNull()
       expect((collab as { status: string }).status).toBe('accepted')
       expect((collab as { budget_cents: number }).budget_cents).toBe(proposedPrice)
+      collaborationId = (collab as { id: string } | null)?.id
 
       // 4b. El aviso "ya puedes pagarla" tiene que apuntar a /partner/requests
       //     (antes apuntaba a /partner/profile, la pestaña retirada en la
@@ -155,11 +157,17 @@ describe.skipIf(!hasSupabaseEnv || !hasServiceRole)('offers: create_offer / resp
       const { data: allCollabsForOffer } = await creator.client.from('collaborations').select('id').eq('offer_id', offerId)
       expect(allCollabsForOffer ?? []).toHaveLength(1)
     } finally {
-      // Limpieza: borra el paquete de prueba (cascada sobre offers/collaborations
-      // vía FK, ver la migración de chat/packages/offers) para no dejar basura
-      // de test mezclada con datos de demo reales. El mensaje de sistema NO
-      // cascada (messages.offer_id es `on delete set null`) — se borra aparte,
-      // explícitamente, con service_role (sin policy de delete para el cliente).
+      // Limpieza: borra el paquete de prueba (cascada sobre `offers` vía FK,
+      // ver la migración de chat/packages/offers) para no dejar basura de
+      // test mezclada con datos de demo reales. PERO `collaborations.offer_id`
+      // y `messages.offer_id` son los dos `on delete set null`, NO `cascade`
+      // — el comentario anterior de este archivo decía que sí cascadeaba y
+      // era falso: durante toda la sesión, cada ejecución de este test dejó
+      // una `collaboration` real y permanente (111,11 €) sin borrar, sin que
+      // ningún test lo detectara. Las tres filas huérfanas (collaboration +
+      // los dos mensajes) se borran aquí, explícitamente, con `service_role`
+      // (no hay policy de delete para `authenticated` en ninguna de las dos).
+      if (collaborationId) await admin.from('collaborations').delete().eq('id', collaborationId)
       await creator.client.from('packages').delete().eq('id', packageId)
       if (systemMessageId) await admin.from('messages').delete().eq('id', systemMessageId)
       if (offerMessageId) await admin.from('messages').delete().eq('id', offerMessageId)

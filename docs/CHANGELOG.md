@@ -4,6 +4,35 @@ Registro de qué se hizo, por qué, y qué queda pendiente de verificar — pens
 
 ---
 
+## 2026-10-23 (38) — Tercera fuga, la más grave: `collaborations` tampoco cascadeaba, y es la causa real de los hallazgos #1 y #10
+
+Al investigar el hallazgo #10 ("Todas las colaboraciones" repite "Alma Beauty Co." unas 23 veces) para empezar la Fase 2, apareció la pieza que faltaba para entender también el #1 (contadores incoherentes entre creador y partner): **`collaborations.offer_id` es, igual que `messages.offer_id`, `on delete set null` y no `cascade`**. El comentario que yo mismo escribí en la entrada (35) ("borra el paquete de prueba, cascada sobre offers/collaborations") daba por hecho algo que nunca se comprobó. Resultado real: cada ejecución del test "ciclo completo" dejaba, además de los mensajes ya corregidos, una `collaboration` real y permanente con `status='accepted'` y 111,11 € — invisible porque el propio test seguía en verde (solo comprueba que hay exactamente una collaboration para ESA oferta, no que no sobren de ejecuciones anteriores).
+
+### Alcance real encontrado
+
+Consultado contra Supabase real con `service_role` antes de tocar nada: **38 filas en `collaborations`**, de las cuales **18 con `budget_cents = 11111`** (exactamente el precio fijo del test) y **1 con `budget_cents = 5000`** (de la prueba manual de webhook de la entrada 37) — 19 en total, todas con `offer_id` ya `null` (huérfanas confirmadas, no colaboraciones en uso). Esto es casi con toda seguridad la causa real de "18 colaboraciones activas" en el Hoy del creador y de que el filtro del Tablero liste 23 veces la misma contraparte (#1 y #10 puede que no sean un bug de cómo se cuenta, sino de qué se cuenta).
+
+### Arreglado
+
+- `tests/integration/offers.spec.ts`: captura también el `id` de la `collaboration` creada (ya se leía su `status`/`budget_cents` para la aserción, solo faltaba pedir `id`) y la borra explícitamente con `admin` en el `finally`, antes de que el borrado del paquete la deje huérfana.
+- Verificado con 4 ejecuciones limpias seguidas tras el fix (dos sueltas + la suite completa dos veces): el recuento de `budget_cents = 11111` se queda fijo, no vuelve a crecer.
+
+### Limpieza de datos (mismo criterio explícito que las entradas anteriores)
+
+Borradas las 19 filas huérfanas confirmadas (`budget_cents` en `{11111, 5000}`, todas con `offer_id` ya `null`). **Total de `collaborations` en el proyecto: de 38 a 18.**
+
+**No tocadas, por falta de un criterio de "test" tan claro como el anterior** (quedan abiertas en la pregunta 5 de `CONTEXT.md`): un grupo de 6 filas creadas en el mismo segundo (2026-10-23 09:14:22-23, importes 300/350/600/400/700/500 €) que tiene toda la pinta de un script de seed de demo, no de basura; otro grupo de 4 filas del 2026-10-20 17:53:47-48 (900/0/2200/600 €), mismo patrón; dos filas sueltas de 32,00 €, sin origen identificado; las dos colaboraciones ligadas a los paquetes "Reel de lanzamiento 7505/7823" (400/450 €); y **la fila de 567 € (Paula Ibáñez, "requested")**, que coincide exactamente con el valor de referencia que el propio `CONTEXT.md` registró antes de cualquier cambio — se deja intacta a propósito.
+
+### Verificado de verdad
+
+- `npm run test:integration`: 60/60. `npm test -- --run`: 30/30.
+- Confirmado por API: 0 filas con `budget_cents` en `{11111, 5000}` tras el borrado; total de `collaborations` = 18.
+
+### Pendiente
+
+- Decidir qué hacer con el grupo ambiguo de arriba (pregunta abierta 5).
+- Con los datos ya mucho más limpios, seguir con la Fase 2 (#1 fuente única de contadores, #10 deduplicar el filtro del Tablero por colaboración en vez de listar entradas sueltas, #2 bandeja de notificaciones, N1 renombrar para no confundir).
+
 ## 2026-10-23 (37) — Decisión del entorno de pruebas + segunda fuga de mensajes de test encontrada y cerrada
 
 El usuario decide no crear un segundo proyecto de Supabase por ahora: este proyecto sigue sirviendo de entorno de pruebas mientras se avanza, y más adelante se clonará su esquema a uno vacío para datos reales. Esto reabre la Fase 1 (#3) con otra vuelta: antes de seguir con la Fase 2, se revisó el estado real de los datos de test en Supabase.
