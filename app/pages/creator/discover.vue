@@ -173,8 +173,8 @@ async function send() {
              IA", como un interruptor, no como una pestaña enfrentada a otra
              que no hacía nada por sí misma. -->
         <button
-          type="button"
-          class="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-[var(--radius-xs)] text-[0.8125rem] font-medium border transition-colors"
+          type="button" :disabled="searching"
+          class="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-[var(--radius-xs)] text-[0.8125rem] font-medium border transition-colors disabled:opacity-40 disabled:pointer-events-none"
           :class="mode === 'ai'
             ? 'border-[var(--color-primary-500)]/50 bg-[var(--color-primary-500)]/12 text-[var(--color-primary-600)]'
             : 'border-[var(--color-hairline)] text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:border-[var(--color-hairline-strong)] hover:bg-[var(--color-ink-overlay)]'"
@@ -184,8 +184,8 @@ async function send() {
           Buscar con IA
         </button>
         <button
-          type="button"
-          class="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-[var(--radius-xs)] text-[0.8125rem] font-medium border border-[var(--color-hairline)] text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:border-[var(--color-hairline-strong)] hover:bg-[var(--color-ink-overlay)] transition-colors"
+          type="button" :disabled="searching"
+          class="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-[var(--radius-xs)] text-[0.8125rem] font-medium border border-[var(--color-hairline)] text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:border-[var(--color-hairline-strong)] hover:bg-[var(--color-ink-overlay)] transition-colors disabled:opacity-40 disabled:pointer-events-none"
           @click="filtersOpen = !filtersOpen"
         >
           <Icon name="ph:sliders-horizontal-bold" class="size-4" />

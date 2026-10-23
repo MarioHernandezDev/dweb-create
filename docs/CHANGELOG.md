@@ -4,6 +4,22 @@ Registro de qué se hizo, por qué, y qué queda pendiente de verificar — pens
 
 ---
 
+## 2026-10-23 (46) — Feedback directo del usuario: bloquear el interruptor de IA y el de Filtros mientras se busca
+
+Pedido explícito: mientras se busca con IA, el botón de Filtros debe quedar deshabilitado, y viceversa — no tiene sentido dejar cambiar de modo o abrir el panel de filtros con una búsqueda ya en marcha.
+
+### Arreglado
+
+En las dos páginas de Descubrir, el interruptor "Buscar con IA" y el botón "Filtros" ganan `:disabled="searching"` (el mismo computed de la entrada 44 que ya cubre las dos fases, filtros y IA) — mientras cualquiera de las dos esté en marcha, ninguno de los dos se puede pulsar, con la misma atenuación visual que ya usa `BaseButton` (`opacity-40`, sin eventos de puntero).
+
+### Verificado de verdad
+
+`npx vue-tsc --noEmit`: limpio. `npm test -- --run`: 30/30. `npm run build`: limpio. Sin `test:integration` (cambio puramente de interfaz, sin tocar `server/` ni composables de datos).
+
+### Sin verificar
+
+El aspecto real en el navegador — no hay herramienta de navegador en esta sesión.
+
 ## 2026-10-23 (45) — Feedback directo del usuario: dos botones "Filtros" en Descubrir, y el botón de buscar siempre visible
 
 ### Encontrado
