@@ -9,6 +9,15 @@ const props = defineProps<{
 }>()
 
 const open = defineModel<boolean>({ default: false })
+
+// Checklist de solo lectura (ver supabase/migrations/20261025160000_
+// checklist_partner_visibility.sql) — mismo composable que ya usa el
+// creador, sin checkbox interactivo: aquí es información de progreso, no
+// una acción del partner. Se carga perezosamente al abrir la hoja, nunca
+// bloqueando el resto del contenido ya disponible sin red.
+const { itemsByPost, ensureItems } = useChecklist()
+const checklistItems = computed(() => (props.post ? itemsByPost.value[props.post.id] ?? [] : []))
+watch(() => props.post?.id, (postId) => { if (postId) ensureItems(postId) }, { immediate: true })
 </script>
 
 <template>
@@ -42,6 +51,19 @@ const open = defineModel<boolean>({ default: false })
       <p v-if="post.hashtags.length" class="flex flex-wrap gap-1.5">
         <span v-for="tag in post.hashtags" :key="tag" class="text-[0.8125rem] text-[var(--color-text-faint)]">{{ tag }}</span>
       </p>
+
+      <div v-if="checklistItems.length" class="mt-4">
+        <h3 class="text-[0.6875rem] font-semibold uppercase tracking-wide text-[var(--color-text-faint)] mb-2">Checklist</h3>
+        <ul class="flex flex-col gap-1.5">
+          <li v-for="item in checklistItems" :key="item.id" class="flex items-center gap-2 text-[0.8125rem]">
+            <Icon
+              :name="item.done ? 'ph:check-square-fill' : 'ph:square-bold'"
+              class="size-4 shrink-0" :class="item.done ? 'text-[var(--color-status-published)]' : 'text-[var(--color-text-faint)]'"
+            />
+            <span :class="item.done ? 'text-[var(--color-text-faint)] line-through' : 'text-[var(--color-text)]'">{{ item.text }}</span>
+          </li>
+        </ul>
+      </div>
 
       <slot name="actions" :post="post" />
     </template>

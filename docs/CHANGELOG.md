@@ -4,6 +4,179 @@ Registro de qué se hizo, por qué, y qué queda pendiente de verificar — pens
 
 ---
 
+## 2026-10-23 (34) — Reorganización de navegación, Fase 3 (retirada de "Colaboraciones" en Ajustes + fix de enlaces)
+
+Antes de retirar la pestaña antigua, el usuario pidió una auditoría explícita de 4 puntos. Se encontró un hueco real (no cubierto en Fase 2) y, al revisar los enlaces de notificación relacionados, un bug preexistente sin relación con esta reorganización.
+
+### Hueco encontrado y corregido
+
+`server/api/stripe/pay-collaboration.post.ts` tenía el destino de vuelta de Stripe **fijo por código**: `success_url`/`cancel_url` apuntaban siempre a `/partner/profile?payment=...`, sin importar desde qué pantalla se inició el pago. Con el botón "Pagar" ya añadido a `/partner/requests` en la Fase 2, esto significaba volver de Stripe a una pantalla distinta de la que se estaba viendo — justo el "perder el contexto" que se quería evitar. El cobro en sí (`paid_at`, vía webhook) es completamente independiente de esta URL, así que el cambio es seguro: cero riesgo sobre el dinero real.
+
+- `success_url`/`cancel_url` ahora apuntan a `/partner/requests?payment=...&collaboration=<id>`.
+- `partner/requests.vue` lee esos parámetros: fuerza un refresco real de las colaboraciones (el webhook puede haber escrito `paid_at` hace solo un instante), muestra el mismo aviso "Pago enviado"/"Pago cancelado" que antes solo existía en Ajustes, y **reabre automáticamente la hoja de detalle de esa misma colaboración** — no solo "la misma página", el mismo contexto exacto.
+
+### Enlaces de notificación corregidos (`supabase/migrations/20261025190000_fix_notification_links.sql`)
+
+- `notify_collaboration_updated()` y `respond_offer()`: apuntaban a `/partner/profile` (la pestaña que se retira). Ahora apuntan a `/partner/requests`.
+- **Bug preexistente, no causado por esta reorganización**, encontrado al revisar lo anterior: `submit_collaboration_rating()` tenía los enlaces **cruzados** — cuando el partner valoraba, el aviso al creador (quien lo recibe) apuntaba a `/partner/profile` (una ruta que un creador no puede abrir); cuando el creador valoraba, el aviso al partner apuntaba a `/creator/requests`. Corregido: el enlace de cada aviso es siempre la ruta de quien lo recibe, no la del rol de quien valora.
+
+### Retirada de la pestaña "Colaboraciones" de `partner/profile.vue`
+
+Confirmado antes de retirarla que no se perdía ninguna función: la lista de colaboraciones + pagar/completar/valorar ya estaba íntegra (y mejor, con pestañas Pendientes/Historial) en `/partner/requests`; el enlace "Descubrir más" deja de hacer falta porque "Descubrir" ya es un destino de menú principal desde la Fase 1. Se elimina el bloque entero, el aviso de pago de esa página y todo el código que solo usaban (`payableStatuses`, `confirmPay`, `confirmMarkCompleted`, `formatDate`, el `useMyCollaborations()` de esa página).
+
+### Verificado de verdad
+
+- `npx vue-tsc --noEmit`, `npm test -- --run` (30/30) y `npm run build`: limpios.
+- Migración aplicada y confirmada.
+- **`tests/integration/notification-links.spec.ts`** (nuevo, 5 tests): `mark_collaboration_completed` y `submit_collaboration_rating` en ambas direcciones, sobre colaboraciones de prueba aisladas (nunca sobre las cuentas de demo compartidas — `collaboration_ratings` no tiene policy de delete), comprobando el `link` real guardado en `notifications`. `offers.spec.ts` ampliado con la misma comprobación sobre su propio ciclo completo ya existente. **60/60 en toda la suite de integración**, sin regresiones.
+- SSR real: `/partner/requests?payment=success&collaboration=<id>` muestra el aviso; `/partner/profile` ya no contiene la pestaña ni su contenido (confirmado por `grep` que solo queda el nombre "Colaboraciones" del menú de navegación, no de la pestaña retirada).
+
+### Sin verificar
+
+- La interacción real en navegador: completar un pago de verdad en Stripe y comprobar visualmente que la hoja de la colaboración se reabre sola al volver — no hay herramienta de navegador en esta sesión. El mecanismo se verificó pieza por pieza (URL de redirección, lectura de query params, refresco forzado, apertura de la hoja) pero no de principio a fin con un pago real.
+
+### Pendiente
+
+Fase 4 (opcional, fusionar Redes+Métricas en "Mis redes" — pendiente de validar con datos de uso reales si penaliza a quien usa Métricas a menudo).
+
+## 2026-10-23 (33) — Reorganización de navegación, Fase 2 (detalle de colaboración en dos niveles)
+
+Segunda fase del plan acordado. Reorganiza `creator/requests.vue` y `partner/requests.vue` en los dos niveles presentados en el documento: Nivel 1 fijo (quién, estado, acción del momento) + pestañas Brief/Calendario/Registro para consulta ocasional.
+
+### Qué se cambió
+
+- **Nivel 1, siempre visible, nunca en pestaña**: avatar + nombre + `StatusPill` (sin cambios) + una línea del brief truncada a 1 línea (antes el párrafo completo) + la acción del momento según estado: `NegotiationPanel` (negociar), **"Pagar"** (nuevo aquí), "Marcar como completada" o `RatingPrompt`.
+- **Adelanto explícito, pedido por el usuario**: el botón "Pagar" y "Marcar como completada" para el partner, hasta ahora solo en `partner/profile.vue` (pestaña "Colaboraciones" de Ajustes — el hallazgo central de la auditoría), se añaden aquí reutilizando exactamente el mismo composable (`useMyCollaborations`: `payForCollaboration`, `markCompleted`, `paying`, `payError`) — ninguna lógica de negocio nueva, ningún cambio de RLS/Stripe. La pestaña de Ajustes **se deja intacta por ahora** (no se retira todavía, eso sigue siendo la Fase 3, una vez confirmado que este sitio cubre todos los casos). Como consecuencia, `handleAccept` en `partner/requests.vue` ya no cierra la hoja ni redirige a `/partner/profile?tab=collabs` — se queda en la misma hoja, ya con el botón de pago visible.
+- **Pestaña "Brief"**: fusiona el brief libre + `CollaborationTermsCard` (campaña/condiciones) + las fechas (pedida/resuelta/cobrado) — mismos componentes, sin cambios internos.
+- **Pestaña "Calendario"**: el `WeekBoard` acotado ya no es de solo lectura — pulsar un entregable expande, dentro de la misma pestaña (sin sheet nueva, sin navegar), un bloque con portada/caption/estado y su **checklist de solo lectura** (reutilizando `useChecklist()`, misma tabla ya visible desde la migración de "seguimiento del progreso"). Resuelve directamente lo que pedía el usuario: consultar un entregable sin salir de la colaboración y sin buscarlo de nuevo en el dashboard general. Edición del checklist sigue siendo tarea exclusiva del Tablero/dashboard, no se duplica aquí.
+- **Pestaña "Registro"**: `CollaborationLogCard`, sin cambios — ya no compite visualmente con el brief ni con la acción principal.
+- `SegmentedTabs` (mismo componente ya usado en "Pendientes/Historial" de estas mismas páginas) para las 3 pestañas — sin patrón visual nuevo.
+
+### Verificado de verdad
+
+- `npx vue-tsc --noEmit`, `npm test -- --run` (30/30) y `npm run build`: limpios.
+- **55/55 en toda la suite de integración**, sin regresiones — coherente con que no se tocó ninguna migración, policy ni RPC; solo se reutilizan composables ya probados.
+- SSR real con sesión de las dos cuentas demo sobre `/creator/requests` y `/partner/requests`: `200`, sin errores.
+
+### Sin verificar
+
+- La interacción real con las pestañas y el bloque expandido del checklist en móvil (si las tres etiquetas de `SegmentedTabs` quedan cómodas al tacto, si el contenido de cada pestaña se siente "demasiado largo") — no hay herramienta de navegador en esta sesión. Tampoco se puede confirmar visualmente si el truncado a 1 línea del brief corta en un punto razonable en pantallas muy estrechas.
+
+### Pendiente (ya acordado, no implementado todavía)
+
+Fase 3 (retirar la pestaña "Colaboraciones" de `partner/profile.vue` una vez confirmado en la práctica que el nuevo sitio cubre todos los casos) y Fase 4 (fusionar Redes+Métricas en "Mis redes", opcional).
+
+## 2026-10-23 (32) — Reorganización de navegación, Fase 1 (renombrados + accesos secundarios)
+
+Primera fase del plan de reorganización de navegación acordado tras la auditoría de usabilidad completa (documento en Claude Docs). Solo navegación/textos — sin tocar rutas, RLS, datos ni pagos.
+
+### Qué se cambió
+
+- **`app/utils/nav.ts`**: "Solicitudes" → "Colaboraciones" (ambos roles, mismo nombre que ya usaba la pestaña de Ajustes del partner para la misma entidad); "Calendario" → "Inicio" (partner — esa página es un dashboard completo, no solo un calendario; la sección interna sigue llamándose "Tu calendario"). Nueva función `secondaryNav(role)`: Chat / Bandeja de entrada / Guardados / Ajustes — destinos reales que antes solo existían como icono sin texto en `TopBar.vue`, o sin ningún acceso desde ningún menú (caso de Guardados).
+- **`SideRail.vue`** (escritorio): nuevo bloque de texto bajo la cuenta con Chat/Bandeja/Guardados (badges de no-leído reutilizando `useNotifications`/`useChat`, sin disparar un segundo `refresh()` — se lee el estado que `TopBar.vue` ya mantiene al día en cada página).
+- **`BottomTabBar.vue`** (móvil): el botón "Más" ya no depende de que sobren items del rol — el partner, con solo 3 destinos, nunca lo tenía; ahora siempre reúne el overflow del rol (si lo hay) + los 4 accesos secundarios, con badge agregado de no-leídos.
+- Títulos de página (`useHead`/`AppShell title`) de `creator/requests.vue`, `partner/requests.vue` y `partner/index.vue` actualizados a juego con los nombres nuevos.
+
+### Verificado de verdad
+
+- `npx vue-tsc --noEmit`, `npm test -- --run` (30/30) y `npm run build`: limpios.
+- SSR real con sesión de las dos cuentas demo: confirmado por `grep` sobre el HTML real que `SideRail` renderiza los 9 (creador) / 7 (partner) textos esperados, que no queda ningún "Solicitudes"/"Calendario" suelto, que los títulos de página dicen "Colaboraciones", y que el botón "Más" del partner ahora existe (antes no se renderizaba en absoluto).
+- **55/55 en toda la suite de integración**, sin regresiones — coherente con que esta fase no toca RLS/RPC/esquema.
+
+### Sin verificar
+
+- La interacción real con el menú "Más" en móvil (abrir la hoja, pulsar un destino) y el aspecto visual del nuevo bloque secundario en `SideRail` — no hay herramienta de navegador en esta sesión.
+
+### Pendiente (siguientes fases, ya acordadas, no implementadas todavía)
+
+Fase 2 (reorganizar el detalle de una colaboración en dos niveles con pestañas Brief/Calendario/Registro), Fase 3 (mover pago/completar/valorar de `partner/profile.vue` a `partner/requests.vue`), Fase 4 (opcional: fusionar Redes+Métricas en "Mis redes").
+
+## 2026-10-23 (31) — Brief estructurado + calendario compartido (coherencia visual, cero componentes nuevos)
+
+Cierra los dos últimos huecos de Fase C. Instrucción explícita del usuario: priorizar la cohesión visual de FEEDMA sobre todo — reutilizar lo que ya existe, no crear nada que parezca de otra aplicación. Auditoría previa: no existe ningún calendario-cuadrícula en FEEDMA — la única vista "por fecha" es `WeekBoard.vue`+`DeliverableCard.vue`, y la propia app **ya la llama "Tu calendario"** en el dashboard del partner. El creador no tenía esa vista (solo su Kanban, que el roadmap pide no duplicar), y ninguna de las dos estaba acotada a una colaboración concreta.
+
+### Qué se construyó
+
+- **Calendario compartido, sin migración ni componente nuevo**: `WeekBoard`/`DeliverableCard` reutilizados tal cual, filtrados a los posts de la colaboración abierta, dentro de la misma hoja de detalle donde ya viven Condiciones/Registro — en `creator/requests.vue` y `partner/requests.vue`. **Limitación real encontrada al auditar la reutilización** antes de tocar código: `BottomSheet.vue` limita su panel a `md:max-w-md` (~448px), pero la rejilla a 2 columnas de `WeekBoard` se activa por ancho de **viewport**, no de contenedor (así son los breakpoints de Tailwind) — metida tal cual, en escritorio se habría visto una rejilla de 2 columnas apretada en 448px. Arreglo mínimo: `WeekBoard` gana `twoColumn` (por defecto `true`, cero cambio en su uso actual) y `DeliverableCard` gana `interactive` (por defecto `true`) — en el calendario acotado se usan ambos en `false`: una columna, cards informativas sin `role`/`tabindex`/cursor de mano. Decisión explícita: no se abre ninguna segunda hoja (`PostDetailSheet`) desde dentro de la ya abierta — no tiene precedente en la app, así que las cards son de solo lectura, simétrico entre creador y partner.
+- **Brief estructurado, misma migración y mismo trigger de "condiciones pactadas", ampliados**: `supabase/migrations/20261025180000_collaboration_brief_fields.sql` añade 3 columnas opcionales (`campaign_goal`, `target_audience`, `tone`) a la MISMA fila de `collaborations`, y `create or replace function prevent_collaboration_terms_update()` (la misma de la sesión pasada, no una nueva) amplía su comparación a estas 3 columnas — el trigger ya existente sigue apuntando al mismo nombre, cero piezas nuevas de seguridad. Se integran dentro de `CollaborationTermsCard.vue` (subsección "Sobre la campaña", mismo `<dl>`, visualmente separada de "Condiciones pactadas") y dentro del mismo desplegable ya existente de los formularios de contacto, renombrado de "Condiciones (opcional)" a "Detalles de la propuesta (opcional)" — **un solo desplegable, no dos**.
+
+### Verificado de verdad contra Supabase real
+
+- `npx vue-tsc --noEmit`, `npm test -- --run` (30/30) y `npm run build`: limpios.
+- Revisado que `partner/index.vue` sigue pasando `WeekBoard` sin los props nuevos — comportamiento idéntico al de antes, confirmado por `grep`.
+- Migración aplicada y confirmada por API.
+- **`tests/integration/collaboration-terms.spec.ts`** ampliado (no un archivo nuevo) con los 3 campos nuevos: se guardan y leen bien con valores explícitos y en una colaboración sin nada (`null`); el intento de modificación directa (ya cubierto para las 4 columnas anteriores) se extiende a estas 3, incluido un intento con `service_role` sobre `tone` — bloqueado por el mismo trigger ampliado. **55/55 en toda la suite de integración**, sin regresiones.
+- SSR real con sesión de las dos cuentas demo sobre `/creator/requests`, `/partner/requests`, `/creator/discover`, `/partner/discover` y `/partner`: las 5, `200`, sin errores.
+
+### Sin verificar
+
+- Cómo se ve de verdad la rejilla a una columna dentro de la hoja en escritorio, y el desplegable ampliado del formulario de contacto — no hay herramienta de navegador en esta sesión. La hoja de detalle solo se renderiza del lado del cliente al abrirla (`detailReq`/`detailCollab` empiezan en `null`), así que la comprobación SSR confirma que la página carga sin romperse, no el aspecto final de las secciones nuevas.
+
+## 2026-10-23 (30) — Registro de incidencias y cambios acordados
+
+Cierra el último de los tres huecos de Fase C identificados en la auditoría previa (brief estructurado, calendario compartido, registro de incidencias — los otros dos quedan pendientes, son decisiones de diseño que conviene acordar antes de tocar código). **Distinción auditada antes de construir nada**: ya existía `reports` — pero es un aviso confidencial al admin (spam, presupuesto poco serio), de solo escritura; lo que pide el roadmap aquí es otra cosa, un registro visible para **las dos partes**.
+
+### Qué se construyó
+
+- **`supabase/migrations/20261025170000_collaboration_log.sql`**: tabla `collaboration_log_entries` (`kind` check `'incident'|'agreed_change'`, `detail` con check de no-vacío-tras-trim y ≤1000 caracteres **a nivel de tabla**, no solo en la interfaz — se aplica a cualquier insert, incluido `service_role`). RLS de select para las dos partes; insert con `with check` puro (sin RPC — no hay transición de estado que proteger): `author_profile_id = auth.uid()` evita que nadie suplante al autor, y el `exists(...)` evita asociar una entrada a una colaboración ajena. **Sin policy de update/delete para `authenticated`** — a diferencia de "condiciones pactadas" (que lleva un trigger porque esas columnas sí se actualizan por otras vías legítimas), aquí no hay ningún update/delete legítimo de ninguna fila entera, así que la ausencia de policy ya es protección completa; se deja a propósito que `service_role` pueda borrar vía cascada (limpieza de datos de prueba). Columna `seq` (`generated always as identity`) como segundo criterio de orden real, no decorativo, para cuando dos entradas comparten `created_at`. Trigger `after insert` que notifica **exclusivamente a la otra parte** (nunca a quien escribe) — mismo patrón que `notify_collaboration_offer_created`.
+- **`app/composables/useCollaborationLog.ts`** (nuevo) + **`CollaborationLogCard.vue`** (nuevo, junto a `CollaborationTermsCard.vue`): lista cronológica + formulario (incidencia/cambio acordado), inserción nunca optimista (si falla, no se muestra como guardada). Bajo "cambio acordado", nota explícita: no mueve ningún dato de la colaboración por sí solo, es solo constancia escrita. Montado en `creator/requests.vue` y `partner/requests.vue`.
+
+### Verificado de verdad contra Supabase real
+
+- `npx vue-tsc --noEmit`, `npm test -- --run` (30/30) y `npm run build`: limpios.
+- Migración aplicada y confirmada por API.
+- **`tests/integration/collaboration-log.spec.ts`** (nuevo, 9 tests, en verde): detalle vacío/espacios y >1000 caracteres rechazados de verdad; suplantación de `author_profile_id` rechazada; un perfil ajeno no lee ni inserta; **camino feliz en las dos direcciones con comprobación real de notificaciones** (el creador registra una incidencia → el partner recibe exactamente una notificación con el enlace correcto, el creador autor no recibe ninguna; y al revés); las dos partes leen las entradas en el mismo orden en dos lecturas distintas; **intento real de `update`/`delete`** desde ambos clientes autenticados confirmado sin ningún efecto comparando contra el valor real guardado. **54/54 en toda la suite de integración**, sin regresiones.
+- SSR real con sesión de las dos cuentas demo sobre `/creator/requests` y `/partner/requests`: `200`, sin errores.
+
+### Sin verificar
+
+- Rellenar el formulario en el navegador y ver la lista/notificación pintada de verdad — no hay herramienta de navegador en esta sesión.
+
+## 2026-10-23 (29) — Seguimiento del progreso: el partner ve el checklist real
+
+Siguiente hueco de Fase C, encontrado ya **documentado en el propio código**: `app/composables/usePartnerPosts.ts` tenía, literal, `labelIds: []` / `checklist: { total: 0, done: 0 }` fijos a mano, con el comentario "el partner no las ve todavía". El checklist (`checklist_items`) ya existía y ya lo usaba el creador — el partner simplemente no tenía permiso de lectura. Resultado real: ningún "seguimiento del progreso" más allá de la fase general (`StatusPill`).
+
+### Qué se construyó
+
+- **`supabase/migrations/20261025160000_checklist_partner_visibility.sql`**: la policy de select de `checklist_items` gana la misma rama "partner con colaboración activa sobre el post" que ya usa `posts_select_scoped` desde hace semanas — ningún concepto nuevo. Las policies de insert/update/delete no se tocaron: el partner sigue sin poder escribir nada, esto es puramente visibilidad. `labels`/`post_labels` se quedaron fuera a propósito (organización personal del creador, no información de progreso que pida el roadmap).
+- **`usePartnerPosts.ts`**: un único `select('post_id, done').in('post_id', ...)` agregado en cliente, sustituyendo los ceros fijos — un solo viaje de red para todos los posts visibles.
+- **`DeliverableCard.vue`** (card exclusiva del dashboard del partner): mismo indicador "✓ X/Y" que `BoardCard.vue` ya tenía para el creador.
+- **`PostDetailSheet.vue`** (hoja de detalle, exclusiva del partner): sección "Checklist" de solo lectura (sin checkbox interactivo — es información, no una acción suya), reutilizando `useChecklist.ts` sin tocarlo.
+
+### Verificado de verdad
+
+- `npx vue-tsc --noEmit`, `npm test -- --run` (30/30) y `npm run build`: limpios.
+- Migración aplicada y confirmada por API.
+- **`tests/integration/checklist-visibility.spec.ts`** (nuevo, 5 tests, en verde contra el proyecto real, sobre un post+item aislados): el partner con colaboración activa lee el item; el creador sigue viéndolo (la rama "own" no se rompió); un perfil ajeno no lo lee; y un intento real de insert/update/delete por el partner confirmado sin ningún efecto en la base de datos. **45/45 en toda la suite de integración** (incluidos los incrementos anteriores de esta sesión, sin regresiones).
+- SSR real con sesión del partner de demo sobre `/partner`: `200`, sin errores.
+
+### Sin verificar
+
+- El indicador "✓ X/Y" pintado de verdad en una card y la sección de checklist dentro de la hoja de detalle — no hay herramienta de navegador en esta sesión.
+
+## 2026-10-23 (28) — Condiciones pactadas en la propuesta de colaboración
+
+Siguiente hueco concreto de Fase C. El roadmap pide explícitamente "condiciones pactadas: revisiones incluidas, exclusividad, derechos de uso y alcance" — hasta ahora `collaborations.brief` era un único texto libre de presentación; ninguna de esas cuatro cosas quedaba nunca escrita en ningún sitio, y el creador aceptaba/rechazaba una solicitud sin saberlo por escrito.
+
+### Qué se construyó
+
+- **`supabase/migrations/20261025150000_collaboration_terms.sql`**: 4 columnas nuevas en `collaborations` (`scope_notes`, `revisions_included`, `exclusivity`, `usage_rights`), todas opcionales salvo `exclusivity` (`false` por defecto). Se fijan una sola vez al enviar la propuesta inicial (igual que `brief`/`budget_cents`) y quedan **congeladas de verdad**: antes de diseñar esto se auditó que ya no existe ninguna policy de `update` para el cliente sobre `collaborations` (se cerró en `20261025090000_phase1_security_payments.sql`), pero ese invariante ya se rompió una vez en este mismo proyecto — así que se añadió además un **trigger `before update`** (`prevent_collaboration_terms_update`) que bloquea cualquier cambio a estas 4 columnas venga de donde venga, incluido `service_role` saltándose RLS por completo. Las tres RPCs legítimas (`accept_collaboration_request`/`decline_collaboration_request`/`mark_collaboration_completed`) nunca tocan estas columnas, así que el trigger no las afecta.
+- **Semántica de valores explícita, sin inferencias**: `revisions_included = null` es "sin límite definido", distinto de `0` ("cero revisiones incluidas"); `usage_rights`/`scope_notes` ausentes se muestran como "no especificado", nunca se infiere ningún permiso.
+- **Formulario de contacto** (`creator/discover.vue`, `partner/discover.vue`): sección colapsable "Condiciones (opcional)" — no se exige rellenarla.
+- **`app/components/collab/CollaborationTermsCard.vue`** (nuevo, compartido): bloque de solo lectura en el detalle de la solicitud (`creator/requests.vue`, `partner/requests.vue`). Incluye un contador de "solicitudes de cambios registradas en esta colaboración" (cuenta real sobre `post_revision_notes` de todas las publicaciones de esa colaboración) — deliberadamente **no** es un "cumplido/incumplido": nunca se presenta como fracción ni se bloquea ninguna acción al superar el número orientativo.
+
+### Verificado de verdad contra Supabase real
+
+- `npx vue-tsc --noEmit`, `npm test -- --run` (30/30) y `npm run build`: limpios.
+- Migración aplicada por el usuario; confirmada por API: las 4 columnas existen, el `check (revisions_included >= 0)` rechaza `-1` en un insert real, y **un intento de `PATCH` directo contra la fila con `service_role`** (sin RLS de por medio) fue bloqueado por el trigger con su mensaje explícito — no solo "no hay policy", el trigger es real.
+- **`tests/integration/collaboration-terms.spec.ts`** (nuevo, 8 tests, todos en verde contra el proyecto real): valores exactos leídos por ambas partes autorizadas (incluido `revisions_included = 0` sin confundirse con `null`); una colaboración "antigua" sin condiciones lee `null`/`false` sin error; un perfil ajeno no puede leer ninguna de las dos; **intento de modificación directa por el partner autenticado** (los 4 campos) confirmado sin efecto comparando contra el valor real en la base después; **el mismo intento con `service_role`** confirmado bloqueado por el trigger; una actualización legítima de `status` vía RPC confirmada que no toca las condiciones; el contador de solicitudes de cambios cuenta notas reales y da `0` en una colaboración sin ninguna. Todo sobre colaboraciones/posts de prueba aislados, limpiados en `afterAll` y confirmado sin rastro por API al terminar.
+- De paso se corrigió un bug preexistente (no relacionado con este incremento) en `tests/integration/saved-profiles.spec.ts`: el test de "guardar un perfil" nunca pasaba `owner_profile_id` en el insert, así que la RLS lo rechazaba siempre — ahora el test completo (40/40 con el resto de la suite de integración) pasa en verde.
+- SSR real con sesión de las dos cuentas demo sobre `/creator/requests` y `/partner/requests`: ambas responden `200` sin errores con los composables/tipos nuevos ya compilados.
+
+### Sin verificar
+
+- La interacción real en navegador: abrir "Condiciones (opcional)" en el formulario de contacto, rellenarla, y ver el bloque `CollaborationTermsCard` pintado de verdad en el detalle — no hay herramienta de navegador en esta sesión.
+
 ## 2026-10-23 (27) — Revisiones con comentarios reales (primer corte de Fase C / "FEEDMA Studio")
 
 Siguiente fase del roadmap tras Fase B. En vez de abordar todo "FEEDMA Studio" de golpe (el propio roadmap pide no construir un gestor de proyectos complejo), se auditó el código real y se encontró el hueco más concreto y demostrable: **"Pedir cambios" en una publicación no capturaba ningún motivo** — `request_post_changes()` solo movía el estado, sin texto ni historial; el creador se encontraba su publicación devuelta sin ninguna pista de qué cambiar.

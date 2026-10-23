@@ -5,7 +5,7 @@ import { isFichaIncomplete } from '~/utils/ficha'
 import { relativeTime } from '~/utils/status'
 import type { Creator, Post } from '~/types'
 
-useHead({ title: 'Calendario' })
+useHead({ title: 'Inicio' })
 
 const { partner, ensurePartner } = useMyPartner()
 const { collaborations, ensureLoaded: ensureCollaborationsLoaded } = useMyCollaborations()
@@ -179,7 +179,7 @@ const tips = computed(() => {
 </script>
 
 <template>
-  <AppShell role="partner" title="Calendario" :subtitle="partner?.name">
+  <AppShell role="partner" title="Inicio" :subtitle="partner?.name">
     <section class="mb-6">
       <h1 class="font-display text-[1.75rem] md:text-[2.125rem] leading-[1.1] text-[var(--color-text)]">¡Bienvenido! Organiza tus colaboraciones</h1>
     </section>

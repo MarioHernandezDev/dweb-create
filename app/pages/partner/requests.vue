@@ -4,10 +4,38 @@ import { collaborationStatusMeta, relativeTime } from '~/utils/status'
 import { initialsFromName, hueFromString } from '~/utils/avatar'
 import type { MyCollaboration } from '~/composables/useMyCollaborations'
 
-useHead({ title: 'Solicitudes' })
+useHead({ title: 'Colaboraciones' })
 
-const { collaborations, ensureLoaded, accept, decline } = useMyCollaborations()
-await ensureLoaded()
+// Pagar/completar/valorar viven aquí (Nivel 1, siempre visibles) desde la
+// Fase 2 — mismo composable que antes solo usaba partner/profile.vue
+// (`payForCollaboration`, `markCompleted`, `paying`, `payError`), nada de
+// lógica de negocio nueva. Desde la Fase 3, la pestaña "Colaboraciones" de
+// Ajustes ya no existe — este es el único sitio.
+const { collaborations, paying, acting, payError, ensureLoaded, refresh: refreshCollaborations, accept, decline, payForCollaboration, markCompleted } = useMyCollaborations()
+const { confirm } = useConfirm()
+const route = useRoute()
+const { posts: partnerPosts, ensureLoaded: ensurePostsLoaded } = usePartnerPosts()
+// Si se vuelve de Stripe (`?payment=`), se fuerza un refresco real en vez
+// de fiarse de la caché — el webhook puede haber escrito `paid_at` hace
+// solo un instante.
+await Promise.all([route.query.payment ? refreshCollaborations() : ensureLoaded(), ensurePostsLoaded()])
+
+const payableStatuses = ['accepted', 'in_progress', 'completed']
+const lastPayAttemptId = ref('')
+async function confirmPay(collaborationId: string) {
+  const ok = await confirm({ title: '¿Confirmar el pago?', message: 'Se abrirá Stripe para completar el cobro de esta colaboración.', confirmLabel: 'Ir a pagar' })
+  if (!ok) return
+  lastPayAttemptId.value = collaborationId
+  await payForCollaboration(collaborationId)
+}
+async function confirmMarkCompleted(collaborationId: string) {
+  const ok = await confirm({
+    title: '¿Marcar como completada?',
+    message: 'Indica que el trabajo de esta colaboración ya se ha entregado. No afecta al pago.',
+    confirmLabel: 'Marcar como completada'
+  })
+  if (ok) await markCompleted(collaborationId)
+}
 
 const pendingCount = computed(() => collaborations.value.filter((c) => c.status === 'requested').length)
 
@@ -26,26 +54,62 @@ const visible = computed(() => (tab.value === 'pending' ? pending.value : histor
 const detailOpen = ref(false)
 const detailCollab = ref<MyCollaboration | null>(null)
 const actionError = ref('')
+
+// Fase 2: Nivel 1 (quién/estado/brief corto/acción del momento) fijo;
+// Brief, Calendario y Registro pasan a pestañas.
+const detailTab = ref<'brief' | 'calendar' | 'log'>('brief')
+const detailTabs = [
+  { value: 'brief', label: 'Brief' },
+  { value: 'calendar', label: 'Calendario' },
+  { value: 'log', label: 'Registro' }
+]
+const expandedPostId = ref<string | null>(null)
+
 function openDetail(collab: MyCollaboration) {
   detailCollab.value = collab
   actionError.value = ''
+  detailTab.value = 'brief'
+  expandedPostId.value = null
   detailOpen.value = true
 }
+
+// Al volver de Stripe (éxito o cancelación) se reabre automáticamente la
+// misma colaboración que se estaba pagando — sin esto, "volver al mismo
+// sitio" solo habría significado la lista, no el contexto real en el que
+// se estaba antes de ir a pagar.
+const returnedCollabId = route.query.collaboration as string | undefined
+if (returnedCollabId) {
+  const match = collaborations.value.find((c) => c.id === returnedCollabId)
+  if (match) openDetail(match)
+}
+
+const collaborationPosts = computed(() => partnerPosts.value.filter((p) => p.collaborationId === detailCollab.value?.id))
+const expandedPost = computed(() => collaborationPosts.value.find((p) => p.id === expandedPostId.value) ?? null)
+
+function toggleExpandedPost(post: { id: string }) {
+  expandedPostId.value = expandedPostId.value === post.id ? null : post.id
+}
+
+// Solo lectura: consultar el checklist de un entregable sin salir de la
+// colaboración (auditoría de usabilidad, pestaña Calendario) — marcar
+// items sigue siendo tarea exclusiva del creador, como hoy.
+const { itemsByPost, ensureItems } = useChecklist()
+const expandedPostChecklist = computed(() => (expandedPostId.value ? itemsByPost.value[expandedPostId.value] ?? [] : []))
+watch(expandedPostId, (id) => { if (id) ensureItems(id) })
 
 // Antes `accept`/`decline` se llamaban sin esperar su resultado y la hoja
 // se cerraba al instante — si el update a Supabase fallaba, parecía que
 // había funcionado sin haber cambiado nada de verdad.
-// Antes, tras aceptar, no pasaba nada más que cerrar la hoja — el único
-// botón de pago real vive en la pestaña "Colaboraciones" de /partner/profile
-// y no había ninguna pista de que hubiera que ir allí. Ahora se navega
-// directo, con el presupuesto ya aceptado, a pagar.
+// Antes, tras aceptar, se cerraba la hoja y se redirigía a /partner/profile
+// a pagar, porque ahí era el único sitio con un botón de pago real. Ahora
+// el botón de pago vive aquí mismo (Nivel 1): la hoja se queda abierta y
+// `detailCollab` se refresca con el estado ya aceptado.
 async function handleAccept(amount: number | null) {
   if (!detailCollab.value) return
   actionError.value = ''
   try {
     await accept(detailCollab.value.id, amount)
-    detailOpen.value = false
-    await navigateTo('/partner/profile?tab=collabs')
+    detailCollab.value = collaborations.value.find((c) => c.id === detailCollab.value!.id) ?? detailCollab.value
   } catch (e) {
     actionError.value = e instanceof Error ? e.message : 'No se ha podido aceptar la solicitud. Inténtalo de nuevo.'
   }
@@ -61,10 +125,26 @@ async function handleDecline() {
     actionError.value = e instanceof Error ? e.message : 'No se ha podido rechazar la solicitud. Inténtalo de nuevo.'
   }
 }
+
+async function handleMarkCompleted() {
+  if (!detailCollab.value) return
+  await confirmMarkCompleted(detailCollab.value.id)
+  detailCollab.value = collaborations.value.find((c) => c.id === detailCollab.value!.id) ?? detailCollab.value
+}
 </script>
 
 <template>
-  <AppShell role="partner" title="Solicitudes" subtitle="Tus colaboraciones con creadores de contenido">
+  <AppShell role="partner" title="Colaboraciones" subtitle="Tus colaboraciones con creadores de contenido">
+    <BaseCard v-if="route.query.payment" radius="md" padding="md" class="flex items-center gap-3 mb-5">
+      <Icon
+        :name="route.query.payment === 'success' ? 'ph:check-circle-fill' : 'ph:info-fill'" class="size-5 shrink-0"
+        :class="route.query.payment === 'success' ? 'text-[var(--color-status-published)]' : 'text-[var(--color-text-muted)]'"
+      />
+      <p class="text-[0.875rem] text-[var(--color-text)]">
+        {{ route.query.payment === 'success' ? 'Pago enviado.' : 'Pago cancelado, no se ha cobrado nada.' }}
+      </p>
+    </BaseCard>
+
     <SegmentedTabs v-model="tab" :options="tabs" class="mb-5" />
 
     <EmptyState
@@ -130,21 +210,81 @@ async function handleDecline() {
           </div>
         </div>
 
-        <p class="text-[0.9375rem] text-[var(--color-text)] leading-relaxed mb-5">{{ detailCollab.brief }}</p>
+        <p class="text-[0.8125rem] text-[var(--color-text-muted)] line-clamp-1 mb-4">{{ detailCollab.brief }}</p>
 
-        <dl class="flex flex-col gap-3 mb-5 text-[0.8125rem]">
-          <div class="flex items-center justify-between">
-            <dt class="text-[var(--color-text-muted)]">Pedida</dt>
-            <dd class="text-[var(--color-text)]">{{ relativeTime(detailCollab.createdAt) }}</dd>
-          </div>
-        </dl>
+        <!-- Nivel 1: la acción del momento, siempre visible, nunca dentro de una pestaña. -->
+        <div class="mb-5">
+          <NegotiationPanel
+            :collaboration-id="detailCollab.id" :initial-budget-cents="detailCollab.budgetCents" :status="detailCollab.status"
+            my-role="partner" :initiated-by="detailCollab.initiatedBy"
+            @accept="handleAccept" @decline="handleDecline"
+          />
 
-        <NegotiationPanel
-          :collaboration-id="detailCollab.id" :initial-budget-cents="detailCollab.budgetCents" :status="detailCollab.status"
-          my-role="partner" :initiated-by="detailCollab.initiatedBy"
-          @accept="handleAccept" @decline="handleDecline"
-        />
-        <p v-if="actionError" class="text-[0.8125rem] text-[var(--color-status-alert)] mt-3">{{ actionError }}</p>
+          <p v-if="detailCollab.paidAt" class="inline-flex items-center gap-1.5 text-[0.8125rem] text-[var(--color-status-published)] mt-3">
+            <Icon name="ph:check-circle-fill" class="size-4" /> Cobrado el {{ relativeTime(detailCollab.paidAt) }}
+          </p>
+          <BaseButton
+            v-else-if="payableStatuses.includes(detailCollab.status)"
+            variant="primary" size="md" class="w-full mt-3" :disabled="!detailCollab.budgetCents || paying === detailCollab.id" :icon-spin="paying === detailCollab.id"
+            @click="confirmPay(detailCollab.id)"
+          >
+            {{ paying === detailCollab.id ? 'Abriendo pago…' : 'Pagar' }}
+          </BaseButton>
+          <p v-if="payError && lastPayAttemptId === detailCollab.id" class="text-[0.75rem] text-[var(--color-status-alert)] mt-2">{{ payError }}</p>
+
+          <BaseButton
+            v-if="detailCollab.status === 'accepted' || detailCollab.status === 'in_progress'"
+            variant="secondary" size="md" class="w-full mt-3" :disabled="acting === detailCollab.id" :icon-spin="acting === detailCollab.id"
+            @click="handleMarkCompleted"
+          >
+            Marcar como completada
+          </BaseButton>
+          <RatingPrompt
+            v-else-if="detailCollab.status === 'completed'"
+            :collaboration-id="detailCollab.id" :counterpart-name="detailCollab.creatorName ?? 'el creador'"
+          />
+          <p v-if="actionError" class="text-[0.8125rem] text-[var(--color-status-alert)] mt-3">{{ actionError }}</p>
+        </div>
+
+        <!-- Nivel 2: consulta ocasional, bajo pestañas — ninguna tarea habitual exige cruzarlas. -->
+        <SegmentedTabs v-model="detailTab" :options="detailTabs" class="mb-4" />
+
+        <div v-show="detailTab === 'brief'">
+          <p class="text-[0.9375rem] text-[var(--color-text)] leading-relaxed mb-5">{{ detailCollab.brief }}</p>
+          <CollaborationTermsCard :terms="detailCollab" :collaboration-id="detailCollab.id" />
+          <dl class="flex flex-col gap-3 text-[0.8125rem]">
+            <div class="flex items-center justify-between">
+              <dt class="text-[var(--color-text-muted)]">Pedida</dt>
+              <dd class="text-[var(--color-text)]">{{ relativeTime(detailCollab.createdAt) }}</dd>
+            </div>
+          </dl>
+        </div>
+
+        <div v-show="detailTab === 'calendar'">
+          <WeekBoard :posts="collaborationPosts" :has-any-posts="false" :two-column="false" @open="toggleExpandedPost" />
+          <BaseCard v-if="expandedPost" radius="md" padding="md" class="mt-3">
+            <div class="flex items-center gap-3 mb-3">
+              <div class="relative size-12 shrink-0 rounded-[var(--radius-xs)] overflow-hidden flex items-center justify-center" :style="!expandedPost.mediaUrl ? { background: `linear-gradient(135deg, ${expandedPost.cover.from}, ${expandedPost.cover.to})` } : undefined">
+                <img v-if="expandedPost.mediaUrl" :src="expandedPost.mediaUrl" alt="" class="absolute inset-0 size-full object-cover">
+              </div>
+              <div class="min-w-0 flex-1">
+                <p class="text-[0.875rem] font-medium text-[var(--color-text)] truncate">{{ expandedPost.title }}</p>
+                <StatusPill :status="expandedPost.status" compact />
+              </div>
+            </div>
+            <p v-if="expandedPost.caption" class="text-[0.8125rem] text-[var(--color-text-muted)] leading-relaxed mb-3">{{ expandedPost.caption }}</p>
+            <ul v-if="expandedPostChecklist.length" class="flex flex-col gap-1.5">
+              <li v-for="item in expandedPostChecklist" :key="item.id" class="flex items-center gap-2 text-[0.8125rem]">
+                <Icon :name="item.done ? 'ph:check-square-fill' : 'ph:square-bold'" class="size-4 shrink-0" :class="item.done ? 'text-[var(--color-status-published)]' : 'text-[var(--color-text-faint)]'" />
+                <span :class="item.done ? 'text-[var(--color-text-faint)] line-through' : 'text-[var(--color-text)]'">{{ item.text }}</span>
+              </li>
+            </ul>
+          </BaseCard>
+        </div>
+
+        <div v-show="detailTab === 'log'">
+          <CollaborationLogCard :collaboration-id="detailCollab.id" :counterpart-name="detailCollab.creatorName ?? 'el creador'" />
+        </div>
       </template>
     </BottomSheet>
   </AppShell>

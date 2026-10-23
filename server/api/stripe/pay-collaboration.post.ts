@@ -88,8 +88,12 @@ export default defineEventHandler(async (event) => {
         application_fee_amount: platformFeeCents(budgetCents),
         transfer_data: { destination: payee.stripe_connect_account_id }
       },
-      success_url: `${origin}/partner/profile?payment=success`,
-      cancel_url: `${origin}/partner/profile?payment=cancelled`,
+      // El detalle de la colaboración (condiciones/calendario/registro/pago)
+      // vive en /partner/requests desde la Fase 2 de la reorganización de
+      // navegación — volver aquí con el id permite reabrir exactamente la
+      // misma colaboración, sin perder el contexto en el que se estaba.
+      success_url: `${origin}/partner/requests?payment=success&collaboration=${collaboration.id}`,
+      cancel_url: `${origin}/partner/requests?payment=cancelled&collaboration=${collaboration.id}`,
       metadata: { collaboration_id: collaboration.id }
     },
     // Idempotencia por ventana de 5 minutos: dos clics seguidos (doble clic,

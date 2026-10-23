@@ -92,6 +92,18 @@ describe.skipIf(!hasSupabaseEnv)('offers: create_offer / respond_offer (Supabase
       expect((collab as { status: string }).status).toBe('accepted')
       expect((collab as { budget_cents: number }).budget_cents).toBe(proposedPrice)
 
+      // 4b. El aviso "ya puedes pagarla" tiene que apuntar a /partner/requests
+      //     (antes apuntaba a /partner/profile, la pestaña retirada en la
+      //     Fase 3 de la reorganización de navegación — ver 20261025190000_
+      //     fix_notification_links.sql).
+      const { data: payNotif } = await partner.client
+        .from('notifications')
+        .select('link')
+        .eq('type', 'collaboration_requested')
+        .order('created_at', { ascending: false })
+        .limit(1)
+      expect((payNotif as { link: string }[] | null)?.[0]?.link).toBe('/partner/requests')
+
       // 5. Llamar a respond_offer otra vez sobre la misma oferta (ya no está
       //    "pending") debe fallar — y no debe crear una SEGUNDA collaboration.
       const { error: secondRespondErr } = await creator.client.rpc('respond_offer', { p_offer_id: offerId, p_accept: true })

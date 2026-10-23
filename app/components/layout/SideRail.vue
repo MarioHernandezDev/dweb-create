@@ -1,14 +1,25 @@
 <script setup lang="ts">
-import { roleNav, roleMeta } from '~/utils/nav'
+import { roleNav, roleMeta, secondaryNav } from '~/utils/nav'
 import type { Role } from '~/types'
 
 const props = defineProps<{ role: Role }>()
 const route = useRoute()
 const items = computed(() => roleNav[props.role])
 
+// Solo Chat/Bandeja/Guardados — "Ajustes" ya tiene su propio bloque más
+// abajo (avatar + nombre de cuenta), no hace falta repetirlo.
+const secondaryItems = computed(() => secondaryNav(props.role).slice(0, 3))
+
 function isActive(to: string) {
   return to === items.value[0]?.to ? route.path === to : route.path.startsWith(to)
 }
+
+// Mismas cachés que ya usa TopBar.vue para los contadores — se lee el
+// estado ya cargado, sin disparar un segundo `refresh()` (TopBar ya se
+// monta en cada página y lo mantiene al día).
+const { unreadCount: inboxUnread } = useNotifications()
+const { unreadCount: chatUnread } = useChat()
+const badgeFor: Record<string, import('vue').ComputedRef<number>> = { '/chat': chatUnread, '/inbox': inboxUnread }
 
 // Ya en caché desde role-guard.global.ts — sin parpadeo.
 const { avatarUrl, initials: myInitials, hue: myHue } = useMyAvatar()
@@ -50,6 +61,19 @@ const accountName = computed(() => (props.role === 'creator' ? creator.value?.di
           <p class="text-[0.75rem] text-white/55 truncate">{{ roleMeta[role].label }}</p>
         </div>
       </NuxtLink>
+
+      <nav class="flex flex-col gap-0.5 mt-2" aria-label="Accesos secundarios">
+        <NuxtLink
+          v-for="item in secondaryItems" :key="item.to" :to="item.to"
+          class="flex items-center gap-3 px-3.5 h-9 rounded-[var(--radius-sm)] text-[0.8125rem] font-medium text-white/55 hover:text-white hover:bg-white/8 transition-colors"
+        >
+          <Icon :name="item.icon" class="size-4" />
+          {{ item.label }}
+          <span v-if="badgeFor[item.to]?.value" class="ml-auto min-w-[1.125rem] h-[1.125rem] px-1 rounded-full bg-[var(--color-status-alert)] text-white text-[0.625rem] font-semibold leading-[1.125rem] text-center">
+            {{ badgeFor[item.to].value > 9 ? '9+' : badgeFor[item.to].value }}
+          </span>
+        </NuxtLink>
+      </nav>
     </div>
   </aside>
 </template>

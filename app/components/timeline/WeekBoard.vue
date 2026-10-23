@@ -2,12 +2,16 @@
 import type { Creator, Post } from '~/types'
 import { dueLabel } from '~/utils/status'
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   posts: Post[]
   creatorsById?: Record<string, Creator>
   /** Si el creador tiene publicaciones en absoluto (en cualquier fecha) — sin esto, "sin entregas en los próximos días" y "nunca has creado nada" se veían exactamente igual. */
   hasAnyPosts?: boolean
-}>()
+  /** `false` cuando se embebe dentro de un panel estrecho (ej. BottomSheet, ~448px) — los breakpoints de Tailwind miden el viewport, no el contenedor, así que la rejilla a 2 columnas se activaría igual en escritorio aunque el panel sea angosto. */
+  twoColumn?: boolean
+  /** Reenviado a cada DeliverableCard — ver ese componente. */
+  interactive?: boolean
+}>(), { twoColumn: true, interactive: true })
 
 defineEmits<{ open: [post: Post] }>()
 
@@ -42,12 +46,12 @@ const groups = computed(() => {
       >
         {{ group.label }}
       </h2>
-      <div class="flex flex-col gap-2.5 lg:grid lg:grid-cols-2 lg:gap-3">
+      <div class="flex flex-col gap-2.5" :class="twoColumn && 'lg:grid lg:grid-cols-2 lg:gap-3'">
         <div
           v-for="(post, i) in group.items" :key="post.id"
           class="nx-stagger-in" :style="{ '--stagger-i': i }"
         >
-          <DeliverableCard :post="post" :creator="creatorsById?.[post.creatorId]" @open="$emit('open', $event)">
+          <DeliverableCard :post="post" :creator="creatorsById?.[post.creatorId]" :interactive="interactive" @open="$emit('open', $event)">
             <template v-if="$slots.actions" #actions>
               <slot name="actions" :post="post" />
             </template>

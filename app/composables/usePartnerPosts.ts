@@ -23,11 +23,12 @@ function coverFromId(id: string) {
   return { from: `hsl(${hue} 78% 54%)`, to: `hsl(${(hue + 36) % 360} 70% 40%)`, angle: 135 }
 }
 
-function mapRow(row: PostRow): Post {
+function mapRow(row: PostRow, checklist?: { total: number; done: number }): Post {
   const dueInDays = Math.round((new Date(row.due_date).getTime() - Date.now()) / 86_400_000)
   return {
     id: row.id,
     creatorId: row.creator_id,
+    collaborationId: row.collaboration_id,
     title: row.title,
     caption: row.caption ?? '',
     contentType: row.content_type,
@@ -38,10 +39,13 @@ function mapRow(row: PostRow): Post {
     hashtags: row.metadata?.hashtags ?? [],
     cover: coverFromId(row.id),
     mediaUrl: row.media_url,
-    // Etiquetas/checklist son solo del tablero del creador por ahora — el
-    // partner no las ve todavía (ver migración 20261024090000).
+    // Las labels se quedan fuera a propósito — son organización personal
+    // del creador, no información de progreso (ver migración
+    // 20261025160000_checklist_partner_visibility.sql). El checklist sí es
+    // real desde esa migración: RLS ya deja leerlo si el post es de una
+    // colaboración activa del partner.
     labelIds: [],
-    checklist: { total: 0, done: 0 }
+    checklist: checklist ?? { total: 0, done: 0 }
   }
 }
 
@@ -82,7 +86,30 @@ export function usePartnerPosts() {
       console.error('[usePartnerPosts] fallo al cargar posts:', error.message)
       return
     }
-    posts.value = (data as PostRow[]).map(mapRow)
+    const rows = data as PostRow[]
+
+    // Un solo viaje de red para el checklist de TODOS los posts visibles,
+    // no uno por post — agregado en cliente, igual de válido que un count
+    // agregado en SQL para esta cantidad de filas (tope ya puesto arriba).
+    const checklistByPost: Record<string, { total: number; done: number }> = {}
+    if (rows.length) {
+      const { data: checklistRows, error: checklistError } = await client
+        .from('checklist_items')
+        .select('post_id, done')
+        .in('post_id', rows.map((r) => r.id))
+      if (checklistError) {
+        console.error('[usePartnerPosts] fallo al cargar el checklist:', checklistError.message)
+      } else {
+        for (const item of checklistRows as { post_id: string; done: boolean }[]) {
+          const entry = checklistByPost[item.post_id] ?? { total: 0, done: 0 }
+          entry.total += 1
+          if (item.done) entry.done += 1
+          checklistByPost[item.post_id] = entry
+        }
+      }
+    }
+
+    posts.value = rows.map((r) => mapRow(r, checklistByPost[r.id]))
     loaded.value = true
   }
 

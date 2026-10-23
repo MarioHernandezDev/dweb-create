@@ -1,6 +1,7 @@
 import type { CollaborationStatus } from '~/types'
+import type { CollaborationTerms } from '~/utils/collaboration-terms'
 
-export interface MyCollaboration {
+export interface MyCollaboration extends CollaborationTerms {
   id: string
   status: CollaborationStatus
   creatorId: string
@@ -21,6 +22,13 @@ interface CollaborationRow {
   paid_at: string | null
   created_at: string
   initiated_by: 'creator' | 'partner'
+  scope_notes: string | null
+  revisions_included: number | null
+  exclusivity: boolean
+  usage_rights: string | null
+  campaign_goal: string | null
+  target_audience: string | null
+  tone: string | null
   creators: { display_name: string } | null
 }
 
@@ -45,7 +53,7 @@ export function useMyCollaborations() {
 
     const { data, error } = await client
       .from('collaborations')
-      .select('id, status, creator_id, brief, budget_cents, paid_at, created_at, initiated_by, creators(display_name)')
+      .select('id, status, creator_id, brief, budget_cents, paid_at, created_at, initiated_by, scope_notes, revisions_included, exclusivity, usage_rights, campaign_goal, target_audience, tone, creators(display_name)')
       .eq('partner_id', me.id)
       .order('created_at', { ascending: false })
       .limit(300)
@@ -63,7 +71,14 @@ export function useMyCollaborations() {
       budgetCents: r.budget_cents,
       paidAt: r.paid_at,
       createdAt: r.created_at,
-      initiatedBy: r.initiated_by
+      initiatedBy: r.initiated_by,
+      scopeNotes: r.scope_notes,
+      revisionsIncluded: r.revisions_included,
+      exclusivity: r.exclusivity,
+      usageRights: r.usage_rights,
+      campaignGoal: r.campaign_goal,
+      targetAudience: r.target_audience,
+      tone: r.tone
     }))
     loaded.value = true
   }

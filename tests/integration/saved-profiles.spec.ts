@@ -37,13 +37,13 @@ describe.skipIf(!hasSupabaseEnv)('saved_profiles: RLS (Supabase real)', () => {
 
   it('el partner puede guardar al creador de demo', async () => {
     if (!partner) return
-    const { error } = await partner.client.from('saved_profiles').insert({ target_creator_id: creatorRowId } as never)
+    const { error } = await partner.client.from('saved_profiles').insert({ owner_profile_id: partner.userId, target_creator_id: creatorRowId } as never)
     expect(error).toBeNull()
   })
 
   it('guardar dos veces el mismo perfil se rechaza (índice único)', async () => {
     if (!partner) return
-    const { error } = await partner.client.from('saved_profiles').insert({ target_creator_id: creatorRowId } as never)
+    const { error } = await partner.client.from('saved_profiles').insert({ owner_profile_id: partner.userId, target_creator_id: creatorRowId } as never)
     expect(error).not.toBeNull()
   })
 

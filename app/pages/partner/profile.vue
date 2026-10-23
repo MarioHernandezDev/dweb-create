@@ -2,20 +2,14 @@
 import draggable from 'vuedraggable'
 import { initialsFromName, hueFromString, coverArtFromString } from '~/utils/avatar'
 import { formatEuros } from '~/utils/mock-data'
-import { collaborationStatusMeta } from '~/utils/status'
 import { DISCOVERY_CATEGORIES } from '~/utils/categories'
 import type { Package } from '~/composables/usePackages'
 import type { ChatPrivacy } from '~/types'
-
-// "Pagar" solo tiene sentido una vez la otra parte ha aceptado — antes de
-// eso ni siquiera sabe que existe la solicitud (ver useCollabRequests.ts).
-const payableStatuses = ['accepted', 'in_progress', 'completed']
 
 useHead({ title: 'Perfil' })
 
 const route = useRoute()
 const { partner, ensurePartner, updateFicha, uploadCoverPhoto, removeCoverPhoto } = useMyPartner()
-const { collaborations, paying, acting, payError, ensureLoaded, refresh: refreshCollaborations, payForCollaboration, markCompleted } = useMyCollaborations()
 
 const user = useSupabaseUser()
 const { logout } = useLogout()
@@ -30,11 +24,10 @@ const { myPackages, ensureMyPackages, duplicatePackage, updatePackage, reorderPa
 const { pendingCountByPackage, refreshPendingCounts } = useOffers()
 const { chatPrivacy, chatPrivacyError, ensureChatPrivacy, setChatPrivacy } = useChatSettings()
 
-// Cinco consultas independientes entre sí — en paralelo en vez de en
+// Cuatro consultas independientes entre sí — en paralelo en vez de en
 // cascada (antes cada una esperaba a la anterior sin necesidad, y con la
 // latencia de red real eso se notaba mucho al navegar a esta página).
 await Promise.all([
-  route.query.payment ? refreshCollaborations() : ensureLoaded(),
   ensurePartner(),
   myProfileId ? ensureMyPackages(myProfileId) : Promise.resolve([]),
   myProfileId ? refreshPendingCounts(myProfileId) : Promise.resolve(),
@@ -44,15 +37,15 @@ await Promise.all([
 // Secciones de "Tu Perfil" — antes era un único scroll larguísimo con 6
 // bloques seguidos, cada uno marcado solo con una etiqueta gris diminuta.
 // Agrupadas así se navega directo a lo que se busca, en vez de bajar todo.
+// "Colaboraciones" vivió aquí hasta la Fase 3 de la reorganización de
+// navegación (pagar/completar/valorar) — ahora vive entera en
+// /partner/requests, junto al resto del detalle de cada colaboración.
 const tabs = [
   { id: 'account', label: 'Cuenta', icon: 'ph:user-circle-fill' },
   { id: 'ficha', label: 'Ficha pública', icon: 'ph:identification-card-fill' },
   { id: 'needs', label: 'Necesidades', icon: 'ph:package-fill' },
-  { id: 'collabs', label: 'Colaboraciones', icon: 'ph:handshake-fill' },
   { id: 'privacy', label: 'Privacidad', icon: 'ph:shield-check-fill' }
 ] as const
-// `?tab=collabs` permite enlazar directo desde fuera (p. ej. justo tras
-// aceptar una negociación en /partner/requests, para ir derecho a pagar).
 const initialTab = route.query.tab as string | undefined
 const activeTab = ref<(typeof tabs)[number]['id']>(
   tabs.some((t) => t.id === initialTab) ? (initialTab as (typeof tabs)[number]['id']) : 'ficha'
@@ -128,32 +121,6 @@ async function confirmLogout() {
   // ejecutado, dejando la sesión a medias si en ese segundo aviso se cancelara).
   fichaSnapshot.value = JSON.stringify(ficha)
   await logout()
-}
-
-const lastPayAttemptId = ref('')
-async function confirmPay(collaborationId: string) {
-  const ok = await confirm({
-    title: '¿Confirmar el pago?',
-    message: 'Se abrirá Stripe para completar el cobro de esta colaboración.',
-    confirmLabel: 'Ir a pagar'
-  })
-  if (!ok) return
-  lastPayAttemptId.value = collaborationId
-  await payForCollaboration(collaborationId)
-}
-
-function formatDate(iso: string | null) {
-  if (!iso) return '—'
-  return new Date(iso).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })
-}
-
-async function confirmMarkCompleted(collaborationId: string) {
-  const ok = await confirm({
-    title: '¿Marcar como completada?',
-    message: 'Indica que el trabajo de esta colaboración ya se ha entregado. No afecta al pago.',
-    confirmLabel: 'Marcar como completada'
-  })
-  if (ok) await markCompleted(collaborationId)
 }
 
 const chatPrivacyOptions: { value: ChatPrivacy; label: string; description: string }[] = [
@@ -252,16 +219,6 @@ async function saveFicha() {
             <p class="text-[0.9375rem] text-[var(--color-text-muted)]">{{ user?.email ?? 'Cuenta de partner' }}</p>
           </div>
         </section>
-
-        <BaseCard v-if="route.query.payment" radius="md" padding="md" class="flex items-center gap-3 mb-6">
-          <Icon
-            :name="route.query.payment === 'success' ? 'ph:check-circle-fill' : 'ph:info-fill'" class="size-5 shrink-0"
-            :class="route.query.payment === 'success' ? 'text-[var(--color-status-published)]' : 'text-[var(--color-text-muted)]'"
-          />
-          <p class="text-[0.875rem] text-[var(--color-text)]">
-            {{ route.query.payment === 'success' ? 'Pago enviado.' : 'Pago cancelado, no se ha cobrado nada.' }}
-          </p>
-        </BaseCard>
 
         <ProfileCompletionBar :percent="completionPercent" />
       </div>
@@ -414,60 +371,6 @@ async function saveFicha() {
                 </template>
               </draggable>
               <PackageFormSheet v-if="myProfileId" v-model="packageSheetOpen" :profile-id="myProfileId" role="partner" :editing="editingPackage" />
-            </section>
-          </div>
-
-          <div v-show="activeTab === 'collabs'" class="md:max-w-lg">
-            <section>
-              <div class="flex items-center justify-between mb-2 px-1">
-                <p class="text-[0.8125rem] font-medium text-[var(--color-text-muted)]">Tus colaboraciones</p>
-                <NuxtLink to="/partner/discover" class="text-[0.8125rem] font-medium text-[var(--color-primary-500)]">Descubrir más</NuxtLink>
-              </div>
-
-              <EmptyState
-                v-if="!collaborations.length"
-                icon="ph:handshake" title="Ninguna todavía"
-                description="Contacta a un creador de contenido desde 'Descubrir' para empezar."
-              />
-              <div v-else class="flex flex-col gap-2.5">
-                <BaseCard v-for="collab in collaborations" :key="collab.id" radius="lg" padding="md">
-                  <div class="flex items-center justify-between gap-3 mb-1">
-                    <p class="text-[0.9375rem] font-medium text-[var(--color-text)] truncate">
-                      {{ collab.creatorName ?? 'Sin asignar' }}
-                    </p>
-                    <span class="text-[0.9375rem] font-medium text-[var(--color-text)] shrink-0">{{ formatEuros(collab.budgetCents) }}</span>
-                  </div>
-                  <p class="text-[0.75rem] mb-3" :style="{ color: collaborationStatusMeta[collab.status].color }">
-                    {{ collaborationStatusMeta[collab.status].label }}
-                  </p>
-
-                  <p v-if="collab.paidAt" class="inline-flex items-center gap-1.5 text-[0.8125rem] text-[var(--color-status-published)] mb-2">
-                    <Icon name="ph:check-circle-fill" class="size-4" /> Cobrado el {{ formatDate(collab.paidAt) }}
-                  </p>
-                  <p v-else-if="!payableStatuses.includes(collab.status)" class="text-[0.75rem] text-[var(--color-text-faint)]">
-                    Se podrá pagar cuando acepten la solicitud.
-                  </p>
-                  <BaseButton
-                    v-else-if="!collab.paidAt" variant="primary" size="sm" class="w-full mb-2" :disabled="!collab.budgetCents || paying === collab.id"
-                    :icon-spin="paying === collab.id" @click="confirmPay(collab.id)"
-                  >
-                    {{ paying === collab.id ? 'Abriendo pago…' : 'Pagar' }}
-                  </BaseButton>
-                  <p v-if="payError && lastPayAttemptId === collab.id" class="text-[0.75rem] text-[var(--color-status-alert)] mb-2">{{ payError }}</p>
-
-                  <BaseButton
-                    v-if="collab.status === 'accepted' || collab.status === 'in_progress'"
-                    variant="secondary" size="sm" class="w-full" :disabled="acting === collab.id" :icon-spin="acting === collab.id"
-                    @click="confirmMarkCompleted(collab.id)"
-                  >
-                    Marcar como completada
-                  </BaseButton>
-                  <RatingPrompt
-                    v-else-if="collab.status === 'completed'"
-                    :collaboration-id="collab.id" :counterpart-name="collab.creatorName ?? 'el creador'"
-                  />
-                </BaseCard>
-              </div>
             </section>
           </div>
 

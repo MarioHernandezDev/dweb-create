@@ -76,10 +76,37 @@ export function usePostRevisions() {
     return last?.kind === 'changes_requested' ? last : null
   }
 
+  // Recuento de solicitudes de cambios de TODA la colaboración, no de un
+  // post concreto — es el dato que se muestra junto a `revisionsIncluded`
+  // (ver app/utils/collaboration-terms.ts) en el detalle de la colaboración.
+  // Deliberadamente no es un "cumplido/incumplido": solo cuenta notas
+  // `changes_requested` reales vía el `!inner` join (si RLS no deja ver los
+  // posts de esa colaboración, el recuento sale 0, nunca un error visible).
+  const requestedCountByCollaboration = useState<Record<string, number | null>>('post-revisions-requested-count', () => ({}))
+
+  async function revisionsRequestedForCollaboration(collaborationId: string) {
+    if (requestedCountByCollaboration.value[collaborationId] !== undefined) {
+      return requestedCountByCollaboration.value[collaborationId]
+    }
+    const { count, error } = await client
+      .from('post_revision_notes')
+      .select('id, posts!inner(collaboration_id)', { count: 'exact', head: true })
+      .eq('kind', 'changes_requested')
+      .eq('posts.collaboration_id', collaborationId)
+    if (error) {
+      console.error('[usePostRevisions] fallo al contar solicitudes de cambios:', error.message)
+      requestedCountByCollaboration.value = { ...requestedCountByCollaboration.value, [collaborationId]: null }
+      return null
+    }
+    requestedCountByCollaboration.value = { ...requestedCountByCollaboration.value, [collaborationId]: count ?? 0 }
+    return count ?? 0
+  }
+
   function reset() {
     notesByPost.value = {}
     loading.value = null
+    requestedCountByCollaboration.value = {}
   }
 
-  return { notesByPost, loading, ensureLoaded, latestPendingChangeRequest, reset }
+  return { notesByPost, loading, ensureLoaded, latestPendingChangeRequest, revisionsRequestedForCollaboration, requestedCountByCollaboration, reset }
 }

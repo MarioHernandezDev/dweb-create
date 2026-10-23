@@ -3,10 +3,12 @@ import type { Creator, Post } from '~/types'
 import { contentTypeMeta, statusMeta } from '~/utils/status'
 import { platformMeta } from '~/utils/mock-data'
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   post: Post
   creator?: Creator
-}>()
+  /** `false` para un uso puramente informativo (ej. calendario acotado a una colaboración, dentro de una hoja ya abierta) — sin role/tabindex/cursor de mano ni emisión de `open`. */
+  interactive?: boolean
+}>(), { interactive: true })
 
 defineEmits<{ open: [post: Post] }>()
 
@@ -27,9 +29,10 @@ const coverStyle = computed(() => {
   <!-- role="button" en vez de un <button> real: lleva un <slot name="actions">
        con sus propios controles interactivos dentro (mismo motivo que BoardCard.vue). -->
   <div
-    class="relative cursor-pointer select-none rounded-[var(--radius-sm)]" role="button" tabindex="0"
-    :aria-label="`Abrir «${post.title}»`" style="box-shadow: 3px 3px 0 0 rgb(26 22 37 / 7%), 6px 6px 0 0 rgb(26 22 37 / 4%)"
-    @click="$emit('open', post)" @keydown.enter="$emit('open', post)" @keydown.space.prevent="$emit('open', post)"
+    class="relative rounded-[var(--radius-sm)]" :class="interactive && 'cursor-pointer select-none'"
+    :role="interactive ? 'button' : undefined" :tabindex="interactive ? 0 : undefined"
+    :aria-label="interactive ? `Abrir «${post.title}»` : undefined" style="box-shadow: 3px 3px 0 0 rgb(26 22 37 / 7%), 6px 6px 0 0 rgb(26 22 37 / 4%)"
+    @click="interactive && $emit('open', post)" @keydown.enter="interactive && $emit('open', post)" @keydown.space.prevent="interactive && $emit('open', post)"
   >
     <div class="flex gap-0 overflow-hidden rounded-[var(--radius-sm)] border border-[var(--color-hairline)] bg-[var(--color-paper)]">
       <div class="w-1 shrink-0" :style="{ background: statusMeta[post.status].color }" />
@@ -58,6 +61,10 @@ const coverStyle = computed(() => {
             <span v-if="post.successScore" class="inline-flex items-center gap-1 text-[0.75rem] font-medium text-[var(--color-signal-500)]">
               <Icon name="ph:sparkle-fill" class="size-3.5" />
               {{ post.successScore }}
+            </span>
+            <span v-if="post.checklist.total" class="inline-flex items-center gap-1 text-[0.75rem] text-[var(--color-text-faint)]">
+              <Icon name="ph:check-square-fill" class="size-3.5" :class="post.checklist.done === post.checklist.total && 'text-[var(--color-status-published)]'" />
+              {{ post.checklist.done }}/{{ post.checklist.total }}
             </span>
           </div>
 

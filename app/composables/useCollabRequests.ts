@@ -1,6 +1,7 @@
 import type { CollaborationStatus } from '~/types'
+import type { CollaborationTerms } from '~/utils/collaboration-terms'
 
-export interface CollabRequest {
+export interface CollabRequest extends CollaborationTerms {
   id: string
   status: CollaborationStatus
   brief: string
@@ -21,6 +22,13 @@ interface CollabRequestRow {
   created_at: string
   updated_at: string
   initiated_by: 'creator' | 'partner'
+  scope_notes: string | null
+  revisions_included: number | null
+  exclusivity: boolean
+  usage_rights: string | null
+  campaign_goal: string | null
+  target_audience: string | null
+  tone: string | null
   partners: { company_name: string } | null
 }
 
@@ -34,7 +42,14 @@ function mapRow(row: CollabRequestRow): CollabRequest {
     partnerName: row.partners?.company_name ?? 'Partner',
     createdAt: row.created_at,
     updatedAt: row.updated_at,
-    initiatedBy: row.initiated_by
+    initiatedBy: row.initiated_by,
+    scopeNotes: row.scope_notes,
+    revisionsIncluded: row.revisions_included,
+    exclusivity: row.exclusivity,
+    usageRights: row.usage_rights,
+    campaignGoal: row.campaign_goal,
+    targetAudience: row.target_audience,
+    tone: row.tone
   }
 }
 
@@ -58,7 +73,7 @@ export function useCollabRequests() {
 
     const { data, error } = await client
       .from('collaborations')
-      .select('id, status, brief, budget_cents, paid_at, created_at, updated_at, initiated_by, partners(company_name)')
+      .select('id, status, brief, budget_cents, paid_at, created_at, updated_at, initiated_by, scope_notes, revisions_included, exclusivity, usage_rights, campaign_goal, target_audience, tone, partners(company_name)')
       .eq('creator_id', me.id)
       .order('created_at', { ascending: false })
       .limit(300)
