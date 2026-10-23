@@ -14,11 +14,24 @@ const error = ref('')
 
 const isDev = import.meta.dev
 
-const demoAccounts = [
-  { label: 'Creador de contenido', email: 'creator@feedma.test', icon: 'ph:sparkle-fill' },
-  { label: 'Partner', email: 'partner@feedma.test', icon: 'ph:user-circle-fill' }
-]
-const demoPassword = 'feedma-demo-2026'
+// `v-if="isDev"` ya ocultaba el botón en producción, pero el email y la
+// contraseña de las cuentas de demo seguían viajando como texto plano
+// dentro del bundle de cliente de TODAS formas (`demoAccounts`/
+// `demoPassword` se definían sin condición, solo su renderizado era
+// condicional) — confirmado leyendo el bundle real de `.output/` tras
+// `npm run build`. `import.meta.dev` lo sustituye Vite por un booleano
+// literal en tiempo de compilación; con el valor dentro de este `if`, el
+// minificador elimina la rama entera (y las cadenas) en la build de
+// producción, no solo el HTML que la usa.
+let demoAccounts: { label: string; email: string; icon: string }[] = []
+let demoPassword = ''
+if (import.meta.dev) {
+  demoAccounts = [
+    { label: 'Creador de contenido', email: 'creator@feedma.test', icon: 'ph:sparkle-fill' },
+    { label: 'Partner', email: 'partner@feedma.test', icon: 'ph:user-circle-fill' }
+  ]
+  demoPassword = 'feedma-demo-2026'
+}
 
 async function login(loginEmail: string, loginPassword: string) {
   loading.value = true
