@@ -65,15 +65,23 @@ function toggleCategory(cat: string) {
   else selectedCategories.value.splice(i, 1)
 }
 
-// Los dos caminos de búsqueda son excluyentes (ver botones de arriba) — al
-// entrar en modo IA se cierra el panel de filtros si estaba abierto, para
-// no dejarlo visible con su botón ya deshabilitado.
+// Los dos paneles (buscador de IA / filtros) son como pestañas — igual
+// que GIFs y Stickers en WhatsApp: los dos botones están siempre
+// pulsables, pero abrir uno cierra el otro, nunca se ven los dos a la vez.
 function toggleAiMode() {
   if (mode.value === 'ai') {
     mode.value = 'filters'
   } else {
     mode.value = 'ai'
     filtersOpen.value = false
+  }
+}
+function toggleFiltersPanel() {
+  if (filtersOpen.value) {
+    filtersOpen.value = false
+  } else {
+    filtersOpen.value = true
+    mode.value = 'filters'
   }
 }
 
@@ -182,14 +190,13 @@ async function send() {
         <!-- Antes había dos botones que decían "Filtros": esta pestaña (el
              selector de modo) y el de abajo (el que de verdad abre el panel
              de filtros). Pedido explícito: se queda solo uno de "Buscar con
-             IA", como un interruptor, no como una pestaña enfrentada a otra
-             que no hacía nada por sí misma. Los dos caminos de búsqueda son
-             excluyentes — con filtros puestos no se puede pasar a IA sin
-             quitarlos antes, y en modo IA no se puede abrir el panel de
-             filtros: solo uno de los dos botones está habilitado a la vez. -->
+             IA", como un interruptor. Los dos paneles (IA / filtros) son
+             como pestañas, al estilo GIFs/Stickers de WhatsApp: los dos
+             botones están siempre pulsables, pero abrir uno cierra el otro
+             — nunca se ven los dos a la vez. -->
         <button
-          type="button" :disabled="hasActiveFilters"
-          class="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-[var(--radius-xs)] text-[0.8125rem] font-medium border transition-colors disabled:opacity-40 disabled:pointer-events-none"
+          type="button"
+          class="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-[var(--radius-xs)] text-[0.8125rem] font-medium border transition-colors"
           :class="mode === 'ai'
             ? 'border-[var(--color-primary-500)]/50 bg-[var(--color-primary-500)]/12 text-[var(--color-primary-600)]'
             : 'border-[var(--color-hairline)] text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:border-[var(--color-hairline-strong)] hover:bg-[var(--color-ink-overlay)]'"
@@ -199,9 +206,12 @@ async function send() {
           Buscar con IA
         </button>
         <button
-          type="button" :disabled="mode === 'ai'"
-          class="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-[var(--radius-xs)] text-[0.8125rem] font-medium border border-[var(--color-hairline)] text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:border-[var(--color-hairline-strong)] hover:bg-[var(--color-ink-overlay)] transition-colors disabled:opacity-40 disabled:pointer-events-none"
-          @click="filtersOpen = !filtersOpen"
+          type="button"
+          class="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-[var(--radius-xs)] text-[0.8125rem] font-medium border transition-colors"
+          :class="filtersOpen
+            ? 'border-[var(--color-primary-500)]/50 bg-[var(--color-primary-500)]/12 text-[var(--color-primary-600)]'
+            : 'border-[var(--color-hairline)] text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:border-[var(--color-hairline-strong)] hover:bg-[var(--color-ink-overlay)]'"
+          @click="toggleFiltersPanel"
         >
           <Icon name="ph:sliders-horizontal-bold" class="size-4" />
           Filtros

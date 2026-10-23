@@ -4,6 +4,26 @@ Registro de qué se hizo, por qué, y qué queda pendiente de verificar — pens
 
 ---
 
+## 2026-10-23 (48) — Segunda corrección: pestañas al estilo GIFs/Stickers de WhatsApp, no botones deshabilitados
+
+El usuario corrigió también la entrada 47: no quería que un botón bloqueara al otro (deshabilitado, sin poder pulsarlo hasta quitar filtros) — quería el patrón de pestañas de WhatsApp (GIFs/Stickers): los dos botones siempre se pueden pulsar, pero abrir uno cierra el otro automáticamente, nunca se ven los dos paneles a la vez.
+
+### Arreglado
+
+- Se quita el `:disabled` de los dos botones — "Buscar con IA" y "Filtros" están siempre pulsables.
+- `toggleAiMode()`: al activar el modo IA, cierra el panel de filtros si estaba abierto (`filtersOpen = false`). Al desactivarlo, vuelve a `mode = 'filters'` sin tocar nada más.
+- `toggleFiltersPanel()` (nueva): al abrir el panel de filtros, fuerza `mode = 'filters'` (oculta el cuadro de IA si estaba abierto). Al cerrarlo, solo lo cierra.
+- El botón "Filtros" gana el mismo resaltado morado que ya tenía "Buscar con IA" cuando su panel está abierto — antes no había ninguna pista visual de qué "pestaña" estaba activa salvo el cuadro de texto apareciendo o no.
+- Los filtros puestos (categorías/presupuesto) **no se borran** al cambiar de panel — solo se oculta la vista para editarlos, igual que WhatsApp no borra el texto de búsqueda de GIFs al pasar a Stickers. El punto morado del botón "Filtros" sigue avisando de que hay un filtro activo aunque el panel esté cerrado.
+
+### Verificado de verdad
+
+`npx vue-tsc --noEmit`: limpio. `npm test -- --run`: 30/30. `npm run build`: limpio.
+
+### Sin verificar
+
+El aspecto real en el navegador — no hay herramienta de navegador en esta sesión.
+
 ## 2026-10-23 (47) — Corrección del usuario: la exclusividad es entre los dos modos, no durante la búsqueda
 
 El usuario corrigió la entrada anterior (46): no era "deshabilitar los dos botones mientras se busca", sino "solo uno de los dos puede estar habilitado a la vez, antes de buscar siquiera" — IA y Filtros son dos caminos de búsqueda excluyentes, no dos controles que compiten por un mismo instante de carga.
