@@ -4,6 +4,35 @@ Registro de qué se hizo, por qué, y qué queda pendiente de verificar — pens
 
 ---
 
+## 2026-10-23 (37) — Decisión del entorno de pruebas + segunda fuga de mensajes de test encontrada y cerrada
+
+El usuario decide no crear un segundo proyecto de Supabase por ahora: este proyecto sigue sirviendo de entorno de pruebas mientras se avanza, y más adelante se clonará su esquema a uno vacío para datos reales. Esto reabre la Fase 1 (#3) con otra vuelta: antes de seguir con la Fase 2, se revisó el estado real de los datos de test en Supabase.
+
+### Segunda fuga encontrada (mismo bug, la mitad que quedó sin cubrir)
+
+El arreglo de la entrada (35) solo capturaba el mensaje de **sistema** que inserta `respond_offer()`. Pero `create_offer()` inserta OTRO mensaje, el texto de la propia oferta ("oferta de test de integración", `kind='offer'`), también con `offer_id` — y el mismo `on delete set null` lo dejaba huérfano igual. Resultado: cada ejecución del test "ciclo completo" seguía dejando un segundo mensaje permanente en el chat real, sin detectarse porque el test en verde no lo delataba.
+
+- `tests/integration/offers.spec.ts`: captura también el mensaje de `kind='offer'` (vía `admin`, igual que el de sistema) y lo borra en el `finally`.
+- Verificado: dos ejecuciones seguidas del test con la cuenta de `oferta de test de integración` quedándose fija en 16 (no 18) — confirma que ya no crece.
+
+### Limpieza de datos (criterio explícito, no un borrado sin filtro)
+
+Revisado contra Supabase real con `service_role`, antes de borrar nada:
+- 16 mensajes `body = 'oferta de test de integración'` — todos con `offer_id` ya `null` (huérfanos confirmados por el mismo bug). Borrados.
+- 1 mensaje `body = 'test webhook'` (50,00 €, de una prueba manual anterior de `webhook-idempotency.mjs`, no generado por ningún script automático) — mismo patrón, `offer_id` ya `null`. Borrado.
+- **No tocados, por falta de criterio claro para calificarlos de "test"**: los paquetes "Reel de lanzamiento 7505" y "7823" (450 €) y sus ofertas/colaboraciones asociadas — no coinciden con ningún patrón de nombre generado por un script conocido del repo; podrían ser datos de prueba manual del propio equipo o contenido de demo real. Quedan pendientes de que el desarrollador confirme si son basura o demo válida (pregunta abierta 5 de `CONTEXT.md`, todavía sin resolver).
+
+### Verificado de verdad
+
+- `npm run test:integration`: 60/60.
+- Confirmado por API: 0 filas restantes con esos dos textos exactos tras el borrado.
+
+### Pendiente
+
+- Preguntas abiertas 1 (fuente tipográfica), 4 (definición de "colaboración activa"/"entrega próxima"/"solicitud pendiente") y 5 (qué hacer con "Reel de lanzamiento 7505/7823") de `CONTEXT.md` siguen sin resolver.
+- Se sigue sin hacer una copia/exportación de los datos de Supabase antes de limpiar, como pedía la Fase 0 — pendiente de decidir si hace falta ya que el entorno seguirá siendo el mismo por ahora.
+- Continúa con la Fase 2 del plan (#2, #1, #10, N1) a partir de aquí.
+
 ## 2026-10-23 (36) — Fase 1 (#4): las credenciales demo ya no viajan en el bundle de producción
 
 Siguiente pieza del plan de `CONTEXT.md`, la única de la Fase 1 que no dependía del segundo proyecto de Supabase (pendiente de crear). El hallazgo #4 pedía comprobar "si las credenciales están en el código del cliente" — lo estaban.

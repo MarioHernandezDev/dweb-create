@@ -23,6 +23,15 @@ import { hasSupabaseEnv, creatorSession, partnerSession } from './supabase-setup
  * explícitamente con `service_role` (no hay policy de delete para
  * `authenticated` sobre `messages`) — sin esto, cada ejecución de este test
  * volvería a dejar un mensaje más.
+ *
+ * `create_offer` deja el MISMO problema con un segundo mensaje: el propio
+ * texto de la oferta ("oferta de test de integración", kind='offer') se
+ * inserta también como fila de `messages` con `offer_id` apuntando a la
+ * oferta — y el mismo `on delete set null` lo deja huérfano igual que al
+ * de sistema. Esto pasó inadvertido en el primer arreglo de este archivo
+ * (solo se capturó el mensaje de `respond_offer`) y siguió acumulando un
+ * mensaje "oferta de test de integración" por cada ejecución — 16 encontrados
+ * y limpiados al detectarlo. Se captura también aquí, por el mismo motivo.
  */
 const SUPABASE_URL = process.env.SUPABASE_URL
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -64,6 +73,7 @@ describe.skipIf(!hasSupabaseEnv || !hasServiceRole)('offers: create_offer / resp
   it('ciclo completo: crear paquete -> ofertar -> aceptar -> aparece una collaboration cobrable', async () => {
     if (!creator || !partner) return
     let systemMessageId: string | undefined
+    let offerMessageId: string | undefined
 
     // 1. El creador publica un paquete de prueba (desechable, con un título
     //    que lo identifica como generado por tests).
@@ -92,6 +102,12 @@ describe.skipIf(!hasSupabaseEnv || !hasServiceRole)('offers: create_offer / resp
       expect(offerErr).toBeNull()
       const offerId = (offer as { id: string } | null)?.id
       expect(offerId).toBeTruthy()
+
+      // Captura el mensaje que `create_offer` acaba de insertar con el texto
+      // de la oferta (kind='offer') — el mismo problema que el mensaje de
+      // sistema de más abajo: `messages.offer_id` no cascada al borrar.
+      const { data: offerMessage } = await admin.from('messages').select('id').eq('offer_id', offerId).eq('kind', 'offer').maybeSingle()
+      offerMessageId = (offerMessage as { id: string } | null)?.id
 
       // 3. El creador la acepta.
       const { data: responded, error: respondErr } = await creator.client.rpc('respond_offer', {
@@ -146,6 +162,7 @@ describe.skipIf(!hasSupabaseEnv || !hasServiceRole)('offers: create_offer / resp
       // explícitamente, con service_role (sin policy de delete para el cliente).
       await creator.client.from('packages').delete().eq('id', packageId)
       if (systemMessageId) await admin.from('messages').delete().eq('id', systemMessageId)
+      if (offerMessageId) await admin.from('messages').delete().eq('id', offerMessageId)
     }
   })
 
