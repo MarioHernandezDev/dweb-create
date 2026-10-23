@@ -4,6 +4,24 @@ Registro de qué se hizo, por qué, y qué queda pendiente de verificar — pens
 
 ---
 
+## 2026-10-23 (36) — Fase 1 (#4): las credenciales demo ya no viajan en el bundle de producción
+
+Siguiente pieza del plan de `CONTEXT.md`, la única de la Fase 1 que no dependía del segundo proyecto de Supabase (pendiente de crear). El hallazgo #4 pedía comprobar "si las credenciales están en el código del cliente" — lo estaban.
+
+### Lo encontrado
+
+`login.vue` ya ocultaba el botón de acceso demo en producción con `v-if="isDev"` (protección ya existente). Pero `demoAccounts`/`demoPassword` se definían sin ninguna condición en el `<script setup>` — confirmado leyendo el bundle real tras `npm run build`: el email (`feedma.test`) y la contraseña (`feedma-demo-2026`) estaban en texto plano en el JS de cliente que se sirve a cualquiera, aunque el botón nunca se renderizara.
+
+### Arreglado
+
+Las asignaciones se movieron dentro de `if (import.meta.dev) { ... }`. Vite sustituye esa expresión por un booleano literal en tiempo de build, y el minificador elimina la rama entera (con sus cadenas) cuando es `false` — no es solo "no se ve", es que ya no existe en el archivo.
+
+### Verificado de verdad
+
+- `npx vue-tsc --noEmit` y `npm test -- --run` (30/30): limpios.
+- Build de producción limpio desde cero (`rm -rf .output && npm run build`) y confirmado por `grep` que ni `feedma-demo-2026` ni `feedma.test` aparecen en ningún archivo de `.output/public` ni `.output/server`.
+- Sin verificar en vivo en modo desarrollo (el servidor de `npm run dev` no estaba corriendo en este momento) — el comportamiento en dev no cambia de todas formas, ya que `import.meta.dev` sigue siendo `true` ahí.
+
 ## 2026-10-23 (35) — Fase 0 del traspaso CONTEXT.md: commit del backlog, rama nueva, dos bugs verificados y corregidos
 
 Traspaso técnico recibido de una auditoría de usabilidad hecha en navegador por otra sesión (`CONTEXT.md`, 21+2 hallazgos). Antes de aplicar nada, se verificaron en código real las pistas más críticas, tal y como pide el propio documento ("salen de nombres de archivo, no de leer el código").
