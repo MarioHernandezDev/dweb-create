@@ -91,15 +91,17 @@ export function usePartnerPosts() {
     return posts.value
   }
 
-  async function approvePost(id: string) {
-    const { error } = await client.rpc('approve_post', { target_post_id: id } as never)
+  /** `comment` opcional en aprobar ("¡Perfecto!"), nunca obligatorio — a diferencia de `requestChanges`. */
+  async function approvePost(id: string, comment?: string) {
+    const { error } = await client.rpc('approve_post', { target_post_id: id, p_comment: comment?.trim() || null } as never)
     if (error) throw error
     const local = posts.value.find((p) => p.id === id)
     if (local) local.status = 'scheduled'
   }
 
-  async function requestChanges(id: string) {
-    const { error } = await client.rpc('request_post_changes', { target_post_id: id } as never)
+  /** El servidor rechaza un comentario vacío — no es opcional, sin él "pedir cambios" no explica nada de verdad. */
+  async function requestChanges(id: string, comment: string) {
+    const { error } = await client.rpc('request_post_changes', { target_post_id: id, p_comment: comment } as never)
     if (error) throw error
     const local = posts.value.find((p) => p.id === id)
     if (local) local.status = 'in_production'

@@ -60,7 +60,7 @@ onMounted(() => {
 onUnmounted(() => {
   if (import.meta.client) window.removeEventListener('resize', syncViewportWidth)
 })
-const WINDOW_SIZE = computed(() => (viewportWidth.value < 640 ? 1 : viewportWidth.value < 1024 ? 2 : 3))
+const WINDOW_SIZE = computed(() => (viewportWidth.value < 640 ? 1 : viewportWidth.value < 1024 ? 2 : viewportWidth.value < 1280 ? 3 : 4))
 
 // Ventana deslizante sobre `results` (ya ordenado por puntuación): se ve una
 // tira de WINDOW_SIZE cards a la vez. "+" la desliza una posición — la de
@@ -143,7 +143,7 @@ const liveStatus = computed(() => {
   <div class="mb-8">
     <div class="flex items-center gap-2.5 mb-3">
       <Icon name="ph:sparkle-fill" class="size-4 text-[var(--color-primary-500)]" />
-      <h2 class="font-display text-[1.125rem] text-[var(--color-text)]">Destacados para ti</h2>
+      <h2 class="font-display text-[1.125rem] text-[var(--color-text)]">{{ scoreMeaningful ? 'Destacados para ti' : 'Perfiles para explorar' }}</h2>
       <span v-if="loading" class="inline-flex items-center gap-1.5 text-[0.75rem] text-[var(--color-text-faint)]">
         <Icon name="ph:circle-notch-bold" class="size-3 animate-spin" /> la IA está analizando…
       </span>

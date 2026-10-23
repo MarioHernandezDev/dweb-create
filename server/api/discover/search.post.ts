@@ -56,6 +56,7 @@ interface CreatorCandidateRow {
   min_rate_cents: number | null
   max_rate_cents: number | null
   cover_url: string | null
+  created_at: string
   social_accounts: { followers_count: number }[] | null
 }
 
@@ -68,6 +69,7 @@ interface PartnerCandidateRow {
   min_budget_cents: number | null
   max_budget_cents: number | null
   cover_url: string | null
+  created_at: string
 }
 
 const CANDIDATE_POOL_LIMIT = 200
@@ -223,10 +225,18 @@ export default defineEventHandler(async (event) => {
 
   let results: DiscoveryResult[] = []
 
+  // `.order('created_at')`: sin filtro de categorías, heuristicScore() da el
+  // mismo 50 a todos — sin esto, el orden final dependía de lo que
+  // Postgres devolviera sin más (no garantizado, podía cambiar entre
+  // peticiones idénticas). Array.prototype.sort es estable (ES2019+), así
+  // que con las puntuaciones empatadas este orden de la base de datos es
+  // justo el que se conserva al pintar — "más recientes primero" en vez de
+  // arbitrario.
   if (viewerRole === 'creator') {
     const { data, error } = await client
       .from('partners')
-      .select('id, company_name, bio, categories, looking_for, min_budget_cents, max_budget_cents, cover_url')
+      .select('id, company_name, bio, categories, looking_for, min_budget_cents, max_budget_cents, cover_url, created_at')
+      .order('created_at', { ascending: false })
       .limit(CANDIDATE_POOL_LIMIT)
     if (error) throw createError({ statusCode: 500, statusMessage: error.message })
 
@@ -254,7 +264,8 @@ export default defineEventHandler(async (event) => {
   } else {
     const { data, error } = await client
       .from('creators')
-      .select('id, display_name, bio, categories, looking_for, min_rate_cents, max_rate_cents, cover_url, social_accounts(followers_count)')
+      .select('id, display_name, bio, categories, looking_for, min_rate_cents, max_rate_cents, cover_url, created_at, social_accounts(followers_count)')
+      .order('created_at', { ascending: false })
       .limit(CANDIDATE_POOL_LIMIT)
     if (error) throw createError({ statusCode: 500, statusMessage: error.message })
 

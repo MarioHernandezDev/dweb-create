@@ -67,7 +67,16 @@ export function useDiscover() {
     }) as Promise<DiscoverResponse>
   }
 
+  // Si el usuario relanza la búsqueda (cambia de modo, pulsa Buscar dos
+  // veces) antes de que termine la anterior, esa respuesta vieja no debe
+  // pisar los resultados de la más nueva al llegar tarde — cada llamada a
+  // `search()` se numera y cualquier fase (filtros o IA) que termine
+  // cuando ya no es la última lanzada se descarta en silencio, sin tocar
+  // `results`/`loading`/`aiSummary`.
+  let latestRequestId = 0
+
   async function search(mode: 'filters' | 'ai', queryText: string, filters: DiscoveryFilters) {
+    const requestId = ++latestRequestId
     loading.value = true
     error.value = ''
     aiSummary.value = null
@@ -78,9 +87,11 @@ export function useDiscover() {
       // es la parte rápida (sin LLM de por medio), pinta algo de verdad al
       // instante en vez de dejar la pantalla en blanco mientras se piensa.
       const base = await runFetch('filters', queryText, filters)
+      if (requestId !== latestRequestId) return
       results.value = base.results
       searched.value = true
     } catch (err) {
+      if (requestId !== latestRequestId) return
       error.value = err instanceof Error ? err.message : 'No se ha podido buscar. Inténtalo de nuevo.'
       loading.value = false
       return
@@ -92,13 +103,14 @@ export function useDiscover() {
     aiLoading.value = true
     try {
       const enriched = await runFetch('ai', queryText, filters)
+      if (requestId !== latestRequestId) return
       results.value = enriched.results
       aiSummary.value = enriched.aiSummary
       aiCategories.value = enriched.aiCategories
     } catch (err) {
       console.error('[useDiscover] fallo al enriquecer con IA (se queda el orden por filtros):', err)
     } finally {
-      aiLoading.value = false
+      if (requestId === latestRequestId) aiLoading.value = false
     }
   }
 

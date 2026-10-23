@@ -14,6 +14,17 @@
 // a mano en auth.users), idempotente por email/nombre/brief — se puede
 // volver a correr sin duplicar nada.
 //
+// Novedad sobre la versión anterior de este seed: cada ficha y cada
+// paquete lleva una foto de portada de verdad — nunca inventa una URL
+// externa (ni Unsplash ni nada suelto que pueda dejar de funcionar).
+// Sube las 5 fotos ya licenciadas que vive en public/img/ al mismo bucket
+// de Storage (`post-media`) y con el mismo patrón de ruta que usa la app
+// de verdad cuando un usuario sube su propia portada (ver
+// `uploadCoverPhoto`/`uploadPackageCover` en app/composables/useMyCreator.ts,
+// useMyPartner.ts y usePackages.ts) — rotando entre las 5, repetidas entre
+// perfiles (es contenido de demo, no hace falta una foto distinta por
+// cada uno).
+//
 // Uso:
 //   npm run db:seed-discover
 // (lee SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY / DEMO_PASSWORD de .env,
@@ -21,6 +32,9 @@
 // supabase/migrations/20261021150000_discovery_bidireccional.sql ya aplicada)
 
 import { createClient } from '@supabase/supabase-js'
+import { readFileSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
+import path from 'node:path'
 
 const SUPABASE_URL = process.env.SUPABASE_URL
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -38,6 +52,35 @@ if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
 const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
   auth: { autoRefreshToken: false, persistSession: false }
 })
+
+// ----------------------------------------------------------------------------
+// Fotos locales (public/img/, ya licenciadas y parte del repo) — se leen una
+// sola vez y se reparten por índice entre fichas y paquetes.
+// ----------------------------------------------------------------------------
+const PUBLIC_IMG_DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'public', 'img')
+const LOCAL_PHOTOS = [
+  'pexels-artempodrez-5716035.jpg',
+  'pexels-thirdman-7181178.jpg',
+  'pexels-tracy-le-blanc-67789-607812.jpg',
+  'pexels-viralyft-16852355.jpg',
+  'pexels-yankrukov-7693745.jpg'
+].map((name) => ({ name, buffer: readFileSync(path.join(PUBLIC_IMG_DIR, name)) }))
+
+let photoCursor = 0
+function nextPhoto() {
+  const photo = LOCAL_PHOTOS[photoCursor % LOCAL_PHOTOS.length]
+  photoCursor++
+  return photo
+}
+
+/** Sube una foto local al bucket `post-media` en la misma ruta que usaría la subida real desde la app, y devuelve la URL pública. */
+async function uploadCover(storagePath) {
+  const photo = nextPhoto()
+  const { error } = await admin.storage.from('post-media').upload(storagePath, photo.buffer, { upsert: true, contentType: 'image/jpeg' })
+  if (error) throw error
+  const { data } = admin.storage.from('post-media').getPublicUrl(storagePath)
+  return `${data.publicUrl}?v=${Date.now()}`
+}
 
 async function createDemoUser({ email, role, fullName }) {
   const { data, error } = await admin.auth.admin.createUser({
@@ -67,6 +110,8 @@ async function createDemoUser({ email, role, fullName }) {
 // Catálogo de creadores y partners de prueba — categorías copiadas a mano de
 // app/utils/categories.ts (DISCOVERY_CATEGORIES) para que coincidan letra
 // por letra; un script .mjs plano no puede importar ese .ts directamente.
+// Cada uno trae además un `pkg` — su paquete de ejemplo (lo que ofrece un
+// creador / lo que busca financiar un partner).
 // ----------------------------------------------------------------------------
 const CREATORS = [
   {
@@ -78,7 +123,8 @@ const CREATORS = [
     minRateCents: 15000,
     maxRateCents: 40000,
     lookingFor: 'Marcas de suplementos y ropa deportiva, campañas de rutinas patrocinadas.',
-    socials: [{ platform: 'instagram', handle: '@mateorivas.fit', followers: 85000 }, { platform: 'tiktok', handle: '@mateorivas.fit', followers: 120000 }]
+    socials: [{ platform: 'instagram', handle: '@mateorivas.fit', followers: 85000 }, { platform: 'tiktok', handle: '@mateorivas.fit', followers: 120000 }],
+    pkg: { title: 'Pack de 4 reels de rutina', description: 'Cuatro reels mensuales de rutinas de entreno, guion y grabación incluidos.', priceCents: 30000, deliverables: ['4 reels (Instagram)', '1 ronda de revisión por reel'] }
   },
   {
     email: 'lucia.fernandez@feedma.test',
@@ -89,7 +135,8 @@ const CREATORS = [
     minRateCents: 30000,
     maxRateCents: 80000,
     lookingFor: 'Marcas de moda sostenible o de producción local, tono cercano y femenino.',
-    socials: [{ platform: 'instagram', handle: '@luciafdz', followers: 210000 }, { platform: 'tiktok', handle: '@luciafdz', followers: 50000 }]
+    socials: [{ platform: 'instagram', handle: '@luciafdz', followers: 210000 }, { platform: 'tiktok', handle: '@luciafdz', followers: 50000 }],
+    pkg: { title: 'Campaña de colección cápsula', description: '2 looks en carrusel + 1 reel presentando una colección nueva.', priceCents: 60000, deliverables: ['2 carruseles (Instagram)', '1 reel (Instagram)'] }
   },
   {
     email: 'diego.castillo@feedma.test',
@@ -100,7 +147,8 @@ const CREATORS = [
     minRateCents: 10000,
     maxRateCents: 35000,
     lookingFor: 'Marcas de periféricos, hardware o apps — sin exclusividad larga.',
-    socials: [{ platform: 'youtube', handle: 'DiegoCastilloGG', followers: 95000 }, { platform: 'tiktok', handle: '@diegocastillogg', followers: 60000 }]
+    socials: [{ platform: 'youtube', handle: 'DiegoCastilloGG', followers: 95000 }, { platform: 'tiktok', handle: '@diegocastillogg', followers: 60000 }],
+    pkg: { title: 'Review en vídeo de lanzamiento', description: 'Vídeo de review técnica de un producto o juego recién lanzado.', priceCents: 25000, deliverables: ['1 vídeo (YouTube)', '1 clip corto (TikTok)'] }
   },
   {
     email: 'valeria.soto@feedma.test',
@@ -111,7 +159,8 @@ const CREATORS = [
     minRateCents: 25000,
     maxRateCents: 60000,
     lookingFor: 'Marcas de turismo, aerolíneas o restaurantes para colaboraciones in situ.',
-    socials: [{ platform: 'instagram', handle: '@valeriasoto.travel', followers: 175000 }]
+    socials: [{ platform: 'instagram', handle: '@valeriasoto.travel', followers: 175000 }],
+    pkg: { title: 'Cobertura de ruta gastronómica', description: 'Cobertura de 3 días en stories + 1 vídeo resumen de una ruta.', priceCents: 50000, deliverables: ['Stories diarias (3 días)', '1 vídeo resumen'] }
   },
   {
     email: 'carla.jimenez@feedma.test',
@@ -122,7 +171,8 @@ const CREATORS = [
     minRateCents: 12000,
     maxRateCents: 30000,
     lookingFor: 'Marcas de puericultura, alimentación infantil o productos para el hogar.',
-    socials: [{ platform: 'instagram', handle: '@carlaysufamilia', followers: 60000 }]
+    socials: [{ platform: 'instagram', handle: '@carlaysufamilia', followers: 60000 }],
+    pkg: { title: 'Reseña de producto en el día a día', description: 'Integración de un producto en la rutina diaria, en formato stories + post.', priceCents: 18000, deliverables: ['Stories (1 semana)', '1 publicación'] }
   },
   {
     email: 'hugo.navarro@feedma.test',
@@ -133,7 +183,8 @@ const CREATORS = [
     minRateCents: 40000,
     maxRateCents: 100000,
     lookingFor: 'Apps de finanzas, bancos digitales o herramientas para autónomos.',
-    socials: [{ platform: 'instagram', handle: '@hugonavarro.finanzas', followers: 40000 }, { platform: 'youtube', handle: 'HugoNavarroFinanzas', followers: 70000 }]
+    socials: [{ platform: 'instagram', handle: '@hugonavarro.finanzas', followers: 40000 }, { platform: 'youtube', handle: 'HugoNavarroFinanzas', followers: 70000 }],
+    pkg: { title: 'Serie "finanzas para autónomos"', description: 'Serie de 3 vídeos explicando una herramienta o app financiera.', priceCents: 70000, deliverables: ['3 vídeos (YouTube)', '3 posts de apoyo (Instagram)'] }
   },
   {
     email: 'elena.ruiz@feedma.test',
@@ -144,7 +195,8 @@ const CREATORS = [
     minRateCents: 15000,
     maxRateCents: 40000,
     lookingFor: 'Marcas de hogar sostenible, menaje reutilizable o energía.',
-    socials: [{ platform: 'instagram', handle: '@elenaruiz.eco', followers: 55000 }]
+    socials: [{ platform: 'instagram', handle: '@elenaruiz.eco', followers: 55000 }],
+    pkg: { title: 'Guía práctica de producto sostenible', description: 'Carrusel explicando cómo integrar un producto sostenible en casa.', priceCents: 22000, deliverables: ['1 carrusel (Instagram)', '1 story destacada'] }
   },
   {
     email: 'marcos.pena@feedma.test',
@@ -155,7 +207,8 @@ const CREATORS = [
     minRateCents: 18000,
     maxRateCents: 45000,
     lookingFor: 'Marcas de ropa técnica, suplementación o material deportivo.',
-    socials: [{ platform: 'instagram', handle: '@marcospena.training', followers: 90000 }, { platform: 'tiktok', handle: '@marcospena.training', followers: 200000 }]
+    socials: [{ platform: 'instagram', handle: '@marcospena.training', followers: 90000 }, { platform: 'tiktok', handle: '@marcospena.training', followers: 200000 }],
+    pkg: { title: 'Review técnica de equipamiento', description: 'Vídeo de entrenamiento real probando equipamiento o ropa técnica.', priceCents: 28000, deliverables: ['1 reel (Instagram)', '1 vídeo largo (TikTok)'] }
   },
   {
     email: 'paula.ibanez@feedma.test',
@@ -166,7 +219,8 @@ const CREATORS = [
     minRateCents: 10000,
     maxRateCents: 28000,
     lookingFor: 'Academias online, marcas de instrumentos o apps educativas.',
-    socials: [{ platform: 'instagram', handle: '@paulaibanez.music', followers: 30000 }, { platform: 'youtube', handle: 'PaulaIbanezMusic', followers: 45000 }]
+    socials: [{ platform: 'instagram', handle: '@paulaibanez.music', followers: 30000 }, { platform: 'youtube', handle: 'PaulaIbanezMusic', followers: 45000 }],
+    pkg: { title: 'Clase patrocinada en vídeo', description: 'Vídeo de una clase de piano mencionando/usando una marca o academia.', priceCents: 20000, deliverables: ['1 vídeo (YouTube)', '1 publicación (Instagram)'] }
   }
 ]
 
@@ -179,7 +233,8 @@ const PARTNERS = [
     categories: ['Nutrición', 'Fitness'],
     minBudgetCents: 20000,
     maxBudgetCents: 60000,
-    lookingFor: 'Creadores de fitness o nutrición con audiencia en España, tono cercano.'
+    lookingFor: 'Creadores de fitness o nutrición con audiencia en España, tono cercano.',
+    pkg: { title: 'Busco: campaña de lanzamiento', description: 'Buscamos creadores para una campaña de lanzamiento de producto, formato rutina patrocinada.', priceCents: 40000, deliverables: ['2-4 publicaciones', 'Briefing de marca incluido'] }
   },
   {
     email: 'velora@feedma.test',
@@ -189,7 +244,8 @@ const PARTNERS = [
     categories: ['Moda', 'Sostenibilidad'],
     minBudgetCents: 30000,
     maxBudgetCents: 90000,
-    lookingFor: 'Creadores de moda con enfoque sostenible o de segunda mano.'
+    lookingFor: 'Creadores de moda con enfoque sostenible o de segunda mano.',
+    pkg: { title: 'Busco: colección cápsula', description: 'Presentación de nuestra próxima colección cápsula con un/a creador/a de moda.', priceCents: 60000, deliverables: ['2 looks en carrusel', '1 reel'] }
   },
   {
     email: 'pixelforge.games@feedma.test',
@@ -199,7 +255,8 @@ const PARTNERS = [
     categories: ['Gaming', 'Tecnología'],
     minBudgetCents: 15000,
     maxBudgetCents: 50000,
-    lookingFor: 'Streamers o creadores de reviews de juegos indie.'
+    lookingFor: 'Streamers o creadores de reviews de juegos indie.',
+    pkg: { title: 'Busco: review de lanzamiento', description: 'Review en vídeo de nuestro próximo juego indie, antes del lanzamiento.', priceCents: 35000, deliverables: ['1 vídeo de review', 'Acceso anticipado al juego'] }
   },
   {
     email: 'rutasyco@feedma.test',
@@ -209,7 +266,8 @@ const PARTNERS = [
     categories: ['Viajes', 'Gastronomía'],
     minBudgetCents: 30000,
     maxBudgetCents: 80000,
-    lookingFor: 'Creadores de viajes con buena fotografía/vídeo, dispuestos a viajar.'
+    lookingFor: 'Creadores de viajes con buena fotografía/vídeo, dispuestos a viajar.',
+    pkg: { title: 'Busco: cobertura de ruta', description: 'Cobertura de una de nuestras rutas gastronómicas, gastos de viaje incluidos.', priceCents: 50000, deliverables: ['Stories durante la ruta', '1 vídeo resumen'] }
   },
   {
     email: 'mamafeliz@feedma.test',
@@ -219,7 +277,8 @@ const PARTNERS = [
     categories: ['Familia y maternidad', 'Lifestyle'],
     minBudgetCents: 10000,
     maxBudgetCents: 35000,
-    lookingFor: 'Creadoras de maternidad, contenido auténtico, sin postureo.'
+    lookingFor: 'Creadoras de maternidad, contenido auténtico, sin postureo.',
+    pkg: { title: 'Busco: prueba de producto', description: 'Probar un producto nuevo en la rutina diaria y compartir la experiencia real.', priceCents: 18000, deliverables: ['Stories (1 semana)', '1 publicación'] }
   },
   {
     email: 'capitalia@feedma.test',
@@ -229,7 +288,8 @@ const PARTNERS = [
     categories: ['Negocios y emprendimiento', 'Finanzas'],
     minBudgetCents: 50000,
     maxBudgetCents: 150000,
-    lookingFor: 'Creadores de finanzas o negocio con audiencia de autónomos/freelance.'
+    lookingFor: 'Creadores de finanzas o negocio con audiencia de autónomos/freelance.',
+    pkg: { title: 'Busco: serie educativa', description: 'Serie de contenido explicando una herramienta financiera para autónomos.', priceCents: 70000, deliverables: ['3 vídeos', '3 publicaciones de apoyo'] }
   },
   {
     email: 'ecohogar@feedma.test',
@@ -239,7 +299,8 @@ const PARTNERS = [
     categories: ['Sostenibilidad', 'Hogar y decoración'],
     minBudgetCents: 15000,
     maxBudgetCents: 45000,
-    lookingFor: 'Creadores de sostenibilidad u hogar, contenido práctico.'
+    lookingFor: 'Creadores de sostenibilidad u hogar, contenido práctico.',
+    pkg: { title: 'Busco: guía práctica', description: 'Explicar cómo integrar nuestros productos sostenibles en el día a día.', priceCents: 22000, deliverables: ['1 carrusel', '1 story destacada'] }
   },
   {
     email: 'proforma.sport@feedma.test',
@@ -249,7 +310,8 @@ const PARTNERS = [
     categories: ['Deporte', 'Fitness'],
     minBudgetCents: 20000,
     maxBudgetCents: 60000,
-    lookingFor: 'Creadores de deporte/fitness con contenido técnico, no solo estético.'
+    lookingFor: 'Creadores de deporte/fitness con contenido técnico, no solo estético.',
+    pkg: { title: 'Busco: review técnica', description: 'Review de nuestra ropa técnica en una sesión de entrenamiento real.', priceCents: 28000, deliverables: ['1 reel', '1 vídeo largo'] }
   },
   {
     email: 'soundwave.academy@feedma.test',
@@ -259,12 +321,16 @@ const PARTNERS = [
     categories: ['Música', 'Educación'],
     minBudgetCents: 10000,
     maxBudgetCents: 30000,
-    lookingFor: 'Creadores de música o educación, formato clases/tutoriales.'
+    lookingFor: 'Creadores de música o educación, formato clases/tutoriales.',
+    pkg: { title: 'Busco: clase patrocinada', description: 'Una clase en vídeo que mencione o use nuestra academia.', priceCents: 20000, deliverables: ['1 vídeo', '1 publicación'] }
   }
 ]
 
 async function ensureCreatorFicha(entry) {
   const user = await createDemoUser({ email: entry.email, role: 'creator', fullName: `${entry.name} (demo)` })
+
+  const { data: existing } = await admin.from('creators').select('id, cover_url').eq('profile_id', user.id).maybeSingle()
+  const coverUrl = existing?.cover_url ?? (await uploadCover(`${user.id}/profile-cover.jpg`))
 
   const { data: creator, error } = await admin
     .from('creators')
@@ -277,7 +343,8 @@ async function ensureCreatorFicha(entry) {
         categories: entry.categories,
         min_rate_cents: entry.minRateCents,
         max_rate_cents: entry.maxRateCents,
-        looking_for: entry.lookingFor
+        looking_for: entry.lookingFor,
+        cover_url: coverUrl
       },
       { onConflict: 'profile_id' }
     )
@@ -295,12 +362,17 @@ async function ensureCreatorFicha(entry) {
     if (socialError) throw socialError
   }
 
-  console.log(`✓ Creador listo: ${entry.name} (${entry.categories.join(', ')})`)
+  await ensurePackage(user.id, entry.pkg)
+
+  console.log(`✓ Creador listo: ${entry.name} (${entry.categories.join(', ')}), con foto y paquete`)
   return creator
 }
 
 async function ensurePartnerFicha(entry) {
   const user = await createDemoUser({ email: entry.email, role: 'partner', fullName: `${entry.name} (demo)` })
+
+  const { data: existing } = await admin.from('partners').select('id, cover_url').eq('profile_id', user.id).maybeSingle()
+  const coverUrl = existing?.cover_url ?? (await uploadCover(`${user.id}/profile-cover.jpg`))
 
   const { data: partner, error } = await admin
     .from('partners')
@@ -313,7 +385,8 @@ async function ensurePartnerFicha(entry) {
         categories: entry.categories,
         min_budget_cents: entry.minBudgetCents,
         max_budget_cents: entry.maxBudgetCents,
-        looking_for: entry.lookingFor
+        looking_for: entry.lookingFor,
+        cover_url: coverUrl
       },
       { onConflict: 'profile_id' }
     )
@@ -321,8 +394,38 @@ async function ensurePartnerFicha(entry) {
     .single()
   if (error) throw error
 
-  console.log(`✓ Partner listo: ${entry.name} (${entry.categories.join(', ')})`)
+  await ensurePackage(user.id, entry.pkg)
+
+  console.log(`✓ Partner listo: ${entry.name} (${entry.categories.join(', ')}), con foto y paquete`)
   return partner
+}
+
+/** Crea el paquete de ejemplo de un perfil (si no existe ya uno con el mismo título) con su propia foto de portada — mismo patrón que `usePackages.createPackage`/`uploadPackageCover`. */
+async function ensurePackage(profileId, pkg) {
+  const { data: existing, error: existingError } = await admin
+    .from('packages')
+    .select('id, cover_url')
+    .eq('profile_id', profileId)
+    .eq('title', pkg.title)
+    .maybeSingle()
+  if (existingError) throw existingError
+  if (existing?.cover_url) return existing
+
+  let row = existing
+  if (!row) {
+    const { data: created, error: createError } = await admin
+      .from('packages')
+      .insert({ profile_id: profileId, title: pkg.title, description: pkg.description, price_cents: pkg.priceCents, deliverables: pkg.deliverables })
+      .select()
+      .single()
+    if (createError) throw createError
+    row = created
+  }
+
+  const coverUrl = await uploadCover(`${profileId}/package-${row.id}.jpg`)
+  const { error: updateError } = await admin.from('packages').update({ cover_url: coverUrl }).eq('id', row.id)
+  if (updateError) throw updateError
+  return row
 }
 
 async function ensureCollaboration({ partner, creator, initiatedBy, status, budgetCents, brief }) {
@@ -405,11 +508,11 @@ async function seedDiscoverySearches({ creatorProfileIds, partnerProfileIds }) {
 }
 
 async function main() {
-  console.log('Creando/actualizando 9 creadores de contenido de prueba…\n')
+  console.log('Creando/actualizando 9 creadores de contenido de prueba (con foto y paquete)…\n')
   const creators = []
   for (const entry of CREATORS) creators.push(await ensureCreatorFicha(entry))
 
-  console.log('\nCreando/actualizando 9 partners de prueba…\n')
+  console.log('\nCreando/actualizando 9 partners de prueba (con foto y paquete)…\n')
   const partners = []
   for (const entry of PARTNERS) partners.push(await ensurePartnerFicha(entry))
 
@@ -445,7 +548,7 @@ async function main() {
     partnerProfileIds: partners.map((p) => p.profile_id)
   })
 
-  console.log('\nListo. 9 creadores + 9 partners nuevos (contraseña para todos: ' + DEMO_PASSWORD + '), 6 colaboraciones de ejemplo en ambas direcciones, y 12 búsquedas de ejemplo para la pestaña Analíticas → Descubrir del admin.\n')
+  console.log('\nListo. 9 creadores + 9 partners nuevos (contraseña para todos: ' + DEMO_PASSWORD + '), cada uno con foto de portada y un paquete publicado con su propia foto, 6 colaboraciones de ejemplo en ambas direcciones, y 12 búsquedas de ejemplo para la pestaña Analíticas → Descubrir del admin.\n')
   console.log('Prueba /creator/discover y /partner/discover con filtros (Fitness, Moda, Gaming…) y con "Buscar con IA".\n')
 }
 

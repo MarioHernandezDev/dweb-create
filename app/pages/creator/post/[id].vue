@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { contentTypeMeta, statusMeta } from '~/utils/status'
+import { contentTypeMeta, statusMeta, relativeTime } from '~/utils/status'
 import { platformMeta, suggestionsForDraft } from '~/utils/mock-data'
 import type { PostStatus } from '~/types'
 
@@ -18,6 +18,18 @@ if (!post.value) {
 }
 
 useHead({ title: post.value.title })
+
+// Historial de revisión (ver supabase/migrations/20261025140000_post_
+// revision_notes.sql) — solo tiene algo que mostrar si el post está/estuvo
+// ligado a una colaboración, pero se pide igual, sin condición: si no hay
+// filas, `notesByPost[id]` simplemente queda como un array vacío.
+const { notesByPost, ensureLoaded: ensureRevisionsLoaded, latestPendingChangeRequest } = usePostRevisions()
+await ensureRevisionsLoaded(post.value.id)
+const revisionNotes = computed(() => notesByPost.value[post.value!.id] ?? [])
+// Vigente de verdad solo si el post sigue en producción — en cuanto se
+// reenvía a revisión, deja de ser "lo pendiente", aunque la nota se quede
+// en el historial para siempre.
+const pendingChangeRequest = computed(() => (post.value?.status === 'in_production' ? latestPendingChangeRequest(post.value.id) : null))
 
 const title = ref(post.value.title)
 const caption = ref(post.value.caption)
@@ -105,6 +117,14 @@ async function predict() {
           class="mb-6" @update:media-url="(url) => { if (post) post.mediaUrl = url }"
         />
 
+        <BaseCard v-if="pendingChangeRequest" radius="md" padding="md" class="flex items-start gap-3 mb-6 border-[var(--color-status-alert)]/30 bg-[var(--color-status-alert)]/[0.06]">
+          <Icon name="ph:arrow-counter-clockwise-bold" class="size-5 text-[var(--color-status-alert)] shrink-0 mt-0.5" />
+          <div class="min-w-0">
+            <p class="text-[0.8125rem] font-medium text-[var(--color-text)]">{{ pendingChangeRequest.authorName }} ha pedido cambios</p>
+            <p class="text-[0.875rem] text-[var(--color-text)] leading-relaxed mt-0.5">{{ pendingChangeRequest.comment }}</p>
+          </div>
+        </BaseCard>
+
         <div class="flex items-center gap-2.5 mb-6 flex-wrap">
           <StatusPill :status="post.status" />
           <span class="inline-flex items-center gap-1.5 text-[0.8125rem] text-[var(--color-text-muted)]">
@@ -144,12 +164,37 @@ async function predict() {
           </p>
         </div>
 
-        <div class="flex gap-2.5">
+        <div class="flex gap-2.5 mb-8">
           <BaseButton variant="danger" icon="ph:trash-fill" :icon-spin="deleting" :disabled="deleting" @click="remove">Eliminar</BaseButton>
           <BaseButton variant="primary" icon="ph:check-bold" class="flex-1" :icon-spin="saving" :disabled="!dirty || saving" @click="save">
             {{ saving ? 'Guardando…' : 'Guardar cambios' }}
           </BaseButton>
         </div>
+
+        <section v-if="revisionNotes.length">
+          <h2 class="text-[0.6875rem] font-semibold uppercase tracking-wide text-[var(--color-text-faint)] mb-3">Historial de revisión</h2>
+          <div class="flex flex-col gap-2.5">
+            <div
+              v-for="note in revisionNotes" :key="note.id"
+              class="flex items-start gap-3 rounded-[var(--radius-sm)] border border-[var(--color-hairline)] bg-[var(--color-paper)] p-3"
+            >
+              <span
+                class="flex items-center justify-center size-8 rounded-full shrink-0"
+                :class="note.kind === 'approved' ? 'bg-[var(--color-status-published)]/12 text-[var(--color-status-published)]' : 'bg-[var(--color-status-alert)]/12 text-[var(--color-status-alert)]'"
+              >
+                <Icon :name="note.kind === 'approved' ? 'ph:check-bold' : 'ph:arrow-counter-clockwise-bold'" class="size-4" />
+              </span>
+              <div class="min-w-0 flex-1">
+                <p class="text-[0.8125rem] text-[var(--color-text)]">
+                  <span class="font-medium">{{ note.authorName }}</span>
+                  {{ note.kind === 'approved' ? 'aprobó esta publicación' : 'pidió cambios' }}
+                  <span class="text-[var(--color-text-faint)]">· {{ relativeTime(note.createdAt) }}</span>
+                </p>
+                <p v-if="note.comment" class="text-[0.8125rem] text-[var(--color-text-muted)] leading-relaxed mt-1">{{ note.comment }}</p>
+              </div>
+            </div>
+          </div>
+        </section>
       </div>
 
       <section class="mt-6 lg:mt-0">

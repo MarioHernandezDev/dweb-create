@@ -36,6 +36,7 @@ export function resetAccountCaches() {
   useNotifications().reset()
   useRatings().reset()
   useSavedProfiles().reset()
+  usePostRevisions().reset()
 
   useState<unknown>('my-subscription', () => null).value = null
   useState<boolean>('my-subscription-loaded', () => false).value = false

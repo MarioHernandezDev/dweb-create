@@ -4,6 +4,198 @@ Registro de qué se hizo, por qué, y qué queda pendiente de verificar — pens
 
 ---
 
+## 2026-10-23 (27) — Revisiones con comentarios reales (primer corte de Fase C / "FEEDMA Studio")
+
+Siguiente fase del roadmap tras Fase B. En vez de abordar todo "FEEDMA Studio" de golpe (el propio roadmap pide no construir un gestor de proyectos complejo), se auditó el código real y se encontró el hueco más concreto y demostrable: **"Pedir cambios" en una publicación no capturaba ningún motivo** — `request_post_changes()` solo movía el estado, sin texto ni historial; el creador se encontraba su publicación devuelta sin ninguna pista de qué cambiar.
+
+### Qué se construyó
+
+- **`supabase/migrations/20261025140000_post_revision_notes.sql`**: tabla `post_revision_notes` (una por publicación, no por colaboración — es sobre un entregable concreto, mismo criterio que `labels`/`checklist_items`), RLS de solo lectura para las dos partes implicadas, sin policy de insert para el cliente. `request_post_changes()`/`approve_post()` redefinidas con un parámetro `p_comment` — **obligatorio** en la primera (rechaza vacío de verdad, no es decorativo), opcional en la segunda. Importante: se **borraron explícitamente** las versiones de 1 argumento (`drop function if exists ... (uuid)`) antes de crear las de 2 — `create or replace` con una firma distinta crea una sobrecarga nueva, no sustituye la vieja; dejar la de 1 argumento viva habría permitido seguir pidiendo cambios sin comentario, saltándose la exigencia entera.
+- **Atomicidad real**: el cambio de estado es un único `update ... where status = 'ready_for_review' returning id` — si dos llamadas concurrentes apuntan al mismo post, la segunda no encuentra fila que actualizar y se rechaza con un mensaje claro, nunca ejecuta dos veces.
+- **`app/composables/usePostRevisions.ts`** (nuevo) + `usePartnerPosts.ts` actualizado para pasar el comentario.
+- **UI partner** (`app/pages/partner/index.vue`): "Pedir cambios" ya no actúa al primer clic (el servidor exige el comentario) — abre la hoja de detalle con un formulario real; "Aprobar" sigue siendo un clic, con un comentario opcional colapsado. De paso se quitó código muerto (`approveNext`/`firstPendingId`, sobrante del rediseño del Home).
+- **UI creador** (`app/pages/creator/post/[id].vue`): aviso destacado con la solicitud de cambios vigente (solo mientras el post sigue en `in_production` — desaparece solo al reenviar a revisión, sin borrar la nota) + historial completo cronológico (autor, fecha, tipo, comentario).
+
+### Verificado de verdad contra Supabase real (no solo en local)
+
+- `npx vue-tsc --noEmit`, `npm test -- --run` (30/30) y `npm run build`: limpios.
+- Migración aplicada por el usuario, confirmada por API (`200` en vez de `404` al consultar la tabla nueva).
+- **`tests/integration/post-revisions.spec.ts`** (nuevo, 8 tests) ejecutado de verdad contra el proyecto real y **los 8 en verde**: un perfil ajeno no puede leer el historial (ni las dos partes implicadas pueden verlo el ajeno); el propio creador no puede aprobar/devolver su publicación; comentario vacío rechazado; camino feliz real (nota + cambio de estado); segunda llamada sobre un post ya resuelto rechazada; insert directo sobre `post_revision_notes` bloqueado por RLS; **y una prueba de concurrencia real** (`approve_post`/`request_post_changes` disparadas a la vez con `Promise.all` sobre el mismo post) — confirmado que solo una de las dos tiene éxito y que estado + historial quedan coherentes entre sí, nunca un estado intermedio. Todo sobre publicaciones de prueba aisladas creadas y borradas por el propio test (confirmado después por API que no quedó ningún post de prueba suelto) — nunca sobre datos de demo ya existentes.
+
+### Sin verificar
+
+- La interacción real en navegador (abrir la hoja, escribir el comentario, ver el aviso destacado en el creador) — no hay herramienta de navegador en esta sesión.
+
+## 2026-10-23 (26) — Limpieza de cuentas de prueba + nuevo seed con fotos reales
+
+Petición directa del usuario: borrar las cuentas de prueba creadas por `seed-discover-demo.mjs` (sin tocar `creator@feedma.test`/`partner@feedma.test`) y sustituirlas por un seed más rico, con fotos de verdad en fichas y paquetes.
+
+### Borrado (`scripts/cleanup-discover-demo.mjs`, nuevo)
+
+- Antes de borrar nada, se auditaron las cascadas FK reales de cada tabla implicada contra las migraciones — se encontró un desajuste de esquema ya existente: `collaborations.creator_id` es `NOT NULL` pero su FK sigue en `ON DELETE SET NULL` (nunca se corrigió al quitar el rol de manager). Borrar un creador con colaboraciones directamente habría hecho fallar el borrado entero. El script borra primero las colaboraciones de estas cuentas y después los usuarios (vía `auth.admin.deleteUser`, nunca un DELETE a mano sobre `auth.users`) — el resto (profiles, creators/partners, social_accounts, packages, discovery_searches…) cascada limpio, comprobado tabla por tabla antes de ejecutar nada.
+- **Ejecutado de verdad contra el proyecto real**: 18 cuentas borradas (las 9 creadores + 9 partners de `seed-discover-demo.mjs`), 6 colaboraciones y sus búsquedas de `discovery_searches` asociadas. Verificado después por API: `creators`/`partners` solo contienen ya `Nora Blake`, `Alma Beauty Co.` y la cuenta real del propio usuario (`Alejandro Suárez Durán` — no tocada, no estaba en ninguna lista de borrado).
+
+### Nuevo seed (`scripts/seed-discover-demo.mjs`, reescrito en el mismo archivo — mismo propósito, no tenía sentido mantener dos scripts que crean las mismas 18 cuentas)
+
+- Mismos 9 creadores + 9 partners de antes (nombres, categorías, rangos — ya estaban bien pensados), pero ahora cada ficha lleva una foto de portada real y cada una trae además **un paquete publicado** (nuevo — antes no existía ningún paquete de demo), también con su propia foto.
+- Las fotos son las 5 de `public/img/` que ya usa el proyecto (licencia ya resuelta, ya en el repo) — se suben de verdad al bucket `post-media`, con la misma ruta que usaría una subida real desde la app (`uploadCoverPhoto`/`uploadPackageCover`), rotando entre las 5. Decisión tomada con el usuario: nada de Unsplash ni URLs externas sueltas para esto.
+- Idempotente, mismo criterio que el resto de seeds del proyecto.
+- **Ejecutado de verdad contra el proyecto real**: 9+9 cuentas recreadas, cada una con foto (`cover_url` real en Supabase Storage, comprobado con `curl` que las imágenes responden `200 image/jpeg` del tamaño real) y un paquete con su propia foto (comprobado igual). Confirmado por SSR con sesión real que `/partner/discover` ya pinta fotos reales (13 `<img>` con `src` de `post-media`) en vez de los degradados de antes.
+
+### Verificado / sin verificar
+
+- `npm test` (30/30) sigue verde tras los cambios.
+- Borrado y seed **ejecutados de verdad**, no solo escritos — con comprobación por API después de cada paso, no solo confiando en el log del script.
+- **Sin probar en navegador real**: cómo se ven las fotos en las tarjetas de verdad (tamaño, recorte, carga) — solo confirmado que la URL responde con una imagen válida, no el renderizado visual real.
+
+## 2026-10-23 (25) — Rediseño de Descubrir + diagnóstico de relevancia (`DESIGN.md`)
+
+Petición explícita con un documento detallado (`DESIGN.md`) pidiendo auditar primero cómo funcionan de verdad los Destacados y la búsqueda sin texto antes de tocar nada visual. Se entró en modo de planificación y se auditó `server/api/discover/search.post.ts` línea a línea antes de escribir código.
+
+### Diagnóstico (lo que había de verdad, no lo que parecía)
+
+- Los Destacados y la búsqueda sin texto **ya usaban datos 100% reales** (nunca contenido de demo) — pero sin ningún filtro de categorías, `heuristicScore()` daba **50 a todos por igual** (sin personalización real posible sin IA/filtros) y la consulta a `creators`/`partners` **no tenía ningún `.order()`** — el orden dependía de lo que Postgres devolviera, sin garantía de ser el mismo entre dos peticiones idénticas. El cliente ya ocultaba el badge de puntuación en ese caso (`scoreMeaningful`), pero el título "Destacados para ti" se mantenía fijo aunque no hubiera nada personalizado detrás.
+- Cero paginación — se pintaban todos los resultados filtrados de golpe.
+- `useDiscover().search()` no protegía contra una respuesta vieja pisando una más nueva (sin guarda de petición obsoleta).
+- El layout ya usaba `<AppShell full-width>`, pero el contenido se autolimitaba por dentro (`max-w-[1100px]`/`max-w-[760px]`) — eso era justo el hueco vacío a la derecha en pantallas anchas.
+
+### Qué se arregló
+
+- **`server/api/discover/search.post.ts`**: se añadió `created_at` al `select` y `.order('created_at', { ascending: false })` a las dos consultas de candidatos. Como `Array.prototype.sort` es estable, con las puntuaciones empatadas (sin filtro) el orden de la base de datos es justo el que se conserva al pintar — estable y explicable ("más recientes primero") en vez de arbitrario. **Verificado de verdad**: dos peticiones idénticas al endpoint real (con sesión de la cuenta demo creadora) devuelven ahora exactamente el mismo orden de ids, confirmado con un `diff` byte a byte de las dos respuestas.
+- **`useDiscover.ts`**: contador de petición en el cierre del composable — cualquier fase (filtros o IA) que resuelva cuando ya no es la búsqueda más reciente se descarta sin tocar `results`/`loading`/`aiSummary`.
+- **Título neutral**: `FeaturedDeck.vue` ahora usa el `scoreMeaningful` que ya calculaban las páginas — "Destacados para ti" solo con criterio real (filtro de categorías o IA), si no "Perfiles para explorar".
+- **Layout**: quitados los `max-w` internos que capaban el ancho; `DiscoveryCard.vue` pasa de fila horizontal a tarjeta vertical compacta (portada + nombre/categorías/bio/datos clave + marcador + CTA), ahora en cuadrícula `1→2→3→4` columnas según ancho. `FeaturedDeck` aprovecha una cuarta columna en pantallas muy anchas (antes topaba en 3 siempre).
+- **Revelación progresiva**: 12 tarjetas al principio, "Cargar más" revela 12 más del array ya recibido — sin petición nueva (el backend no tiene paginación real; construir una habría sido ampliar alcance, se documenta como pendiente).
+- **Filtros activos**: fila de chips quitables individualmente (categorías + rango de presupuesto) + "Limpiar filtros", visible aunque el panel esté colapsado — quitar un chip relanza la búsqueda al momento.
+- **Guardados**: el enlace ya existente ahora lleva el contador real (`useSavedProfiles`, sin consulta nueva).
+
+### Qué se conservó sin tocar
+
+El motor de búsqueda, el modo IA completo (con su resiliencia sin API key), el flujo de "Proponer"/"Contactar" (abrir perfil vs. proponer siguen siendo acciones distintas, con sus estados de carga/éxito/error reales), `useSavedProfiles`/`/favorites`, y `SideRail`/`TopBar`/`BottomTabBar`/`AppShell`.
+
+### Qué queda fuera, documentado
+
+- Paginación real con cursor en el servidor — necesitaría parámetros nuevos en el endpoint (y probablemente un índice) para ser barata de verdad; no se improvisa aquí.
+- Un criterio de relevancia más sofisticado que "categorías + fecha estable" (p. ej. puntuar por plenitud de ficha) — se descarta a propósito por acercarse a un "sistema de ranking" que el propio encargo pide evitar sin necesidad clara.
+
+### Verificado / sin verificar
+
+- `npx vue-tsc --noEmit`, `npm test -- --run` (30/30) y `npm run build`: limpios.
+- **SSR real con sesión de las dos cuentas demo**: `/creator/discover` y `/partner/discover` responden 200 sin errores; título neutral correcto en ambas (sin filtro activo); 10 y 11 tarjetas reales respectivamente con nombres reales distintos; "Cargar más" correctamente ausente (menos de 12 resultados); fila de "Limpiar filtros" correctamente ausente sin filtros activos; el badge de "Guardados" refleja el conteo real (4 en la cuenta creadora, 0 en la de partner — dato real de pruebas anteriores del usuario, no mío).
+- **Sin probar en navegador real**: clics (abrir perfil vs. guardar vs. proponer sin interferirse entre sí), quitar un chip de filtro en vivo, la hoja de "Proponer", y el responsive real en tablet/móvil — no hay herramienta de navegador disponible en esta sesión.
+- Nada se ha subido a GitHub todavía.
+
+## 2026-10-23 (24) — Rediseño del Home (`creator/index.vue` + `partner/index.vue`)
+
+Petición explícita del usuario, con una imagen de referencia (dashboard de smart-home) y un encargo detallado: trasladar la sensación de producto premium y bien organizado sin copiar literalmente la referencia ni inventar datos. Se entró en modo de planificación, se auditó qué ya existía (`SideRail.vue`/`TopBar.vue` ya cubrían navegación lateral y cabecera — no se tocaron) y se presentó un plan (qué se conserva/reorganiza/muestra) antes de escribir código, tal como pedía el propio encargo.
+
+### Qué se construyó
+
+- **`app/components/home/HomeHeroCard.vue`** (nuevo, presentacional): panel destacado — imagen real o degradado por semilla (mismo lenguaje que `ProfileHeaderCard`/`FeaturedDeck`) + scrim + eyebrow/título en blanco + un único CTA. Acepta `ctaTo` (ruta real) o, si se omite, emite `cta-click` para acciones que abren una hoja inferior en vez de navegar (el panel de revisión del partner).
+- **`creator/index.vue`**: 4 `StatTile` (colaboraciones activas, solicitudes pendientes, entregas próximas, objetivo semanal) + grid asimétrica `1fr/22rem` — columna ancha: hero (prioridad real: fuera de plazo > solicitud sin responder > próxima entrega > CTA a Descubrir) + panel de marcas sugeridas (`useDiscover` modo filtros, sin IA, 3 resultados, sin bloquear el render); columna angosta: "Necesita tu atención" (solicitudes + entregas + mensajes sin leer, hasta 4 filas), redes conectadas, consejos (ficha incompleta/paquete/conectar red, consolidados en una tarjeta). `WeekBoard` sale del home (quedaba casi duplicado con `/creator/timeline`, que ya es la vista completa) — se conservan el objetivo semanal como única métrica y el `Fab`/`PostComposerSheet`.
+- **`partner/index.vue`**: mismo patrón de stats/grid. El hero añade un escalón de prioridad que no estaba en el plan original pero es correcto con los datos reales: publicación por revisar > solicitud de un creador sin responder (`initiatedBy === 'creator'`, nunca una propuesta propia esperando respuesta) > sin colaboración activa > próxima entrega > invitación a descubrir. **`WeekBoard` y `PostDetailSheet` se conservan intactos** (aprobar/pedir cambios) — a diferencia del creador, `/partner` es la ÚNICA pantalla donde existe esa acción, quitarla habría sido una regresión real, no una reorganización.
+- Panel de descubrimiento en ambas páginas: `useDiscover().search('filters', '', {...})` lanzado SIN `await` en el `Promise.all` principal — no bloquea el primer pintado, mismo patrón de "fase 2 progresiva" que ya usa `useDiscover` para el enriquecido con IA. Reutiliza el endpoint existente de Descubrir tal cual (sin tocar servidor); se renderizan solo los 3 primeros resultados del array que ya devuelve.
+
+### Qué queda fuera a propósito (nada inventado)
+
+- Cero ingresos, conversión, seguidores con tendencia ni "recomendado por IA" — el modo filtros no usa LLM.
+- Cada bloque (actividad, descubrimiento, consejos, redes) se omite entero con `v-if` si no tiene contenido real — nunca un `EmptyState` decorativo ocupando espacio en el dashboard.
+- Limitación detectada y documentada, no arreglada de paso (fuera de alcance tocar servidor): el endpoint `/api/discover/search` no tiene forma barata de pedir "solo 3" — siempre trae hasta 200 candidatos server-side aunque solo se pinten 3. Aceptable por ahora (reutiliza lo existente), pero sería un buen candidato a un parámetro `limit` en una sesión futura si el panel de descubrimiento del home se usa de verdad.
+
+### Verificado / sin verificar
+
+- `npx vue-tsc --noEmit`, `npm test -- --run` (30/30) y `npm run build`: limpios.
+- **SSR real contra el servidor de desarrollo con sesión real de las dos cuentas demo**: `/creator` y `/partner` responden 200, sin ningún error en el HTML. Se confirmó con los datos reales de cada cuenta que el hero elige la rama correcta (el creador demo cayó en la rama "sin nada pendiente → Descubrir"; el partner demo cayó en "todo al día → Descubrir más creadores", y sus `StatTile` de "Por revisar" mostraron el dato real) — en ningún caso se pintó más de un hero a la vez. Se extrajeron y revisaron todos los enlaces internos renderizados: todos apuntan a rutas reales ya existentes.
+- **No se ha podido confirmar por este medio que el panel de descubrimiento rellene sus 3 tarjetas con enlaces (`/profile/[role]/[id]`) correctos en el navegador real** — al no bloquear el render (a propósito, por rendimiento), la petición no llegó a resolverse dentro de la ventana de SSR en ninguno de los 3 intentos, así que solo se vio el esqueleto de carga. La lógica está verificada por código (mismo campo `DiscoveryResult.id` que ya se confirmó correcto en sesiones anteriores de esta misma conversación), pero el relleno real en pantalla no se ha visto.
+- **Sin probar en navegador real**: clics, hidratación sin warnings de consola, y el responsive de verdad en tablet/móvil (el reflow a una columna por prioridad está escrito pero no se ha visto renderizado) — no hay herramienta de navegador disponible en esta sesión.
+- Nada se ha subido a GitHub todavía — pendiente de confirmación del usuario, como en los incrementos anteriores de esta sesión.
+
+## 2026-10-23 (23) — Comparar candidatos guardados + primera acción útil en los dos `home` (Fase B del roadmap)
+
+Dos incrementos pequeños seguidos, sin tocar servidor ni migraciones nuevas en ninguno de los dos.
+
+### Comparar candidatos (sección 6 del roadmap)
+
+- `app/pages/favorites.vue`: modo "Comparar" — selecciona 2-3 guardados con checkboxes y pulsa "Comparar" para ver una sección con sus fichas lado a lado. Reutiliza `ProfileHeaderCard` en modo `compact` (el mismo componente del perfil público, cero markup nuevo) + reputación (`useRatings`) + rango de tarifa/presupuesto + enlace a "Ver perfil completo". Los datos completos (`usePublicProfile().loadProfile`) solo se piden al pulsar Comparar, nunca para los guardados que no se van a comparar.
+- Sin tests unitarios nuevos (sin lógica pura que valga la pena aislar, todo es UI + composables ya probados en otro sitio).
+- **Verificado**: `npm test` (25/25), `vue-tsc` limpio, `npm run build` limpio, y SSR real con 2 favoritos reales guardados vía API (sesión del partner demo) — la lista renderiza ambos y el botón "Comparar" aparece, sin errores. **Sin probar la interacción de clic real** (seleccionar → comparar → ver la sección) — necesita navegador de verdad, sin herramienta disponible en esta sesión.
+
+### Primera acción útil en el home (sección 12 del roadmap)
+
+Antes, un creador o partner con la ficha pública vacía (sin bio/categorías/rango económico) no tenía ningún aviso de ello en su `home` — nada le decía que, sin rellenarla, es invisible en Descubrir. Tampoco había ningún aviso para publicar el primer paquete.
+
+- **`app/utils/ficha.ts`** (nuevo): `isFichaIncomplete()` — pura, con test unitario (`tests/unit/ficha.spec.ts`, 5 casos).
+- **`creator/index.vue`**: aviso (mismo estilo que los de "fuera de plazo"/"solicitud nueva" ya existentes) — ficha incompleta → "Completa tu ficha pública"; si la ficha ya está completa pero no hay ningún paquete publicado → "Publica tu primer paquete". Nunca los dos a la vez.
+- **`partner/index.vue`**: mismo aviso de ficha incompleta (sin el de paquetes — un partner ya tiene su propio aviso de "descubre un creador" cuando no hay colaboración activa).
+- **Verificado contra datos reales**: las dos cuentas demo (`creator@feedma.test`/`partner@feedma.test`) tienen la ficha incompleta de verdad (sin rango de tarifa/presupuesto rellenado) — comprobado con `service_role` antes de probar, y confirmado que el aviso aparece en el HTML real de los dos `home` vía SSR con sesión real, sin errores. `npm test` (30/30), `vue-tsc` limpio, `npm run build` limpio.
+- **Sin aplicar/pendiente**: nada — este incremento no toca la base de datos, solo lee columnas que ya existían.
+
+### Nota de proceso
+
+A petición explícita del usuario, este incremento **no se ha subido a `main`** (ni este ni el de comparar candidatos) — se queda en el árbol de trabajo local hasta que lo pida.
+
+## 2026-10-23 (22) — Favoritos: guardar un candidato desde Descubrir (Fase B del roadmap)
+
+Siguiente incremento tras las valoraciones: el roadmap señala "guardado de favoritos y listas de selección" en dos secciones (6 y 16) — ahora mismo, salir de Descubrir sin contactar significaba perder el candidato para siempre, sin forma de recordarlo ni de volver a él sin repetir la búsqueda.
+
+### Qué se construyó
+
+- **`supabase/migrations/20261025130000_saved_profiles.sql`** (nueva, sin aplicar todavía): tabla `saved_profiles` — `target_creator_id`/`target_partner_id` (exactamente uno de los dos, FK real a `creators`/`partners` para que un perfil borrado se lleve el favorito con él), propiedad pura del que guarda (sin validación cruzada de negocio, a diferencia de `collaboration_ratings`). RLS de solo-lo-propio (select/insert/delete), sin ninguna función RPC — mismo criterio de sencillez que `labels`. Índices únicos **parciales** (no un `unique` normal, que con columnas nulas no evitaría duplicados) para que no se pueda guardar dos veces el mismo perfil.
+- **`app/composables/useSavedProfiles.ts`** (nuevo): `savedCreatorIds`/`savedPartnerIds` como `Set` en caché para que marcar/desmarcar el icono sea instantáneo; `toggleSave`/`isSaved`/`listSaved` (esta última resuelve los datos de ficha para `/favorites`, con lookup en lote a `creators`/`partners`, nunca por fila). Registrado en `resetAccountCaches()`.
+- **`DiscoveryCard.vue`/`FeaturedDeck.vue`**: icono de marcador (relleno si ya está guardado) junto al botón de contacto / sobre la portada — en `FeaturedDeck` con `stopPropagation` para no disparar también la navegación al perfil.
+- **`app/pages/favorites.vue`** (nueva, fuera de `/creator`/`/partner` a propósito, mismo criterio que `/inbox`: una sola pantalla para los 2 roles): lista de guardados con botón de quitar y estado vacío con instrucciones. Enlazada desde `/creator/discover` y `/partner/discover` (junto al botón de Filtros) — no se añadió a `roleNav`/`BottomTabBar` a propósito: la barra inferior del creador ya va apretada en móvil con 6 iconos (ver entrada de "Descubrir bidireccional" más abajo).
+- **Tests**: `tests/integration/saved-profiles.spec.ts` — a diferencia de las valoraciones, aquí sí se prueba el camino feliz completo (guardar, duplicado rechazado, invisible para quien no es el dueño, spoof de `owner_profile_id` rechazado, quitar) porque guardar/quitar es reversible por diseño, no deja contaminación permanente. Sin tests unitarios nuevos: no hay lógica pura que valga la pena aislar aquí (a diferencia de `ratings.ts`), todo es acceso a datos ya cubierto por el test de integración.
+
+### Verificado / sin verificar
+
+- `npm test`: 25/25 verdes (sin cambios respecto a antes, no hay unitarios nuevos en este incremento).
+- `npx vue-tsc --noEmit`: limpio. `npm run build`: completo sin errores.
+- **Probado contra el servidor de desarrollo real con sesión real** (mismo mecanismo de cookie SSR a mano que en la entrada anterior, sin herramienta de navegador disponible en esta sesión): `/favorites`, `/creator/discover`, `/partner/discover` responden `200`, sin ningún "does not exist" ni error 500 filtrado al HTML aunque la migración todavía no estaba aplicada (el composable degrada con un `console.error` en vez de romper la página) — confirma que desplegar el código antes de aplicar la migración no rompe nada, aunque los favoritos no funcionen todavía hasta aplicarla. El enlace "Guardados" y el estado vacío de `/favorites` aparecen en el HTML real.
+- **Sin aplicar la migración al proyecto real** y **sin probar el camino feliz en navegador con interacción de verdad** (guardar desde una card, verlo aparecer en `/favorites`, quitarlo) — pendiente de que alguien del equipo la aplique y lo recorra a mano, igual que con las valoraciones.
+
+## 2026-10-23 (21) — Auditoría contra `FEEDMA_PRODUCT_ROADMAP.md` + MVP de valoraciones y reputación
+
+Sesión pedida para contrastar el roadmap de producto (`FEEDMA_PRODUCT_ROADMAP.md`, nuevo en el repo) con el estado real del código, priorizar lo que falta y construir la primera mejora de alto impacto. Dos cosas antes de empezar, para que quede constancia:
+
+### Nota: el commit `9928bd2` ("Mejoras de seguridad, test, prueba de negociación de paquetes, animación.") no tenía entrada aquí
+
+Ese commit (de una sesión anterior, no documentada en este changelog) ya estaba en el repo al empezar esta auditoría — se verificó con `git log`/`git show`, no se tocó nada de él. Resumen rápido de lo que contiene, para que quede localizable: cierra el hallazgo más grave encontrado (una oferta de chat aceptada nunca creaba una `collaboration` cobrable — `respond_offer` ahora sí la crea), retira el `update` directo sobre `collaborations.budget_cents`/`status` en favor de `accept_collaboration_request`/`decline_collaboration_request`/`mark_collaboration_completed` (RPCs `security definer` que validan el importe contra una negociación real), añade idempotencia real a Stripe (`idempotencyKey` en el Checkout, `.is('paid_at', null)` en el webhook), mueve el saldo de créditos a una RPC de servidor (`my_credit_balance`), y añade objetivo semanal configurable + etiquetas/checklist/límite WIP en el tablero. Trae también la primera batería de tests (`tests/unit/*`, `tests/integration/*`, 19 unitarios, todos verdes) y `PROJECT_OVERVIEW.md`. Esas migraciones (`20261024090000_board_labels_checklist_wip.sql`, `20261025090000_phase1_security_payments.sql`, `20261025100000_phase3_weekly_target.sql`, `20261025110000_phase5_credit_balance_rpc.sql`) **se han aplicado ya al proyecto real de Supabase** (Mario, vía SQL Editor, más adelante en esta misma sesión) — ver la sección "Verificado / sin verificar" más abajo para cómo se comprobó. No se pudo aplicar directamente desde este entorno: la red de esta máquina bloquea tanto el registro de npm (no se pudo instalar `pg` para `scripts/apply-pending-migrations.mjs`) como el puerto 5432 de conexión directa a Postgres — solo el tráfico HTTPS al propio proyecto de Supabase está permitido.
+
+### Diagnóstico frente al roadmap
+
+Ya resuelto o en buen estado: seguridad/integridad de pagos (Fase A), rate-limit de login de admin (documentado como limitado a un solo proceso, no resuelto del todo), tablero con etiquetas/checklist/WIP, objetivo semanal real. Sin empezar todavía: reputación/confianza (Fase B, hasta esta sesión), FEEDMA Studio (brief/entregables/revisiones por colaboración, Fase C), favoritos/comparación de perfiles, campañas abiertas, repetir colaboración, analítica de activación/retención, paginación del listado de usuarios de admin (deliberadamente aplazada, documentado en el propio endpoint como aceptable para un equipo pequeño).
+
+Prioridad elegida para el primer incremento: **reputación vinculada a colaboraciones completadas** — es lo más desbloqueado justo ahora (`mark_collaboration_completed`, de la sesión anterior, es la primera señal fiable de "esto se completó de verdad" sobre la que anclar una valoración sin arriesgarse a reseñas sin colaboración real detrás) y es la pieza que el propio roadmap señala como base de confianza antes de construir nada más grande (FEEDMA Studio, campañas).
+
+### Qué se construyó — valoraciones mutuas (MVP, sección 4 del roadmap)
+
+- **`supabase/migrations/20261025120000_collaboration_ratings.sql`** (nueva, ya aplicada al proyecto real): tabla `collaboration_ratings` (una valoración por persona y colaboración — `unique (collaboration_id, rater_profile_id)` —, 1-5 estrellas, comentario opcional hasta 500 caracteres, **inmutable**: sin policy de update/delete para el cliente, mitigación simple contra reseñas manipuladas sin construir todavía un sistema de moderación completo). Lectura abierta a cualquier autenticado (mismo criterio que los directorios públicos de `creators`/`partners`) — es la base de la reputación visible en el perfil público. Dos funciones `security definer`:
+  - `submit_collaboration_rating(p_collaboration_id, p_stars, p_comment)`: resuelve ella misma quién es el rater/ratee a partir de `auth.uid()` y de la colaboración real (nunca un `profile_id` que mande el cliente); rechaza una colaboración no completada, a quien no es parte de ella, una puntuación fuera de 1-5, y una segunda valoración sobre la misma colaboración.
+  - `profile_rating_summary(p_profile_id)`: media + recuento, siempre los datos crudos — la decisión de "¿hay bastantes valoraciones para mostrar un número?" se queda en el cliente (`app/utils/ratings.ts`, `MIN_RATINGS_TO_SHOW = 3`), no en la base de datos.
+- **`app/composables/useRatings.ts`** (nuevo, mismo patrón `useState` que el resto): `ensureMyRatingsLoaded`/`submitRating` (cachea, por id de colaboración, la valoración que YO ya envié) y `fetchSummary(profileId)` (siempre fresco, sin caché — mismo criterio que `usePublicProfile.ts`). Registrado en `resetAccountCaches()`.
+- **`app/components/collab/RatingStars.vue`** (nuevo): estrellas 1-5, interactivas o de solo lectura, accesibles por teclado (`role="radiogroup"`, `aria-pressed`).
+- **`app/components/collab/RatingPrompt.vue`** (nuevo): el widget completo — si ya valoraste esa colaboración, muestra tu valoración; si no, el formulario (estrellas + comentario opcional) con `submit_collaboration_rating` por debajo.
+- **Puntos de entrada**: en `creator/requests.vue` y `partner/profile.vue`, justo donde antes solo vivía el botón "Marcar como completada" — en cuanto una colaboración pasa a `completed`, aparece `RatingPrompt` en su lugar.
+- **`app/pages/profile/[role]/[id].vue`**: bloque de reputación bajo la cabecera del perfil (estrellas + texto, usando `formatRatingSummary`) — solo se muestra si hay al menos 1 valoración, y solo pinta una media numérica a partir de 3 (por debajo, un texto honesto en vez de un número poco fiable).
+- **Tests nuevos**: `tests/unit/ratings.spec.ts` (4 tests, la lógica de "¿hay bastantes valoraciones para mostrar media?" y el formato de texto) y `tests/integration/ratings.spec.ts` (contra Supabase real, se salta sin credenciales) — cubre los rechazos (`insert` directo bloqueado, colaboración inexistente, puntuación fuera de rango, `profile_rating_summary` siempre devuelve datos) pero **a propósito no prueba el camino feliz de verdad**: escribiría una fila real e inmutable sobre las cuentas de demo compartidas sin forma de deshacerlo al terminar el test (sin policy de delete), y rompería en la segunda ejecución por la `unique`. Ver el propio comentario de cabecera del test.
+
+### Qué queda fuera a propósito de este incremento
+
+- Sin flujo de reportar una valoración abusiva ni de resolución de conflictos — el roadmap pide evaluarlo, no construirlo ya; la mitigación de esta primera versión es solo "una por colaboración real, inmutable".
+- Sin lista de comentarios recientes en el perfil público, solo el agregado (media + recuento) — si hace falta mostrar los comentarios de verdad, es una ampliación pequeña sobre lo ya construido (la tabla y la policy de lectura ya lo permiten).
+- El resto del roadmap (FEEDMA Studio, favoritos, campañas abiertas, repetir colaboración, analítica de producto) sigue sin empezar — ver diagnóstico arriba.
+
+### Verificado / sin verificar
+
+- `npm test`: 25/25 verdes (los 19 de antes + los 6 nuevos de `ratings.spec.ts`).
+- `npx vue-tsc --noEmit`: limpio.
+- `npm run build`: build de producción completo sin errores (incluye los chunks nuevos `RatingStars`/`RatingPrompt`/`useRatings`).
+- **Las 5 migraciones pendientes (`board_labels_checklist_wip`, `phase1_security_payments`, `phase3_weekly_target`, `phase5_credit_balance_rpc`, `collaboration_ratings`) ya se han aplicado al proyecto real de Supabase** (Mario, vía SQL Editor). Comprobado contra la base real con `service_role` tras aplicarlas: las tablas/columnas nuevas responden `200` (`collaboration_ratings`, `labels`, `checklist_items`, `creators.weekly_post_target`/`board_wip_limits`, `collaborations.offer_id`) y las RPCs nuevas existen y validan de verdad (`accept_collaboration_request`/`mark_collaboration_completed`/`respond_offer`/`submit_collaboration_rating` devuelven su error de negocio esperado con un id inventado, no un error de "función inexistente"; `my_credit_balance`/`profile_rating_summary` devuelven datos). Servidor de desarrollo levantado y rutas afectadas comprobadas sin error 500 (`/`, `/login`, `/admin/login` → 200; `/creator/timeline`, `/creator/requests`, `/partner/profile`, `/inbox`, `/profile/creator/[id]`, `/profile/partner/[id]` → 302 sin sesión, como se espera).
+- **Sigue sin probarse en navegador con una sesión real**: completar una colaboración de verdad y valorar desde los dos lados, comprobar que la segunda valoración sobre la misma colaboración se rechaza, y que el bloque de reputación aparece en `/profile/[role]/[id]` a partir de 3 valoraciones reales. No se ha hecho desde esta sesión porque no hay herramienta de navegador disponible aquí — pendiente de que alguien del equipo lo recorra a mano (ver guion en la conversación/PR).
+- Aviso operativo: al levantar `npm run dev` en esta sesión, Nuxt detectó un servidor ya corriendo en el puerto 3000 y lo sustituyó — si alguien del equipo lo tenía abierto para su propia prueba, tendrá que volver a arrancarlo.
+
+---
+
 ## 2026-10-21 (20) — "Descubrir" bidireccional (creador <-> partner) + buscador con IA + analíticas de admin
 
 Decisión tomada en `docs/10-ROADMAP-FUTURO.md` (sección 0, "decisión pendiente para la próxima sesión"): entre mejorar el descubrimiento y meter los packs recurrentes, se eligió descubrimiento. Hasta ahora `partner/discover.vue` era un `select *` plano sin filtros, y **no existía ningún "descubrir" para el creador** — solo el partner podía iniciar una colaboración.
