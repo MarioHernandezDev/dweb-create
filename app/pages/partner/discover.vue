@@ -32,6 +32,11 @@ const hasActiveFilters = computed(() => selectedCategories.value.length > 0 || m
 // sin ella, el propio orden por filtros (más alto = más categorías en
 // común) y la bio en vez de un "motivo" inventado.
 const showDeck = computed(() => results.value.length > 0)
+// `loading` solo cubre la fase rápida de filtros (siempre BD) — mientras
+// la IA sigue pensando (`aiLoading`), antes el botón volvía a su aspecto
+// normal como si ya hubiera terminado. Esto es lo que de verdad decide su
+// aspecto "ocupado" en el botón de abajo.
+const searching = computed(() => loading.value || aiLoading.value)
 // El 50% heurístico por defecto (sin filtros de categoría ni IA) es el
 // mismo para todo el mundo — mostrarlo sería un número sin significado
 // real, así que el badge de puntuación y el título "para ti" solo aparecen
@@ -236,10 +241,10 @@ async function send() {
       </div>
 
       <BaseButton
-        variant="primary" size="md" :icon-spin="loading" :disabled="loading"
+        :variant="searching ? 'secondary' : 'primary'" size="md" :icon-spin="searching" :disabled="searching"
         :icon="mode === 'ai' ? 'ph:sparkle-fill' : 'ph:magnifying-glass-bold'" @click="runSearch"
       >
-        {{ loading ? 'Buscando…' : mode === 'ai' ? 'Buscar con IA' : 'Buscar' }}
+        {{ searching ? 'Buscando…' : mode === 'ai' ? 'Buscar con IA' : 'Buscar' }}
       </BaseButton>
       <p v-if="error" class="text-[0.8125rem] text-[var(--color-status-alert)] mt-2">{{ error }}</p>
     </section>

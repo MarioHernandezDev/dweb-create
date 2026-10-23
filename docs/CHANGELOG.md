@@ -4,6 +4,24 @@ Registro de qué se hizo, por qué, y qué queda pendiente de verificar — pens
 
 ---
 
+## 2026-10-23 (44) — Feedback directo del usuario: el botón de buscar no se veía ocupado mientras la IA pensaba
+
+Pedido explícito tras probar la Fase 4: el botón de "Buscar con IA" debía verse grisáceo mientras busca, el aviso de "Buscando" debía resaltar más, y el porcentaje de coincidencia también.
+
+### Encontrado
+
+`loading` (en `useDiscover`) solo cubre la fase rápida de filtros (siempre base de datos) — se pone a `false` justo antes de empezar la fase de IA, que usa `aiLoading` aparte. El botón de las dos páginas de Descubrir solo miraba `loading`: durante los 10 segundos reales de espera de la IA (la fase larga, la que importa), el botón volvía a su aspecto normal como si ya hubiera terminado, aunque seguía "pensando" de fondo.
+
+### Arreglado
+
+- **Botón**: nuevo computed `searching = loading || aiLoading` en `creator/discover.vue` y `partner/discover.vue`. Mientras es `true`, el botón cambia de `variant="primary"` (morado) a `variant="secondary"` (fondo neutro, el mismo tono ya usado para botones secundarios en toda la app) — "grisáceo" de verdad, no solo una opacidad más baja sobre el morado, y sin tocar `BaseButton.vue` (que es compartido por decenas de botones que no tenían este problema).
+- **Aviso "La IA está analizando…"**: en `FeaturedDeck.vue`, pasa de texto pequeño y apagado (`text-faint`, 0.75rem) a una píldora con fondo lila claro y texto morado de marca, en negrita — se nota de un vistazo, no solo si se busca con atención.
+- **Porcentaje de coincidencia**: la píldora de cada tarjeta pasa de un fondo neutro semitransparente a morado de marca sólido, con el número más grande (1rem → 1.375rem) y el "%" más visible (antes casi invisible, al 60% de opacidad).
+
+### Verificado de verdad
+
+`npx vue-tsc --noEmit`: limpio. `npm test -- --run`: 30/30. `npm run build`: limpio. Sin probar en navegador real (no hay herramienta en esta sesión) — el usuario podrá confirmar el aspecto final la próxima vez que lo abra.
+
 ## 2026-10-23 (43) — Fase 4 (#6, #7, #8, #9): la causa real de "la IA no sirve de nada", avisos de solicitud duplicada, unidad de audiencia y fichas vacías
 
 Cierra la Fase 4 de `CONTEXT.md`. La pieza central (#6) resultó ser un bug de verdad, no una percepción — se encontró probando la IA en real contra Supabase y OpenRouter, como autorizó el usuario ("si se gasta la cuota, se puede reiniciar").

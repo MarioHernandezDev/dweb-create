@@ -150,8 +150,8 @@ const liveStatus = computed(() => {
     <div class="flex items-center gap-2.5 mb-3">
       <Icon name="ph:sparkle-fill" class="size-4 text-[var(--color-primary-500)]" />
       <h2 class="font-display text-[1.125rem] text-[var(--color-text)]">{{ scoreMeaningful ? 'Destacados para ti' : 'Perfiles para explorar' }}</h2>
-      <span v-if="loading" class="inline-flex items-center gap-1.5 text-[0.75rem] text-[var(--color-text-faint)]">
-        <Icon name="ph:circle-notch-bold" class="size-3 animate-spin" /> la IA está analizando…
+      <span v-if="loading" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[var(--color-primary-50)] text-[var(--color-primary-600)] text-[0.8125rem] font-semibold">
+        <Icon name="ph:circle-notch-bold" class="size-3.5 animate-spin" /> La IA está analizando…
       </span>
       <button
         v-if="loading" type="button"
@@ -216,8 +216,8 @@ const liveStatus = computed(() => {
 
                 <span class="absolute inset-x-0 bottom-0 h-3/4" style="background: linear-gradient(to top, rgb(10 9 12 / 92%) 10%, rgb(10 9 12 / 0%) 100%)" />
 
-                <span v-if="scoreMeaningful" class="absolute top-3 left-3 inline-flex items-center gap-0.5 px-2 py-1 rounded-full bg-[var(--color-slate)]/85 backdrop-blur-sm">
-                  <span class="font-display text-[1rem] leading-none text-white">{{ r.score }}</span><span class="text-[0.625rem] text-white/60">%</span>
+                <span v-if="scoreMeaningful" class="absolute top-3 left-3 inline-flex items-center gap-0.5 px-2.5 py-1.5 rounded-full bg-[var(--color-primary-500)] shadow-[0_4px_14px_-4px_rgb(0_0_0/45%)]">
+                  <span class="font-display text-[1.375rem] leading-none text-white">{{ r.score }}</span><span class="text-[0.75rem] font-medium text-white/90">%</span>
                 </span>
 
                 <div class="absolute inset-x-0 bottom-0 p-4 flex flex-col gap-1.5 text-left">
