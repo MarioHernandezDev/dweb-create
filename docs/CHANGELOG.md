@@ -4,6 +4,25 @@ Registro de qué se hizo, por qué, y qué queda pendiente de verificar — pens
 
 ---
 
+## 2026-10-23 (47) — Corrección del usuario: la exclusividad es entre los dos modos, no durante la búsqueda
+
+El usuario corrigió la entrada anterior (46): no era "deshabilitar los dos botones mientras se busca", sino "solo uno de los dos puede estar habilitado a la vez, antes de buscar siquiera" — IA y Filtros son dos caminos de búsqueda excluyentes, no dos controles que compiten por un mismo instante de carga.
+
+### Arreglado
+
+- "Buscar con IA" ahora se deshabilita con `hasActiveFilters` (si hay algún filtro puesto, hay que quitarlo antes de poder pasar a IA).
+- "Filtros" se deshabilita con `mode === 'ai'` (en modo IA no se puede abrir el panel).
+- Nueva función `toggleAiMode()`: al entrar en modo IA cierra el panel de filtros si estaba abierto, para no dejarlo visible con su botón ya deshabilitado.
+- Se revierte el `:disabled="searching"` de la entrada 46 — ya no hace falta: con la exclusividad de modos, cuando hay una búsqueda de IA en marcha el botón de Filtros ya está deshabilitado (porque `mode === 'ai'`), y cuando hay una búsqueda de filtros en marcha con filtros activos, el de IA ya está deshabilitado (porque `hasActiveFilters`) — el mismo efecto, sin necesitar la condición de "buscando" aparte.
+
+### Verificado de verdad
+
+`npx vue-tsc --noEmit`: limpio. `npm test -- --run`: 30/30. `npm run build`: limpio.
+
+### Sin verificar
+
+El aspecto real en el navegador — no hay herramienta de navegador en esta sesión.
+
 ## 2026-10-23 (46) — Feedback directo del usuario: bloquear el interruptor de IA y el de Filtros mientras se busca
 
 Pedido explícito: mientras se busca con IA, el botón de Filtros debe quedar deshabilitado, y viceversa — no tiene sentido dejar cambiar de modo o abrir el panel de filtros con una búsqueda ya en marcha.
