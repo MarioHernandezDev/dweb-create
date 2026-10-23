@@ -8,6 +8,7 @@ export interface CollabRequest extends CollaborationTerms {
   brief: string
   budgetCents: number | null
   paidAt: string | null
+  partnerId: string
   partnerName: string
   createdAt: string
   updatedAt: string
@@ -20,6 +21,7 @@ interface CollabRequestRow {
   brief: string
   budget_cents: number | null
   paid_at: string | null
+  partner_id: string
   created_at: string
   updated_at: string
   initiated_by: 'creator' | 'partner'
@@ -40,6 +42,7 @@ function mapRow(row: CollabRequestRow): CollabRequest {
     brief: row.brief,
     budgetCents: row.budget_cents,
     paidAt: row.paid_at,
+    partnerId: row.partner_id,
     partnerName: row.partners?.company_name ?? 'Partner',
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -74,7 +77,7 @@ export function useCollabRequests() {
 
     const { data, error } = await client
       .from('collaborations')
-      .select('id, status, brief, budget_cents, paid_at, created_at, updated_at, initiated_by, scope_notes, revisions_included, exclusivity, usage_rights, campaign_goal, target_audience, tone, partners(company_name)')
+      .select('id, status, brief, budget_cents, paid_at, partner_id, created_at, updated_at, initiated_by, scope_notes, revisions_included, exclusivity, usage_rights, campaign_goal, target_audience, tone, partners(company_name)')
       .eq('creator_id', me.id)
       .order('created_at', { ascending: false })
       .limit(300)

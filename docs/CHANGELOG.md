@@ -4,6 +4,50 @@ Registro de qué se hizo, por qué, y qué queda pendiente de verificar — pens
 
 ---
 
+## 2026-10-23 (43) — Fase 4 (#6, #7, #8, #9): la causa real de "la IA no sirve de nada", avisos de solicitud duplicada, unidad de audiencia y fichas vacías
+
+Cierra la Fase 4 de `CONTEXT.md`. La pieza central (#6) resultó ser un bug de verdad, no una percepción — se encontró probando la IA en real contra Supabase y OpenRouter, como autorizó el usuario ("si se gasta la cuota, se puede reiniciar").
+
+### #6 — La causa real: el modelo gastaba todo el presupuesto de tokens "pensando" y nunca llegaba a responder
+
+Probado en real, con los 11 creadores de demo reales y la misma consulta del informe de auditoría ("busco un creador de fitness con contenido técnico, presupuesto 200-500€"): la respuesta de OpenRouter venía con `finish_reason: "length"` y `content: null` — el modelo gratuito actual (`nemotron-3.5-lightning`, un modelo "reasoning") agotaba los 3000 tokens de `max_tokens` enteros en su campo interno `reasoning` ("pensar en voz alta") y nunca escribía el JSON pedido. Sin JSON que parsear, `fetchAiRanking` caía en el orden por filtros — que, sin ningún filtro de categoría activo, da un empate a 50 para todos y conserva el orden de "más reciente primero", exactamente lo que vio la auditoría ("los 9 primeros perfiles quedaron en el mismo orden"). No era un fallo aislado: tardaba entre 30 y 58 segundos en fallar así la mayoría de las veces.
+
+**Arreglado**: `reasoning: { enabled: false }` en la llamada a OpenRouter (`server/api/discover/search.post.ts`). Probado con los mismos 11 candidatos y la misma consulta: de 57,7s a 9,6s, `finish_reason: "stop"`, JSON completo, y el ranking real aplicado — Marcos Peña (calistenia, "contenido técnico, sin humo") pasa a encabezar la búsqueda con 95 puntos y Paula Ibáñez (música) cae al puesto que le corresponde, en vez de quedarse primera por inercia. Se añade también una comprobación explícita de `finish_reason === 'length'` para que, si algún día vuelve a cortarse, quede registrado en el servidor en vez de fallar en silencio. Tope de tiempo bajado de 60s a 30s (ya no hace falta tanto margen).
+
+**El resto de #6, ya resuelto o ya existente**:
+- "Botón de cancelar": nuevo. `useDiscover()` gana `cancelAi()` (con `AbortController`, cancela solo la llamada de IA, nunca la de filtros); `FeaturedDeck.vue` muestra "Cancelar" junto al indicador de carga.
+- "Recuento de perfiles": nuevo. Las dos páginas de Descubrir muestran ahora "X creadores encontrados"/"X marcas encontradas" (antes el único recuento era un `aria-live` solo para lector de pantalla, que la auditoría leyó del árbol de accesibilidad como si fuera texto visible — no lo era, y se mantiene igual).
+- "Motivo en cada tarjeta": ya existía en el código (`r.reason`) — simplemente nunca se rellenaba, por el mismo bug de arriba. Con el fix, llega de verdad.
+- "Cachear consultas repetidas": nuevo, en memoria de la pestaña (`useDiscover`), acotado a 20 entradas — repetir exactamente la misma búsqueda de IA ya no vuelve a gastar una llamada real al proveedor.
+- "Peticiones duplicadas": revisado pero no tocado — la petición inicial de la página (`await runSearch()` en el `setup`) se ejecuta una vez en el servidor (SSR) y otra en el cliente al hidratar, porque `results`/`loading` de `useDiscover` son `ref` normales, no `useState` (no viajan en el payload). Es una duplicación real, pero del modo "filters" (solo base de datos, sin coste de IA) — se deja documentada aquí, sin arreglar en este incremento, para no tocar más superficie de la necesaria junto al fix de IA.
+
+### #7 — "Contactar" ya avisa de una solicitud pendiente
+
+`openContact`/`send()` insertaban directamente en `collaborations` sin comprobar si ya había una `requested` con esa misma persona. `useCollabRequests` (creador) gana `partnerId` en cada fila (antes solo traía el nombre); `useMyCollaborations` (partner) ya lo tenía. Las dos páginas de Descubrir cargan esa lista en paralelo con la búsqueda y calculan qué ids ya tienen una solicitud sin responder. `DiscoveryCard.vue` y `FeaturedDeck.vue` ganan la prop `isPending`/`pendingIds`: muestran la etiqueta "Pendiente de respuesta" junto al nombre y desactivan el botón de contacto (mismo texto, ya no se puede pulsar) para esas tarjetas en concreto. **Solo en la interfaz** — no se añadió ninguna restricción en la base de datos (`collaborations` sigue permitiendo el insert directo); si se quisiera cerrar también por ahí, sería un cambio de esquema aparte, a confirmar antes.
+
+### #8 — Cifra de audiencia con unidad
+
+`DiscoveryCard.vue` y `FeaturedDeck.vue`: el icono de personas + número compacto ("75 mil") ahora dice "75 mil seguidores" — ya no hay ambigüedad sobre si es audiencia, alcance u otra cosa.
+
+### #9 — Perfiles sin bio ya no se ven en blanco
+
+Cuando no hay biografía (p. ej. "Alejandro Suárez Durán" en la demo), las dos tarjetas muestran "Ficha en construcción" en cursiva en vez de un hueco vacío. Se optó por la opción más simple de las dos que ofrecía `CONTEXT.md` (mostrar el aviso) en vez de excluir perfiles incompletos de Descubrir — así no se penaliza a alguien nuevo que todavía no ha rellenado su ficha.
+
+### Verificado de verdad
+
+- `npx vue-tsc --noEmit`: limpio. `npm test -- --run`: 30/30. `npm run build`: limpio.
+- `npm run test:integration`: **62/62**, sin regresiones — las dos tandas intermedias con fallos masivos (visto "Request rate limit reached" en el log) eran el límite de autenticación de Supabase por repetir la suite completa varias veces seguidas en esta misma sesión, no un fallo de código: confirmado reintentando tras un momento, 62/62 otra vez.
+- El fix de `reasoning: { enabled: false }` se probó de verdad contra OpenRouter y los 11 creadores reales de la cuenta demo, reproduciendo exactamente la consulta del informe de auditoría — no es una suposición.
+
+### Sin verificar
+
+- El fix de IA no se probó a través del endpoint HTTP completo con sesión real de navegador (no hay herramienta de navegador en esta sesión, y reconstruir a mano la cookie de sesión de `@nuxtjs/supabase` v2 no encajaba en el tiempo disponible) — se verificó replicando exactamente la misma llamada que hace el servidor (mismo modelo, mismo prompt, mismos parámetros, candidatos reales), no el viaje HTTP completo.
+- El aspecto real de "Pendiente de respuesta", "Ficha en construcción" y el botón "Cancelar" en el navegador.
+
+### Con esto, la Fase 4 de `CONTEXT.md` queda cerrada
+
+Sigue la Fase 5 (#11 a #21: pulido y accesibilidad) — la última del plan.
+
 ## 2026-10-23 (42) — Fase 3 (tipografía): Sora en los títulos, Snasm queda solo para el logo
 
 Cierra la Fase 3. Pregunta abierta 1 de `CONTEXT.md` resuelta con el usuario: Sora para los títulos, y el cambio alcanza solo a lo que ya se trataba como "texto de display" (títulos, no el texto normal/botones/enlaces, que siguen con Hanken Grotesk).

@@ -60,10 +60,27 @@ export function useDiscover() {
   const aiSummary = ref<string | null>(null)
   const aiCategories = ref<string[]>([])
 
-  async function runFetch(mode: 'filters' | 'ai', queryText: string, filters: DiscoveryFilters) {
+  // Caché en memoria de la pestaña (hallazgo #6: "cachear consultas
+  // repetidas") — si se repite exactamente la misma búsqueda de IA (texto +
+  // filtros), no se vuelve a gastar una llamada real al proveedor. No
+  // persiste entre sesiones ni páginas a propósito: es solo para evitar el
+  // caso típico de volver a pulsar "Buscar con IA" sobre lo mismo. Acotada
+  // a 20 entradas (se descarta la más antigua) para no crecer sin límite.
+  const aiCache = new Map<string, DiscoverResponse>()
+  function cacheKey(queryText: string, filters: DiscoveryFilters) {
+    return JSON.stringify([queryText, filters])
+  }
+
+  // Petición de IA en curso, para poder cancelarla (hallazgo #6: "botón de
+  // cancelar") — el modo "filters" nunca se cancela, siempre es rápido
+  // (solo base de datos, sin proveedor externo de por medio).
+  let aiAbort: AbortController | null = null
+
+  async function runFetch(mode: 'filters' | 'ai', queryText: string, filters: DiscoveryFilters, signal?: AbortSignal) {
     return requestFetch('/api/discover/search', {
       method: 'POST',
-      body: { mode, queryText: queryText || undefined, filters }
+      body: { mode, queryText: queryText || undefined, filters },
+      signal
     }) as Promise<DiscoverResponse>
   }
 
@@ -100,19 +117,39 @@ export function useDiscover() {
 
     if (mode !== 'ai' || !queryText.trim()) return
 
+    const key = cacheKey(queryText, filters)
+    const cached = aiCache.get(key)
+    if (cached) {
+      results.value = cached.results
+      aiSummary.value = cached.aiSummary
+      aiCategories.value = cached.aiCategories
+      return
+    }
+
     aiLoading.value = true
+    aiAbort = new AbortController()
     try {
-      const enriched = await runFetch('ai', queryText, filters)
+      const enriched = await runFetch('ai', queryText, filters, aiAbort.signal)
       if (requestId !== latestRequestId) return
       results.value = enriched.results
       aiSummary.value = enriched.aiSummary
       aiCategories.value = enriched.aiCategories
+      if (aiCache.size >= 20) aiCache.delete(aiCache.keys().next().value as string)
+      aiCache.set(key, enriched)
     } catch (err) {
-      console.error('[useDiscover] fallo al enriquecer con IA (se queda el orden por filtros):', err)
+      const aborted = err instanceof Error && (err.name === 'AbortError' || /abort/i.test(err.message))
+      if (!aborted) console.error('[useDiscover] fallo al enriquecer con IA (se queda el orden por filtros):', err)
     } finally {
       if (requestId === latestRequestId) aiLoading.value = false
+      aiAbort = null
     }
   }
 
-  return { results, loading, searched, error, aiLoading, aiSummary, aiCategories, search }
+  // Cancela la petición de IA en curso (si hay una) — el orden por filtros
+  // ya pintado se queda tal cual, no desaparece nada.
+  function cancelAi() {
+    aiAbort?.abort()
+  }
+
+  return { results, loading, searched, error, aiLoading, aiSummary, aiCategories, search, cancelAi }
 }

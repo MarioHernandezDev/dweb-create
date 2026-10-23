@@ -13,9 +13,15 @@ const props = defineProps<{
   loading: boolean
   /** `false` cuando la puntuación es el 50% heurístico por defecto (sin filtro de categorías ni IA) — igual para todo el mundo, así que no se enseña como si significara algo. */
   scoreMeaningful: boolean
+  /** Hallazgo #7: ids con una solicitud sin responder ya enviada — avisa en la tarjeta y desactiva el botón en vez de dejar enviar una segunda. */
+  pendingIds?: string[]
 }>()
 
-const emit = defineEmits<{ contact: [result: DiscoveryResult]; 'visible-change': [ids: string[]] }>()
+function isPending(result: DiscoveryResult) {
+  return props.pendingIds?.includes(result.id) ?? false
+}
+
+const emit = defineEmits<{ contact: [result: DiscoveryResult]; 'visible-change': [ids: string[]]; cancel: [] }>()
 
 const router = useRouter()
 function openProfile(result: DiscoveryResult) {
@@ -147,6 +153,13 @@ const liveStatus = computed(() => {
       <span v-if="loading" class="inline-flex items-center gap-1.5 text-[0.75rem] text-[var(--color-text-faint)]">
         <Icon name="ph:circle-notch-bold" class="size-3 animate-spin" /> la IA está analizando…
       </span>
+      <button
+        v-if="loading" type="button"
+        class="text-[0.75rem] font-medium text-[var(--color-text-muted)] hover:text-[var(--color-text)] underline underline-offset-2"
+        @click="$emit('cancel')"
+      >
+        Cancelar
+      </button>
     </div>
 
     <p class="sr-only" aria-live="polite">{{ liveStatus }}</p>
@@ -212,7 +225,10 @@ const liveStatus = computed(() => {
                     <span v-for="c in r.categories.slice(0, 2)" :key="c" class="px-2 py-0.5 rounded-full text-[0.625rem] font-medium bg-white/15 text-white backdrop-blur-sm">{{ c }}</span>
                   </div>
                   <h3 class="font-display text-[1.25rem] text-white leading-snug truncate">{{ r.name }}</h3>
+                  <span v-if="isPending(r)" class="self-start px-1.5 py-0.5 rounded-full text-[0.625rem] font-medium bg-white/15 text-white backdrop-blur-sm">Pendiente de respuesta</span>
                   <p v-if="r.reason || r.bio" class="text-[0.8125rem] text-white/85 leading-snug line-clamp-2">{{ r.reason ?? r.bio }}</p>
+                  <!-- Hallazgo #9: antes se veía un hueco en blanco en vez de explicar por qué no hay descripción. -->
+                  <p v-else class="text-[0.8125rem] text-white/60 italic">Ficha en construcción</p>
                 </div>
               </button>
 
@@ -220,13 +236,13 @@ const liveStatus = computed(() => {
                 <p v-if="r.lookingFor" class="text-[0.75rem] text-[var(--color-text-muted)] leading-snug line-clamp-1"><span class="text-[var(--color-text-faint)]">Busca:</span> {{ r.lookingFor }}</p>
                 <div class="flex items-center gap-3 text-[0.75rem] text-[var(--color-text-muted)]">
                   <span v-if="kind === 'creator' && r.followers" class="inline-flex items-center gap-1">
-                    <Icon name="ph:users-three-fill" class="size-3.5 text-[var(--color-text-faint)]" /> {{ formatCompactNumber(r.followers) }}
+                    <Icon name="ph:users-three-fill" class="size-3.5 text-[var(--color-text-faint)]" /> {{ formatCompactNumber(r.followers) }} seguidores
                   </span>
                   <span v-if="budgetLabel(r)" class="inline-flex items-center gap-1">
                     <Icon name="ph:currency-eur" class="size-3.5 text-[var(--color-text-faint)]" /> {{ budgetLabel(r) }}
                   </span>
                 </div>
-                <BaseButton variant="primary" size="sm" class="w-full" @click="$emit('contact', r)">{{ ctaLabel }}</BaseButton>
+                <BaseButton variant="primary" size="sm" class="w-full" :disabled="isPending(r)" @click="$emit('contact', r)">{{ isPending(r) ? 'Pendiente de respuesta' : ctaLabel }}</BaseButton>
               </div>
             </article>
           </TransitionGroup>

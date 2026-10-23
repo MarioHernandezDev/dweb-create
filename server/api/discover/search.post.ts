@@ -73,11 +73,10 @@ interface PartnerCandidateRow {
 }
 
 const CANDIDATE_POOL_LIMIT = 200
-// Probado directo contra OpenRouter con el modelo gratuito actual
-// (nemotron-3.5-lightning, "reasoning"): 10 candidatos ya tardan ~30s él
-// solo. Con 30 candidatos la respuesta se arrastra tanto que la sección de
-// Destacados tarda una eternidad en aparecer — 16 es el punto en el que la
-// espera deja de sentirse rota sin perder candidatos reales de la bolsa.
+// Con `reasoning: { enabled: false }` (ver fetchAiRanking) probado en real
+// con 11 candidatos: ~10s. Se mantiene el tope en 16 — ya cubre de sobra la
+// bolsa real de demo, y un prompt más largo sigue tardando más aunque el
+// modelo ya no "piense" de más.
 const AI_CANDIDATE_CAP = 16
 
 function overlapCount(a: string[], b: string[]): number {
@@ -147,27 +146,44 @@ Devuelve ÚNICAMENTE un objeto JSON (sin texto adicional, sin markdown) con esta
 {"ranked": [{"id": "uuid del candidato", "score": 0-100, "reason": "1 frase breve en español explicando el porqué"}], "extracted_categories": ["categorías que detectas en la búsqueda, de una lista cerrada típica de nichos (moda, fitness, belleza, gaming, viajes, tecnología, etc.)"], "summary": "resumen de 1 frase de qué está pidiendo la persona, para analíticas internas"}`
 
   try {
-    const response = await $fetch<{ choices?: { message?: { content?: string } }[]; error?: { message?: string } }>(
+    const response = await $fetch<{ choices?: { message?: { content?: string; reasoning?: string }; finish_reason?: string }[]; error?: { message?: string } }>(
       'https://openrouter.ai/api/v1/chat/completions',
       {
         method: 'POST',
         headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-        // `max_tokens` generoso a propósito (igual que predict.post.ts, pero
-        // más alto): los modelos gratuitos de OpenRouter son "reasoning"
-        // (gastan tokens pensando antes de escribir la respuesta) y aquí se
-        // les pide puntuar y justificar varios candidatos a la vez, no uno
-        // solo — con un límite bajo el JSON llega cortado a mitad del
-        // razonamiento, antes de escribirse de verdad.
-        body: { model, messages: [{ role: 'user', content: prompt }], temperature: 0.4, max_tokens: 3000 },
-        // 60s, no 30: probado directo contra OpenRouter con el modelo
-        // gratuito actual (nemotron-3.5-lightning) puntuando 10 candidatos
-        // reales — ~30s él solo, sin contar la ida/vuelta HTTP. Con el tope
-        // de 30 candidatos (AI_CANDIDATE_CAP) 30s se queda corto y tira
-        // "timeout" en vez de responder, cayendo al orden por filtros sin
-        // que de verdad hiciera falta.
-        timeout: 60_000
+        body: {
+          model,
+          messages: [{ role: 'user', content: prompt }],
+          temperature: 0.4,
+          max_tokens: 3000,
+          // Causa real del hallazgo #6 ("la IA no reordena ni da motivo",
+          // ~30-57s de espera): el modelo gratuito actual es "reasoning"
+          // (nemotron-3.5-lightning) y gastaba TODO `max_tokens` "pensando
+          // en voz alta" (campo `reasoning` de la respuesta) antes de
+          // escribir el JSON pedido — `finish_reason: "length"` con
+          // `content: null`, confirmado probándolo en real contra 11
+          // candidatos reales. Sin JSON que parsear, el handler caía en el
+          // orden por filtros (empate a 50 sin filtro de categorías, por
+          // eso el orden no cambiaba) con `reason` siempre a null — no era
+          // un fallo silencioso aislado, pasaba la mayoría de las veces.
+          // `reasoning: { enabled: false }` lo desactiva: mismo candidato,
+          // misma pregunta, de 57.7s a 9.6s y con el ranking real aplicado
+          // (verificado: un creador de fitness pasa a encabezar una
+          // búsqueda de fitness, en vez de quedarse el orden de siempre).
+          reasoning: { enabled: false }
+        },
+        // 30s de margen: con el razonamiento desactivado la respuesta real
+        // tarda unos 10s con el tope de 16 candidatos (AI_CANDIDATE_CAP);
+        // antes hacían falta 60s porque el modelo tardaba eso solo en
+        // "pensar" sin llegar a responder.
+        timeout: 30_000
       }
     )
+
+    if (response.choices?.[0]?.finish_reason === 'length') {
+      console.error('[discover/search] la respuesta del LLM se cortó por max_tokens (se sigue solo con el orden por filtros).')
+      return { ranked: [], extractedCategories: [], summary: null }
+    }
 
     if (response.error) {
       console.error('[discover/search] el LLM devolvió un error (se sigue solo con el orden por filtros):', response.error.message)

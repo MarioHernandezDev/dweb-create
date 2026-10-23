@@ -7,9 +7,15 @@ useHead({ title: 'Descubrir' })
 
 const client = useSupabaseClient()
 const { partner } = useMyPartner()
-const { results, loading, searched, error, aiLoading, aiSummary, aiCategories, search } = useDiscover()
+const { results, loading, searched, error, aiLoading, aiSummary, aiCategories, search, cancelAi } = useDiscover()
 const { savedCreatorIds, ensureIdsLoaded: ensureSavedLoaded } = useSavedProfiles()
 ensureSavedLoaded()
+
+// Hallazgo #7: "Contactar" no avisaba de una solicitud ya enviada a ese
+// mismo creador. `collaborations` ya se usa en /partner/requests — aquí
+// solo se necesita saber a quién ya se le ha escrito y sigue sin responder.
+const { collaborations: myCollaborations, ensureLoaded: ensureCollaborationsLoaded } = useMyCollaborations()
+const pendingCreatorIds = computed(() => myCollaborations.value.filter((c) => c.status === 'requested').map((c) => c.creatorId))
 
 const mode = ref<'filters' | 'ai'>('filters')
 const modeOptions = [{ value: 'filters', label: 'Filtros' }, { value: 'ai', label: 'Buscar con IA' }]
@@ -81,7 +87,7 @@ function clearAllFilters() {
 
 // Carga inicial con los filtros vacíos, igual que antes mostraba el
 // directorio entero sin tener que pulsar nada.
-await runSearch()
+await Promise.all([runSearch(), ensureCollaborationsLoaded()])
 
 const sheetOpen = ref(false)
 const sheetStage = ref<'form' | 'sent'>('form')
@@ -244,15 +250,20 @@ async function send() {
       description="Prueba a quitar algún filtro o a reformular tu búsqueda."
     />
     <template v-else>
+      <!-- Hallazgo #6: antes no había ningún recuento visible de resultados. -->
+      <p v-if="searched" class="text-[0.8125rem] text-[var(--color-text-muted)] mb-3">
+        {{ results.length }} {{ results.length === 1 ? 'creador encontrado' : 'creadores encontrados' }}
+      </p>
       <FeaturedDeck
         v-if="showDeck"
         :results="results" :loading="aiLoading" :summary="aiSummary" :categories="aiCategories" :score-meaningful="scoreMeaningful"
-        kind="creator" cta-label="Contactar"
-        @contact="openContact" @visible-change="deckVisibleIds = $event"
+        kind="creator" cta-label="Contactar" :pending-ids="pendingCreatorIds"
+        @contact="openContact" @visible-change="deckVisibleIds = $event" @cancel="cancelAi"
       />
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3.5">
         <DiscoveryCard
           v-for="creator in visibleResults" :key="creator.id" :result="creator" kind="creator" cta-label="Contactar"
+          :is-pending="pendingCreatorIds.includes(creator.id)"
           @contact="openContact(creator)"
         />
       </div>

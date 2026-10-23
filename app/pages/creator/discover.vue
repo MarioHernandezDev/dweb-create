@@ -7,9 +7,15 @@ useHead({ title: 'Descubrir' })
 
 const client = useSupabaseClient()
 const { creator } = useMyCreator()
-const { results, loading, searched, error, aiLoading, aiSummary, aiCategories, search } = useDiscover()
+const { results, loading, searched, error, aiLoading, aiSummary, aiCategories, search, cancelAi } = useDiscover()
 const { savedPartnerIds, ensureIdsLoaded: ensureSavedLoaded } = useSavedProfiles()
 ensureSavedLoaded()
+
+// Hallazgo #7: "Contactar" no avisaba de una solicitud ya enviada a ese
+// mismo partner. `requests` ya se usa en /creator/requests — aquí solo se
+// necesita saber a quién ya se le ha escrito y sigue sin responder.
+const { requests: myRequests, ensureLoaded: ensureRequestsLoaded } = useCollabRequests()
+const pendingPartnerIds = computed(() => myRequests.value.filter((r) => r.status === 'requested').map((r) => r.partnerId))
 
 const mode = ref<'filters' | 'ai'>('filters')
 const modeOptions = [{ value: 'filters', label: 'Filtros' }, { value: 'ai', label: 'Buscar con IA' }]
@@ -79,7 +85,7 @@ function clearAllFilters() {
   runSearch()
 }
 
-await runSearch()
+await Promise.all([runSearch(), ensureRequestsLoaded()])
 
 const sheetOpen = ref(false)
 const sheetStage = ref<'form' | 'sent'>('form')
@@ -242,15 +248,20 @@ async function send() {
       description="Prueba a quitar algún filtro o a reformular tu búsqueda."
     />
     <template v-else>
+      <!-- Hallazgo #6: antes no había ningún recuento visible de resultados. -->
+      <p v-if="searched" class="text-[0.8125rem] text-[var(--color-text-muted)] mb-3">
+        {{ results.length }} {{ results.length === 1 ? 'marca encontrada' : 'marcas encontradas' }}
+      </p>
       <FeaturedDeck
         v-if="showDeck"
         :results="results" :loading="aiLoading" :summary="aiSummary" :categories="aiCategories" :score-meaningful="scoreMeaningful"
-        kind="partner" cta-label="Proponer"
-        @contact="openContact" @visible-change="deckVisibleIds = $event"
+        kind="partner" cta-label="Proponer" :pending-ids="pendingPartnerIds"
+        @contact="openContact" @visible-change="deckVisibleIds = $event" @cancel="cancelAi"
       />
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3.5">
         <DiscoveryCard
           v-for="partnerResult in visibleResults" :key="partnerResult.id" :result="partnerResult" kind="partner" cta-label="Proponer"
+          :is-pending="pendingPartnerIds.includes(partnerResult.id)"
           @contact="openContact(partnerResult)"
         />
       </div>
