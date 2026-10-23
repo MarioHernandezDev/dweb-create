@@ -168,6 +168,10 @@ async function handleMarkCompleted() {
         >
           Marcar como completada
         </BaseButton>
+        <RatingPrompt
+          v-else-if="detailReq.status === 'completed'"
+          :collaboration-id="detailReq.id" :counterpart-name="detailReq.partnerName"
+        />
         <p v-if="actionError" class="text-[0.8125rem] text-[var(--color-status-alert)] mt-3">{{ actionError }}</p>
       </template>
     </BottomSheet>

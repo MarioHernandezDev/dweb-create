@@ -462,6 +462,10 @@ async function saveFicha() {
                   >
                     Marcar como completada
                   </BaseButton>
+                  <RatingPrompt
+                    v-else-if="collab.status === 'completed'"
+                    :collaboration-id="collab.id" :counterpart-name="collab.creatorName ?? 'el creador'"
+                  />
                 </BaseCard>
               </div>
             </section>

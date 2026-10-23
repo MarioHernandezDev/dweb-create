@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { formatEuros } from '~/utils/mock-data'
+import { formatRatingSummary, hasEnoughRatingsToShowAverage } from '~/utils/ratings'
 import type { Role } from '~/types'
 import type { Package } from '~/composables/usePackages'
 
@@ -31,6 +32,9 @@ if (!profile) {
 
 const { listPackagesOf } = usePackages()
 const packages = ref<Package[]>(await listPackagesOf(profile.profileId))
+
+const { fetchSummary } = useRatings()
+const ratingSummary = ref(await fetchSummary(profile.profileId))
 
 const isOwnProfile = computed(() => profile!.profileId === myProfileId)
 
@@ -98,6 +102,14 @@ function copyProfileLink() {
         </button>
       </div>
       <p v-if="copyError" class="text-[0.75rem] text-[var(--color-status-alert)] -mt-4 mb-4">No se ha podido copiar el enlace.</p>
+
+      <div v-if="ratingSummary.ratingCount > 0" class="flex items-center gap-2.5 rounded-[var(--radius-sm)] bg-[var(--color-ink-overlay)] px-3.5 py-2.5 mb-5">
+        <RatingStars
+          v-if="hasEnoughRatingsToShowAverage(ratingSummary.ratingCount)"
+          :model-value="Math.round(ratingSummary.avgStars)" readonly size="sm"
+        />
+        <span class="text-[0.8125rem] text-[var(--color-text-muted)]">{{ formatRatingSummary(ratingSummary) }}</span>
+      </div>
 
       <template v-if="!isOwnProfile">
         <div class="flex flex-col gap-2 mb-7">
