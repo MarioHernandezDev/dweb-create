@@ -31,6 +31,17 @@ const { unreadCount: inboxUnread } = useNotifications()
 const { unreadCount: chatUnread } = useChat()
 const badgeFor: Record<string, import('vue').ComputedRef<number>> = { '/chat': chatUnread, '/inbox': inboxUnread }
 const moreBadgeTotal = computed(() => chatUnread.value + inboxUnread.value)
+
+// Hallazgo #5 de la auditoría de usabilidad: "cerrar sesión" estaba
+// enterrado (Más → Ajustes → pestaña Cuenta → bajar al final). Ahora está
+// aquí mismo, a un toque desde "Más" en cualquier pantalla.
+const { confirm } = useConfirm()
+const { logout } = useLogout()
+async function confirmLogout() {
+  moreOpen.value = false
+  const ok = await confirm({ title: '¿Cerrar sesión?', confirmLabel: 'Cerrar sesión' })
+  if (ok) await logout()
+}
 </script>
 
 <template>
@@ -91,6 +102,13 @@ const moreBadgeTotal = computed(() => chatUnread.value + inboxUnread.value)
             {{ badgeFor[item.to].value > 9 ? '9+' : badgeFor[item.to].value }}
           </span>
         </NuxtLink>
+        <button
+          type="button" class="flex items-center gap-3 px-3 h-12 rounded-[var(--radius-sm)] text-[var(--color-status-alert)] hover:bg-[var(--color-ink-overlay)] transition-colors duration-150"
+          @click="confirmLogout"
+        >
+          <Icon name="ph:sign-out-bold" class="size-5 shrink-0" />
+          <span class="text-[0.9375rem] font-medium">Cerrar sesión</span>
+        </button>
       </div>
     </BottomSheet>
   </nav>

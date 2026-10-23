@@ -66,7 +66,7 @@ const { avatarUrl, initials: myInitials, hue: myHue } = useMyAvatar()
       </span>
     </NuxtLink>
 
-    <NuxtLink :to="`/${role}/profile`" aria-label="Tu perfil" class="shrink-0">
+    <NuxtLink :to="`/${role}/profile`" aria-label="Perfil" class="shrink-0">
       <BaseAvatar :initials="myInitials" :src="avatarUrl" :hue="myHue" size="sm" />
     </NuxtLink>
   </header>

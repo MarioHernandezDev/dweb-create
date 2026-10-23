@@ -4,6 +4,33 @@ Registro de qué se hizo, por qué, y qué queda pendiente de verificar — pens
 
 ---
 
+## 2026-10-23 (41) — Fase 3 (#5): cerrar sesión ya no está enterrado, y "Ajustes"/"Perfil" deja de ser dos nombres para lo mismo
+
+Primera pieza de la Fase 3 — la que no depende de la pregunta abierta 1 (tipografía), así que se adelanta mientras esa se decide con el usuario.
+
+### Lo que encontró la auditoría, confirmado en código
+
+"Cerrar sesión" solo existía al final de la pestaña "Cuenta" de `/creator/profile` y `/partner/profile` — Más → Perfil → pestaña Cuenta → bajar al final. Y la misma ruta (`/${role}/profile`) tenía dos nombres distintos según por dónde se llegara: el avatar de `TopBar.vue` la enlazaba como "Tu perfil" (solo accesible por lector de pantalla, no visible) mientras el menú "Más" la llamaba "Ajustes" (`secondaryNav`, visible).
+
+### Arreglado
+
+- **Cerrar sesión, a un toque desde cualquier pantalla**: añadido al final del menú "Más" (`BottomTabBar.vue`, móvil) y al final del bloque de cuenta de `SideRail.vue` (escritorio) — mismo `useConfirm()` + `useLogout()` que ya usaban las páginas de perfil, sin lógica nueva. Las páginas de Perfil mantienen su propio botón también (no se quita nada, solo se añade un camino más corto).
+- **Un solo nombre, "Perfil"**: `secondaryNav()` (`utils/nav.ts`) renombra esa entrada de "Ajustes" a "Perfil" (icono a juego, `ph:user-circle-fill`), y el `aria-label` del avatar de `TopBar.vue` pasa de "Tu perfil" a "Perfil" — mismo texto en los dos sitios que llevan a la misma página. Se eligió "un solo nombre" (la opción más simple de las dos que ofrecía `CONTEXT.md`) porque la pestaña con la que arranca esa página es la ficha pública, no una lista de interruptores — "Perfil" la describe mejor que "Ajustes".
+
+### Verificado de verdad
+
+- `npx vue-tsc --noEmit`: limpio. `npm test -- --run`: 30/30. `npm run test:integration`: 62/62 (sin regresiones — nada de esto toca datos ni RPCs). `npm run build`: limpio.
+- Confirmado por `grep` que no queda ningún "Ajustes" suelto en el código de navegación (solo en comentarios que explican el cambio).
+- El menú "Más" del partner usa el mismo componente (`BottomTabBar.vue`) que el del creador — no hay dos implementaciones que puedan divergir, así que el acceso nuevo funciona igual en los dos roles sin tener que probarlo por separado.
+
+### Sin verificar
+
+- El aspecto real en el navegador (no hay herramienta de navegador en esta sesión) — en particular, si "en dos toques como máximo" se cumple de verdad al tacto en móvil real (debería: abrir "Más" + pulsar "Cerrar sesión" = 2 toques).
+
+### Pendiente
+
+Tipografía (la otra mitad de la Fase 3) — depende de resolver con el usuario la pregunta abierta 1 de `CONTEXT.md`.
+
 ## 2026-10-23 (40) — Fase 2 (#2): la bandeja separa "Importantes" de "Actividad", y el badge deja de contar logins
 
 Última pieza grande de la Fase 2. Al investigar el alcance real, salió algo más grave que "la bandeja está saturada": **`useNotifications` cargaba solo los 30 avisos más recientes en una única lista**, y un aluvión de inicios de sesión (habitual aquí, porque los tests de integración inician sesión de verdad en cada ejecución contra este mismo proyecto — ver entradas 37/38 sobre la decisión del entorno de pruebas) podía ocupar esos 30 huecos enteros. Comprobado contra Supabase real: de los 30 avisos más recientes de la cuenta demo del creador, 9 eran "Has iniciado sesión" intercalados entre solicitudes y ofertas reales — y en una sesión de pruebas más larga, una solicitud real podría quedar completamente fuera de la vista sin que nadie lo notara. Esto no era solo "se ve feo", era "se puede perder un aviso real".

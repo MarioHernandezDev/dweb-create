@@ -6,7 +6,7 @@ const props = defineProps<{ role: Role }>()
 const route = useRoute()
 const items = computed(() => roleNav[props.role])
 
-// Solo Chat/Bandeja/Guardados — "Ajustes" ya tiene su propio bloque más
+// Solo Chat/Bandeja/Guardados — "Perfil" ya tiene su propio bloque más
 // abajo (avatar + nombre de cuenta), no hace falta repetirlo.
 const secondaryItems = computed(() => secondaryNav(props.role).slice(0, 3))
 
@@ -30,6 +30,15 @@ const { avatarUrl, initials: myInitials, hue: myHue } = useMyAvatar()
 const { creator } = useMyCreator()
 const { partner } = useMyPartner()
 const accountName = computed(() => (props.role === 'creator' ? creator.value?.displayName : partner.value?.name) || 'Tu cuenta')
+
+// Hallazgo #5: antes solo se podía cerrar sesión desde dentro de Perfil →
+// pestaña Cuenta, bajando hasta el final. Aquí está siempre a un toque.
+const { confirm } = useConfirm()
+const { logout } = useLogout()
+async function confirmLogout() {
+  const ok = await confirm({ title: '¿Cerrar sesión?', confirmLabel: 'Cerrar sesión' })
+  if (ok) await logout()
+}
 </script>
 
 <template>
@@ -73,6 +82,13 @@ const accountName = computed(() => (props.role === 'creator' ? creator.value?.di
             {{ badgeFor[item.to].value > 9 ? '9+' : badgeFor[item.to].value }}
           </span>
         </NuxtLink>
+        <button
+          type="button" class="flex items-center gap-3 px-3.5 h-9 rounded-[var(--radius-sm)] text-[0.8125rem] font-medium text-white/55 hover:text-white hover:bg-white/8 transition-colors"
+          @click="confirmLogout"
+        >
+          <Icon name="ph:sign-out-bold" class="size-4" />
+          Cerrar sesión
+        </button>
       </nav>
     </div>
   </aside>
