@@ -33,7 +33,7 @@ const year = new Date().getFullYear()
         <div class="col-span-2 md:col-span-1 pr-6">
           <div class="flex items-center gap-2.5 mb-3.5">
             <NuxtImg src="/img/logo-svg.png" alt="" width="24" height="24" class="size-6" />
-            <span class="font-display text-[1.0625rem] text-white">FEEDMA</span>
+            <span class="font-brand text-[1.0625rem] text-white">FEEDMA</span>
           </div>
           <p class="text-[0.8125rem] leading-relaxed max-w-[26ch] text-white/50">
             El parte de rodaje de tu contenido — entregas, métricas y predicciones en un solo sitio.

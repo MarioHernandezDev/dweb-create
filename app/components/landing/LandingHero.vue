@@ -44,7 +44,7 @@
     </svg>
 
     <h1
-      class="nx-stagger-in font-display font-light leading-[0.85] text-black text-[clamp(3.5rem,16vw,15rem)]"
+      class="nx-stagger-in font-brand font-light leading-[0.85] text-black text-[clamp(3.5rem,16vw,15rem)]"
       style="--stagger-i: 1"
     >
       FEEDMA

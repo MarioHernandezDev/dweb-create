@@ -4,6 +4,34 @@ Registro de qué se hizo, por qué, y qué queda pendiente de verificar — pens
 
 ---
 
+## 2026-10-23 (42) — Fase 3 (tipografía): Sora en los títulos, Snasm queda solo para el logo
+
+Cierra la Fase 3. Pregunta abierta 1 de `CONTEXT.md` resuelta con el usuario: Sora para los títulos, y el cambio alcanza solo a lo que ya se trataba como "texto de display" (títulos, no el texto normal/botones/enlaces, que siguen con Hanken Grotesk).
+
+### Lo que había que entender antes de tocar nada
+
+`font-display` (clase de Tailwind generada desde la variable `--font-display`) no se usaba solo en `<h1>`/`<h2>` — son 44 sitios en 31 archivos: títulos de página, pero también precios, números de estadística, títulos de tarjeta, de diálogo, y **el propio wordmark "FEEDMA"** en 6 sitios (hero de la landing, login, footer, nav, SideRail, onboarding). Si se cambiaba solo la variable, el logotipo literal "FEEDMA" también habría cambiado de Snasm a Sora — justo lo contrario de la decisión cerrada del informe ("Snasm solo para el logo").
+
+### Arreglado
+
+- **`nuxt.config.ts`**: añadida la familia `Sora` (google, pesos 400/500/600/700) junto a Hanken Grotesk y Snasm.
+- **`main.css`**: nueva variable `--font-brand` (= lo que antes era `--font-display`: Snasm) para el logotipo; `--font-display` pasa a apuntar a Sora. Tailwind v4 genera la clase `font-brand` sola, a partir del nombre de la variable — sin tocar ningún config de JS.
+- Los 6 sitios donde "FEEDMA" se renderiza como texto (no la imagen del logo) cambian su clase de `font-display` a `font-brand`, para seguir en Snasm: `LandingHero.vue` (hero), `login.vue` (panel de marca), `LandingFooter.vue`, `LandingNav.vue`, `SideRail.vue`, `onboarding.vue`.
+- Los otros 38 usos de `font-display` (títulos de página, precios, estadísticas, diálogos...) no se tocan — heredan Sora automáticamente al cambiar la variable, sin editar esos archivos uno a uno.
+
+### Verificado de verdad, de principio a fin
+
+- `npx vue-tsc --noEmit`: limpio. `npm test -- --run`: 30/30. `npm run test:integration`: 62/62. `npm run build`: limpio.
+- Build de producción real, servido en un puerto aparte (el 3000 ya lo ocupaba un servidor de desarrollo de otra sesión) y comprobado por `curl` sobre el HTML servido de verdad: las 4 variantes de Sora (400/500/600/700) llegan con `@font-face` real y `url()` a un `.woff2` descargado, con sus fuentes de reserva (`size-adjust`/`ascent-override`...) calculadas igual que ya tenía Hanken Grotesk — mismo mecanismo, no uno nuevo sin probar. Confirmado también que `font-brand` se sigue usando en `/login` (el wordmark) y que el `<h1>` de esa misma página sigue en `font-display` (ahora Sora).
+
+### Sin verificar
+
+- El aspecto real — si Sora se ve bien al lado de Snasm en el hero/login, si algún título muy largo se corta en 443–611 px — no hay herramienta de navegador en esta sesión; solo se confirmó que la fuente se carga y se aplica donde debía.
+
+### Con esto, la Fase 3 de `CONTEXT.md` queda cerrada
+
+Sigue la Fase 4 (#6–#9: búsqueda con IA y Descubrir) — depende de la Fase 1 ya cerrada (datos de test fuera de Descubrir).
+
 ## 2026-10-23 (41) — Fase 3 (#5): cerrar sesión ya no está enterrado, y "Ajustes"/"Perfil" deja de ser dos nombres para lo mismo
 
 Primera pieza de la Fase 3 — la que no depende de la pregunta abierta 1 (tipografía), así que se adelanta mientras esa se decide con el usuario.

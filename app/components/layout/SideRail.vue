@@ -45,7 +45,7 @@ async function confirmLogout() {
   <aside class="hidden md:flex md:flex-col w-64 shrink-0 h-dvh sticky top-0 px-5 py-7 bg-[var(--color-primary-900)]">
     <NuxtLink to="/" class="flex items-center gap-2.5 px-1.5 mb-9">
       <NuxtImg src="/img/logo-svg.png" alt="" width="32" height="32" class="size-8" />
-      <span class="font-display text-[1.125rem] text-white">FEEDMA</span>
+      <span class="font-brand text-[1.125rem] text-white">FEEDMA</span>
     </NuxtLink>
 
     <nav class="flex flex-col gap-1" aria-label="Navegación principal">

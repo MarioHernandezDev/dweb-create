@@ -39,6 +39,11 @@ export default defineNuxtConfig({
   fonts: {
     families: [
       { name: 'Hanken Grotesk', provider: 'google', weights: [400, 500, 600, 700, 800] },
+      // Sora: fuente de los títulos (h1/h2 y el resto de texto en "modo
+      // display") desde la Fase 3 de la auditoría de usabilidad — Snasm
+      // quedaba demasiado ancha para títulos largos y se reserva ahora solo
+      // para el logotipo ("FEEDMA" como marca, ver --font-brand en main.css).
+      { name: 'Sora', provider: 'google', weights: [400, 500, 600, 700] },
       // Snasm es una fuente local del equipo (ver app/assets/fonts) — @font-face manual en main.css.
       { name: 'Snasm', provider: 'none' }
     ]

@@ -74,7 +74,7 @@ async function register() {
   <div class="min-h-dvh bg-[var(--color-ink)] flex flex-col">
     <header class="flex items-center gap-2.5 px-5 py-5 md:px-10 md:py-6 max-w-xl mx-auto w-full">
       <NuxtImg src="/img/logo-svg.png" alt="" width="28" height="28" class="size-7" />
-      <span class="font-display text-[1.0625rem] text-[var(--color-text)]">FEEDMA</span>
+      <span class="font-brand text-[1.0625rem] text-[var(--color-text)]">FEEDMA</span>
     </header>
 
     <main class="flex-1 flex items-center">

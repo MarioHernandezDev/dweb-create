@@ -27,7 +27,14 @@
 }
 
 @theme {
-  --font-display: "Snasm", "Hanken Grotesk", ui-sans-serif, system-ui, sans-serif;
+  /* Fase 3 de la auditoría de usabilidad: Snasm es muy ancha para títulos
+     largos (se cortaba en móvil) y se reserva solo para el logotipo —
+     "FEEDMA" como marca (clase font-brand). Los títulos (h1/h2 y el resto
+     de texto que antes usaba font-display) pasan a Sora; el texto, los
+     botones y los enlaces siguen con Hanken Grotesk (--font-sans), sin
+     ningún cambio. */
+  --font-display: "Sora", "Hanken Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-brand: "Snasm", "Hanken Grotesk", ui-sans-serif, system-ui, sans-serif;
   --font-sans: "Hanken Grotesk", ui-sans-serif, system-ui, sans-serif;
 
   /* Radios: varían según jerarquía, no un único valor repetido en todo */

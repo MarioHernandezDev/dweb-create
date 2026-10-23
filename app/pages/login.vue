@@ -85,7 +85,7 @@ function loginAsDemo(demoEmail: string) {
       />
 
       <div class="relative z-10 px-10">
-        <p aria-hidden="true" class="nx-feedma-shimmer font-display font-light leading-[0.82] tracking-tight text-[clamp(3rem,6.5vw,5rem)] mb-5">
+        <p aria-hidden="true" class="nx-feedma-shimmer font-brand font-light leading-[0.82] tracking-tight text-[clamp(3rem,6.5vw,5rem)] mb-5">
           FEEDMA
         </p>
         <p class="text-white/70 text-[1rem] leading-relaxed max-w-[30ch]">
