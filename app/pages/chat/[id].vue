@@ -274,7 +274,10 @@ async function send() {
             v-model="draft" type="text" placeholder="Escribe un mensaje…"
             class="flex-1 h-11 px-4 rounded-full bg-[var(--color-ink-overlay)] border border-[var(--color-hairline)] text-[0.9375rem] text-[var(--color-text)] placeholder:text-[var(--color-text-faint)] focus:outline-none focus:border-[var(--color-primary-500)]/60"
           >
-          <BaseButton variant="primary" size="md" icon-only icon="ph:paper-plane-tilt-fill" type="submit" :icon-spin="sending" :disabled="!draft.trim() || sending" />
+          <BaseButton
+            variant="primary" size="md" icon-only icon="ph:paper-plane-tilt-fill" type="submit" :icon-spin="sending"
+            :disabled="!draft.trim() || sending" aria-label="Enviar mensaje"
+          />
         </form>
       </div>
 

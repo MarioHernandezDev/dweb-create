@@ -9,6 +9,10 @@ export interface MyCreator {
   maxRateCents: number | null
   lookingFor: string | null
   coverUrl: string | null
+  /** Límite de WIP por fase del tablero (ej. `{ in_production: 3 }`) — sin entrada = sin límite. */
+  boardWipLimits: Record<string, number>
+  /** Publicaciones/semana que el propio creador se ha fijado como objetivo (ver creator/index.vue). */
+  weeklyPostTarget: number
 }
 
 interface CreatorFichaRow {
@@ -22,9 +26,12 @@ interface CreatorFichaRow {
   max_rate_cents: number | null
   looking_for: string | null
   cover_url: string | null
+  board_wip_limits: Record<string, number> | null
+  weekly_post_target: number | null
 }
 
-const CREATOR_SELECT = 'id, display_name, niche, stripe_connect_onboarded, bio, categories, min_rate_cents, max_rate_cents, looking_for, cover_url'
+const CREATOR_SELECT =
+  'id, display_name, niche, stripe_connect_onboarded, bio, categories, min_rate_cents, max_rate_cents, looking_for, cover_url, board_wip_limits, weekly_post_target'
 
 function mapCreatorRow(data: CreatorFichaRow): MyCreator {
   return {
@@ -37,7 +44,9 @@ function mapCreatorRow(data: CreatorFichaRow): MyCreator {
     minRateCents: data.min_rate_cents,
     maxRateCents: data.max_rate_cents,
     lookingFor: data.looking_for,
-    coverUrl: data.cover_url
+    coverUrl: data.cover_url,
+    boardWipLimits: data.board_wip_limits ?? {},
+    weeklyPostTarget: data.weekly_post_target ?? 5
   }
 }
 
@@ -80,6 +89,7 @@ export function useMyCreator() {
     minRateCents?: number | null
     maxRateCents?: number | null
     lookingFor?: string | null
+    weeklyPostTarget?: number
   }) {
     const me = creator.value ?? (await ensureCreator())
     if (!me) throw new Error('No hay ficha de creador que actualizar.')
@@ -90,6 +100,7 @@ export function useMyCreator() {
     if (patch.minRateCents !== undefined) payload.min_rate_cents = patch.minRateCents
     if (patch.maxRateCents !== undefined) payload.max_rate_cents = patch.maxRateCents
     if (patch.lookingFor !== undefined) payload.looking_for = patch.lookingFor
+    if (patch.weeklyPostTarget !== undefined) payload.weekly_post_target = patch.weeklyPostTarget
 
     const { data, error } = await useSupabaseClient()
       .from('creators')
@@ -145,9 +156,34 @@ export function useMyCreator() {
     creator.value = mapCreatorRow(data)
   }
 
+  /**
+   * Límite de WIP de una fase del tablero (ver PhaseBoard.vue) — `limit`
+   * nulo o <= 0 quita el límite en vez de guardar un 0 sin sentido. Se
+   * reescribe el JSONB entero (lee-modifica-escribe): solo el propio
+   * creador lo toca, no hay concurrencia real que lo haga arriesgado.
+   */
+  async function setWipLimit(phase: string, limit: number | null) {
+    const me = creator.value ?? (await ensureCreator())
+    if (!me) throw new Error('No hay ficha de creador que actualizar.')
+
+    const next = { ...me.boardWipLimits }
+    if (limit && limit > 0) next[phase] = limit
+    else delete next[phase]
+
+    const { data, error } = await useSupabaseClient()
+      .from('creators')
+      .update({ board_wip_limits: next } as never)
+      .eq('id', me.id)
+      .select(CREATOR_SELECT)
+      .single<CreatorFichaRow>()
+    if (error) throw error
+
+    creator.value = mapCreatorRow(data)
+  }
+
   function reset() {
     creator.value = undefined
   }
 
-  return { creator, ensureCreator, updateFicha, uploadCoverPhoto, removeCoverPhoto, reset }
+  return { creator, ensureCreator, updateFicha, uploadCoverPhoto, removeCoverPhoto, setWipLimit, reset }
 }

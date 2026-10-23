@@ -6,7 +6,8 @@ import type { CollabRequest } from '~/composables/useCollabRequests'
 
 useHead({ title: 'Solicitudes' })
 
-const { requests, pendingCount, ensureLoaded, accept, decline } = useCollabRequests()
+const { requests, pendingCount, acting, ensureLoaded, accept, decline, markCompleted } = useCollabRequests()
+const { confirm } = useConfirm()
 await ensureLoaded()
 
 const tab = ref<'pending' | 'history'>('pending')
@@ -54,6 +55,23 @@ async function handleDecline() {
     actionError.value = e instanceof Error ? e.message : 'No se ha podido rechazar la solicitud. Inténtalo de nuevo.'
   }
 }
+
+async function handleMarkCompleted() {
+  if (!detailReq.value) return
+  const ok = await confirm({
+    title: '¿Marcar como completada?',
+    message: 'Indica que el trabajo de esta colaboración ya se ha entregado. No afecta al pago.',
+    confirmLabel: 'Marcar como completada'
+  })
+  if (!ok) return
+  actionError.value = ''
+  try {
+    await markCompleted(detailReq.value.id)
+    detailReq.value = requests.value.find((r) => r.id === detailReq.value!.id) ?? detailReq.value
+  } catch (e) {
+    actionError.value = e instanceof Error ? e.message : 'No se ha podido marcar como completada. Inténtalo de nuevo.'
+  }
+}
 </script>
 
 <template>
@@ -72,32 +90,34 @@ async function handleDecline() {
     />
 
     <div v-else class="flex flex-col gap-2.5 md:max-w-xl">
-      <BaseCard v-for="req in visible" :key="req.id" radius="lg" padding="md" interactive @click="openDetail(req)">
-        <div class="flex items-start gap-3 mb-3">
-          <BaseAvatar :initials="initialsFromName(req.partnerName)" :hue="hueFromString(req.partnerName)" size="sm" />
-          <div class="min-w-0 flex-1">
-            <div class="flex items-start justify-between gap-2">
-              <p class="text-[0.9375rem] font-medium text-[var(--color-text)] truncate">{{ req.partnerName }}</p>
-              <span class="text-[0.9375rem] font-medium text-[var(--color-text)] shrink-0">
-                {{ req.budgetCents ? formatEuros(req.budgetCents) : 'Sin presupuesto' }}
-              </span>
+      <button v-for="req in visible" :key="req.id" type="button" class="text-left" @click="openDetail(req)">
+        <BaseCard radius="lg" padding="md" interactive>
+          <div class="flex items-start gap-3 mb-3">
+            <BaseAvatar :initials="initialsFromName(req.partnerName)" :hue="hueFromString(req.partnerName)" size="sm" />
+            <div class="min-w-0 flex-1">
+              <div class="flex items-start justify-between gap-2">
+                <p class="text-[0.9375rem] font-medium text-[var(--color-text)] truncate">{{ req.partnerName }}</p>
+                <span class="text-[0.9375rem] font-medium text-[var(--color-text)] shrink-0">
+                  {{ req.budgetCents ? formatEuros(req.budgetCents) : 'Sin presupuesto' }}
+                </span>
+              </div>
+              <p class="text-[0.75rem] text-[var(--color-text-faint)] mt-0.5">{{ relativeTime(req.createdAt) }}</p>
             </div>
-            <p class="text-[0.75rem] text-[var(--color-text-faint)] mt-0.5">{{ relativeTime(req.createdAt) }}</p>
           </div>
-        </div>
 
-        <p class="text-[0.8125rem] text-[var(--color-text-muted)] leading-relaxed mb-3 line-clamp-2">{{ req.brief }}</p>
+          <p class="text-[0.8125rem] text-[var(--color-text-muted)] leading-relaxed mb-3 line-clamp-2">{{ req.brief }}</p>
 
-        <span
-          class="inline-flex items-center px-2.5 py-1 rounded-[var(--radius-xs)] text-[0.75rem] font-medium"
-          :style="{
-            color: collaborationStatusMeta[req.status].color,
-            background: `color-mix(in oklab, ${collaborationStatusMeta[req.status].color} 16%, transparent)`
-          }"
-        >
-          {{ collaborationStatusMeta[req.status].label }}
-        </span>
-      </BaseCard>
+          <span
+            class="inline-flex items-center px-2.5 py-1 rounded-[var(--radius-xs)] text-[0.75rem] font-medium"
+            :style="{
+              color: collaborationStatusMeta[req.status].color,
+              background: `color-mix(in oklab, ${collaborationStatusMeta[req.status].color} 16%, transparent)`
+            }"
+          >
+            {{ collaborationStatusMeta[req.status].label }}
+          </span>
+        </BaseCard>
+      </button>
     </div>
 
     <BottomSheet v-model="detailOpen" :title="detailReq?.partnerName ?? 'Solicitud'">
@@ -131,11 +151,23 @@ async function handleDecline() {
           </div>
         </dl>
 
+        <p v-if="detailReq.paidAt" class="inline-flex items-center gap-1.5 text-[0.8125rem] text-[var(--color-status-published)] mb-4">
+          <Icon name="ph:check-circle-fill" class="size-4" /> Cobrado el {{ relativeTime(detailReq.paidAt) }}
+        </p>
+
         <NegotiationPanel
+          v-if="detailReq.status === 'requested'"
           :collaboration-id="detailReq.id" :initial-budget-cents="detailReq.budgetCents" :status="detailReq.status"
           my-role="creator" :initiated-by="detailReq.initiatedBy"
           @accept="handleAccept" @decline="handleDecline"
         />
+        <BaseButton
+          v-else-if="detailReq.status === 'accepted' || detailReq.status === 'in_progress'"
+          variant="secondary" size="md" class="w-full" :disabled="acting === detailReq.id" :icon-spin="acting === detailReq.id"
+          @click="handleMarkCompleted"
+        >
+          Marcar como completada
+        </BaseButton>
         <p v-if="actionError" class="text-[0.8125rem] text-[var(--color-status-alert)] mt-3">{{ actionError }}</p>
       </template>
     </BottomSheet>

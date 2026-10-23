@@ -5,6 +5,7 @@ export interface CollabRequest {
   status: CollaborationStatus
   brief: string
   budgetCents: number | null
+  paidAt: string | null
   partnerName: string
   createdAt: string
   updatedAt: string
@@ -16,6 +17,7 @@ interface CollabRequestRow {
   status: string
   brief: string
   budget_cents: number | null
+  paid_at: string | null
   created_at: string
   updated_at: string
   initiated_by: 'creator' | 'partner'
@@ -28,6 +30,7 @@ function mapRow(row: CollabRequestRow): CollabRequest {
     status: row.status as CollaborationStatus,
     brief: row.brief,
     budgetCents: row.budget_cents,
+    paidAt: row.paid_at,
     partnerName: row.partners?.company_name ?? 'Partner',
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -55,9 +58,10 @@ export function useCollabRequests() {
 
     const { data, error } = await client
       .from('collaborations')
-      .select('id, status, brief, budget_cents, created_at, updated_at, initiated_by, partners(company_name)')
+      .select('id, status, brief, budget_cents, paid_at, created_at, updated_at, initiated_by, partners(company_name)')
       .eq('creator_id', me.id)
       .order('created_at', { ascending: false })
+      .limit(300)
     if (error) {
       console.error('[useCollabRequests] fallo al cargar las solicitudes:', error.message)
       return
@@ -77,12 +81,16 @@ export function useCollabRequests() {
   // última contraoferta aceptada (si hubo negociación) — el presupuesto que
   // lee el cobro de Stripe es esta columna (server/api/stripe/pay-
   // collaboration.post.ts), no el historial de `collaboration_offers`.
+  // Pasa por una función `security definer` (no un update directo): el
+  // servidor valida que el importe coincide con una propuesta real de la
+  // negociación, no con lo que el cliente diga que se acordó.
   async function accept(id: string, agreedBudgetCents?: number | null) {
     acting.value = id
     try {
-      const payload: Record<string, unknown> = { status: 'accepted' }
-      if (agreedBudgetCents !== undefined) payload.budget_cents = agreedBudgetCents
-      const { error } = await client.from('collaborations').update(payload as never).eq('id', id)
+      const { error } = await client.rpc('accept_collaboration_request' as never, {
+        p_collaboration_id: id,
+        p_agreed_budget_cents: agreedBudgetCents ?? null
+      } as never)
       if (error) throw error
       await refresh()
     } finally {
@@ -93,7 +101,18 @@ export function useCollabRequests() {
   async function decline(id: string) {
     acting.value = id
     try {
-      const { error } = await client.from('collaborations').update({ status: 'declined' } as never).eq('id', id)
+      const { error } = await client.rpc('decline_collaboration_request' as never, { p_collaboration_id: id } as never)
+      if (error) throw error
+      await refresh()
+    } finally {
+      acting.value = null
+    }
+  }
+
+  async function markCompleted(id: string) {
+    acting.value = id
+    try {
+      const { error } = await client.rpc('mark_collaboration_completed' as never, { p_collaboration_id: id } as never)
       if (error) throw error
       await refresh()
     } finally {
@@ -106,5 +125,5 @@ export function useCollabRequests() {
     loaded.value = false
   }
 
-  return { requests, loaded, acting, pendingCount, refresh, ensureLoaded, accept, decline, reset }
+  return { requests, loaded, acting, pendingCount, refresh, ensureLoaded, accept, decline, markCompleted, reset }
 }

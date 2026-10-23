@@ -9,7 +9,10 @@
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
     "db:seed-users": "node --env-file=.env scripts/seed-demo-users.mjs",
-    "db:seed-discover": "node --env-file=.env scripts/seed-discover-demo.mjs"
+    "db:seed-discover": "node --env-file=.env scripts/seed-discover-demo.mjs",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:integration": "vitest run --config vitest.integration.config.ts"
   },
   "dependencies": {
     "@iconify-json/ph": "^1.2.2",
@@ -33,6 +36,7 @@
   "devDependencies": {
     "@types/node": "^26.6.5",
     "typescript": "^5.9.3",
+    "vitest": "^2.1.9",
     "vue-tsc": "^3.3.13"
   }
 }

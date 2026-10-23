@@ -69,6 +69,21 @@ const MESSAGE_SELECT = 'id, conversation_id, sender_id, kind, body, offer_id, cr
 // sin límite que no deja de crecer con los años.
 const MESSAGE_PREVIEW_LIMIT = 500
 
+// Mismo motivo: cuántas conversaciones carga /chat de una vez. 200 es mucho
+// más que cualquier bandeja real necesita ver de golpe — sin esto, alguien
+// con años de actividad acababa trayendo TODAS las conversaciones que ha
+// tenido alguna vez, para enseñar una lista que nunca se desplaza tanto.
+const CONVERSATIONS_LIMIT = 200
+
+// Cuántos mensajes trae un hilo abierto (chat/[id].vue) de una sola vez —
+// sin esto, una negociación larga y activa entre las mismas dos personas
+// (meses de mensajes) se traía ENTERA cada vez que se abría ese chat. Se
+// piden los 300 más RECIENTES (orden descendente) y se invierten en JS para
+// mostrarlos en orden cronológico — cargar historial más antiguo con scroll
+// hacia arriba queda fuera de esta pasada (no había paginación previa
+// tampoco), pero al menos ya no crece sin límite con los años.
+const THREAD_MESSAGE_LIMIT = 300
+
 // Indicador de "está escribiendo": Supabase Realtime Broadcast, no
 // Postgres Changes — es un aviso efímero, no tiene sentido guardarlo en una
 // tabla. Un canal por DESTINATARIO (`chat-typing-<profileId>`), no por
@@ -163,6 +178,7 @@ export function useChat() {
       .from('conversations')
       .select('*')
       .order('last_message_at', { ascending: false, nullsFirst: false })
+      .limit(CONVERSATIONS_LIMIT)
     if (error) {
       console.error('[useChat] fallo al cargar las conversaciones:', error.message)
       return []
@@ -268,16 +284,20 @@ export function useChat() {
 
   /** Igual que ensureMessages, pero siempre vuelve a consultar — para refrescar tras aceptar/rechazar una oferta sin esperar a Realtime. */
   async function refreshMessages(conversationId: string) {
+    // Los THREAD_MESSAGE_LIMIT más recientes, no los más antiguos — se piden
+    // en orden descendente y se invierten después, para no acabar cargando
+    // el principio de una conversación larga en vez de lo último que se dijo.
     const { data, error } = await client
       .from('messages')
       .select(MESSAGE_SELECT)
       .eq('conversation_id', conversationId)
-      .order('created_at', { ascending: true })
+      .order('created_at', { ascending: false })
+      .limit(THREAD_MESSAGE_LIMIT)
     if (error) {
       console.error('[useChat] fallo al cargar los mensajes:', error.message)
       return messagesByConversation.value[conversationId] ?? []
     }
-    const mapped = (data as MessageRow[]).map(mapMessageRow)
+    const mapped = (data as MessageRow[]).map(mapMessageRow).reverse()
     messagesByConversation.value = { ...messagesByConversation.value, [conversationId]: mapped }
     return mapped
   }

@@ -52,7 +52,14 @@ const tabs = [
   { id: 'packages', label: 'Paquetes', icon: 'ph:package-fill' },
   { id: 'billing', label: 'Privacidad y pagos', icon: 'ph:shield-check-fill' }
 ] as const
-const activeTab = ref<(typeof tabs)[number]['id']>('ficha')
+// `?tab=billing` permite enlazar directo desde fuera (p. ej. "mejora tu
+// plan" en el compositor de posts, cuando no quedan créditos) — antes ese
+// texto no llevaba a ningún sitio real, solo se podía llegar aquí a mano
+// por el avatar y clicando la pestaña correcta.
+const initialTab = route.query.tab as string | undefined
+const activeTab = ref<(typeof tabs)[number]['id']>(
+  tabs.some((t) => t.id === initialTab) ? (initialTab as (typeof tabs)[number]['id']) : 'ficha'
+)
 
 const packageSheetOpen = ref(false)
 const editingPackage = ref<Package | null>(null)
@@ -197,6 +204,18 @@ function toggleFichaCategory(cat: string) {
   else ficha.categories.splice(i, 1)
 }
 
+const weeklyTargetInput = ref(creator.value?.weeklyPostTarget ?? 5)
+const savingWeeklyTarget = ref(false)
+async function saveWeeklyTarget() {
+  if (!weeklyTargetInput.value || weeklyTargetInput.value < 1) return
+  savingWeeklyTarget.value = true
+  try {
+    await updateFicha({ weeklyPostTarget: Math.round(weeklyTargetInput.value) })
+  } finally {
+    savingWeeklyTarget.value = false
+  }
+}
+
 async function saveFicha() {
   savingFicha.value = true
   fichaSaved.value = false
@@ -271,6 +290,24 @@ async function saveFicha() {
                 <div class="flex items-center justify-between px-5 py-4">
                   <span class="text-[0.9375rem] text-[var(--color-text)]">Créditos de predicción</span>
                   <span class="text-[0.8125rem] text-[var(--color-text-faint)]">{{ creditsBalance === null ? '…' : `${creditsBalance} restantes` }}</span>
+                </div>
+                <div class="flex items-center justify-between px-5 py-4 gap-3">
+                  <div>
+                    <p class="text-[0.9375rem] text-[var(--color-text)]">Objetivo semanal</p>
+                    <p class="text-[0.75rem] text-[var(--color-text-faint)]">Publicaciones/semana que ves reflejadas en "Hoy"</p>
+                  </div>
+                  <div class="flex items-center gap-2 shrink-0">
+                    <input
+                      v-model.number="weeklyTargetInput" type="number" min="1" step="1"
+                      class="w-16 h-9 px-2 rounded-[var(--radius-xs)] bg-[var(--color-ink-overlay)] border border-[var(--color-hairline)] text-[0.8125rem] text-[var(--color-text)] text-center focus:outline-none focus:border-[var(--color-primary-500)]/60"
+                    >
+                    <BaseButton
+                      variant="secondary" size="sm" :disabled="savingWeeklyTarget || !weeklyTargetInput || weeklyTargetInput === creator?.weeklyPostTarget"
+                      :icon-spin="savingWeeklyTarget" @click="saveWeeklyTarget"
+                    >
+                      Guardar
+                    </BaseButton>
+                  </div>
                 </div>
               </BaseCard>
             </section>

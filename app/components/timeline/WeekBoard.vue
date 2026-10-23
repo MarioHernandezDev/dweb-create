@@ -5,6 +5,8 @@ import { dueLabel } from '~/utils/status'
 const props = defineProps<{
   posts: Post[]
   creatorsById?: Record<string, Creator>
+  /** Si el creador tiene publicaciones en absoluto (en cualquier fecha) — sin esto, "sin entregas en los próximos días" y "nunca has creado nada" se veían exactamente igual. */
+  hasAnyPosts?: boolean
 }>()
 
 defineEmits<{ open: [post: Post] }>()
@@ -24,9 +26,14 @@ const groups = computed(() => {
 <template>
   <div class="flex flex-col gap-7">
     <EmptyState
-      v-if="!posts.length"
-      icon="ph:calendar-blank" title="No hay entregas por aquí"
-      description="Cuando se añadan publicaciones a este tablero, aparecerán organizadas por fecha."
+      v-if="!posts.length && !hasAnyPosts"
+      icon="ph:calendar-blank" title="Aquí no hay ninguna publicación todavía"
+      description="Cuando se añadan publicaciones, aparecerán organizadas por fecha."
+    />
+    <EmptyState
+      v-else-if="!posts.length"
+      icon="ph:check-circle" title="Nada pendiente en los próximos días"
+      description="No hay entregas para hoy ni para los próximos 3 días."
     />
     <section v-for="group in groups" :key="group.dueInDays">
       <h2

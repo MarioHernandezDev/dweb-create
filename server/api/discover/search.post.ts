@@ -71,7 +71,12 @@ interface PartnerCandidateRow {
 }
 
 const CANDIDATE_POOL_LIMIT = 200
-const AI_CANDIDATE_CAP = 30
+// Probado directo contra OpenRouter con el modelo gratuito actual
+// (nemotron-3.5-lightning, "reasoning"): 10 candidatos ya tardan ~30s él
+// solo. Con 30 candidatos la respuesta se arrastra tanto que la sección de
+// Destacados tarda una eternidad en aparecer — 16 es el punto en el que la
+// espera deja de sentirse rota sin perder candidatos reales de la bolsa.
+const AI_CANDIDATE_CAP = 16
 
 function overlapCount(a: string[], b: string[]): number {
   if (!a.length || !b.length) return 0
@@ -152,7 +157,13 @@ Devuelve ÚNICAMENTE un objeto JSON (sin texto adicional, sin markdown) con esta
         // solo — con un límite bajo el JSON llega cortado a mitad del
         // razonamiento, antes de escribirse de verdad.
         body: { model, messages: [{ role: 'user', content: prompt }], temperature: 0.4, max_tokens: 3000 },
-        timeout: 30_000
+        // 60s, no 30: probado directo contra OpenRouter con el modelo
+        // gratuito actual (nemotron-3.5-lightning) puntuando 10 candidatos
+        // reales — ~30s él solo, sin contar la ida/vuelta HTTP. Con el tope
+        // de 30 candidatos (AI_CANDIDATE_CAP) 30s se queda corto y tira
+        // "timeout" en vez de responder, cayendo al orden por filtros sin
+        // que de verdad hiciera falta.
+        timeout: 60_000
       }
     )
 
@@ -322,5 +333,8 @@ export default defineEventHandler(async (event) => {
     console.error('[discover/search] fallo al registrar la búsqueda (no afecta al resultado):', err)
   }
 
-  return { viewerRole, results }
+  // `aiExtracted` antes se calculaba solo para el registro de analíticas y
+  // se tiraba — la ficha-resumen de Destacados en el cliente lo necesita de
+  // verdad para explicar qué ha entendido la IA de la búsqueda.
+  return { viewerRole, results, aiSummary: aiExtracted?.summary ?? null, aiCategories: aiExtracted?.categories ?? [] }
 })

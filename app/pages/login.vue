@@ -12,6 +12,8 @@ const loading = ref(false)
 const activeDemo = ref('')
 const error = ref('')
 
+const isDev = import.meta.dev
+
 const demoAccounts = [
   { label: 'Creador de contenido', email: 'creator@feedma.test', icon: 'ph:sparkle-fill' },
   { label: 'Partner', email: 'partner@feedma.test', icon: 'ph:user-circle-fill' }
@@ -113,7 +115,10 @@ function loginAsDemo(demoEmail: string) {
             ¿No tienes cuenta todavía? <NuxtLink to="/onboarding" class="text-[var(--color-text-muted)] hover:text-[var(--color-text)] underline underline-offset-2">Crea una cuenta</NuxtLink>
           </p>
 
-          <div class="mt-10 pt-6 border-t border-[var(--color-hairline)]">
+          <!-- Solo en desarrollo: en producción, esto era una contraseña compartida
+               en texto plano, visible en el bundle, que cualquiera podía usar para
+               entrar como creador o partner de demo con un solo clic. -->
+          <div v-if="isDev" class="mt-10 pt-6 border-t border-[var(--color-hairline)]">
             <p class="text-[0.75rem] text-[var(--color-text-faint)] mb-3">Cuentas de prueba (equipo) — un clic y dentro:</p>
             <div class="flex gap-2">
               <button

@@ -63,8 +63,13 @@ export interface Post {
   cover: CoverArt
   mediaUrl?: string | null
   successScore?: number
-  confidence?: number
+  /** Si el score vino de juzgar el contenido real con el LLM, o solo de la heurística de forma (longitud/hashtags). */
+  aiEvaluated?: boolean
   suggestions?: Suggestion[]
+  /** Ids de `labels` asignadas — el objeto Label completo vive en `useLabels()`. */
+  labelIds: string[]
+  /** Recuento agregado del checklist, para pintar la barra de progreso en la card sin cargar los items. */
+  checklist: { total: number; done: number }
 }
 
 export interface SparklinePoint {

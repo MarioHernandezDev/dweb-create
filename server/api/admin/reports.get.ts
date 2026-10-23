@@ -27,6 +27,10 @@ export default defineEventHandler(async (event) => {
     .from('reports')
     .select('id, reason, detail, created_at, profiles(full_name, role), collaborations(brief, creators(display_name), partners(company_name))')
     .order('created_at', { ascending: false })
+    // Sin tope, esto traía TODOS los reportes desde el origen de los tiempos
+    // en cada visita al panel — 500 ya es mucho más de lo que un equipo
+    // pequeño revisa de una sentada (igual que el resto de /api/admin/*.get.ts).
+    .limit(500)
   if (error) throw createError({ statusCode: 500, statusMessage: error.message })
 
   const reports = (data as unknown as ReportRow[]).map((r) => ({

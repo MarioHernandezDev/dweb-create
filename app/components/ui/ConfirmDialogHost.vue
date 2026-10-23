@@ -7,6 +7,34 @@
  * pero centrado y compacto: esto es una alerta sí/no, no un formulario.
  */
 const { state, resolve } = useConfirm()
+
+// Mismo criterio de foco que BottomSheet.vue: Escape cancela (como pulsar
+// el botón "Cancelar"), y al abrirse el foco entra en "Cancelar" — nunca en
+// la acción que confirma, para que un Enter/Espacio accidental no dispare
+// justo la acción (a veces destructiva) que el diálogo existe para frenar.
+const cancelBtn = ref<{ $el: HTMLElement } | null>(null)
+
+function onKeydown(e: KeyboardEvent) {
+  if (e.key === 'Escape') resolve(false)
+}
+
+watch(
+  () => state.value.open,
+  async (open) => {
+    if (!import.meta.client) return
+    if (open) {
+      document.addEventListener('keydown', onKeydown)
+      await nextTick()
+      cancelBtn.value?.$el?.focus?.()
+    } else {
+      document.removeEventListener('keydown', onKeydown)
+    }
+  }
+)
+
+onUnmounted(() => {
+  if (import.meta.client) document.removeEventListener('keydown', onKeydown)
+})
 </script>
 
 <template>
@@ -39,7 +67,7 @@ const { state, resolve } = useConfirm()
               </div>
             </div>
             <div class="flex items-center gap-2.5">
-              <BaseButton variant="secondary" size="md" class="flex-1" @click="resolve(false)">{{ state.cancelLabel }}</BaseButton>
+              <BaseButton ref="cancelBtn" variant="secondary" size="md" class="flex-1" @click="resolve(false)">{{ state.cancelLabel }}</BaseButton>
               <BaseButton :variant="state.tone === 'danger' ? 'danger' : 'primary'" size="md" class="flex-1" @click="resolve(true)">
                 {{ state.confirmLabel }}
               </BaseButton>

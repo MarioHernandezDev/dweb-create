@@ -37,7 +37,11 @@ function mapRow(row: PostRow): Post {
     dueDate: row.due_date.slice(0, 10),
     hashtags: row.metadata?.hashtags ?? [],
     cover: coverFromId(row.id),
-    mediaUrl: row.media_url
+    mediaUrl: row.media_url,
+    // Etiquetas/checklist son solo del tablero del creador por ahora — el
+    // partner no las ve todavía (ver migración 20261024090000).
+    labelIds: [],
+    checklist: { total: 0, done: 0 }
   }
 }
 
@@ -70,6 +74,10 @@ export function usePartnerPosts() {
       .select('*')
       .in('collaboration_id', collabIds)
       .order('due_date', { ascending: true })
+      // Mismo tope de cordura que useMyPosts.ts — sin esto, un partner con
+      // muchas colaboraciones activas durante años acababa trayendo CADA
+      // publicación de todas ellas, de siempre, solo para pintar un tablero.
+      .limit(300)
     if (error) {
       console.error('[usePartnerPosts] fallo al cargar posts:', error.message)
       return

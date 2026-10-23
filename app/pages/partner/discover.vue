@@ -6,7 +6,7 @@ useHead({ title: 'Descubrir' })
 
 const client = useSupabaseClient()
 const { partner } = useMyPartner()
-const { results, loading, searched, error, search } = useDiscover()
+const { results, loading, searched, error, aiLoading, aiSummary, aiCategories, search } = useDiscover()
 
 const mode = ref<'filters' | 'ai'>('filters')
 const modeOptions = [{ value: 'filters', label: 'Filtros' }, { value: 'ai', label: 'Buscar con IA' }]
@@ -15,6 +15,22 @@ const selectedCategories = ref<string[]>([])
 const minBudgetEuros = ref<number | null>(null)
 const maxBudgetEuros = ref<number | null>(null)
 const filtersOpen = ref(false)
+
+// Destacados es el diseño general de la sección, con o sin IA de por medio
+// — se ve en cuanto hay resultados. Lo único que cambia con el modo es qué
+// hay de verdad detrás de cada card: con IA, puntuación y motivo reales;
+// sin ella, el propio orden por filtros (más alto = más categorías en
+// común) y la bio en vez de un "motivo" inventado.
+const showDeck = computed(() => results.value.length > 0)
+// El 50% heurístico por defecto (sin filtros de categoría ni IA) es el
+// mismo para todo el mundo — mostrarlo sería un número sin significado
+// real, así que el badge de puntuación solo aparece cuando hay un criterio
+// de verdad detrás.
+const scoreMeaningful = computed(() => selectedCategories.value.length > 0 || results.value.some((r) => r.reason))
+// Ids visibles ahora mismo en la tira de Destacados — la lista de debajo
+// los excluye, así nada se repite entre las dos zonas.
+const deckVisibleIds = ref<string[]>([])
+const listResults = computed(() => (showDeck.value ? results.value.filter((r) => !deckVisibleIds.value.includes(r.id)) : results.value))
 
 function toggleCategory(cat: string) {
   const i = selectedCategories.value.indexOf(cat)
@@ -136,12 +152,20 @@ async function send() {
       icon="ph:user-circle" title="Ningún creador encaja con esta búsqueda"
       description="Prueba a quitar algún filtro o a reformular tu búsqueda."
     />
-    <div v-else class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-      <DiscoveryCard
-        v-for="creator in results" :key="creator.id" :result="creator" kind="creator" cta-label="Contactar"
-        @contact="openContact(creator)"
+    <template v-else>
+      <FeaturedDeck
+        v-if="showDeck"
+        :results="results" :loading="aiLoading" :summary="aiSummary" :categories="aiCategories" :score-meaningful="scoreMeaningful"
+        kind="creator" cta-label="Contactar"
+        @contact="openContact" @visible-change="deckVisibleIds = $event"
       />
-    </div>
+      <div class="flex flex-col gap-3 max-w-[760px]">
+        <DiscoveryCard
+          v-for="creator in listResults" :key="creator.id" :result="creator" kind="creator" cta-label="Contactar"
+          @contact="openContact(creator)"
+        />
+      </div>
+    </template>
 
     <BottomSheet v-model="sheetOpen" :title="target ? `Contactar a ${target.name}` : 'Contactar'">
       <template v-if="sheetStage === 'form'">

@@ -63,12 +63,15 @@
       Entregas, métricas y predicciones de éxito — partners y creadores de contenido, todo en un solo sitio.
     </p>
 
+    <!-- Quien llega a una landing pública no tiene cuenta todavía, por
+         definición — el CTA grande lleva a crear una, "Acceder" queda como
+         enlace secundario para quien ya es usuario. Antes era al revés. -->
     <div class="nx-stagger-in flex flex-col items-center gap-4 sm:flex-row sm:gap-6" style="--stagger-i: 3">
-      <BaseButton to="/login" variant="primary" size="lg" icon="ph:arrow-right-bold" class="w-full sm:w-auto sm:px-10">
-        Acceder a tu cuenta
+      <BaseButton to="/onboarding" variant="primary" size="lg" icon="ph:arrow-right-bold" class="w-full sm:w-auto sm:px-10">
+        Crear cuenta
       </BaseButton>
-      <NuxtLink to="/onboarding" class="text-[0.875rem] text-[var(--color-text-muted)] underline decoration-[var(--color-hairline-strong)] underline-offset-4 hover:text-[var(--color-text)]">
-        Registro personal :)
+      <NuxtLink to="/login" class="text-[0.875rem] text-[var(--color-text-muted)] underline decoration-[var(--color-hairline-strong)] underline-offset-4 hover:text-[var(--color-text)]">
+        Ya tengo cuenta
       </NuxtLink>
     </div>
   </div>

@@ -79,7 +79,7 @@ async function predict() {
     const result = await $fetch('/api/ml/predict', { method: 'POST', body: { postId: post.value.id } })
     if (post.value) {
       post.value.successScore = result.successScore
-      post.value.confidence = result.confidence
+      post.value.aiEvaluated = result.aiEvaluated
       post.value.suggestions = result.suggestions.length ? result.suggestions : undefined
     }
     setCreditBalance(result.creditsRemaining)
@@ -154,14 +154,19 @@ async function predict() {
 
       <section class="mt-6 lg:mt-0">
         <SuccessScoreCard
-          v-if="post.successScore" :score="post.successScore" :confidence="post.confidence ?? 0.82"
+          v-if="post.successScore" :score="post.successScore" :ai-evaluated="post.aiEvaluated"
           :suggestions="post.suggestions ?? suggestionsForDraft" :generic-suggestions="!post.suggestions"
         />
         <BaseCard v-else radius="lg" padding="lg" class="flex items-center justify-between gap-4 lg:flex-col lg:items-start">
           <div>
             <p class="text-[0.9375rem] text-[var(--color-text)]">Todavía no has predicho el éxito de esta publicación</p>
             <p class="text-[0.8125rem] text-[var(--color-text-muted)] mt-0.5">
-              {{ creditBalance === 0 ? 'Sin créditos — mejora tu plan para seguir prediciendo' : `Consume 1 crédito · te quedan ${creditBalance ?? '…'}` }}
+              <template v-if="creditBalance === 0">
+                Sin créditos —
+                <NuxtLink to="/creator/profile?tab=billing" class="text-[var(--color-primary-500)] hover:text-[var(--color-primary-600)] underline underline-offset-2">mejora tu plan</NuxtLink>
+                para seguir prediciendo
+              </template>
+              <template v-else>Consume 1 crédito · te quedan {{ creditBalance ?? '…' }}</template>
             </p>
             <p v-if="predictError" class="text-[0.8125rem] text-[var(--color-status-alert)] mt-1">{{ predictError }}</p>
           </div>

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { Suggestion } from '~/types'
 
-const props = defineProps<{ score: number; confidence: number; suggestions: Suggestion[]; genericSuggestions?: boolean }>()
+const props = defineProps<{ score: number; aiEvaluated?: boolean; suggestions: Suggestion[]; genericSuggestions?: boolean }>()
 
 const kindMeta: Record<Suggestion['kind'], { icon: string; label: string }> = {
   caption: { icon: 'ph:pencil-simple-fill', label: 'Mejora de texto' },
@@ -24,9 +24,14 @@ const scoreWord = computed(() => (props.score < 45 ? 'bajo' : props.score < 72 ?
           Predicción de éxito
         </p>
         <p class="mt-1 text-[0.9375rem] text-[var(--color-text)]">
-          Potencial <strong class="font-semibold">{{ scoreWord }}</strong> · confianza del {{ Math.round(confidence * 100) }}%
+          Potencial <strong class="font-semibold">{{ scoreWord }}</strong>
         </p>
-        <p class="mt-1 text-[0.8125rem] text-[var(--color-text-muted)]">Basado en tu historial y las tendencias activas ahora mismo.</p>
+        <!-- Honesto sobre qué se evaluó de verdad — nada de un "% de confianza"
+             inventado ni de afirmar que se mira tu historial o tendencias, que
+             nunca ha sido cierto (ver server/api/ml/predict.post.ts). -->
+        <p class="mt-1 text-[0.8125rem] text-[var(--color-text-muted)]">
+          {{ aiEvaluated ? 'Evaluado con IA sobre el contenido real de este borrador.' : 'Evaluado solo por la forma del borrador (longitud, hashtags) — sin IA disponible ahora mismo.' }}
+        </p>
       </div>
     </div>
 

@@ -11,11 +11,12 @@ const { pendingCount: pendingRequests, ensureLoaded: ensureRequestsLoaded } = us
 // porque no hay ninguna fuente real detrás todavía (alcance/interacciones
 // necesitan el permiso de insights de Instagram, pendiente de Meta).
 const { accounts: socialAccounts, ensureLoaded: ensureSocialsLoaded } = useMySocialAccounts()
+const { creator, ensureCreator } = useMyCreator()
 const composerOpen = ref(false)
 
-// En paralelo, no en serie — son tres consultas independientes, esperarlas
+// En paralelo, no en serie — son cuatro consultas independientes, esperarlas
 // una tras otra solo suma su latencia de red sin motivo.
-await Promise.all([ensureLoaded(), ensureRequestsLoaded(), ensureSocialsLoaded()])
+await Promise.all([ensureLoaded(), ensureRequestsLoaded(), ensureSocialsLoaded(), ensureCreator()])
 
 const today = computed(() => posts.value.filter((p) => p.dueInDays === 0))
 const upcoming = computed(() => posts.value.filter((p) => p.dueInDays > 0 && p.dueInDays <= 3))
@@ -23,12 +24,11 @@ const overdue = computed(() => posts.value.filter((p) => p.status === 'overdue')
 const connectedFollowers = computed(() => socialAccounts.value.filter((a) => a.connected).reduce((sum, a) => sum + a.followers, 0))
 const hasConnectedSocials = computed(() => socialAccounts.value.some((a) => a.connected))
 
-// El objetivo semanal (nº de publicaciones/semana) es del perfil del
-// creador en Supabase en el futuro; de momento, fijo, como el resto de la
-// ficha de "creator" que aún no se edita desde la app.
-const weeklyTarget = 5
+// Objetivo semanal real del creador (editable en Perfil → Ficha pública) —
+// antes era un `5` fijo igual para todo el mundo, sin forma de cambiarlo.
+const weeklyTarget = computed(() => creator.value?.weeklyPostTarget ?? 5)
 const publishedThisWeek = computed(() => posts.value.filter((p) => p.status === 'published').length)
-const goalPct = computed(() => (posts.value.length ? Math.min(100, Math.round((publishedThisWeek.value / weeklyTarget) * 100)) : 0))
+const goalPct = computed(() => (posts.value.length ? Math.min(100, Math.round((publishedThisWeek.value / weeklyTarget.value) * 100)) : 0))
 
 const quickActions = [
   { label: 'Publicar', icon: 'ph:pencil-simple-fill', action: () => { composerOpen.value = true } },
@@ -123,7 +123,7 @@ const quickActions = [
         <h2 class="font-display text-[1.25rem] text-[var(--color-text)]">Próximas entregas</h2>
         <NuxtLink to="/creator/timeline" class="text-[0.875rem] font-medium text-[var(--color-text-muted)] hover:text-[var(--color-text)]">Ver todo</NuxtLink>
       </div>
-      <WeekBoard :posts="[...today, ...upcoming]" @open="router.push(`/creator/post/${$event.id}`)" />
+      <WeekBoard :posts="[...today, ...upcoming]" :has-any-posts="posts.length > 0" @open="router.push(`/creator/post/${$event.id}`)" />
     </section>
 
     <Fab :active="composerOpen" @click="composerOpen = true" />

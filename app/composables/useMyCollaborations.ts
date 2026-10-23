@@ -37,6 +37,7 @@ export function useMyCollaborations() {
   const loaded = useState<boolean>('my-collaborations-loaded', () => false)
   const paying = useState<string | null>('my-collaborations-paying', () => null)
   const acting = useState<string | null>('my-collaborations-acting', () => null)
+  const payError = useState<string>('my-collaborations-pay-error', () => '')
 
   async function refresh() {
     const me = partner.value ?? (await ensurePartner())
@@ -47,6 +48,7 @@ export function useMyCollaborations() {
       .select('id, status, creator_id, brief, budget_cents, paid_at, created_at, initiated_by, creators(display_name)')
       .eq('partner_id', me.id)
       .order('created_at', { ascending: false })
+      .limit(300)
     if (error) {
       console.error('[useMyCollaborations] fallo al cargar colaboraciones:', error.message)
       return
@@ -72,13 +74,16 @@ export function useMyCollaborations() {
   }
 
   // Mismo patrón que useCollabRequests (lado creador): `agreedBudgetCents`
-  // sincroniza el presupuesto con la última oferta aceptada.
+  // sincroniza el presupuesto con la última oferta aceptada. Pasa por RPC
+  // (no un update directo) — el servidor valida el importe contra la
+  // negociación real, nunca se fía de lo que mande el cliente.
   async function accept(id: string, agreedBudgetCents?: number | null) {
     acting.value = id
     try {
-      const payload: Record<string, unknown> = { status: 'accepted' }
-      if (agreedBudgetCents !== undefined) payload.budget_cents = agreedBudgetCents
-      const { error } = await client.from('collaborations').update(payload as never).eq('id', id)
+      const { error } = await client.rpc('accept_collaboration_request' as never, {
+        p_collaboration_id: id,
+        p_agreed_budget_cents: agreedBudgetCents ?? null
+      } as never)
       if (error) throw error
       await refresh()
     } finally {
@@ -89,7 +94,7 @@ export function useMyCollaborations() {
   async function decline(id: string) {
     acting.value = id
     try {
-      const { error } = await client.from('collaborations').update({ status: 'declined' } as never).eq('id', id)
+      const { error } = await client.rpc('decline_collaboration_request' as never, { p_collaboration_id: id } as never)
       if (error) throw error
       await refresh()
     } finally {
@@ -97,15 +102,34 @@ export function useMyCollaborations() {
     }
   }
 
+  async function markCompleted(id: string) {
+    acting.value = id
+    try {
+      const { error } = await client.rpc('mark_collaboration_completed' as never, { p_collaboration_id: id } as never)
+      if (error) throw error
+      await refresh()
+    } finally {
+      acting.value = null
+    }
+  }
+
+  // El servidor ya explica en español exactamente por qué falla un pago
+  // (Stripe no conectado, colaboración no aceptada, ya pagada...) — antes
+  // ese mensaje se perdía porque nadie capturaba el error: el botón solo
+  // dejaba de girar, sin explicación, y el usuario no sabía qué había pasado.
   async function payForCollaboration(collaborationId: string) {
     paying.value = collaborationId
+    payError.value = ''
     try {
       const { url } = await $fetch('/api/stripe/pay-collaboration', { method: 'POST', body: { collaborationId } })
       await navigateTo(url, { external: true })
+    } catch (e) {
+      payError.value = (e as { data?: { statusMessage?: string } })?.data?.statusMessage
+        ?? (e instanceof Error ? e.message : 'No se ha podido iniciar el pago. Inténtalo de nuevo.')
     } finally {
       paying.value = null
     }
   }
 
-  return { collaborations, loaded, paying, acting, refresh, ensureLoaded, payForCollaboration, accept, decline }
+  return { collaborations, loaded, paying, acting, payError, refresh, ensureLoaded, payForCollaboration, accept, decline, markCompleted }
 }

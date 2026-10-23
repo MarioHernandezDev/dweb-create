@@ -35,12 +35,17 @@ function openDetail(collab: MyCollaboration) {
 // Antes `accept`/`decline` se llamaban sin esperar su resultado y la hoja
 // se cerraba al instante — si el update a Supabase fallaba, parecía que
 // había funcionado sin haber cambiado nada de verdad.
+// Antes, tras aceptar, no pasaba nada más que cerrar la hoja — el único
+// botón de pago real vive en la pestaña "Colaboraciones" de /partner/profile
+// y no había ninguna pista de que hubiera que ir allí. Ahora se navega
+// directo, con el presupuesto ya aceptado, a pagar.
 async function handleAccept(amount: number | null) {
   if (!detailCollab.value) return
   actionError.value = ''
   try {
     await accept(detailCollab.value.id, amount)
     detailOpen.value = false
+    await navigateTo('/partner/profile?tab=collabs')
   } catch (e) {
     actionError.value = e instanceof Error ? e.message : 'No se ha podido aceptar la solicitud. Inténtalo de nuevo.'
   }
@@ -74,32 +79,34 @@ async function handleDecline() {
     />
 
     <div v-else class="flex flex-col gap-2.5 md:max-w-xl">
-      <BaseCard v-for="collab in visible" :key="collab.id" radius="lg" padding="md" interactive @click="openDetail(collab)">
-        <div class="flex items-start gap-3 mb-3">
-          <BaseAvatar :initials="initialsFromName(collab.creatorName ?? '?')" :hue="hueFromString(collab.creatorName ?? '')" size="sm" />
-          <div class="min-w-0 flex-1">
-            <div class="flex items-start justify-between gap-2">
-              <p class="text-[0.9375rem] font-medium text-[var(--color-text)] truncate">{{ collab.creatorName ?? 'Sin asignar' }}</p>
-              <span class="text-[0.9375rem] font-medium text-[var(--color-text)] shrink-0">
-                {{ collab.budgetCents ? formatEuros(collab.budgetCents) : 'Sin presupuesto' }}
-              </span>
+      <button v-for="collab in visible" :key="collab.id" type="button" class="text-left" @click="openDetail(collab)">
+        <BaseCard radius="lg" padding="md" interactive>
+          <div class="flex items-start gap-3 mb-3">
+            <BaseAvatar :initials="initialsFromName(collab.creatorName ?? '?')" :hue="hueFromString(collab.creatorName ?? '')" size="sm" />
+            <div class="min-w-0 flex-1">
+              <div class="flex items-start justify-between gap-2">
+                <p class="text-[0.9375rem] font-medium text-[var(--color-text)] truncate">{{ collab.creatorName ?? 'Sin asignar' }}</p>
+                <span class="text-[0.9375rem] font-medium text-[var(--color-text)] shrink-0">
+                  {{ collab.budgetCents ? formatEuros(collab.budgetCents) : 'Sin presupuesto' }}
+                </span>
+              </div>
+              <p class="text-[0.75rem] text-[var(--color-text-faint)] mt-0.5">{{ relativeTime(collab.createdAt) }}</p>
             </div>
-            <p class="text-[0.75rem] text-[var(--color-text-faint)] mt-0.5">{{ relativeTime(collab.createdAt) }}</p>
           </div>
-        </div>
 
-        <p class="text-[0.8125rem] text-[var(--color-text-muted)] leading-relaxed mb-3 line-clamp-2">{{ collab.brief }}</p>
+          <p class="text-[0.8125rem] text-[var(--color-text-muted)] leading-relaxed mb-3 line-clamp-2">{{ collab.brief }}</p>
 
-        <span
-          class="inline-flex items-center px-2.5 py-1 rounded-[var(--radius-xs)] text-[0.75rem] font-medium"
-          :style="{
-            color: collaborationStatusMeta[collab.status].color,
-            background: `color-mix(in oklab, ${collaborationStatusMeta[collab.status].color} 16%, transparent)`
-          }"
-        >
-          {{ collaborationStatusMeta[collab.status].label }}
-        </span>
-      </BaseCard>
+          <span
+            class="inline-flex items-center px-2.5 py-1 rounded-[var(--radius-xs)] text-[0.75rem] font-medium"
+            :style="{
+              color: collaborationStatusMeta[collab.status].color,
+              background: `color-mix(in oklab, ${collaborationStatusMeta[collab.status].color} 16%, transparent)`
+            }"
+          >
+            {{ collaborationStatusMeta[collab.status].label }}
+          </span>
+        </BaseCard>
+      </button>
     </div>
 
     <BottomSheet v-model="detailOpen" :title="detailCollab?.creatorName ?? 'Solicitud'">

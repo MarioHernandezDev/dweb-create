@@ -15,7 +15,7 @@ useHead({ title: 'Perfil' })
 
 const route = useRoute()
 const { partner, ensurePartner, updateFicha, uploadCoverPhoto, removeCoverPhoto } = useMyPartner()
-const { collaborations, paying, ensureLoaded, refresh: refreshCollaborations, payForCollaboration } = useMyCollaborations()
+const { collaborations, paying, acting, payError, ensureLoaded, refresh: refreshCollaborations, payForCollaboration, markCompleted } = useMyCollaborations()
 
 const user = useSupabaseUser()
 const { logout } = useLogout()
@@ -51,7 +51,12 @@ const tabs = [
   { id: 'collabs', label: 'Colaboraciones', icon: 'ph:handshake-fill' },
   { id: 'privacy', label: 'Privacidad', icon: 'ph:shield-check-fill' }
 ] as const
-const activeTab = ref<(typeof tabs)[number]['id']>('ficha')
+// `?tab=collabs` permite enlazar directo desde fuera (p. ej. justo tras
+// aceptar una negociación en /partner/requests, para ir derecho a pagar).
+const initialTab = route.query.tab as string | undefined
+const activeTab = ref<(typeof tabs)[number]['id']>(
+  tabs.some((t) => t.id === initialTab) ? (initialTab as (typeof tabs)[number]['id']) : 'ficha'
+)
 
 const packageSheetOpen = ref(false)
 const editingPackage = ref<Package | null>(null)
@@ -125,13 +130,30 @@ async function confirmLogout() {
   await logout()
 }
 
+const lastPayAttemptId = ref('')
 async function confirmPay(collaborationId: string) {
   const ok = await confirm({
     title: '¿Confirmar el pago?',
     message: 'Se abrirá Stripe para completar el cobro de esta colaboración.',
     confirmLabel: 'Ir a pagar'
   })
-  if (ok) await payForCollaboration(collaborationId)
+  if (!ok) return
+  lastPayAttemptId.value = collaborationId
+  await payForCollaboration(collaborationId)
+}
+
+function formatDate(iso: string | null) {
+  if (!iso) return '—'
+  return new Date(iso).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })
+}
+
+async function confirmMarkCompleted(collaborationId: string) {
+  const ok = await confirm({
+    title: '¿Marcar como completada?',
+    message: 'Indica que el trabajo de esta colaboración ya se ha entregado. No afecta al pago.',
+    confirmLabel: 'Marcar como completada'
+  })
+  if (ok) await markCompleted(collaborationId)
 }
 
 const chatPrivacyOptions: { value: ChatPrivacy; label: string; description: string }[] = [
@@ -419,17 +441,26 @@ async function saveFicha() {
                     {{ collaborationStatusMeta[collab.status].label }}
                   </p>
 
-                  <p v-if="collab.paidAt" class="inline-flex items-center gap-1.5 text-[0.8125rem] text-[var(--color-status-published)]">
-                    <Icon name="ph:check-circle-fill" class="size-4" /> Pagado
+                  <p v-if="collab.paidAt" class="inline-flex items-center gap-1.5 text-[0.8125rem] text-[var(--color-status-published)] mb-2">
+                    <Icon name="ph:check-circle-fill" class="size-4" /> Cobrado el {{ formatDate(collab.paidAt) }}
                   </p>
                   <p v-else-if="!payableStatuses.includes(collab.status)" class="text-[0.75rem] text-[var(--color-text-faint)]">
                     Se podrá pagar cuando acepten la solicitud.
                   </p>
                   <BaseButton
-                    v-else variant="primary" size="sm" class="w-full" :disabled="!collab.budgetCents || paying === collab.id"
+                    v-else-if="!collab.paidAt" variant="primary" size="sm" class="w-full mb-2" :disabled="!collab.budgetCents || paying === collab.id"
                     :icon-spin="paying === collab.id" @click="confirmPay(collab.id)"
                   >
                     {{ paying === collab.id ? 'Abriendo pago…' : 'Pagar' }}
+                  </BaseButton>
+                  <p v-if="payError && lastPayAttemptId === collab.id" class="text-[0.75rem] text-[var(--color-status-alert)] mb-2">{{ payError }}</p>
+
+                  <BaseButton
+                    v-if="collab.status === 'accepted' || collab.status === 'in_progress'"
+                    variant="secondary" size="sm" class="w-full" :disabled="acting === collab.id" :icon-spin="acting === collab.id"
+                    @click="confirmMarkCompleted(collab.id)"
+                  >
+                    Marcar como completada
                   </BaseButton>
                 </BaseCard>
               </div>

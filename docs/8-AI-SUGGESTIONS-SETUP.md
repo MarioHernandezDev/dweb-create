@@ -22,7 +22,7 @@ Igual que con Supabase y Stripe: esto no lo puede hacer Claude Code por vosotros
 ```bash
 # en tu .env
 OPENROUTER_API_KEY=sk-or-v1-...
-OPENROUTER_MODEL=nvidia/nemotron-3-super-120b-a12b:free
+OPENROUTER_MODEL=nvidia/nemotron-3.5-lightning:free
 ```
 
 `OPENROUTER_MODEL` ya trae un valor por defecto en el código (`nuxt.config.ts`) si lo dejas vacío, así que solo hace falta tocarlo si el modelo deja de estar disponible gratis (ver paso 3).
@@ -31,7 +31,7 @@ OPENROUTER_MODEL=nvidia/nemotron-3-super-120b-a12b:free
 
 ## 3. Si el modelo por defecto deja de funcionar
 
-OpenRouter rota qué modelos están en su catálogo gratuito de vez en cuando (el que se usó al construir esta pieza, `meta-llama/llama-3.3-70b-instruct:free`, ya desapareció una vez) — si `nvidia/nemotron-3-super-120b-a12b:free` deja de existir o de ser gratis:
+OpenRouter rota qué modelos están en su catálogo gratuito de vez en cuando — van ya dos bajas: `meta-llama/llama-3.3-70b-instruct:free` (404, retirado del catálogo) y después `nvidia/nemotron-3-super-120b-a12b:free` (404 "Function not found" aunque seguía apareciendo listado — el catálogo público y la disponibilidad real del proveedor no siempre van a la par). Si `nvidia/nemotron-3.5-lightning:free` deja de existir o de ser gratis:
 
 1. Ve a [openrouter.ai/models?max_price=0](https://openrouter.ai/models?max_price=0) (filtro de precio 0, solo modelos gratis).
 2. Copia el identificador exacto de otro modelo de la lista (el que aparece en la URL de su ficha, con el sufijo `:free`).

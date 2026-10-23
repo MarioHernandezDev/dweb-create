@@ -16,10 +16,15 @@ function openProfile() {
   router.push(`/profile/${props.kind}/${props.result.id}`)
 }
 
+// Mismo lenguaje que BoardCard/PackageCard/FeaturedDeck: textura de
+// claqueta desaturada en vez de un degradado vistoso, cuando no hay foto.
 const coverArt = computed(() => coverArtFromString(props.result.id))
+const coverStyle = computed(() => ({
+  backgroundColor: `hsl(${coverArt.value.from.match(/hsl\((\d+)/)?.[1] ?? 0} 24% 93%)`,
+  backgroundImage: 'repeating-linear-gradient(45deg, rgb(26 22 37 / 5%) 0 8px, transparent 8px 16px)'
+}))
 const icon = computed(() => (props.kind === 'creator' ? 'ph:user-focus' : 'ph:storefront-fill'))
 const topCategories = computed(() => props.result.categories.slice(0, 3))
-const extraCategoryCount = computed(() => Math.max(0, props.result.categories.length - 3))
 
 const budgetLabel = computed(() => {
   const { minCents, maxCents } = props.result
@@ -29,53 +34,25 @@ const budgetLabel = computed(() => {
 </script>
 
 <template>
-  <BaseCard radius="lg" padding="none" interactive class="overflow-hidden flex flex-col" @click="openProfile">
-    <div class="relative h-52">
-      <img v-if="result.coverUrl" :src="result.coverUrl" alt="" class="absolute inset-0 size-full object-cover">
-      <div
-        v-else class="absolute inset-0 flex items-center justify-center"
-        :style="{ background: `linear-gradient(${coverArt.angle}deg, ${coverArt.from}, ${coverArt.to})` }"
-      >
-        <Icon :name="icon" class="size-16 text-white/25" />
-      </div>
-
-      <div class="absolute inset-0" style="background: linear-gradient(185deg, rgb(10 9 12 / 5%) 35%, rgb(10 9 12 / 88%) 100%)" />
-
-      <span
-        v-if="result.reason" class="absolute top-3 right-3 inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[0.75rem] font-medium bg-black/45 backdrop-blur-sm text-white"
-      >
-        <Icon name="ph:sparkle-fill" class="size-3.5" /> {{ result.score }}% match
+  <div class="flex items-center gap-4 rounded-[var(--radius-sm)] border border-[var(--color-hairline)] bg-[var(--color-paper)] p-3 transition-colors hover:border-[var(--color-hairline-strong)]">
+    <!-- Botón de verdad, no un div con @click: así se puede llegar con Tab y activar con Enter/Espacio. -->
+    <button type="button" class="flex min-w-0 flex-1 items-center gap-4 text-left" :aria-label="`Ver el perfil de ${result.name}`" @click="openProfile">
+      <span class="relative size-14 shrink-0 rounded-[var(--radius-xs)] overflow-hidden" :style="!result.coverUrl ? coverStyle : undefined">
+        <img v-if="result.coverUrl" :src="result.coverUrl" alt="" class="absolute inset-0 size-full object-cover">
+        <Icon v-else :name="icon" class="absolute inset-0 m-auto size-5 text-[var(--color-text)] opacity-30" />
       </span>
 
-      <div class="absolute inset-x-0 bottom-0 p-4">
-        <p class="font-display text-white text-[1.25rem] leading-snug truncate">{{ result.name }}</p>
-        <div v-if="topCategories.length" class="flex flex-wrap items-center gap-1.5 mt-1.5">
-          <span v-for="cat in topCategories" :key="cat" class="px-2 py-0.5 rounded-full text-[0.6875rem] font-medium bg-white/15 text-white backdrop-blur-sm">
-            {{ cat }}
-          </span>
-          <span v-if="extraCategoryCount" class="text-[0.6875rem] text-white/70">+{{ extraCategoryCount }}</span>
-        </div>
-      </div>
-    </div>
-
-    <div class="p-4 flex flex-col gap-3 flex-1">
-      <p v-if="result.bio" class="text-[0.8125rem] text-[var(--color-text-muted)] leading-relaxed line-clamp-2">{{ result.bio }}</p>
-      <p v-else class="text-[0.8125rem] text-[var(--color-text-faint)] italic">Sin bio todavía.</p>
-
-      <div class="flex items-center gap-3 text-[0.8125rem] text-[var(--color-text-muted)]">
-        <span v-if="kind === 'creator'" class="inline-flex items-center gap-1.5">
-          <Icon name="ph:users-three-fill" class="size-4 text-[var(--color-text-faint)]" /> {{ formatCompactNumber(result.followers) }}
+      <span class="min-w-0 flex-1 flex flex-col gap-1">
+        <span class="text-[0.9375rem] font-semibold text-[var(--color-text)] truncate">{{ result.name }}</span>
+        <span class="flex flex-wrap items-center gap-x-2 gap-y-1 text-[0.75rem] text-[var(--color-text-muted)]">
+          <span v-for="cat in topCategories" :key="cat">{{ cat }}</span>
+          <span v-if="kind === 'creator' && result.followers" class="inline-flex items-center gap-1"><Icon name="ph:users-three-fill" class="size-3" /> {{ formatCompactNumber(result.followers) }}</span>
+          <span v-if="budgetLabel" class="inline-flex items-center gap-1"><Icon name="ph:currency-eur" class="size-3" /> {{ budgetLabel }}</span>
         </span>
-        <span v-if="budgetLabel" class="inline-flex items-center gap-1.5">
-          <Icon name="ph:currency-eur" class="size-4 text-[var(--color-text-faint)]" /> {{ budgetLabel }}
-        </span>
-      </div>
+        <span v-if="result.bio" class="text-[0.8125rem] text-[var(--color-text-muted)] leading-snug line-clamp-1">{{ result.bio }}</span>
+      </span>
+    </button>
 
-      <p v-if="result.reason" class="text-[0.8125rem] text-[var(--color-primary-500)] flex items-start gap-1.5">
-        <Icon name="ph:sparkle-fill" class="size-4 shrink-0 mt-0.5" /> {{ result.reason }}
-      </p>
-
-      <BaseButton variant="secondary" size="sm" class="w-full mt-auto" @click.stop="$emit('contact')">{{ ctaLabel }}</BaseButton>
-    </div>
-  </BaseCard>
+    <BaseButton variant="secondary" size="sm" class="shrink-0" @click="$emit('contact')">{{ ctaLabel }}</BaseButton>
+  </div>
 </template>

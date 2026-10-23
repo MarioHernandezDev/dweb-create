@@ -4,11 +4,15 @@ import type { Post, PostStatus, Platform } from '~/types'
 import { statusMeta } from '~/utils/status'
 import { platformMeta } from '~/utils/mock-data'
 
-defineEmits<{ open: [post: Post] }>()
-
 const { posts, updatePost, deletePost, refresh } = useMyPosts()
 const { requests: collabRequests, ensureLoaded: ensureCollabRequestsLoaded } = useCollabRequests()
-onMounted(() => ensureCollabRequestsLoaded())
+const { ensureLabels } = useLabels()
+const { creator, ensureCreator, setWipLimit } = useMyCreator()
+onMounted(() => {
+  ensureCollabRequestsLoaded()
+  ensureLabels()
+  ensureCreator()
+})
 
 // Fases del tablero, en el orden en que se recorren de verdad — "overdue" no
 // es una fase a la que se arrastre nada, es una fecha pasada (ver aviso en
@@ -66,8 +70,17 @@ function isOverdue(post: Post) {
 // selector existe como atajo sin arrastrar nada.
 async function moveTo(post: Post, phase: PostStatus, fromDrag = false) {
   if (post.status === phase) return
+  const fromPhase = post.status
   try {
     await updatePost(post.id, { status: phase })
+    if (!fromDrag) {
+      // El selector de fase, a diferencia del drag, no reubica nada por su
+      // cuenta — y `sync()` tampoco: solo añade ids que no reconoce, nunca
+      // mueve uno que ya está en otra columna. Hay que moverla a mano.
+      const idx = board[fromPhase].findIndex((p) => p.id === post.id)
+      if (idx !== -1) board[fromPhase].splice(idx, 1)
+      board[phase].push(post)
+    }
   } catch (err) {
     console.error('[PhaseBoard] fallo al mover de fase, recargando el tablero:', err)
     if (fromDrag) {
@@ -85,6 +98,38 @@ async function moveTo(post: Post, phase: PostStatus, fromDrag = false) {
 function onChange(phase: PostStatus, event: { added?: { element: Post } }) {
   const moved = event.added?.element
   if (moved) moveTo(moved, phase, true)
+}
+
+// Panel lateral de edición rápida — abrir una card ya no navega a otra
+// página, se queda en el tablero (ver PostEditSheet.vue).
+const editingPost = ref<Post | null>(null)
+const editOpen = ref(false)
+function openEdit(post: Post) {
+  editingPost.value = post
+  editOpen.value = true
+}
+
+// Límite de WIP por columna — solo un aviso visual, no bloquea nada (no
+// tendría sentido impedir mover una card porque la columna esté "llena").
+const wipLimits = computed(() => creator.value?.boardWipLimits ?? {})
+const wipEditingPhase = ref<PostStatus | null>(null)
+const wipInput = ref('')
+function toggleWipEditor(phase: PostStatus) {
+  if (wipEditingPhase.value === phase) {
+    wipEditingPhase.value = null
+    return
+  }
+  wipEditingPhase.value = phase
+  wipInput.value = wipLimits.value[phase] ? String(wipLimits.value[phase]) : ''
+}
+async function saveWipLimit(phase: PostStatus) {
+  const n = parseInt(wipInput.value, 10)
+  await setWipLimit(phase, Number.isFinite(n) && n > 0 ? n : null)
+  wipEditingPhase.value = null
+}
+function isOverLimit(phase: PostStatus) {
+  const limit = wipLimits.value[phase]
+  return !!limit && board[phase].length > limit
 }
 
 // Selección múltiple para borrar varios a la vez — pensada para limpiar
@@ -162,12 +207,34 @@ async function bulkDelete() {
       icon="ph:funnel" title="Ningún resultado con estos filtros"
       description="Prueba a quitar el buscador o alguno de los filtros de arriba."
     />
-    <div v-else class="grid grid-cols-1 gap-6 lg:grid-cols-5 lg:gap-4 lg:items-start">
+    <div v-else class="grid grid-cols-1 gap-6 lg:grid-cols-5 lg:gap-4 lg:items-start select-none">
       <section v-for="phase in phases" :key="phase" class="flex flex-col min-w-0 lg:max-w-[20rem]">
-        <div class="flex items-center gap-2 mb-3 px-0.5">
-          <span class="size-2 rounded-full shrink-0" :style="{ background: statusMeta[phase].color }" />
-          <h2 class="text-[0.8125rem] font-medium text-[var(--color-text)]">{{ statusMeta[phase].label }}</h2>
-          <span class="text-[0.75rem] text-[var(--color-text-faint)] ml-auto">{{ board[phase].length }}</span>
+        <div class="mb-3">
+          <div class="flex items-center gap-2 px-0.5">
+            <span class="size-2 rounded-full shrink-0" :style="{ background: statusMeta[phase].color }" />
+            <h2 class="text-[0.8125rem] font-medium text-[var(--color-text)]">{{ statusMeta[phase].label }}</h2>
+            <div class="ml-auto flex items-center gap-1">
+              <Icon v-if="isOverLimit(phase)" name="ph:warning-fill" class="size-3.5 text-[var(--color-status-alert)]" />
+              <span class="text-[0.75rem]" :class="isOverLimit(phase) ? 'text-[var(--color-status-alert)] font-semibold' : 'text-[var(--color-text-faint)]'">
+                {{ board[phase].length }}{{ wipLimits[phase] ? `/${wipLimits[phase]}` : '' }}
+              </span>
+              <button
+                type="button" aria-label="Límite de la columna"
+                class="size-5 flex items-center justify-center rounded-full text-[var(--color-text-faint)] hover:text-[var(--color-text)] hover:bg-[var(--color-ink-overlay)]"
+                @click="toggleWipEditor(phase)"
+              >
+                <Icon name="ph:gear-six-bold" class="size-3" />
+              </button>
+            </div>
+          </div>
+          <div v-if="wipEditingPhase === phase" class="flex items-center gap-1.5 mt-2 px-0.5">
+            <input
+              v-model="wipInput" type="number" min="1" placeholder="Sin límite"
+              class="w-24 h-7 px-2 rounded-[var(--radius-xs)] bg-[var(--color-ink-overlay)] border border-[var(--color-hairline)] text-[0.75rem] text-[var(--color-text)] focus:outline-none focus:border-[var(--color-primary-500)]/60"
+              @keydown.enter.prevent="saveWipLimit(phase)"
+            >
+            <button type="button" class="text-[0.75rem] font-medium text-[var(--color-primary-500)]" @click="saveWipLimit(phase)">Guardar</button>
+          </div>
         </div>
 
         <draggable
@@ -189,7 +256,7 @@ async function bulkDelete() {
         >
           <template #item="{ element }: { element: Post }">
             <div class="relative" :class="isOverdue(element) && 'rounded-[var(--radius-md)] ring-2 ring-[var(--color-status-alert)]'">
-              <BoardCard :post="element" :phases="phases" @open="$emit('open', $event)" @move="moveTo(element, $event)" />
+              <BoardCard :post="element" :phases="phases" @open="openEdit(element)" @move="moveTo(element, $event)" />
               <template v-if="selectionMode">
                 <button
                   type="button" class="absolute inset-0 z-10 rounded-[var(--radius-md)]"
@@ -227,6 +294,8 @@ async function bulkDelete() {
         <BaseButton variant="danger" size="sm" :icon-spin="bulkDeleting" :disabled="bulkDeleting" @click="bulkDelete">Borrar</BaseButton>
       </div>
     </Transition>
+
+    <PostEditSheet v-model="editOpen" :post="editingPost" :phases="phases" @move="(status) => editingPost && moveTo(editingPost, status)" />
   </div>
 </template>
 

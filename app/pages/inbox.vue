@@ -22,10 +22,13 @@ const typeIcon: Record<string, string> = {
   collaboration_requested: 'ph:handshake-fill',
   collaboration_accepted: 'ph:check-circle-fill',
   collaboration_declined: 'ph:x-circle-fill',
-  collaboration_assigned: 'ph:briefcase-fill',
-  roster_requested: 'ph:users-three-fill',
-  roster_accepted: 'ph:check-circle-fill',
-  roster_declined: 'ph:x-circle-fill'
+  collaboration_completed: 'ph:flag-checkered-fill',
+  // 'collaboration_assigned' se retiró al quitar el rol de manager —
+  // no queda ningún camino de código que lo vuelva a emitir.
+  collaboration_paid: 'ph:currency-eur-fill',
+  offer_received: 'ph:tag-fill',
+  offer_accepted: 'ph:check-circle-fill',
+  offer_declined: 'ph:x-circle-fill'
 }
 
 function iconFor(n: AppNotification) {

@@ -68,9 +68,12 @@ export default defineNuxtConfig({
     // Las sugerencias de IA se piden desde /api/ml/predict, nunca desde el
     // navegador — ver docs/8-AI-SUGGESTIONS-SETUP.md.
     openrouterApiKey: process.env.OPENROUTER_API_KEY,
-    // `meta-llama/llama-3.3-70b-instruct:free` desapareció del catálogo
-    // gratuito de OpenRouter (404) — ver docs/CHANGELOG.md.
-    openrouterModel: process.env.OPENROUTER_MODEL || 'nvidia/nemotron-3-super-120b-a12b:free',
+    // El catálogo gratuito de OpenRouter rota — ya van dos modelos por
+    // defecto que han dejado de responder (404 primero
+    // `meta-llama/llama-3.3-70b-instruct:free`, luego 404 "Function not
+    // found" en `nvidia/nemotron-3-super-120b-a12b:free`, aunque seguía
+    // listado en el catálogo). Ver docs/CHANGELOG.md.
+    openrouterModel: process.env.OPENROUTER_MODEL || 'nvidia/nemotron-3.5-lightning:free',
     // OAuth real de Instagram (Fase 4) — ver docs/9-INSTAGRAM-OAUTH-SETUP.md.
     // Los 3 son necesarios para que "Conectar" en Redes funcione de verdad;
     // sin ellos, server/api/auth/instagram/start.get.ts devuelve un 500 claro

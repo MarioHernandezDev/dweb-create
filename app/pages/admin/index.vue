@@ -173,11 +173,21 @@ const proSeries = computed(() => [
   { label: 'Pro regalado', color: 'var(--color-logo-amber)', values: analytics.value?.proGifted ?? [] }
 ])
 
+const { confirm } = useConfirm()
+
 const acting = ref<string | null>(null)
 async function toggleBlock(user: AdminUser) {
+  const willBlock = !user.bannedUntil
+  const ok = await confirm({
+    title: willBlock ? `¿Bloquear a ${user.displayName ?? user.email}?` : `¿Desbloquear a ${user.displayName ?? user.email}?`,
+    message: willBlock ? 'No podrá iniciar sesión hasta que lo desbloquees.' : 'Podrá volver a iniciar sesión con normalidad.',
+    confirmLabel: willBlock ? 'Bloquear' : 'Desbloquear', tone: willBlock ? 'danger' : 'default'
+  })
+  if (!ok) return
+
   acting.value = user.id
   try {
-    await $fetch(`/api/admin/users/${user.id}/block`, { method: 'POST', body: { banned: !user.bannedUntil } })
+    await $fetch(`/api/admin/users/${user.id}/block`, { method: 'POST', body: { banned: willBlock } })
     await loadUsers()
   } finally {
     acting.value = null
@@ -189,9 +199,17 @@ function monthsFor(id: string) {
   return monthsByUser[id] ?? 6
 }
 async function grantPro(user: AdminUser) {
+  const months = monthsFor(user.id)
+  const ok = await confirm({
+    title: `¿Regalar Pro a ${user.displayName ?? user.email}?`,
+    message: `Se le concederán ${months} mes${months === 1 ? '' : 'es'} de Pro y los créditos correspondientes, sin pasar por Stripe.`,
+    confirmLabel: 'Dar Pro'
+  })
+  if (!ok) return
+
   acting.value = user.id
   try {
-    await $fetch(`/api/admin/users/${user.id}/grant-pro`, { method: 'POST', body: { months: monthsFor(user.id) } })
+    await $fetch(`/api/admin/users/${user.id}/grant-pro`, { method: 'POST', body: { months } })
     await loadUsers()
   } finally {
     acting.value = null
@@ -376,5 +394,6 @@ function formatDate(iso: string | null) {
         </BaseCard>
       </div>
     </div>
+    <ConfirmDialogHost />
   </div>
 </template>

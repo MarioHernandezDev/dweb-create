@@ -37,7 +37,7 @@ const platforms = Object.entries(platformMeta).map(([value, meta]) => ({ value: 
 
 type Stage = 'draft' | 'predicting' | 'saving' | 'result'
 const stage = ref<Stage>('draft')
-const result = ref<{ score: number; confidence: number; suggestions: Suggestion[] } | null>(null)
+const result = ref<{ score: number; aiEvaluated: boolean; suggestions: Suggestion[] } | null>(null)
 const error = ref('')
 
 // El post se crea de verdad (estado "idea") en el primer "Predecir éxito" o
@@ -78,7 +78,7 @@ async function predict() {
   try {
     const postId = await saveDraft()
     const prediction = await $fetch('/api/ml/predict', { method: 'POST', body: { postId } })
-    result.value = { score: prediction.successScore, confidence: prediction.confidence, suggestions: prediction.suggestions }
+    result.value = { score: prediction.successScore, aiEvaluated: prediction.aiEvaluated, suggestions: prediction.suggestions }
     setCreditBalance(prediction.creditsRemaining)
     stage.value = 'result'
   } catch (err) {
@@ -210,7 +210,12 @@ watch(open, (value) => {
           {{ stage === 'predicting' ? 'Analizando…' : 'Predecir éxito' }}
         </BaseButton>
         <p class="text-center text-[0.75rem] text-[var(--color-text-faint)] -mt-2">
-          {{ creditBalance === 0 ? 'Sin créditos — mejora tu plan para seguir prediciendo' : `Consume 1 crédito · te quedan ${creditBalance ?? '…'}` }}
+          <template v-if="creditBalance === 0">
+            Sin créditos —
+            <NuxtLink to="/creator/profile?tab=billing" class="text-[var(--color-primary-500)] hover:text-[var(--color-primary-600)] underline underline-offset-2">mejora tu plan</NuxtLink>
+            para seguir prediciendo
+          </template>
+          <template v-else>Consume 1 crédito · te quedan {{ creditBalance ?? '…' }}</template>
         </p>
 
         <BaseButton
@@ -225,7 +230,7 @@ watch(open, (value) => {
 
       <div v-else-if="result" key="result">
         <SuccessScoreCard
-          :score="result.score" :confidence="result.confidence"
+          :score="result.score" :ai-evaluated="result.aiEvaluated"
           :suggestions="result.suggestions.length ? result.suggestions : suggestionsForDraft" :generic-suggestions="!result.suggestions.length"
         />
         <div class="flex gap-2.5 mt-5">

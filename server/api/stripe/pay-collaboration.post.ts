@@ -72,25 +72,33 @@ export default defineEventHandler(async (event) => {
   const origin = getRequestURL(event).origin
   const budgetCents = collaboration.budget_cents
 
-  const session = await stripe.checkout.sessions.create({
-    mode: 'payment',
-    customer_email: user.email,
-    line_items: [{
-      price_data: {
-        currency: 'eur',
-        unit_amount: budgetCents,
-        product_data: { name: 'Colaboración FEEDMA', description: `Presupuesto acordado para la colaboración ${collaboration.id}` }
+  const session = await stripe.checkout.sessions.create(
+    {
+      mode: 'payment',
+      customer_email: user.email,
+      line_items: [{
+        price_data: {
+          currency: 'eur',
+          unit_amount: budgetCents,
+          product_data: { name: 'Colaboración FEEDMA', description: `Presupuesto acordado para la colaboración ${collaboration.id}` }
+        },
+        quantity: 1
+      }],
+      payment_intent_data: {
+        application_fee_amount: platformFeeCents(budgetCents),
+        transfer_data: { destination: payee.stripe_connect_account_id }
       },
-      quantity: 1
-    }],
-    payment_intent_data: {
-      application_fee_amount: platformFeeCents(budgetCents),
-      transfer_data: { destination: payee.stripe_connect_account_id }
+      success_url: `${origin}/partner/profile?payment=success`,
+      cancel_url: `${origin}/partner/profile?payment=cancelled`,
+      metadata: { collaboration_id: collaboration.id }
     },
-    success_url: `${origin}/partner/profile?payment=success`,
-    cancel_url: `${origin}/partner/profile?payment=cancelled`,
-    metadata: { collaboration_id: collaboration.id }
-  })
+    // Idempotencia por ventana de 5 minutos: dos clics seguidos (doble clic,
+    // doble pestaña) en esa ventana reutilizan la MISMA sesión de Stripe en
+    // vez de crear dos sesiones de pago independientes para la misma
+    // colaboración — pero un reintento genuino más tarde (p. ej. al día
+    // siguiente, tras cancelar) sí genera una sesión nueva.
+    { idempotencyKey: `collab-pay-${collaboration.id}-${Math.floor(Date.now() / 300_000)}` }
+  )
 
   if (!session.url) throw createError({ statusCode: 500, statusMessage: 'Stripe no devolvió una URL de Checkout.' })
   return { url: session.url }

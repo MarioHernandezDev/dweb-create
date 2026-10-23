@@ -35,8 +35,13 @@ const { avatarUrl, initials: myInitials, hue: myHue } = useMyAvatar()
     <NuxtImg v-else src="/img/logo-svg.png" alt="" width="28" height="28" class="md:hidden size-7 shrink-0" />
 
     <div class="min-w-0 flex-1">
-      <h1 class="font-display text-[1.375rem] md:text-[1.75rem] text-[var(--color-text)] truncate">{{ title }}</h1>
-      <p v-if="subtitle" class="text-[0.8125rem] text-[var(--color-text-muted)] truncate">{{ subtitle }}</p>
+      <h1 class="font-display text-[1.1875rem] md:text-[1.75rem] text-[var(--color-text)] truncate">{{ title }}</h1>
+      <!-- El subtítulo se oculta en móvil a propósito: con el icono de volver/logo,
+           el título, el buscador, chat, bandeja y avatar compartiendo una sola fila
+           en ~375px, era la primera víctima de la falta de espacio — el título
+           llegaba a truncarse a una o dos letras. La propia pantalla ya explica
+           su contenido; el subtítulo vuelve a partir de `md` donde sí cabe. -->
+      <p v-if="subtitle" class="hidden md:block text-[0.8125rem] text-[var(--color-text-muted)] truncate">{{ subtitle }}</p>
     </div>
 
     <ProfileSearchBar />

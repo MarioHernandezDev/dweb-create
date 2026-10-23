@@ -74,9 +74,27 @@
   --color-hairline: rgb(60 30 130 / 9%);
   --color-hairline-strong: rgb(60 30 130 / 16%);
 
+  /* "Ficha de rodaje": blanco con calidez de papel (no blanco puro) para
+     las cards que adoptan el molde de ficha/ticket — BoardCard, PackageCard,
+     StatTile. Distinto a propósito de --color-ink-raised: ese sigue siendo
+     el blanco "de panel" (sheets, inputs); este es el "de tarjeta física". */
+  --color-paper: #fffdf6;
+  /* Casi-negro con tinte morado (no un gris neutro) — talón de precio de
+     PackageCard, spine de StatTile. Mismo criterio que --color-text: nunca
+     negro puro, todo lleva el matiz de marca. */
+  --color-slate: #221c30;
+
   --color-text: #1a1625;
   --color-text-muted: #6b6478;
-  --color-text-faint: #a39db0;
+  /* Antes #a39db0: 2.3–2.6:1 sobre cualquier fondo real de la app — falla
+     el mínimo AA (4.5:1) en todos. Es, además, uno de los tonos más
+     repetidos de la paleta (timestamps, precios, fechas, metadatos), así
+     que no era solo un detalle decorativo sin consecuencia. Oscurecido
+     hasta el punto en que de verdad pasa el contraste en los cuatro fondos
+     reales (--color-ink/-raised/-overlay, --color-paper) — queda muy cerca
+     de --color-text-muted a propósito: un "faint" que de verdad respeta
+     AA no puede alejarse mucho de "muted" sin volver a fallar.  */
+  --color-text-faint: #6d6782;
 
   --color-on-primary: #ffffff;
   --color-on-signal: #ffffff;
@@ -189,6 +207,51 @@ body {
   position: absolute;
   inset: 0;
   width: 100%;
+}
+
+/* Tira de Destacados (FeaturedDeck.vue): la card que sale desliza fuera por
+   la izquierda, la que entra llega desde la derecha, y las que se quedan en
+   medio se reacomodan solas (`-move`, animación FLIP nativa de Vue). */
+.nx-deck-move {
+  transition: transform 0.45s var(--ease-spring);
+}
+.nx-deck-enter-active {
+  transition: opacity 0.4s var(--ease-spring), transform 0.4s var(--ease-spring);
+}
+.nx-deck-leave-active {
+  transition: opacity 0.3s var(--ease-spring), transform 0.3s var(--ease-spring);
+  position: absolute;
+}
+.nx-deck-enter-from {
+  opacity: 0;
+  transform: translateX(48px) scale(0.96);
+}
+.nx-deck-leave-to {
+  opacity: 0;
+  transform: translateX(-48px) scale(0.96);
+}
+
+/* Espejo de lo de arriba para cuando se retrocede con el botón de la
+   izquierda: entra desde la izquierda, sale por la derecha — justo al
+   revés que avanzar, para que la dirección del movimiento coincida de
+   verdad con qué botón se ha pulsado. */
+.nx-deck-back-move {
+  transition: transform 0.45s var(--ease-spring);
+}
+.nx-deck-back-enter-active {
+  transition: opacity 0.4s var(--ease-spring), transform 0.4s var(--ease-spring);
+}
+.nx-deck-back-leave-active {
+  transition: opacity 0.3s var(--ease-spring), transform 0.3s var(--ease-spring);
+  position: absolute;
+}
+.nx-deck-back-enter-from {
+  opacity: 0;
+  transform: translateX(-48px) scale(0.96);
+}
+.nx-deck-back-leave-to {
+  opacity: 0;
+  transform: translateX(48px) scale(0.96);
 }
 
 /* Entrada escalonada para listas (tarjetas de tablero, filas de cliente, etc.) */

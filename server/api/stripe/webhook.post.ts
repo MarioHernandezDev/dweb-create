@@ -88,8 +88,40 @@ async function handleCollaborationPaid(client: SupabaseClient, session: Stripe.C
     stripe_payment_intent_id: session.payment_intent as string,
     paid_at: new Date().toISOString()
   }
-  const { error } = await client.from('collaborations').update(payload as never).eq('id', collaborationId)
-  if (error) console.error('[stripe webhook] fallo al marcar la colaboración como pagada:', error.message)
+  // `.eq('paid_at', null)` hace esto idempotente: si Stripe reentrega el
+  // mismo evento (puede pasar, es su comportamiento documentado) o dos
+  // checkouts llegaron a completarse para la misma colaboración, solo la
+  // primera entrega escribe algo — las siguientes no actualizan ninguna fila.
+  const { data, error } = await client
+    .from('collaborations')
+    .update(payload as never)
+    .eq('id', collaborationId)
+    .is('paid_at', null)
+    .select('id, creator_id, budget_cents')
+    .maybeSingle<{ id: string; creator_id: string; budget_cents: number | null }>()
+  if (error) {
+    console.error('[stripe webhook] fallo al marcar la colaboración como pagada:', error.message)
+    return
+  }
+  if (!data) {
+    console.error('[stripe webhook] checkout.session.completed repetido o colaboración ya pagada — ignorado:', collaborationId, 'payment_intent:', session.payment_intent)
+    return
+  }
+
+  // El creador no tenía forma de saber que le habían pagado salvo entrando a
+  // mirar — ahora se lo avisa igual que cualquier otro evento de la app.
+  const { data: creator } = await client.from('creators').select('profile_id').eq('id', data.creator_id).maybeSingle<{ profile_id: string }>()
+  if (creator?.profile_id) {
+    const amountLabel = data.budget_cents ? `${(data.budget_cents / 100).toFixed(2)} €` : 'tu colaboración'
+    const { error: notifyError } = await client.rpc('notify', {
+      p_profile_id: creator.profile_id,
+      p_type: 'collaboration_paid',
+      p_title: 'Te han pagado',
+      p_body: `Has cobrado ${amountLabel}.`,
+      p_link: '/creator/requests'
+    } as never)
+    if (notifyError) console.error('[stripe webhook] fallo al notificar el cobro al creador:', notifyError.message)
+  }
 }
 
 /**

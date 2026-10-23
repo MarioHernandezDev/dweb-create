@@ -72,11 +72,11 @@ onMounted(() => {
           Entra con tu cuenta o crea una nueva — da igual si eres partner o creador de contenido.
         </p>
         <div class="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-5">
-          <BaseButton to="/login" variant="primary" size="lg" icon="ph:arrow-right-bold" class="w-full sm:w-auto sm:px-9">
-            Entrar a FEEDMA
-          </BaseButton>
-          <NuxtLink to="/onboarding" class="text-[0.875rem] text-white/60 hover:text-white underline underline-offset-4 decoration-white/30">
+          <BaseButton to="/onboarding" variant="primary" size="lg" icon="ph:arrow-right-bold" class="w-full sm:w-auto sm:px-9">
             Crear una cuenta
+          </BaseButton>
+          <NuxtLink to="/login" class="text-[0.875rem] text-white/60 hover:text-white underline underline-offset-4 decoration-white/30">
+            Ya tengo cuenta
           </NuxtLink>
         </div>
       </div>

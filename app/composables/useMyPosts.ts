@@ -13,8 +13,12 @@ interface PostRow {
   due_date: string
   media_url: string | null
   metadata: { hashtags?: string[] } | null
-  ml_predictions: { success_score: number; confidence: number | null; suggestions: Suggestion[] | null; created_at: string }[] | null
+  ml_predictions: { success_score: number; model_version: string | null; suggestions: Suggestion[] | null; created_at: string }[] | null
+  post_labels: { label_id: string }[] | null
+  checklist_items: { done: boolean }[] | null
 }
+
+const POST_SELECT = '*, ml_predictions(success_score, model_version, suggestions, created_at), post_labels(label_id), checklist_items(done)'
 
 function latestPrediction(predictions: PostRow['ml_predictions']) {
   if (!predictions?.length) return undefined
@@ -39,11 +43,16 @@ function mapRow(row: PostRow): Post {
     cover: coverArtFromString(row.id),
     mediaUrl: row.media_url,
     successScore: prediction?.success_score,
-    confidence: prediction?.confidence ?? undefined,
+    aiEvaluated: prediction?.model_version ? prediction.model_version.includes('llm') : undefined,
     // La IA que enriquece la predicción es opcional (ver docs/8-AI-SUGGESTIONS-SETUP.md):
     // si no había OPENROUTER_API_KEY cuando se predijo, esto llega vacío y la
     // pantalla cae en el texto fijo de `suggestionsForDraft`.
-    suggestions: prediction?.suggestions?.length ? prediction.suggestions : undefined
+    suggestions: prediction?.suggestions?.length ? prediction.suggestions : undefined,
+    labelIds: (row.post_labels ?? []).map((pl) => pl.label_id),
+    checklist: {
+      total: row.checklist_items?.length ?? 0,
+      done: row.checklist_items?.filter((i) => i.done).length ?? 0
+    }
   }
 }
 
@@ -88,7 +97,7 @@ export function useMyPosts() {
     loading.value = true
     const { data, error } = await client
       .from('posts')
-      .select('*, ml_predictions(success_score, confidence, suggestions, created_at)')
+      .select(POST_SELECT)
       .eq('creator_id', me.id)
       .order('due_date', { ascending: true })
       // Tope de cordura — sin esto la consulta crece sin límite con el
@@ -187,7 +196,7 @@ export function useMyPosts() {
         due_date: parseDueDate(input.dueDate).toISOString(),
         metadata: input.hashtags?.length ? { hashtags: input.hashtags } : {}
       } as never)
-      .select('*, ml_predictions(success_score, confidence, suggestions, created_at)')
+      .select(POST_SELECT)
       .single<PostRow>()
     if (error) throw error
 

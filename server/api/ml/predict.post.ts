@@ -1,4 +1,8 @@
 import { serverSupabaseServiceRole, serverSupabaseUser } from '#supabase/server'
+// MODEL_VERSION_STRUCTURAL_ONLY / MODEL_VERSION_WITH_LLM / structuralScore
+// vienen de server/utils/ml-heuristic.ts — Nitro las auto-importa como
+// globales, mismo criterio que `plans`/`platformFeeCents`/`useStripe` en el
+// resto de server/api/stripe/*.ts (sin import explícito a propósito).
 
 /**
  * POST /api/ml/predict — motor de ML real (ver docs/3-ML-PIPELINE.md §3.4.2
@@ -49,25 +53,11 @@ interface AiSuggestion {
   text: string
 }
 
-const MODEL_VERSION_STRUCTURAL_ONLY = 'v1-heuristic-2026.01'
-const MODEL_VERSION_WITH_LLM = 'v1-heuristic+llm-2026.01'
 const SUGGESTION_KINDS: AiSuggestion['kind'][] = ['caption', 'hashtag', 'schedule']
 
 interface AiEvaluation {
   qualityScore: number | null
   suggestions: AiSuggestion[]
-}
-
-function structuralScore(post: PostRow): number {
-  const captionLength = post.caption?.length ?? 0
-  const hashtagCount = post.metadata?.hashtags?.length ?? 0
-
-  let score = 50
-  score += Math.min(post.title.length, 20) * 0.5
-  score += captionLength > 40 ? 10 : 0
-  score += Math.min(hashtagCount, 5) * 2
-
-  return Math.max(5, Math.min(96, Math.round(score)))
 }
 
 /**
@@ -171,7 +161,6 @@ export default defineEventHandler(async (event) => {
   }
 
   const structural = structuralScore(post)
-  const confidence = Number((0.7 + Math.random() * 0.15).toFixed(3))
 
   const config = useRuntimeConfig(event)
   const evaluation = config.openrouterApiKey
@@ -187,11 +176,16 @@ export default defineEventHandler(async (event) => {
   const modelVersion = evaluation.qualityScore !== null ? MODEL_VERSION_WITH_LLM : MODEL_VERSION_STRUCTURAL_ONLY
   const suggestions = evaluation.suggestions
 
+  // `confidence` se queda a null a propósito: no hay ninguna señal real que
+  // la respalde (antes era `0.7 + Math.random() * 0.15` — un número con
+  // pinta de estadística que no medía nada). Lo que SÍ es honesto mostrar es
+  // si el score viene solo de la heurística de forma o si además lo juzgó
+  // el LLM sobre el contenido real — eso lo dice `model_version`.
   const { data: prediction, error: insertError } = await client
     .from('ml_predictions')
-    .insert({ post_id: post.id, success_score: successScore, confidence, model_version: modelVersion, suggestions } as never)
-    .select('success_score, confidence, model_version, suggestions, created_at')
-    .single<{ success_score: number; confidence: number; model_version: string; suggestions: AiSuggestion[]; created_at: string }>()
+    .insert({ post_id: post.id, success_score: successScore, confidence: null, model_version: modelVersion, suggestions } as never)
+    .select('success_score, model_version, suggestions, created_at')
+    .single<{ success_score: number; model_version: string; suggestions: AiSuggestion[]; created_at: string }>()
   if (insertError) throw createError({ statusCode: 500, statusMessage: insertError.message })
 
   // Se descuenta DESPUÉS de guardar la predicción con éxito, no antes — si
@@ -206,8 +200,8 @@ export default defineEventHandler(async (event) => {
 
   return {
     successScore: prediction.success_score,
-    confidence: prediction.confidence,
     modelVersion: prediction.model_version,
+    aiEvaluated: prediction.model_version.includes('llm'),
     suggestions: prediction.suggestions ?? [],
     creditsRemaining: creditBalance - 1
   }

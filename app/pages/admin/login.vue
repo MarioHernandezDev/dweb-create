@@ -11,8 +11,8 @@ async function submit() {
   try {
     await $fetch('/api/admin/login', { method: 'POST', body: { password: password.value } })
     await navigateTo('/admin')
-  } catch {
-    error.value = 'Contraseña incorrecta.'
+  } catch (e) {
+    error.value = (e as { data?: { statusMessage?: string } })?.data?.statusMessage ?? 'Contraseña incorrecta.'
   } finally {
     loading.value = false
   }

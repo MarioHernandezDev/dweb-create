@@ -6,12 +6,47 @@ function close() {
   emit('update:modelValue', false)
 }
 
+// Gestión de foco de un diálogo modal de verdad (patrón WAI-ARIA): al abrir,
+// el foco entra en la hoja (si no, un usuario de teclado/lector de pantalla
+// se queda "detrás" del backdrop, sin saber que algo se ha abierto); Escape
+// cierra, igual que el click en el backdrop o el botón "Cerrar"; al cerrar,
+// el foco vuelve exactamente a donde estaba (el botón que abrió la hoja),
+// en vez de perderse en el body. Antes no había nada de esto — la única
+// forma de cerrar con teclado era llegar a tabs hasta el botón "Cerrar".
+const sheetEl = ref<HTMLElement | null>(null)
+let previouslyFocused: HTMLElement | null = null
+
+function onKeydown(e: KeyboardEvent) {
+  if (e.key === 'Escape') close()
+}
+
 watch(
   () => props.modelValue,
-  (open) => {
+  async (open) => {
     if (import.meta.client) document.body.style.overflow = open ? 'hidden' : ''
+    if (!import.meta.client) return
+
+    if (open) {
+      previouslyFocused = document.activeElement as HTMLElement | null
+      document.addEventListener('keydown', onKeydown)
+      await nextTick()
+      // Enfoca el primer elemento enfocable de la hoja (normalmente el botón
+      // "Cerrar") — si no hay ninguno, el propio contenedor del diálogo.
+      const focusable = sheetEl.value?.querySelector<HTMLElement>(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      )
+      ;(focusable ?? sheetEl.value)?.focus()
+    } else {
+      document.removeEventListener('keydown', onKeydown)
+      previouslyFocused?.focus()
+      previouslyFocused = null
+    }
   }
 )
+
+onUnmounted(() => {
+  if (import.meta.client) document.removeEventListener('keydown', onKeydown)
+})
 </script>
 
 <template>
@@ -28,9 +63,9 @@ watch(
       leave-active-class="transition-[transform,opacity] duration-200 ease-[var(--ease-spring)]" leave-from-class="translate-y-0" leave-to-class="translate-y-full md:translate-y-4 md:opacity-0"
     >
       <div
-        v-if="modelValue"
-        class="fixed z-50 inset-x-0 bottom-0 md:inset-0 md:flex md:items-center md:justify-center"
-        role="dialog" aria-modal="true" :aria-label="title"
+        v-if="modelValue" ref="sheetEl"
+        class="fixed z-50 inset-x-0 bottom-0 md:inset-0 md:flex md:items-center md:justify-center outline-none"
+        role="dialog" aria-modal="true" :aria-label="title" tabindex="-1"
       >
         <div class="bg-[var(--color-ink-raised)] rounded-t-[var(--radius-lg)] md:rounded-[var(--radius-lg)] w-full md:max-w-md md:mx-auto border border-[var(--color-hairline)] shadow-[var(--shadow-float)] max-h-[88dvh] flex flex-col">
           <div class="flex items-center justify-between px-5 pt-4 pb-3 border-b border-[var(--color-hairline)] shrink-0">
