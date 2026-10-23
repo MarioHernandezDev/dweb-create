@@ -2,13 +2,13 @@
 import { initialsFromName, hueFromString } from '~/utils/avatar'
 import { formatEuros } from '~/utils/mock-data'
 import { isFichaIncomplete } from '~/utils/ficha'
-import { relativeTime } from '~/utils/status'
+import { relativeTime, isUnresolvedCollaborationStatus } from '~/utils/status'
 import type { Creator, Post } from '~/types'
 
 useHead({ title: 'Inicio' })
 
 const { partner, ensurePartner } = useMyPartner()
-const { collaborations, ensureLoaded: ensureCollaborationsLoaded } = useMyCollaborations()
+const { collaborations, activeCount: activeCollaborations, awaitingMyResponseCount, ensureLoaded: ensureCollaborationsLoaded } = useMyCollaborations()
 const { posts, ensureLoaded: ensurePostsLoaded, approvePost, requestChanges: requestPostChanges } = usePartnerPosts()
 const { conversations, ensureConversations } = useChat()
 
@@ -47,10 +47,10 @@ const collaborator = computed<Creator | null>(() => {
   }
 })
 
-const activeCollaborations = computed(() => collaborations.value.filter((c) => c.status === 'accepted' || c.status === 'in_progress').length)
 // Solo las que de verdad esperan una respuesta TUYA — una que tú mismo
-// propusiste y sigue 'requested' está esperando al creador, no a ti.
-const pendingForMe = computed(() => collaborations.value.filter((c) => c.status === 'requested' && c.initiatedBy === 'creator'))
+// propusiste y sigue 'requested' está esperando al creador, no a ti. Mismo
+// criterio que `awaitingMyResponseCount` del composable (ver utils/status.ts).
+const pendingForMe = computed(() => collaborations.value.filter((c) => isUnresolvedCollaborationStatus(c.status) && c.initiatedBy === 'creator'))
 const nextDeliveries = computed(() => posts.value.filter((p) => p.dueInDays >= 0 && p.dueInDays <= 3).sort((a, b) => a.dueInDays - b.dueInDays))
 
 const pendingReview = computed(() => posts.value.filter((p) => p.status === 'ready_for_review'))
@@ -186,7 +186,7 @@ const tips = computed(() => {
 
     <section class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
       <StatTile label="Colaboraciones activas" :value="String(activeCollaborations)" />
-      <StatTile label="Solicitudes pendientes" :value="String(pendingForMe.length)" />
+      <StatTile label="Por responder" :value="String(pendingForMe.length)" />
       <StatTile label="Por revisar" :value="String(pendingReview.length)" />
       <StatTile label="Entregas próximas" :value="String(nextDeliveries.length)" />
     </section>

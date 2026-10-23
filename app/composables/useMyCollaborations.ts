@@ -1,5 +1,6 @@
 import type { CollaborationStatus } from '~/types'
 import type { CollaborationTerms } from '~/utils/collaboration-terms'
+import { isActiveCollaborationStatus, isUnresolvedCollaborationStatus } from '~/utils/status'
 
 export interface MyCollaboration extends CollaborationTerms {
   id: string
@@ -88,6 +89,20 @@ export function useMyCollaborations() {
     return collaborations.value
   }
 
+  // Mismas definiciones que usa `useCollabRequests` (lado creador) — ver
+  // `utils/status.ts`, hallazgo #1 de la auditoría de usabilidad.
+  const activeCount = computed(() => collaborations.value.filter((c) => isActiveCollaborationStatus(c.status)).length)
+  // "Pendientes": toda solicitud sin resolver, la propusiera quien la propusiera
+  // (así la cuenta ya `partner/requests.vue`).
+  const pendingCount = computed(() => collaborations.value.filter((c) => isUnresolvedCollaborationStatus(c.status)).length)
+  // "Por responder": del subconjunto anterior, solo las que de verdad esperan
+  // TU respuesta — las que propuso el creador. Una que tú mismo propusiste y
+  // sigue "requested" está esperando al creador, no a ti (hallazgo N1: antes
+  // `partner/index.vue` llamaba "Solicitudes pendientes" a ESTE número más
+  // estrecho, con el mismo nombre que la pestaña "Pendientes" de Colaboraciones,
+  // que es el número de arriba — dos cosas correctas, mal nombradas igual).
+  const awaitingMyResponseCount = computed(() => collaborations.value.filter((c) => isUnresolvedCollaborationStatus(c.status) && c.initiatedBy === 'creator').length)
+
   // Mismo patrón que useCollabRequests (lado creador): `agreedBudgetCents`
   // sincroniza el presupuesto con la última oferta aceptada. Pasa por RPC
   // (no un update directo) — el servidor valida el importe contra la
@@ -146,5 +161,5 @@ export function useMyCollaborations() {
     }
   }
 
-  return { collaborations, loaded, paying, acting, payError, refresh, ensureLoaded, payForCollaboration, accept, decline, markCompleted }
+  return { collaborations, loaded, paying, acting, payError, activeCount, pendingCount, awaitingMyResponseCount, refresh, ensureLoaded, payForCollaboration, accept, decline, markCompleted }
 }

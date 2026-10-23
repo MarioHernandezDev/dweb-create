@@ -6,7 +6,7 @@ import { relativeTime } from '~/utils/status'
 useHead({ title: 'Hoy' })
 
 const { posts, ensureLoaded } = useMyPosts()
-const { requests, pendingCount: pendingRequests, ensureLoaded: ensureRequestsLoaded } = useCollabRequests()
+const { requests, pendingCount: pendingRequests, activeCount: activeCollaborations, ensureLoaded: ensureRequestsLoaded } = useCollabRequests()
 // Seguidores reales de tus redes conectadas — mismo dato (y mismo motivo
 // honesto) que ya usa metrics.vue: nada de "interacciones"/"racha" fijas,
 // porque no hay ninguna fuente real detrás todavía (alcance/interacciones
@@ -64,7 +64,6 @@ const weeklyTarget = computed(() => creator.value?.weeklyPostTarget ?? 5)
 const publishedThisWeek = computed(() => posts.value.filter((p) => p.status === 'published').length)
 const goalPct = computed(() => (posts.value.length ? Math.min(100, Math.round((publishedThisWeek.value / weeklyTarget.value) * 100)) : 0))
 
-const activeCollaborations = computed(() => requests.value.filter((r) => r.status === 'accepted' || r.status === 'in_progress').length)
 const nextDeliveries = computed(() => [...today.value, ...upcoming.value].sort((a, b) => a.dueInDays - b.dueInDays))
 const pendingRequestList = computed(() => requests.value.filter((r) => r.status === 'requested'))
 const unreadConversations = computed(() => conversations.value.filter((c) => c.unread))

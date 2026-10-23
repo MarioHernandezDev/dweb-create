@@ -18,6 +18,22 @@ export const collaborationStatusMeta: Record<CollaborationStatus, { label: strin
   declined: { label: 'Rechazada', color: 'var(--color-status-alert)' }
 }
 
+/**
+ * Única definición de "colaboración activa" y "solicitud sin resolver" —
+ * antes `creator/index.vue` y `partner/index.vue` repetían cada uno su
+ * propio filtro inline. Mismo texto, dos sitios: funcionaba igual mientras
+ * no se tocara uno sin el otro, pero no había nada que lo garantizara (ver
+ * hallazgo #1 de la auditoría de usabilidad). Ahora `useCollabRequests` y
+ * `useMyCollaborations` llaman a esto, así que no pueden divergir.
+ */
+export function isActiveCollaborationStatus(status: CollaborationStatus): boolean {
+  return status === 'accepted' || status === 'in_progress'
+}
+
+export function isUnresolvedCollaborationStatus(status: CollaborationStatus): boolean {
+  return status === 'requested'
+}
+
 export const contentTypeMeta: Record<ContentType, { label: string; icon: string }> = {
   video: { label: 'Vídeo', icon: 'ph:play-circle-fill' },
   reel: { label: 'Reel', icon: 'ph:film-slate-fill' },

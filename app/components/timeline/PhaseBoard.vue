@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import draggable from 'vuedraggable'
 import type { Post, PostStatus, Platform } from '~/types'
-import { statusMeta } from '~/utils/status'
-import { platformMeta } from '~/utils/mock-data'
+import { statusMeta, collaborationStatusMeta } from '~/utils/status'
+import { platformMeta, formatEuros } from '~/utils/mock-data'
 
 const { posts, updatePost, deletePost, refresh } = useMyPosts()
 const { requests: collabRequests, ensureLoaded: ensureCollabRequestsLoaded } = useCollabRequests()
@@ -185,7 +185,9 @@ async function bulkDelete() {
       </select>
       <select v-if="collabRequests.length" v-model="collaborationFilter" class="h-9 px-3 rounded-full bg-[var(--color-ink-overlay)] border border-[var(--color-hairline)] text-[0.8125rem] text-[var(--color-text)]">
         <option value="">Todas las colaboraciones</option>
-        <option v-for="c in collabRequests" :key="c.id" :value="c.id">{{ c.partnerName }}</option>
+        <option v-for="c in collabRequests" :key="c.id" :value="c.id">
+          {{ c.partnerName }} · {{ c.budgetCents ? formatEuros(c.budgetCents) : 'Sin presupuesto' }} · {{ collaborationStatusMeta[c.status].label }}
+        </option>
       </select>
 
       <button

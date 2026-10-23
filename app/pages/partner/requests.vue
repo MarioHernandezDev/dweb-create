@@ -11,7 +11,7 @@ useHead({ title: 'Colaboraciones' })
 // (`payForCollaboration`, `markCompleted`, `paying`, `payError`), nada de
 // lógica de negocio nueva. Desde la Fase 3, la pestaña "Colaboraciones" de
 // Ajustes ya no existe — este es el único sitio.
-const { collaborations, paying, acting, payError, ensureLoaded, refresh: refreshCollaborations, accept, decline, payForCollaboration, markCompleted } = useMyCollaborations()
+const { collaborations, paying, acting, payError, pendingCount, ensureLoaded, refresh: refreshCollaborations, accept, decline, payForCollaboration, markCompleted } = useMyCollaborations()
 const { confirm } = useConfirm()
 const route = useRoute()
 const { posts: partnerPosts, ensureLoaded: ensurePostsLoaded } = usePartnerPosts()
@@ -36,8 +36,6 @@ async function confirmMarkCompleted(collaborationId: string) {
   })
   if (ok) await markCompleted(collaborationId)
 }
-
-const pendingCount = computed(() => collaborations.value.filter((c) => c.status === 'requested').length)
 
 const tab = ref<'pending' | 'history'>('pending')
 const tabs = computed(() => [

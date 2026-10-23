@@ -4,6 +4,36 @@ Registro de qué se hizo, por qué, y qué queda pendiente de verificar — pens
 
 ---
 
+## 2026-10-23 (39) — Fase 2 (#1, #10, N1): fuente única para "activa"/"pendiente" y filtro del Tablero legible
+
+Primera pieza de la Fase 2 que no era un bug de datos sino de código — una vez limpiada la fuga de la entrada (38), que probablemente era la causa real de la mayoría de lo que parecía "incoherencia de contadores".
+
+### #1 — Fuente única de verdad
+
+`creator/index.vue` y `partner/index.vue` reimplementaban cada uno, por separado, el mismo filtro `status === 'accepted' || status === 'in_progress'` para "colaboraciones activas". Texto idéntico, pero nada impedía que uno cambiara sin el otro. Se extraen `isActiveCollaborationStatus(status)` e `isUnresolvedCollaborationStatus(status)` a `app/utils/status.ts` (documentadas ahí, un único sitio), y `useCollabRequests` (creador) y `useMyCollaborations` (partner) exponen ahora `activeCount`/`pendingCount` calculados con esas mismas funciones — las páginas ya no filtran nada por su cuenta.
+
+### N1 — no era un fallo, era un nombre compartido para dos cosas distintas
+
+Confirmado el diagnóstico de la entrada (35): `partner/index.vue` llamaba "Solicitudes pendientes" a un número **direccional** (solo las que de verdad esperan la respuesta del partner — las que propuso el creador), mientras que la pestaña "Pendientes" de `partner/requests.vue` cuenta **todas** las sin resolver, las propusiera quien las propusiera. Ambas correctas, mismo nombre. Se renombra el de Inicio a **"Por responder"** (el único cambio de texto de esta entrada) y se documenta la diferencia en `useMyCollaborations.ts` junto a los dos nuevos exports (`pendingCount` = todas, `awaitingMyResponseCount` = direccional). `partner/requests.vue` deja de reimplementar su `pendingCount` inline y usa el del composable.
+
+### #10 — Filtro del Tablero: de "Alma Beauty Co." repetido a algo que se puede distinguir
+
+Con los datos ya limpios, el creador de demo tiene 10 colaboraciones reales, las 10 con el mismo (único) partner de demo — así que el filtro seguía mostrando el mismo nombre repetido, solo que 10 veces en vez de 23. El roadmap pedía mostrar el título o agrupar por marca; como una `collaboration` no siempre tiene un paquete/título asociado (algunas nacen de "Contactar" en Descubrir, sin oferta), se usa en su lugar lo que sí existe siempre: presupuesto + estado. Cada opción del `<select>` de `PhaseBoard.vue` pasa de `"Alma Beauty Co."` a `"Alma Beauty Co. · 450,00 € · Completada"`.
+
+### Prueba nueva, pedida explícitamente por `CONTEXT.md` ("añadir una prueba que compare los dos paneles con los mismos datos")
+
+`tests/integration/collaboration-counters.spec.ts` (nuevo, 2 tests): crea 6 colaboraciones de prueba reales con las dos direcciones de `initiated_by` y los 5 estados representados, consulta ese mismo conjunto como creador y como partner, y comprueba que `isActiveCollaborationStatus`/`isUnresolvedCollaborationStatus` dan el mismo recuento en los dos lados sobre los mismos datos — y que las dos cuentas direccionales ("por responder" de cada lado) suman exactamente el total sin resolver, sin solape ni hueco.
+
+### Verificado de verdad
+
+- `npx vue-tsc --noEmit`: limpio. `npm test -- --run`: 30/30. `npm run build`: limpio.
+- `npm run test:integration`: **62/62** (60 ya existentes + 2 nuevos), sin regresiones. Confirmado por API que el test nuevo no deja ninguna fila (`total collaborations` se queda en 18 antes y después).
+
+### Pendiente
+
+- #2 (bandeja de notificaciones saturada) es la pieza que falta de la Fase 2 — pendiente, es la más grande de las cuatro.
+- El grupo ambiguo de colaboraciones de la entrada (38) y las preguntas abiertas 1/4/5 de `CONTEXT.md` siguen sin resolver.
+
 ## 2026-10-23 (38) — Tercera fuga, la más grave: `collaborations` tampoco cascadeaba, y es la causa real de los hallazgos #1 y #10
 
 Al investigar el hallazgo #10 ("Todas las colaboraciones" repite "Alma Beauty Co." unas 23 veces) para empezar la Fase 2, apareció la pieza que faltaba para entender también el #1 (contadores incoherentes entre creador y partner): **`collaborations.offer_id` es, igual que `messages.offer_id`, `on delete set null` y no `cascade`**. El comentario que yo mismo escribí en la entrada (35) ("borra el paquete de prueba, cascada sobre offers/collaborations") daba por hecho algo que nunca se comprobó. Resultado real: cada ejecución del test "ciclo completo" dejaba, además de los mensajes ya corregidos, una `collaboration` real y permanente con `status='accepted'` y 111,11 € — invisible porque el propio test seguía en verde (solo comprueba que hay exactamente una collaboration para ESA oferta, no que no sobren de ejecuciones anteriores).

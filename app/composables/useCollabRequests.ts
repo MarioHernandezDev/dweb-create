@@ -1,5 +1,6 @@
 import type { CollaborationStatus } from '~/types'
 import type { CollaborationTerms } from '~/utils/collaboration-terms'
+import { isActiveCollaborationStatus, isUnresolvedCollaborationStatus } from '~/utils/status'
 
 export interface CollabRequest extends CollaborationTerms {
   id: string
@@ -90,7 +91,8 @@ export function useCollabRequests() {
     return requests.value
   }
 
-  const pendingCount = computed(() => requests.value.filter((r) => r.status === 'requested').length)
+  const pendingCount = computed(() => requests.value.filter((r) => isUnresolvedCollaborationStatus(r.status)).length)
+  const activeCount = computed(() => requests.value.filter((r) => isActiveCollaborationStatus(r.status)).length)
 
   // `agreedBudgetCents` sincroniza `collaborations.budget_cents` con la
   // última contraoferta aceptada (si hubo negociación) — el presupuesto que
@@ -140,5 +142,5 @@ export function useCollabRequests() {
     loaded.value = false
   }
 
-  return { requests, loaded, acting, pendingCount, refresh, ensureLoaded, accept, decline, markCompleted, reset }
+  return { requests, loaded, acting, pendingCount, activeCount, refresh, ensureLoaded, accept, decline, markCompleted, reset }
 }
