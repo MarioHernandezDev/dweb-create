@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { formatCompactNumber, formatEuros } from '~/utils/mock-data'
 import { isFichaIncomplete } from '~/utils/ficha'
-import { relativeTime } from '~/utils/status'
+import { relativeTime, isPostOverdue } from '~/utils/status'
 
 useHead({ title: 'Hoy' })
 
@@ -55,7 +55,10 @@ const hasNoPackages = computed(() => myPackages.value?.length === 0)
 const today = computed(() => posts.value.filter((p) => p.dueInDays === 0))
 const upcoming = computed(() => posts.value.filter((p) => p.dueInDays > 0 && p.dueInDays <= 3))
 // Ordenado por urgencia real (más vencido primero) — antes solo se contaban, nunca se sabía cuál mirar primero.
-const overdue = computed(() => posts.value.filter((p) => p.status === 'overdue').sort((a, b) => a.dueInDays - b.dueInDays))
+// `isPostOverdue` (fecha pasada + no publicada), no `status === 'overdue'`:
+// ese valor del enum existe en la base de datos pero ningún código lo
+// asigna jamás, así que ese filtro nunca encontraba nada (ver utils/status.ts).
+const overdue = computed(() => posts.value.filter(isPostOverdue).sort((a, b) => a.dueInDays - b.dueInDays))
 const connectedFollowers = computed(() => socialAccounts.value.filter((a) => a.connected).reduce((sum, a) => sum + a.followers, 0))
 const hasConnectedSocials = computed(() => socialAccounts.value.some((a) => a.connected))
 
@@ -108,6 +111,11 @@ const hero = computed(() => {
 interface ActivityItem { icon: string; title: string; subtitle: string; to: string }
 const activity = computed<ActivityItem[]>(() => {
   const items: ActivityItem[] = []
+  // Las atrasadas van primero — son la urgencia real, y antes no aparecían
+  // en ningún resumen salvo que ganaran el único hueco del panel destacado.
+  for (const p of overdue.value.slice(0, 2)) {
+    items.push({ icon: 'ph:warning-fill', title: p.title, subtitle: `Atrasada ${Math.abs(p.dueInDays)} día${Math.abs(p.dueInDays) === 1 ? '' : 's'}`, to: `/creator/post/${p.id}` })
+  }
   for (const r of pendingRequestList.value.slice(0, 2)) {
     items.push({ icon: 'ph:handshake-fill', title: `${r.partnerName} — nueva solicitud`, subtitle: relativeTime(r.createdAt), to: '/creator/requests' })
   }

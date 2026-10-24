@@ -4,6 +4,122 @@ Registro de qué se hizo, por qué, y qué queda pendiente de verificar — pens
 
 ---
 
+## 2026-10-24 (52) — Cierra el plan de publicaciones: columnas del Tablero colapsables en móvil
+
+Última pieza pendiente del plan de la entrada 49: en la entrada 50 se había aparcado a propósito "colapsar columnas vacías en móvil" por miedo a esconder el hueco donde se suelta una card al arrastrar. Revisando el propio código se confirmó que ese miedo no aplica: cada card ya tiene su propio selector de fase (`BoardCard.vue`, pensado desde antes como alternativa al arrastre en móvil) que no necesita que la columna de destino esté visible ni desplegada — así que plegar una columna vacía no quita ninguna forma real de mover algo ahí.
+
+### Añadido
+
+`PhaseBoard.vue`: en móvil, cada columna se pliega sola por defecto si está vacía (icono de flecha junto al límite de WIP, visible solo bajo `lg`). Tocarla pliega/despliega cualquiera a mano — esa preferencia manual manda sobre el valor por defecto hasta que se vuelve a tocar, para no "olvidar" que alguien quiso dejar una columna abierta o cerrada aposta. En escritorio (`lg:` y superior) las 5 columnas se siguen viendo siempre completas, sin cambios.
+
+### Verificado de verdad
+
+- `npx vue-tsc --noEmit`: limpio. `npm test -- --run`: 30/30. `npm run build`: limpio.
+- Verificación real en navegador (Playwright, instalado y desinstalado de nuevo al terminar — mismo criterio que la entrada 51): viewport móvil (390px), cuenta demo del creador. Confirmado con capturas: una columna vacía arranca plegada, el tap la despliega/pliega sin errores de consola, y mover una publicación a una columna plegada con el selector de la propia card (sin arrastrar) funciona y la columna de destino pasa a mostrarse abierta con la card dentro. La única publicación real que se tocó para esta prueba (`dads`, cuenta demo) se devolvió a su fase original (`idea`) al terminar el script — sin residuo de datos.
+
+### Sin verificar
+
+- El gesto de arrastre real (puntero/táctil) hacia una columna plegada — por diseño, no es necesario (el selector de fase cubre ese caso), pero no se ha comprobado explícitamente que arrastrar hacia una columna plegada se comporte con gracia (lo esperable es que no haya zona de destino visible ahí, igual que si la columna no existiera).
+- Con esto se da por completa la Fase 1 (publicaciones) del plan acordado con el usuario. Sigue pendiente, sin empezar y a propósito, la Fase 2 (onboarding guiado para usuarios nuevos) — el usuario pidió explícitamente no tocarla hasta que esta parte esté estable.
+
+---
+
+## 2026-10-24 (51) — Verificación real en navegador de las entradas 49-50, y un fallo de verdad que ni los tipos ni los tests habían pillado
+
+Hasta esta entrada, ningún cambio de interfaz de la sesión se había visto renderizado de verdad (sin herramienta de navegador disponible). El usuario preguntó cómo darme acceso a un navegador; se le explicó que el navegador integrado de la app de escritorio de Claude y la extensión de Chrome son superficies distintas a esta sesión de Claude Code en VS Code, sin forma de conectarlas desde aquí. Con su visto bueno, se instaló Playwright como dependencia de desarrollo **temporal** (desinstalada al final de esta entrada, `package.json`/`package-lock.json` vuelven a su estado previo), se usaron las cuentas demo del equipo (`creator@feedma.test`/`partner@feedma.test`, nunca la cuenta real del usuario, aunque tenía una publicación atrasada de verdad que se podría haber usado) y se automatizó un recorrido real contra el servidor de desarrollo ya en marcha (no se tocó, ya lo tenía abierto el usuario en su propia terminal).
+
+### Fallo real encontrado: la página completa de editar publicación daba un 500 (`Cannot access 'predictError' before initialization`)
+
+Al navegar a `/creator/post/[id]` de verdad (algo que ni `vue-tsc` ni los tests unitarios ejecutan — ninguno de los dos monta un componente Vue con datos reales), la página reventaba. Causa: en `usePostEditorPanel.ts` (entrada 50), el `watch(..., { immediate: true })` se ejecuta en el mismo instante síncrono en que se llama, y dentro usaba variables (`predictError`, `labelsPickerOpen`, `newLabelName`, `newLabelColor`, `newItemText`) declaradas con `const` **más abajo** en el archivo. En `PostEditSheet.vue` (panel del Tablero) esto no se notaba porque el post empieza siendo `null` y el watch corta en el primer `if` antes de tocar nada; en la página completa el post ya existe desde el principio, así que la llamada inmediata entraba de lleno y reventaba contra una `const` que todavía no se había inicializado (temporal dead zone). **Arreglado** moviendo el `watch` al final del composable, después de declarar todo lo que usa — es el mismo motivo por el que esta clase de fallo es invisible a los tipos: TypeScript no analiza el orden de ejecución en tiempo real de un `watch` inmediato.
+
+### Qué se verificó de verdad, con capturas
+
+Recorrido completo como creador: crear una publicación ligada a una colaboración activa (con la explicación nueva del selector visible), verla "Atrasada 2 días" en el Tablero y en el panel de edición con la frase de "qué hacer ahora", moverla a "Para revisar", intentar saltarse la revisión directo a "Publicado" y ver el diálogo de confirmación real, y abrir la página completa (ya con Etiquetas/Checklist, antes ausentes) — sin el 500, tras el arreglo. Luego como partner: la pestaña Calendario de una colaboración mostrando ahora los botones "Pedir cambios"/"Aprobar" (antes de solo lectura), y la misma tarjeta en Inicio → Tu calendario para comparar. El Tablero en móvil (390px) con la fila de salto rápido por fase, con los recuentos reales.
+
+Las 8 capturas eran legibles salvo dos con parte de la transición de apertura de la hoja a medio camino (doble exposición) en el primer intento — se corrigió añadiendo una espera tras abrir cada hoja/diálogo antes de capturar, y se repitió el recorrido entero una segunda vez con capturas limpias. La publicación de demo (`DOM Claude — borrar`) se borró al final del script en los dos intentos — no queda ningún resto en la base de datos.
+
+### Verificado de verdad
+
+- El recorrido completo de navegador descrito arriba, con capturas revisadas una a una.
+- `npx vue-tsc --noEmit`: limpio. `npm test -- --run`: 30/30. `npm run build`: limpio. Los tres, después del arreglo del TDZ.
+- Playwright desinstalado al terminar; `package.json`/`package-lock.json` sin diferencias respecto a antes de esta entrada.
+
+### Sin verificar
+
+- No se ha repetido `npm run test:integration` en esta entrada — los cambios de código (el `usePostEditorPanel.ts` arreglado) no tocan `server/`, RLS ni RPCs.
+- Solo se probó en Chromium (el navegador que usa Playwright por defecto), nunca en Firefox/Safari real, y solo en dos anchos de viewport (1280 y 390 px), no en tablet.
+- No se probó arrastrar una card de verdad con el ratón (drag-and-drop) — el cambio de fase se probó con el `<select>` de "Cambiar de fase", que dispara el mismo código (`moveTo`) que el arrastre, pero el camino del arrastre en sí (eventos de `vuedraggable`) no se ejecutó.
+- El resto del plan de rediseño de publicaciones (estados vacíos adicionales, columnas colapsables en móvil) sigue sin implementar, como ya se documentó en la entrada 50.
+
+### Nota aparte, sin relación con esta tarea
+
+Al buscar datos de demo para el recorrido, apareció una colaboración real en la base de datos con el brief literal `"nigga"` (id visible en los logs de esta sesión, no repetido aquí). No se tocó — es exactamente el tipo de dato ambiguo que el usuario ya pidió no borrar sin confirmar antes (ver `docs/CONTEXTO_PROYECTO_FEEDMA.md` §4.3) — pero se deja constancia explícita por si se quiere revisar o borrar con un criterio claro.
+
+---
+
+## 2026-10-24 (50) — Rediseño de publicaciones, fase 1b: una sola capacidad de edición + explicar el concepto donde se decide
+
+Segundo bloque del mismo plan de la entrada 49. Aquí: cerrar la brecha de capacidades entre las dos pantallas de editar una publicación, y añadir las explicaciones de contexto que el diagnóstico pedía (sin tocar aún estados vacíos del Tablero más que el principal, ni meterse con el onboarding general — eso sigue fuera de alcance, pedido explícitamente para después).
+
+### Unificadas las dos superficies de edición de una publicación
+
+`PostEditSheet.vue` (panel del Tablero) y `/creator/post/[id].vue` (página completa) duplicaban la misma lógica con capacidades distintas: la página no tenía etiquetas ni checklist, el panel no mostraba el historial de revisión ni el aviso de "te han pedido cambios". Extraída toda esa lógica (campos editables, etiquetas, checklist, predicción, historial de revisión) a un composable nuevo, `usePostEditorPanel` (`app/composables/usePostEditorPanel.ts`), que llaman las dos. Resultado: las dos pantallas tienen ahora exactamente las mismas capacidades — solo difieren en cómo se cambia de fase (selector libre en el panel, botón secuencial "Mover a…" en la página) y en el layout, que de verdad son sitios distintos (edición rápida desde el tablero vs. página dedicada) y no tenía sentido forzarlos a verse idénticos.
+
+### Explicado el concepto de "publicación ligada a una colaboración" donde se decide
+
+- Al crear una publicación (`PostComposerSheet.vue`), el selector de colaboración ahora explica debajo, en una frase, qué implica cada opción: vincularla hace que el partner vea su progreso y pueda aprobarla/pedir cambios; dejarla como "Contenido propio" significa que solo la ve el creador.
+- Nueva frase de "qué hacer ahora" (`creatorNextStepHint`/`partnerNextStepHint` en `utils/status.ts`) en las dos superficies de edición del creador y en la vista de detalle del partner (`PostDetailSheet.vue`) — en vez de dejar que el nombre de la fase por sí solo explique qué toca hacer y a quién le toca esperar.
+- Cada columna del Tablero tiene ahora un icono "?" con una frase de una línea de qué significa esa fase (`phaseDescription`).
+- Estado vacío principal del Tablero reescrito para explicar el concepto de publicación (propia vs. de colaboración) y el recorrido de fases, no solo "crea tu primera publicación".
+- En móvil, una fila de accesos rápidos por fase encima del tablero (con el recuento de cada una) para saltar directamente a una columna sin tener que bajar a mano por las 5 apiladas en vertical (hallazgo #15) — no sustituye la mejora de colapsar columnas vacías (pendiente, ver abajo), que se descartó aquí porque colapsar una columna vacía escondería el hueco donde se suelta una card al arrastrar.
+
+### Verificado de verdad
+
+`npx vue-tsc --noEmit`: limpio. `npm test -- --run`: 30/30. `npm run build`: limpio.
+
+### Sin verificar
+
+- El aspecto real en el navegador — sigue sin haber herramienta de navegador disponible en esta sesión. Nada de esto (ni las frases nuevas, ni el salto de fase en móvil, ni el icono "?") se ha visto renderizado de verdad.
+- No se ha ejecutado `npm run test:integration` — cambios puramente de interfaz y de composición de lógica de cliente ya existente, sin tocar `server/`, RLS ni RPCs.
+- Queda pendiente del plan original: columnas vacías del Tablero colapsables en móvil (aparcado a propósito, ver arriba) y una revisión general de los demás estados vacíos (filtros sin resultado, "Sin solicitudes pendientes", etc.) si hiciera falta más contexto en ellos.
+
+---
+
+## 2026-10-24 (49) — Rediseño de publicaciones, fase 1a: "fuera de plazo" de verdad + revisión del partner donde hace falta
+
+Primer bloque de la auditoría de usabilidad de "publicaciones" pedida por el usuario (estudio completo del sistema: qué es una publicación, su relación con las colaboraciones, qué puede hacer cada rol — ver el diagnóstico compartido en esta misma conversación, no hay documento aparte). Dos arreglos de comportamiento, antes de la parte de claridad de textos.
+
+### Encontrado y arreglado: "Fuera de plazo" era inalcanzable
+
+`overdue` es un valor válido del enum `post_status` en el esquema y en el tipo `PostStatus`, pero **ningún código lo asigna jamás** — ni `updatePost` ni ninguna RPC. `creator/index.vue` filtraba `post.status === 'overdue'` para decidir si mostraba el aviso "Fuera de plazo" en el panel destacado de Hoy: esa condición nunca era cierta, así que esa tarjeta de alerta no podía aparecer nunca, por muy atrasada que estuviera una publicación. La única señal real era un borde rojo fino alrededor de la card en el Tablero (`PhaseBoard.vue`, calculado por fecha, no por este estado muerto), sin texto, sin aparecer en ningún resumen.
+
+Arreglado con una sola función compartida, `isPostOverdue` (`app/utils/status.ts`): fecha de entrega pasada y no publicada — ni más ni menos que lo que ya calculaba `PhaseBoard.vue` por su cuenta, ahora en un solo sitio. Además:
+- Aviso visible de verdad ("Atrasada N días", icono de alerta), no solo un borde: en la card del Tablero, en la card de "Tu calendario"/Calendario de colaboración (`DeliverableCard.vue`, visible también para el partner), y en las dos superficies de edición (`PostEditSheet.vue`, `/creator/post/[id].vue`).
+- El panel destacado de Hoy ya puede mostrar "Fuera de plazo" de verdad cuando corresponde.
+- Las atrasadas aparecen también en "Necesita tu atención" (hasta 2), no solo si ganan el único hueco del panel destacado.
+
+### Encontrado y arreglado: la revisión del partner solo existía en una pantalla
+
+Aprobar/pedir cambios a una publicación "Para revisar" (las RPCs `approve_post`/`request_post_changes`) solo estaba implementado con botones reales en `/partner` (Inicio → "Tu calendario"). La misma vista dentro del detalle de una colaboración concreta (`/partner/requests` → pestaña Calendario) era de solo lectura — sin ningún botón, ni un enlace para ir a revisar. Un partner con varias colaboraciones que no viera la entrega en la portada de Inicio no tenía ningún otro sitio desde donde actuar.
+
+Extraído el formulario de aprobar/pedir cambios (antes duplicado en parte, con alguna pieza solo en un sitio) a un componente nuevo, `app/components/timeline/PostReviewActions.vue`, usado ahora en los dos sitios: Inicio (dentro de `PostDetailSheet`, simplificando bastante `partner/index.vue`) y la pestaña Calendario de `/partner/requests` (nuevo). Mismas RPCs de siempre, sin tocarlas.
+
+### Encontrado y arreglado de paso: la "aprobación" no era una puerta real
+
+`approve_post`/`request_post_changes` las ejecuta siempre el partner — pero el creador puede mover cualquier publicación a cualquier fase con un `update` normal (arrastrando en el Tablero o con el selector de fase), incluida una ligada a una colaboración activa, saltándose "Para revisar" y la aprobación del partner por completo. No se ha tocado esto a nivel de permisos/RLS (sería un cambio de esquema, fuera de alcance sin confirmarlo antes) — se ha añadido un aviso de confirmación (`movingSkipsPartnerReview` en `utils/status.ts`) que explica lo que se está evitando y pide confirmar, tanto al arrastrar/seleccionar en el Tablero (`PhaseBoard.vue`) como al usar el botón secuencial "Mover a…" de `/creator/post/[id].vue`. No bloquea nada, solo avisa — igual que ya hacían los límites de WIP.
+
+### Verificado de verdad
+
+`npx vue-tsc --noEmit`: limpio. `npm test -- --run`: 30/30.
+
+### Sin verificar
+
+- El aspecto real en el navegador — sigue sin haber herramienta de navegador disponible en esta sesión. Ningún diálogo de confirmación nuevo, ni el aviso de "Atrasada", se ha visto renderizado de verdad.
+- No se ha ejecutado `npm run test:integration` — ninguno de estos cambios toca `server/`, RLS ni RPCs; solo lógica de cliente y componentes, reutilizando RPCs ya probadas (`approve_post`/`request_post_changes`).
+- Queda por hacer el resto del plan acordado: unificar las dos superficies de edición de una publicación (hoy con capacidades distintas), explicar el concepto de "publicación"/"colaboración" donde se decide, mejorar los estados vacíos del Tablero y las columnas en móvil.
+
+---
+
 ## 2026-10-23 (48) — Segunda corrección: pestañas al estilo GIFs/Stickers de WhatsApp, no botones deshabilitados
 
 El usuario corrigió también la entrada 47: no quería que un botón bloqueara al otro (deshabilitado, sin poder pulsarlo hasta quitar filtros) — quería el patrón de pestañas de WhatsApp (GIFs/Stickers): los dos botones siempre se pueden pulsar, pero abrir uno cierra el otro automáticamente, nunca se ven los dos paneles a la vez.

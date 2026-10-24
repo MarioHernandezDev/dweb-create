@@ -1,13 +1,15 @@
 <script setup lang="ts">
 import draggable from 'vuedraggable'
+import type { ComponentPublicInstance } from 'vue'
 import type { Post, PostStatus, Platform } from '~/types'
-import { statusMeta, collaborationStatusMeta } from '~/utils/status'
+import { statusMeta, collaborationStatusMeta, isPostOverdue, movingSkipsPartnerReview, phaseDescription } from '~/utils/status'
 import { platformMeta, formatEuros } from '~/utils/mock-data'
 
 const { posts, updatePost, deletePost, refresh } = useMyPosts()
 const { requests: collabRequests, ensureLoaded: ensureCollabRequestsLoaded } = useCollabRequests()
 const { ensureLabels } = useLabels()
 const { creator, ensureCreator, setWipLimit } = useMyCreator()
+const { confirm } = useConfirm()
 onMounted(() => {
   ensureCollabRequestsLoaded()
   ensureLabels()
@@ -60,9 +62,7 @@ function sync() {
 
 watch(filteredPosts, sync, { immediate: true })
 
-function isOverdue(post: Post) {
-  return post.dueInDays < 0 && post.status !== 'published'
-}
+const isOverdue = isPostOverdue
 
 // Compartida por el arrastre y el selector rápido de fase (#actions) — en
 // móvil, arrastrar una card de la primera a la última columna obliga a
@@ -71,6 +71,28 @@ function isOverdue(post: Post) {
 async function moveTo(post: Post, phase: PostStatus, fromDrag = false) {
   if (post.status === phase) return
   const fromPhase = post.status
+
+  // Aviso (no bloqueo) si esto evita la aprobación real del partner — ver
+  // `movingSkipsPartnerReview` en utils/status.ts.
+  if (post.collaborationId && movingSkipsPartnerReview(phase, collabRequests.value.find((c) => c.id === post.collaborationId)?.status)) {
+    const partnerName = collabRequests.value.find((c) => c.id === post.collaborationId)?.partnerName ?? 'el partner'
+    const ok = await confirm({
+      title: 'Vas a saltarte la revisión del partner',
+      message: `Esta publicación pertenece a una colaboración activa con ${partnerName}. Normalmente es ${partnerName} quien la aprueba antes de pasar a "${statusMeta[phase].label}" (desde "Para revisar"). ¿Moverla igualmente sin su aprobación?`,
+      confirmLabel: 'Mover igualmente'
+    })
+    if (!ok) {
+      if (fromDrag) {
+        // vuedraggable ya la había movido de columna de verdad al soltarla —
+        // si se cancela aquí, hay que devolverla a mano a su columna real.
+        const idx = board[phase].findIndex((p) => p.id === post.id)
+        if (idx !== -1) board[phase].splice(idx, 1)
+        board[fromPhase].push(post)
+      }
+      return
+    }
+  }
+
   try {
     await updatePost(post.id, { status: phase })
     if (!fromDrag) {
@@ -98,6 +120,34 @@ async function moveTo(post: Post, phase: PostStatus, fromDrag = false) {
 function onChange(phase: PostStatus, event: { added?: { element: Post } }) {
   const moved = event.added?.element
   if (moved) moveTo(moved, phase, true)
+}
+
+// Columnas colapsables en móvil (hallazgo #15 de la auditoría de
+// usabilidad) — plegar una columna no bloquea mover una card ahí: cada
+// card tiene su propio selector de fase (ver BoardCard.vue), que no
+// necesita arrastrar nada ni que la columna de destino esté visible. Por
+// defecto, colapsada si está vacía; tocar la cabecera pliega/despliega
+// cualquiera a mano, y eso manda sobre el valor por defecto hasta que se
+// vuelva a tocar (si no, cada cambio en el número de cards "olvidaría" la
+// preferencia de quien la plegó queriendo dejarla así).
+const manuallyToggledPhases = reactive<Partial<Record<PostStatus, boolean>>>({})
+function isPhaseOpen(phase: PostStatus): boolean {
+  const manual = manuallyToggledPhases[phase]
+  return manual !== undefined ? manual : board[phase].length > 0
+}
+function togglePhaseOpen(phase: PostStatus) {
+  manuallyToggledPhases[phase] = !isPhaseOpen(phase)
+}
+
+// Salto directo a una columna en móvil (ver nav de pills arriba del
+// tablero) — las referencias se guardan a mano porque son dinámicas
+// (una por fase, en un v-for), no hay una sola plantilla que recoja.
+const phaseSectionEls: Partial<Record<PostStatus, Element>> = {}
+function setPhaseSectionRef(phase: PostStatus, el: Element | ComponentPublicInstance | null) {
+  if (el instanceof Element) phaseSectionEls[phase] = el
+}
+function jumpToPhase(phase: PostStatus) {
+  phaseSectionEls[phase]?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
 
 // Panel lateral de edición rápida — abrir una card ya no navega a otra
@@ -149,7 +199,6 @@ function cancelSelection() {
   selectedIds.value = new Set()
 }
 
-const { confirm } = useConfirm()
 const bulkDeleting = ref(false)
 async function bulkDelete() {
   const n = selectedIds.value.size
@@ -201,8 +250,8 @@ async function bulkDelete() {
 
     <EmptyState
       v-if="!posts.length"
-      icon="ph:kanban-bold" title="No hay entregas por aquí"
-      description="Crea tu primera publicación con el botón de abajo y empieza a moverla por el tablero."
+      icon="ph:kanban-bold" title="Aquí irán todas tus publicaciones"
+      description="Una publicación es cualquier pieza de contenido que gestionas en FEEDMA: puede ser propia (solo tú la ves) o el entregable de una colaboración (el partner la ve y la aprueba). Crea la primera con el botón + de abajo — luego la vas moviendo de columna a medida que avanza: de Idea a En producción, Para revisar, Programado y Publicado."
     />
     <EmptyState
       v-else-if="hasFilters && !filteredPosts.length"
@@ -210,11 +259,33 @@ async function bulkDelete() {
       description="Prueba a quitar el buscador o alguno de los filtros de arriba."
     />
     <div v-else class="grid grid-cols-1 gap-6 lg:grid-cols-5 lg:gap-4 lg:items-start select-none">
-      <section v-for="phase in phases" :key="phase" class="flex flex-col min-w-0 lg:max-w-[20rem]">
+      <!-- Solo en móvil: las 5 columnas se apilan en vertical (hallazgo #15
+           de la auditoría de usabilidad) — bajar hasta "Publicado" a mano
+           puede ser mucho scroll si "Idea" tiene varias cards. Un salto
+           directo además de plegar las columnas vacías (más abajo). -->
+      <div class="lg:hidden flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 nx-scroll">
+        <button
+          v-for="phase in phases" :key="phase" type="button"
+          class="shrink-0 inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-[0.75rem] font-medium border border-[var(--color-hairline-strong)]"
+          :style="{ color: statusMeta[phase].color }"
+          @click="jumpToPhase(phase)"
+        >
+          <span class="size-1.5 rounded-full shrink-0" :style="{ background: statusMeta[phase].color }" />
+          {{ statusMeta[phase].label }} ({{ board[phase].length }})
+        </button>
+      </div>
+
+      <section v-for="phase in phases" :key="phase" :ref="(el) => setPhaseSectionRef(phase, el)" class="flex flex-col min-w-0 lg:max-w-[20rem]">
         <div class="mb-3">
           <div class="flex items-center gap-2 px-0.5">
             <span class="size-2 rounded-full shrink-0" :style="{ background: statusMeta[phase].color }" />
             <h2 class="text-[0.8125rem] font-medium text-[var(--color-text)]">{{ statusMeta[phase].label }}</h2>
+            <span
+              class="flex items-center justify-center size-4 rounded-full text-[var(--color-text-faint)] cursor-help" tabindex="0"
+              :title="phaseDescription[phase]" :aria-label="phaseDescription[phase]"
+            >
+              <Icon name="ph:question-fill" class="size-3" />
+            </span>
             <div class="ml-auto flex items-center gap-1">
               <Icon v-if="isOverLimit(phase)" name="ph:warning-fill" class="size-3.5 text-[var(--color-status-alert)]" />
               <span class="text-[0.75rem]" :class="isOverLimit(phase) ? 'text-[var(--color-status-alert)] font-semibold' : 'text-[var(--color-text-faint)]'">
@@ -226,6 +297,13 @@ async function bulkDelete() {
                 @click="toggleWipEditor(phase)"
               >
                 <Icon name="ph:gear-six-bold" class="size-3" />
+              </button>
+              <button
+                type="button" class="lg:hidden size-5 flex items-center justify-center rounded-full text-[var(--color-text-faint)] hover:text-[var(--color-text)] hover:bg-[var(--color-ink-overlay)]"
+                :aria-label="isPhaseOpen(phase) ? `Plegar ${statusMeta[phase].label}` : `Desplegar ${statusMeta[phase].label}`" :aria-expanded="isPhaseOpen(phase)"
+                @click="togglePhaseOpen(phase)"
+              >
+                <Icon name="ph:caret-down-bold" class="size-3 transition-transform" :class="!isPhaseOpen(phase) && '-rotate-90'" />
               </button>
             </div>
           </div>
@@ -253,12 +331,13 @@ async function bulkDelete() {
           :bubble-scroll="true"
           :force-fallback="true"
           ghost-class="nx-phase-ghost"
-          class="flex flex-col gap-2.5 min-h-[3.5rem] max-h-[calc(100vh-18rem)] overflow-y-auto nx-scroll rounded-[var(--radius-md)] p-1.5 -m-1.5"
+          class="lg:!flex flex-col gap-2.5 min-h-[3.5rem] max-h-[calc(100vh-18rem)] overflow-y-auto nx-scroll rounded-[var(--radius-md)] p-1.5 -m-1.5"
+          :class="isPhaseOpen(phase) ? 'flex' : 'hidden'"
           @change="(e: { added?: { element: Post } }) => onChange(phase, e)"
         >
           <template #item="{ element }: { element: Post }">
             <div class="relative" :class="isOverdue(element) && 'rounded-[var(--radius-md)] ring-2 ring-[var(--color-status-alert)]'">
-              <BoardCard :post="element" :phases="phases" @open="openEdit(element)" @move="moveTo(element, $event)" />
+              <BoardCard :post="element" :phases="phases" :overdue="isOverdue(element)" @open="openEdit(element)" @move="moveTo(element, $event)" />
               <template v-if="selectionMode">
                 <button
                   type="button" class="absolute inset-0 z-10 rounded-[var(--radius-md)]"

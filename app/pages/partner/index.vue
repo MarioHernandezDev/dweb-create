@@ -9,7 +9,7 @@ useHead({ title: 'Inicio' })
 
 const { partner, ensurePartner } = useMyPartner()
 const { collaborations, activeCount: activeCollaborations, awaitingMyResponseCount, ensureLoaded: ensureCollaborationsLoaded } = useMyCollaborations()
-const { posts, ensureLoaded: ensurePostsLoaded, approvePost, requestChanges: requestPostChanges } = usePartnerPosts()
+const { posts, ensureLoaded: ensurePostsLoaded, approvePost } = usePartnerPosts()
 const { conversations, ensureConversations } = useChat()
 
 // En paralelo, no en serie — cuatro consultas independientes.
@@ -56,64 +56,28 @@ const nextDeliveries = computed(() => posts.value.filter((p) => p.dueInDays >= 0
 const pendingReview = computed(() => posts.value.filter((p) => p.status === 'ready_for_review'))
 const reviewedPct = computed(() => (posts.value.length ? Math.round(((posts.value.length - pendingReview.value.length) / posts.value.length) * 100) : 0))
 
-const acting = ref(false)
-async function approve(postId: string, comment?: string) {
-  acting.value = true
-  try {
-    await approvePost(postId, comment)
-  } finally {
-    acting.value = false
-  }
-}
-
-async function requestChanges(postId: string, comment: string) {
-  acting.value = true
-  try {
-    await requestPostChanges(postId, comment)
-  } finally {
-    acting.value = false
-  }
-}
-
-// "Pedir cambios" ya no actúa al primer clic (el servidor exige un
-// comentario real desde esta sesión) — abre la hoja de detalle, que es
-// donde vive el formulario. "Aprobar" sigue siendo directo desde el
-// tablero: no necesita texto, solo desde la hoja se ofrece añadir uno
-// opcional.
+// El formulario de aprobar/pedir cambios vive en PostReviewActions.vue
+// (compartido con la pestaña Calendario de /partner/requests) — aquí solo
+// se abre la hoja de detalle con el post y se cierra cuando ese componente
+// avisa de que ya terminó.
 const detailOpen = ref(false)
 const detailPost = ref<Post | null>(null)
-const reviewStage = ref<'idle' | 'requesting-changes'>('idle')
-const changeComment = ref('')
-const changeError = ref('')
-const showApproveComment = ref(false)
-const approveComment = ref('')
 
 function openDetail(post: Post) {
   detailPost.value = posts.value.find((p) => p.id === post.id) ?? post
-  reviewStage.value = 'idle'
-  changeComment.value = ''
-  changeError.value = ''
-  showApproveComment.value = false
-  approveComment.value = ''
   detailOpen.value = true
 }
 
-async function submitApprove(postId: string) {
-  await approve(postId, approveComment.value)
-  detailOpen.value = false
-}
-
-async function submitChanges(postId: string) {
-  changeError.value = ''
-  if (!changeComment.value.trim()) {
-    changeError.value = 'Explica qué hay que cambiar.'
-    return
-  }
+// Aprobar directo desde la fila del calendario, sin abrir la hoja — no
+// necesita texto, a diferencia de "Pedir cambios" (que sí lo exige, así que
+// abre la hoja con el formulario de PostReviewActions.vue).
+const quickApproving = ref<string | null>(null)
+async function quickApprove(postId: string) {
+  quickApproving.value = postId
   try {
-    await requestChanges(postId, changeComment.value)
-    detailOpen.value = false
-  } catch (e) {
-    changeError.value = e instanceof Error ? e.message : 'No se ha podido enviar. Inténtalo de nuevo.'
+    await approvePost(postId)
+  } finally {
+    quickApproving.value = null
   }
 }
 
@@ -209,7 +173,7 @@ const tips = computed(() => {
             <template #actions="{ post }">
               <div v-if="post.status === 'ready_for_review'" class="mt-3 flex gap-2">
                 <BaseButton variant="secondary" size="sm" icon="ph:arrow-counter-clockwise-bold" @click="openDetail(post)">Pedir cambios</BaseButton>
-                <BaseButton variant="primary" size="sm" icon="ph:check-bold" :disabled="acting" @click="approve(post.id)">Aprobar</BaseButton>
+                <BaseButton variant="primary" size="sm" icon="ph:check-bold" :disabled="!!quickApproving" :icon-spin="quickApproving === post.id" @click="quickApprove(post.id)">Aprobar</BaseButton>
               </div>
             </template>
           </WeekBoard>
@@ -276,33 +240,7 @@ const tips = computed(() => {
 
     <PostDetailSheet v-model="detailOpen" :post="detailPost" :creator="collaborator ?? undefined">
       <template #actions="{ post }">
-        <div v-if="post.status === 'ready_for_review'" class="mt-5">
-          <template v-if="reviewStage === 'requesting-changes'">
-            <label class="block text-[0.8125rem] font-medium text-[var(--color-text-muted)] mb-1.5" for="change-comment">¿Qué hay que cambiar?</label>
-            <textarea
-              id="change-comment" v-model="changeComment" rows="3" placeholder="Sé concreto — esto es justo lo que verá el creador…"
-              class="w-full px-3.5 py-2.5 rounded-[var(--radius-sm)] bg-[var(--color-ink-overlay)] border border-[var(--color-hairline)] text-[0.9375rem] text-[var(--color-text)] placeholder:text-[var(--color-text-faint)] focus:outline-none focus:border-[var(--color-primary-500)]/60 resize-none"
-            />
-            <p v-if="changeError" class="text-[0.75rem] text-[var(--color-status-alert)] mt-1.5">{{ changeError }}</p>
-            <div class="flex gap-2.5 mt-3">
-              <BaseButton variant="secondary" class="flex-1" :disabled="acting" @click="reviewStage = 'idle'">Cancelar</BaseButton>
-              <BaseButton variant="primary" class="flex-1" :disabled="acting || !changeComment.trim()" :icon-spin="acting" @click="submitChanges(post.id)">Enviar</BaseButton>
-            </div>
-          </template>
-          <template v-else>
-            <textarea
-              v-if="showApproveComment" v-model="approveComment" rows="2" placeholder="Comentario opcional al aprobar…"
-              class="w-full px-3.5 py-2.5 rounded-[var(--radius-sm)] bg-[var(--color-ink-overlay)] border border-[var(--color-hairline)] text-[0.875rem] text-[var(--color-text)] placeholder:text-[var(--color-text-faint)] focus:outline-none focus:border-[var(--color-primary-500)]/60 resize-none mb-3"
-            />
-            <button v-else type="button" class="text-[0.75rem] text-[var(--color-text-muted)] hover:text-[var(--color-text)] underline underline-offset-2 mb-3" @click="showApproveComment = true">
-              + Añadir un comentario
-            </button>
-            <div class="flex gap-2.5">
-              <BaseButton variant="secondary" class="flex-1" icon="ph:arrow-counter-clockwise-bold" :disabled="acting" @click="reviewStage = 'requesting-changes'">Pedir cambios</BaseButton>
-              <BaseButton variant="primary" class="flex-1" icon="ph:check-bold" :disabled="acting" :icon-spin="acting" @click="submitApprove(post.id)">Aprobar</BaseButton>
-            </div>
-          </template>
-        </div>
+        <PostReviewActions v-if="post.status === 'ready_for_review'" class="mt-5" :post-id="post.id" @done="detailOpen = false" />
       </template>
     </PostDetailSheet>
   </AppShell>

@@ -166,6 +166,14 @@ watch(open, (value) => {
             <option value="">Contenido propio</option>
             <option v-for="c in activeCollaborations" :key="c.id" :value="c.id">{{ c.partnerName }}</option>
           </select>
+          <p class="text-[0.75rem] text-[var(--color-text-faint)] mt-1.5 leading-relaxed">
+            <template v-if="collaborationId">
+              {{ activeCollaborations.find((c) => c.id === collaborationId)?.partnerName }} podrá ver su progreso (checklist y fase) y, cuando la marques "Para revisar", aprobarla o pedirte cambios.
+            </template>
+            <template v-else>
+              Solo tú la verás — no se comparte con ningún partner ni cuenta como entregable de ninguna colaboración.
+            </template>
+          </p>
         </div>
 
         <div class="grid grid-cols-2 gap-3">

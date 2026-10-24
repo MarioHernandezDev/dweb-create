@@ -1,147 +1,27 @@
 <script setup lang="ts">
-import { contentTypeMeta, statusMeta } from '~/utils/status'
+import { contentTypeMeta, statusMeta, isPostOverdue, overdueLabel, relativeTime, creatorNextStepHint } from '~/utils/status'
 import { platformMeta, suggestionsForDraft } from '~/utils/mock-data'
 import { LABEL_COLORS } from '~/utils/labels'
-import type { ChecklistItem } from '~/composables/useChecklist'
-import type { Label } from '~/composables/useLabels'
 import type { Post, PostStatus } from '~/types'
 
 const props = defineProps<{ modelValue: boolean; post: Post | null; phases: PostStatus[] }>()
 const emit = defineEmits<{ 'update:modelValue': [value: boolean]; move: [status: PostStatus] }>()
 
-const { updatePost, deletePost } = useMyPosts()
-const { balance: creditBalance, ensureLoaded: ensureCreditsLoaded, setBalance: setCreditBalance } = useMyCredits()
-const { labels, ensureLabels, createLabel, attachLabel, detachLabel } = useLabels()
-const { itemsByPost, ensureItems, addItem: addChecklistItem, toggleItem, deleteItem } = useChecklist()
-const { confirm } = useConfirm()
-
-const title = ref('')
-const caption = ref('')
-const dueDate = ref('')
-const todayIso = new Date().toISOString().slice(0, 10)
-
-// Se resetea cada vez que se abre con una card distinta — el panel es uno
-// solo, reutilizado para cualquier post que se abra desde el tablero.
-watch(
-  () => [props.modelValue, props.post?.id] as const,
-  ([open]) => {
-    if (!open || !props.post) return
-    title.value = props.post.title
-    caption.value = props.post.caption
-    dueDate.value = props.post.dueDate
-    predictError.value = ''
-    labelsPickerOpen.value = false
-    newLabelName.value = ''
-    newLabelColor.value = LABEL_COLORS[0].hex
-    newItemText.value = ''
-    ensureCreditsLoaded()
-    ensureLabels()
-    ensureItems(props.post.id)
-  },
-  { immediate: true }
-)
-
-const dirty = computed(
-  () => !!props.post && (title.value !== props.post.title || caption.value !== props.post.caption || dueDate.value !== props.post.dueDate)
-)
-const saving = ref(false)
-async function save() {
-  if (!props.post) return
-  saving.value = true
-  try {
-    await updatePost(props.post.id, { title: title.value, caption: caption.value, dueDate: dueDate.value })
-  } finally {
-    saving.value = false
-  }
-}
-
-const deleting = ref(false)
-async function remove() {
-  if (!props.post) return
-  const ok = await confirm({
-    title: `¿Borrar "${props.post.title}"?`,
-    message: 'Se borrará permanentemente, junto con su checklist, etiquetas y predicción de éxito si las tenía.',
-    confirmLabel: 'Borrar', tone: 'danger', icon: 'ph:trash-fill'
-  })
-  if (!ok) return
-  deleting.value = true
-  try {
-    await deletePost(props.post.id)
-    emit('update:modelValue', false)
-  } finally {
-    deleting.value = false
-  }
-}
+const postRef = computed(() => props.post)
+const {
+  title, caption, dueDate, dirty, saving, save, deleting, remove,
+  predicting, predictError, predict, creditBalance,
+  labels, labelsPickerOpen, newLabelName, newLabelColor, attachedLabels, isLabelAttached, toggleLabel, createAndAttachLabel,
+  checklistItems, checklistPct, newItemText, addItem, toggleItem, deleteItem,
+  revisionNotes, pendingChangeRequest
+} = usePostEditorPanel(postRef)
 
 function onStatusChange(event: Event) {
   emit('move', (event.target as HTMLSelectElement).value as PostStatus)
 }
 
-// Motor de ML real (ver docs/3-ML-PIPELINE.md §3.5).
-const predicting = ref(false)
-const predictError = ref('')
-async function predict() {
-  if (!props.post) return
-  predicting.value = true
-  predictError.value = ''
-  try {
-    const result = await $fetch('/api/ml/predict', { method: 'POST', body: { postId: props.post.id } })
-    if (props.post) {
-      props.post.successScore = result.successScore
-      props.post.aiEvaluated = result.aiEvaluated
-      props.post.suggestions = result.suggestions.length ? result.suggestions : undefined
-    }
-    setCreditBalance(result.creditsRemaining)
-  } catch (err) {
-    console.error('[PostEditSheet] fallo al predecir:', err)
-    const statusCode = (err as { statusCode?: number; response?: { status?: number } })?.statusCode
-      ?? (err as { response?: { status?: number } })?.response?.status
-    predictError.value = statusCode === 402
-      ? 'Sin créditos disponibles. Mejora tu plan para seguir prediciendo.'
-      : 'No se ha podido predecir. Inténtalo de nuevo.'
-  } finally {
-    predicting.value = false
-  }
-}
-
-// Etiquetas
-const labelsPickerOpen = ref(false)
-const newLabelName = ref('')
-const newLabelColor = ref(LABEL_COLORS[0].hex)
-const attachedLabels = computed(() => {
-  if (!props.post) return []
-  const ids = props.post.labelIds
-  return labels.value.filter((l) => ids.includes(l.id))
-})
-function isAttached(labelId: string) {
-  return !!props.post?.labelIds.includes(labelId)
-}
-async function toggleLabel(label: Label) {
-  if (!props.post) return
-  if (isAttached(label.id)) await detachLabel(props.post.id, label.id, props.post)
-  else await attachLabel(props.post.id, label.id, props.post)
-}
-async function createAndAttachLabel() {
-  const name = newLabelName.value.trim()
-  if (!name || !props.post) return
-  const created = await createLabel(name, newLabelColor.value)
-  await attachLabel(props.post.id, created.id, props.post)
-  newLabelName.value = ''
-}
-
-// Checklist
-const checklistItems = computed<ChecklistItem[]>(() => (props.post ? itemsByPost.value[props.post.id] ?? [] : []))
-const checklistPct = computed(() => {
-  const total = checklistItems.value.length
-  if (!total) return 0
-  return Math.round((checklistItems.value.filter((i) => i.done).length / total) * 100)
-})
-const newItemText = ref('')
-async function onAddItem() {
-  const text = newItemText.value.trim()
-  if (!text || !props.post) return
-  await addChecklistItem(props.post.id, text, props.post)
-  newItemText.value = ''
+async function onRemove() {
+  if (await remove()) emit('update:modelValue', false)
 }
 </script>
 
@@ -153,7 +33,19 @@ async function onAddItem() {
         class="mb-5" @update:media-url="(url) => { if (post) post.mediaUrl = url }"
       />
 
+      <BaseCard v-if="pendingChangeRequest" radius="md" padding="md" class="flex items-start gap-3 mb-5 border-[var(--color-status-alert)]/30 bg-[var(--color-status-alert)]/[0.06]">
+        <Icon name="ph:arrow-counter-clockwise-bold" class="size-5 text-[var(--color-status-alert)] shrink-0 mt-0.5" />
+        <div class="min-w-0">
+          <p class="text-[0.8125rem] font-medium text-[var(--color-text)]">{{ pendingChangeRequest.authorName }} ha pedido cambios</p>
+          <p class="text-[0.875rem] text-[var(--color-text)] leading-relaxed mt-0.5">{{ pendingChangeRequest.comment }}</p>
+        </div>
+      </BaseCard>
+
       <div class="flex items-center gap-2.5 mb-4 flex-wrap">
+        <span v-if="isPostOverdue(post)" class="inline-flex items-center gap-1 text-[0.8125rem] font-medium text-[var(--color-status-alert)]">
+          <Icon name="ph:warning-fill" class="size-4" />
+          {{ overdueLabel(post.dueInDays) }}
+        </span>
         <span class="inline-flex items-center gap-1.5 text-[0.8125rem] text-[var(--color-text-muted)]">
           <Icon :name="platformMeta[post.platform].icon" class="size-4" :style="{ color: platformMeta[post.platform].colorVar }" />
           {{ platformMeta[post.platform].label }}
@@ -171,6 +63,10 @@ async function onAddItem() {
           </option>
         </select>
       </div>
+
+      <p class="text-[0.8125rem] text-[var(--color-text-muted)] leading-relaxed mb-5 -mt-1">
+        {{ creatorNextStepHint(post, !!pendingChangeRequest) }}
+      </p>
 
       <div class="flex flex-col gap-4 mb-5">
         <div>
@@ -190,7 +86,7 @@ async function onAddItem() {
         <div>
           <label class="block text-[0.8125rem] font-medium text-[var(--color-text-muted)] mb-1.5" for="pes-due-date">Fecha de entrega</label>
           <input
-            id="pes-due-date" v-model="dueDate" type="date" :min="todayIso"
+            id="pes-due-date" v-model="dueDate" type="date"
             class="w-full h-11 px-3.5 rounded-[var(--radius-sm)] bg-[var(--color-ink-overlay)] border border-[var(--color-hairline)] text-[0.9375rem] text-[var(--color-text)] focus:outline-none focus:border-[var(--color-primary-500)]/60"
           >
         </div>
@@ -229,7 +125,7 @@ async function onAddItem() {
           >
             <span class="size-3 rounded-full shrink-0" :style="{ background: l.color }" />
             <span class="flex-1 text-left text-[0.875rem] text-[var(--color-text)]">{{ l.name }}</span>
-            <Icon v-if="isAttached(l.id)" name="ph:check-bold" class="size-4 text-[var(--color-primary-500)]" />
+            <Icon v-if="isLabelAttached(l.id)" name="ph:check-bold" class="size-4 text-[var(--color-primary-500)]" />
           </button>
           <p v-if="!labels.length" class="text-[0.8125rem] text-[var(--color-text-faint)] px-2 py-1.5">Todavía no tienes ninguna etiqueta.</p>
 
@@ -272,12 +168,12 @@ async function onAddItem() {
               type="button" class="size-5 rounded-[0.3rem] border flex items-center justify-center shrink-0"
               :class="item.done ? 'bg-[var(--color-primary-500)] border-[var(--color-primary-500)]' : 'border-[var(--color-hairline-strong)]'"
               :aria-label="item.done ? 'Marcar como pendiente' : 'Marcar como hecho'"
-              @click="toggleItem(post.id, item.id, !item.done, post)"
+              @click="toggleItem(item.id, !item.done)"
             >
               <Icon v-if="item.done" name="ph:check-bold" class="size-3 text-white" />
             </button>
             <span class="flex-1 text-[0.875rem]" :class="item.done ? 'text-[var(--color-text-faint)] line-through' : 'text-[var(--color-text)]'">{{ item.text }}</span>
-            <button type="button" aria-label="Borrar elemento" class="size-6 flex items-center justify-center rounded-full text-[var(--color-text-faint)] opacity-0 group-hover:opacity-100 hover:bg-[var(--color-ink-overlay)] hover:text-[var(--color-status-alert)]" @click="deleteItem(post.id, item.id, post)">
+            <button type="button" aria-label="Borrar elemento" class="size-6 flex items-center justify-center rounded-full text-[var(--color-text-faint)] opacity-0 group-hover:opacity-100 hover:bg-[var(--color-ink-overlay)] hover:text-[var(--color-status-alert)]" @click="deleteItem(item.id)">
               <Icon name="ph:x-bold" class="size-3" />
             </button>
           </div>
@@ -287,9 +183,9 @@ async function onAddItem() {
           <input
             v-model="newItemText" type="text" placeholder="Añadir elemento…"
             class="flex-1 h-9 px-3 rounded-[var(--radius-xs)] bg-[var(--color-ink-overlay)] border border-[var(--color-hairline)] text-[0.875rem] text-[var(--color-text)] placeholder:text-[var(--color-text-faint)] focus:outline-none focus:border-[var(--color-primary-500)]/60"
-            @keydown.enter.prevent="onAddItem"
+            @keydown.enter.prevent="addItem"
           >
-          <BaseButton size="sm" variant="secondary" :disabled="!newItemText.trim()" @click="onAddItem">Añadir</BaseButton>
+          <BaseButton size="sm" variant="secondary" :disabled="!newItemText.trim()" @click="addItem">Añadir</BaseButton>
         </div>
       </div>
 
@@ -317,8 +213,33 @@ async function onAddItem() {
         </BaseButton>
       </BaseCard>
 
+      <section v-if="revisionNotes.length" class="mb-5">
+        <h2 class="text-[0.6875rem] font-semibold uppercase tracking-wide text-[var(--color-text-faint)] mb-3">Historial de revisión</h2>
+        <div class="flex flex-col gap-2.5">
+          <div
+            v-for="note in revisionNotes" :key="note.id"
+            class="flex items-start gap-3 rounded-[var(--radius-sm)] border border-[var(--color-hairline)] bg-[var(--color-paper)] p-3"
+          >
+            <span
+              class="flex items-center justify-center size-8 rounded-full shrink-0"
+              :class="note.kind === 'approved' ? 'bg-[var(--color-status-published)]/12 text-[var(--color-status-published)]' : 'bg-[var(--color-status-alert)]/12 text-[var(--color-status-alert)]'"
+            >
+              <Icon :name="note.kind === 'approved' ? 'ph:check-bold' : 'ph:arrow-counter-clockwise-bold'" class="size-4" />
+            </span>
+            <div class="min-w-0 flex-1">
+              <p class="text-[0.8125rem] text-[var(--color-text)]">
+                <span class="font-medium">{{ note.authorName }}</span>
+                {{ note.kind === 'approved' ? 'aprobó esta publicación' : 'pidió cambios' }}
+                <span class="text-[var(--color-text-faint)]">· {{ relativeTime(note.createdAt) }}</span>
+              </p>
+              <p v-if="note.comment" class="text-[0.8125rem] text-[var(--color-text-muted)] leading-relaxed mt-1">{{ note.comment }}</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <div class="flex gap-2.5">
-        <BaseButton variant="danger" icon="ph:trash-fill" :icon-spin="deleting" :disabled="deleting" @click="remove">Eliminar</BaseButton>
+        <BaseButton variant="danger" icon="ph:trash-fill" :icon-spin="deleting" :disabled="deleting" @click="onRemove">Eliminar</BaseButton>
         <BaseButton variant="primary" icon="ph:check-bold" class="flex-1" :icon-spin="saving" :disabled="!dirty || saving" @click="save">
           {{ saving ? 'Guardando…' : 'Guardar cambios' }}
         </BaseButton>

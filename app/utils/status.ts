@@ -1,6 +1,16 @@
-import type { CollaborationStatus, ContentType, PostStatus } from '~/types'
+import type { CollaborationStatus, ContentType, Post, PostStatus } from '~/types'
 
 // El icono de cada estado vive en StatusGlyph.vue (set propio, no icon-font).
+/** Explicación de una línea por fase — para el icono "?" de cada columna del Tablero, que antes no explicaba nada más que el nombre. */
+export const phaseDescription: Record<PostStatus, string> = {
+  idea: 'Solo una idea anotada — todavía no has empezado a producirla.',
+  in_production: 'La estás grabando, editando o preparando.',
+  ready_for_review: 'Lista por tu parte. Si es de una colaboración, el partner la aprueba o pide cambios aquí.',
+  scheduled: 'Ya aprobada (o sin colaboración de por medio) — lista para publicarse.',
+  published: 'Ya ha salido de verdad en la red social.',
+  overdue: 'Fuera de plazo.'
+}
+
 export const statusMeta: Record<PostStatus, { label: string; color: string }> = {
   idea: { label: 'Idea', color: 'var(--color-status-idea)' },
   in_production: { label: 'En producción', color: 'var(--color-status-production)' },
@@ -32,6 +42,93 @@ export function isActiveCollaborationStatus(status: CollaborationStatus): boolea
 
 export function isUnresolvedCollaborationStatus(status: CollaborationStatus): boolean {
   return status === 'requested'
+}
+
+/**
+ * Si una publicación está fuera de plazo de verdad. `overdue` existe como
+ * valor del enum `post_status` en la base de datos, pero ningún código lo
+ * asigna jamás — ni `updatePost` ni ninguna RPC lo escriben, así que una
+ * publicación atrasada se queda con el estado que ya tenía (p. ej.
+ * "in_production") para siempre. Esto es lo único que de verdad define
+ * "atrasada": fecha de entrega ya pasada y todavía no publicada. Antes esta
+ * misma cuenta vivía duplicada e inconsistente: `PhaseBoard.vue` la
+ * calculaba así para el borde rojo de la card, pero `creator/index.vue`
+ * comprobaba `status === 'overdue'` (que nunca es cierto) para decidir si
+ * mostraba el aviso "Fuera de plazo" — esa tarjeta de alerta no podía
+ * aparecer jamás. Una sola función, usada en los dos sitios.
+ */
+export function isPostOverdue(post: Pick<Post, 'dueInDays' | 'status'>): boolean {
+  return post.dueInDays < 0 && post.status !== 'published'
+}
+
+export function overdueLabel(dueInDays: number): string {
+  const days = Math.abs(dueInDays)
+  return `Atrasada ${days} día${days === 1 ? '' : 's'}`
+}
+
+/**
+ * Si el creador puede saltarse la revisión real del partner moviendo una
+ * publicación ligada a una colaboración activa directamente a esta fase.
+ * `approve_post`/`request_post_changes` son las únicas puertas "oficiales"
+ * hacia `scheduled` para una publicación de colaboración — las ejecuta el
+ * partner, dejan una nota en `post_revision_notes` y avisan al creador. Pero
+ * nada en el esquema impide que el propio creador haga un `update` directo
+ * (arrastrando la card o con el selector de fase) y llegue a "Programado"/
+ * "Publicado" sin que el partner haya aprobado nada. No se bloquea aquí
+ * (sería un cambio de permisos/RLS, fuera de alcance sin confirmarlo antes)
+ * — solo se usa para avisar con una confirmación antes de dejarlo pasar.
+ */
+export function movingSkipsPartnerReview(targetStatus: PostStatus, collaborationStatus: CollaborationStatus | null | undefined): boolean {
+  if (targetStatus !== 'scheduled' && targetStatus !== 'published') return false
+  if (!collaborationStatus) return false
+  return isActiveCollaborationStatus(collaborationStatus)
+}
+
+/**
+ * "Qué hacer ahora" en lenguaje llano, para el creador — nada de esto es
+ * nuevo (la fase ya lo dice todo), pero antes había que inferirlo del
+ * nombre de la fase sin ninguna frase que lo dijera de verdad. No depende
+ * del estado real de la colaboración (solo de si está ligada o no): para
+ * una pista de un vistazo no hace falta distinguir "aceptada" de "en
+ * curso", y así no obliga a cargar las colaboraciones en todos los sitios
+ * donde se edita una publicación.
+ */
+export function creatorNextStepHint(post: Pick<Post, 'status' | 'collaborationId'>, hasPendingChangeRequest: boolean): string {
+  switch (post.status) {
+    case 'idea':
+      return post.collaborationId
+        ? 'Empieza a producirla cuando quieras — todavía no la ve el partner.'
+        : 'Es contenido propio: solo tú la ves. Empieza a producirla cuando quieras.'
+    case 'in_production':
+      if (hasPendingChangeRequest) return 'Hay cambios pedidos — resuélvelos antes de volver a mandarla a revisión.'
+      return post.collaborationId
+        ? 'Cuando esté lista, muévela a "Para revisar" para que el partner la vea y la apruebe.'
+        : 'Cuando esté lista, muévela a "Programado".'
+    case 'ready_for_review':
+      return post.collaborationId
+        ? 'A la espera de que el partner la apruebe o pida cambios — no necesitas hacer nada más por ahora.'
+        : 'Puedes programarla cuando quieras.'
+    case 'scheduled':
+      return 'Lista — muévela a "Publicado" en cuanto salga de verdad.'
+    default:
+      return 'Ya está publicada.'
+  }
+}
+
+/** Lo mismo que `creatorNextStepHint`, pero visto desde el partner — solo tiene sentido para una publicación ligada a su colaboración. */
+export function partnerNextStepHint(status: PostStatus): string {
+  switch (status) {
+    case 'idea':
+      return 'El creador todavía no ha empezado a producirla.'
+    case 'in_production':
+      return 'El creador la está preparando — te avisaremos cuando esté lista para revisar.'
+    case 'ready_for_review':
+      return 'Lista para que la apruebes o le pidas cambios.'
+    case 'scheduled':
+      return 'Ya aprobada — en camino a publicarse.'
+    default:
+      return 'Ya está publicada.'
+  }
 }
 
 export const contentTypeMeta: Record<ContentType, { label: string; icon: string }> = {

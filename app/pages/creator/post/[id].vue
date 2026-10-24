@@ -1,15 +1,16 @@
 <script setup lang="ts">
-import { contentTypeMeta, statusMeta, relativeTime } from '~/utils/status'
+import { contentTypeMeta, statusMeta, relativeTime, isPostOverdue, overdueLabel, movingSkipsPartnerReview, creatorNextStepHint } from '~/utils/status'
 import { platformMeta, suggestionsForDraft } from '~/utils/mock-data'
+import { LABEL_COLORS } from '~/utils/labels'
 import type { PostStatus } from '~/types'
 
 const route = useRoute()
 const router = useRouter()
-const { posts, ensureLoaded, updatePost, deletePost } = useMyPosts()
-const { balance: creditBalance, ensureLoaded: ensureCreditsLoaded, setBalance: setCreditBalance } = useMyCredits()
+const { posts, ensureLoaded } = useMyPosts()
+const { requests: collabRequests, ensureLoaded: ensureCollabRequestsLoaded } = useCollabRequests()
 
-// En paralelo, no en serie — dos consultas independientes.
-await Promise.all([ensureLoaded(), ensureCreditsLoaded()])
+// En paralelo, no en serie — consultas independientes.
+await Promise.all([ensureLoaded(), ensureCollabRequestsLoaded()])
 
 const post = computed(() => posts.value.find((p) => p.id === route.params.id))
 
@@ -19,52 +20,18 @@ if (!post.value) {
 
 useHead({ title: post.value.title })
 
-// Historial de revisión (ver supabase/migrations/20261025140000_post_
-// revision_notes.sql) — solo tiene algo que mostrar si el post está/estuvo
-// ligado a una colaboración, pero se pide igual, sin condición: si no hay
-// filas, `notesByPost[id]` simplemente queda como un array vacío.
-const { notesByPost, ensureLoaded: ensureRevisionsLoaded, latestPendingChangeRequest } = usePostRevisions()
-await ensureRevisionsLoaded(post.value.id)
-const revisionNotes = computed(() => notesByPost.value[post.value!.id] ?? [])
-// Vigente de verdad solo si el post sigue en producción — en cuanto se
-// reenvía a revisión, deja de ser "lo pendiente", aunque la nota se quede
-// en el historial para siempre.
-const pendingChangeRequest = computed(() => (post.value?.status === 'in_production' ? latestPendingChangeRequest(post.value.id) : null))
+const {
+  title, caption, dueDate, dirty, saving, save, deleting, remove,
+  predicting, predictError, predict, creditBalance,
+  labels, labelsPickerOpen, newLabelName, newLabelColor, attachedLabels, isLabelAttached, toggleLabel, createAndAttachLabel,
+  checklistItems, checklistPct, newItemText, addItem, toggleItem, deleteItem,
+  revisionNotes, pendingChangeRequest
+} = usePostEditorPanel(post)
 
-const title = ref(post.value.title)
-const caption = ref(post.value.caption)
-const dueDate = ref(post.value.dueDate)
-const dirty = computed(() => title.value !== post.value?.title || caption.value !== post.value?.caption || dueDate.value !== post.value?.dueDate)
-const saving = ref(false)
 const todayIso = new Date().toISOString().slice(0, 10)
 
-async function save() {
-  if (!post.value) return
-  saving.value = true
-  try {
-    await updatePost(post.value.id, { title: title.value, caption: caption.value, dueDate: dueDate.value })
-  } finally {
-    saving.value = false
-  }
-}
-
-const { confirm } = useConfirm()
-const deleting = ref(false)
-async function remove() {
-  if (!post.value) return
-  const ok = await confirm({
-    title: `¿Borrar "${post.value.title}"?`,
-    message: 'Se borrará permanentemente, junto con su predicción de éxito si la tenía.',
-    confirmLabel: 'Borrar', tone: 'danger', icon: 'ph:trash-fill'
-  })
-  if (!ok) return
-  deleting.value = true
-  try {
-    await deletePost(post.value.id)
-    router.push('/creator/timeline')
-  } finally {
-    deleting.value = false
-  }
+async function onRemove() {
+  if (await remove()) router.push('/creator/timeline')
 }
 
 const statusFlow: PostStatus[] = ['idea', 'in_production', 'ready_for_review', 'scheduled', 'published']
@@ -73,38 +40,28 @@ const nextStatus = computed(() => {
   const idx = statusFlow.indexOf(post.value.status)
   return idx >= 0 && idx < statusFlow.length - 1 ? statusFlow[idx + 1] : null
 })
+const { updatePost } = useMyPosts()
+const { confirm } = useConfirm()
 async function advanceStatus() {
-  if (post.value && nextStatus.value) await updatePost(post.value.id, { status: nextStatus.value })
-}
+  if (!post.value || !nextStatus.value) return
+  const p = post.value
+  const next = nextStatus.value
 
-// Motor de ML real (ver docs/3-ML-PIPELINE.md §3.5): modelo heurístico +
-// sugerencias opcionales de un LLM gratuito, servido por /api/ml/predict,
-// que SÍ persiste en `ml_predictions` (con service_role, el cliente no
-// tiene permiso de escritura ahí — ver RLS).
-const predicting = ref(false)
-const predictError = ref('')
-async function predict() {
-  if (!post.value) return
-  predicting.value = true
-  predictError.value = ''
-  try {
-    const result = await $fetch('/api/ml/predict', { method: 'POST', body: { postId: post.value.id } })
-    if (post.value) {
-      post.value.successScore = result.successScore
-      post.value.aiEvaluated = result.aiEvaluated
-      post.value.suggestions = result.suggestions.length ? result.suggestions : undefined
-    }
-    setCreditBalance(result.creditsRemaining)
-  } catch (err) {
-    console.error('[creator/post/:id] fallo al predecir:', err)
-    const statusCode = (err as { statusCode?: number; response?: { status?: number } })?.statusCode
-      ?? (err as { response?: { status?: number } })?.response?.status
-    predictError.value = statusCode === 402
-      ? 'Sin créditos disponibles. Mejora tu plan para seguir prediciendo.'
-      : 'No se ha podido predecir. Inténtalo de nuevo.'
-  } finally {
-    predicting.value = false
+  // Mismo aviso que PhaseBoard.vue al arrastrar — ver movingSkipsPartnerReview
+  // en utils/status.ts. Aquí solo puede pasar al llegar a "scheduled" desde
+  // "ready_for_review": es el único salto de este botón secuencial que
+  // coincide con lo que debería hacer `approve_post`, no un update directo.
+  if (p.collaborationId && movingSkipsPartnerReview(next, collabRequests.value.find((c) => c.id === p.collaborationId)?.status)) {
+    const partnerName = collabRequests.value.find((c) => c.id === p.collaborationId)?.partnerName ?? 'el partner'
+    const ok = await confirm({
+      title: 'Vas a saltarte la revisión del partner',
+      message: `Esta publicación pertenece a una colaboración activa con ${partnerName}. Normalmente es ${partnerName} quien la aprueba antes de pasar a "${statusMeta[next].label}". ¿Moverla igualmente sin su aprobación?`,
+      confirmLabel: 'Mover igualmente'
+    })
+    if (!ok) return
   }
+
+  await updatePost(p.id, { status: next })
 }
 </script>
 
@@ -127,6 +84,10 @@ async function predict() {
 
         <div class="flex items-center gap-2.5 mb-6 flex-wrap">
           <StatusPill :status="post.status" />
+          <span v-if="isPostOverdue(post)" class="inline-flex items-center gap-1 text-[0.8125rem] font-medium text-[var(--color-status-alert)]">
+            <Icon name="ph:warning-fill" class="size-4" />
+            {{ overdueLabel(post.dueInDays) }}
+          </span>
           <span class="inline-flex items-center gap-1.5 text-[0.8125rem] text-[var(--color-text-muted)]">
             <Icon :name="platformMeta[post.platform].icon" class="size-4" :style="{ color: platformMeta[post.platform].colorVar }" />
             {{ platformMeta[post.platform].label }}
@@ -136,6 +97,10 @@ async function predict() {
             Mover a "{{ statusMeta[nextStatus].label }}"
           </BaseButton>
         </div>
+
+        <p class="text-[0.8125rem] text-[var(--color-text-muted)] leading-relaxed mb-6 -mt-2">
+          {{ creatorNextStepHint(post, !!pendingChangeRequest) }}
+        </p>
 
         <div class="flex flex-col gap-4 mb-6">
           <div>
@@ -164,8 +129,102 @@ async function predict() {
           </p>
         </div>
 
+        <!-- Etiquetas — antes solo existían desde el panel del Tablero, no desde esta página. -->
+        <div class="mb-6">
+          <div class="flex items-center justify-between mb-1.5">
+            <span class="text-[0.8125rem] font-medium text-[var(--color-text-muted)]">Etiquetas</span>
+            <button type="button" class="text-[0.8125rem] font-medium text-[var(--color-primary-500)]" @click="labelsPickerOpen = !labelsPickerOpen">
+              {{ labelsPickerOpen ? 'Cerrar' : '+ Añadir' }}
+            </button>
+          </div>
+
+          <div v-if="attachedLabels.length" class="flex flex-wrap gap-1.5 mb-2">
+            <span
+              v-for="l in attachedLabels" :key="l.id"
+              class="inline-flex items-center gap-1.5 pl-2.5 pr-1.5 h-7 rounded-full text-[0.8125rem] font-medium text-white"
+              :style="{ background: l.color }"
+            >
+              {{ l.name }}
+              <button type="button" aria-label="Quitar etiqueta" class="size-4 flex items-center justify-center rounded-full hover:bg-black/20" @click="toggleLabel(l)">
+                <Icon name="ph:x-bold" class="size-2.5" />
+              </button>
+            </span>
+          </div>
+
+          <div v-if="labelsPickerOpen" class="rounded-[var(--radius-sm)] border border-[var(--color-hairline)] bg-[var(--color-ink-overlay)] p-2.5">
+            <button
+              v-for="l in labels" :key="l.id" type="button"
+              class="w-full flex items-center gap-2.5 h-9 px-2 rounded-[var(--radius-xs)] hover:bg-[var(--color-ink-raised)]"
+              @click="toggleLabel(l)"
+            >
+              <span class="size-3 rounded-full shrink-0" :style="{ background: l.color }" />
+              <span class="flex-1 text-left text-[0.875rem] text-[var(--color-text)]">{{ l.name }}</span>
+              <Icon v-if="isLabelAttached(l.id)" name="ph:check-bold" class="size-4 text-[var(--color-primary-500)]" />
+            </button>
+            <p v-if="!labels.length" class="text-[0.8125rem] text-[var(--color-text-faint)] px-2 py-1.5">Todavía no tienes ninguna etiqueta.</p>
+
+            <div class="border-t border-[var(--color-hairline)] mt-2 pt-2.5">
+              <div class="flex items-center gap-1.5 mb-2">
+                <button
+                  v-for="c in LABEL_COLORS" :key="c.hex" type="button" :aria-label="c.name"
+                  class="size-5 rounded-full shrink-0 transition-transform"
+                  :class="newLabelColor === c.hex && 'ring-2 ring-offset-2 ring-offset-[var(--color-ink-overlay)] ring-[var(--color-text)] scale-110'"
+                  :style="{ background: c.hex }"
+                  @click="newLabelColor = c.hex"
+                />
+              </div>
+              <div class="flex gap-2">
+                <input
+                  v-model="newLabelName" type="text" placeholder="Nueva etiqueta…"
+                  class="flex-1 h-9 px-3 rounded-[var(--radius-xs)] bg-[var(--color-ink-raised)] border border-[var(--color-hairline)] text-[0.875rem] text-[var(--color-text)] placeholder:text-[var(--color-text-faint)] focus:outline-none focus:border-[var(--color-primary-500)]/60"
+                  @keydown.enter.prevent="createAndAttachLabel"
+                >
+                <BaseButton size="sm" variant="secondary" :disabled="!newLabelName.trim()" @click="createAndAttachLabel">Crear</BaseButton>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Checklist — antes solo existía desde el panel del Tablero, no desde esta página. -->
+        <div class="mb-8">
+          <div class="flex items-center justify-between mb-1.5">
+            <span class="text-[0.8125rem] font-medium text-[var(--color-text-muted)]">
+              Checklist{{ checklistItems.length ? ` · ${checklistItems.filter((i) => i.done).length}/${checklistItems.length}` : '' }}
+            </span>
+          </div>
+          <div v-if="checklistItems.length" class="h-1.5 rounded-full bg-[var(--color-ink-overlay)] overflow-hidden mb-2.5">
+            <div class="h-full rounded-full bg-[var(--color-primary-500)] transition-[width]" :style="{ width: `${checklistPct}%` }" />
+          </div>
+
+          <div v-if="checklistItems.length" class="flex flex-col gap-1.5 mb-2.5">
+            <div v-for="item in checklistItems" :key="item.id" class="flex items-center gap-2.5 group">
+              <button
+                type="button" class="size-5 rounded-[0.3rem] border flex items-center justify-center shrink-0"
+                :class="item.done ? 'bg-[var(--color-primary-500)] border-[var(--color-primary-500)]' : 'border-[var(--color-hairline-strong)]'"
+                :aria-label="item.done ? 'Marcar como pendiente' : 'Marcar como hecho'"
+                @click="toggleItem(item.id, !item.done)"
+              >
+                <Icon v-if="item.done" name="ph:check-bold" class="size-3 text-white" />
+              </button>
+              <span class="flex-1 text-[0.875rem]" :class="item.done ? 'text-[var(--color-text-faint)] line-through' : 'text-[var(--color-text)]'">{{ item.text }}</span>
+              <button type="button" aria-label="Borrar elemento" class="size-6 flex items-center justify-center rounded-full text-[var(--color-text-faint)] opacity-0 group-hover:opacity-100 hover:bg-[var(--color-ink-overlay)] hover:text-[var(--color-status-alert)]" @click="deleteItem(item.id)">
+                <Icon name="ph:x-bold" class="size-3" />
+              </button>
+            </div>
+          </div>
+
+          <div class="flex gap-2">
+            <input
+              v-model="newItemText" type="text" placeholder="Añadir elemento…"
+              class="flex-1 h-9 px-3 rounded-[var(--radius-xs)] bg-[var(--color-ink-overlay)] border border-[var(--color-hairline)] text-[0.875rem] text-[var(--color-text)] placeholder:text-[var(--color-text-faint)] focus:outline-none focus:border-[var(--color-primary-500)]/60"
+              @keydown.enter.prevent="addItem"
+            >
+            <BaseButton size="sm" variant="secondary" :disabled="!newItemText.trim()" @click="addItem">Añadir</BaseButton>
+          </div>
+        </div>
+
         <div class="flex gap-2.5 mb-8">
-          <BaseButton variant="danger" icon="ph:trash-fill" :icon-spin="deleting" :disabled="deleting" @click="remove">Eliminar</BaseButton>
+          <BaseButton variant="danger" icon="ph:trash-fill" :icon-spin="deleting" :disabled="deleting" @click="onRemove">Eliminar</BaseButton>
           <BaseButton variant="primary" icon="ph:check-bold" class="flex-1" :icon-spin="saving" :disabled="!dirty || saving" @click="save">
             {{ saving ? 'Guardando…' : 'Guardar cambios' }}
           </BaseButton>

@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import type { Post, PostStatus } from '~/types'
-import { contentTypeMeta, statusMeta } from '~/utils/status'
+import { contentTypeMeta, statusMeta, overdueLabel } from '~/utils/status'
 import { platformMeta } from '~/utils/mock-data'
 
-const props = defineProps<{ post: Post; phases: PostStatus[] }>()
+const props = defineProps<{ post: Post; phases: PostStatus[]; overdue?: boolean }>()
 defineEmits<{ open: [post: Post]; move: [status: PostStatus] }>()
 
 // Cargadas una sola vez desde PhaseBoard.vue (onMounted) — este componente
@@ -68,6 +68,11 @@ const coverStyle = computed(() => {
 
           <p class="text-[0.875rem] font-medium text-[var(--color-text)] leading-snug line-clamp-2 min-h-[2.5em] mb-2">
             {{ post.title }}
+          </p>
+
+          <p v-if="overdue" class="flex items-center gap-1 mb-2.5 text-[0.75rem] font-medium text-[var(--color-status-alert)]">
+            <Icon name="ph:warning-fill" class="size-3.5 shrink-0" />
+            {{ overdueLabel(post.dueInDays) }}
           </p>
 
           <p v-if="post.checklist.total" class="flex items-center gap-1 mb-2.5 text-[0.75rem] text-[var(--color-text-faint)]">

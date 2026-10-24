@@ -277,6 +277,15 @@ async function handleMarkCompleted() {
                 <span :class="item.done ? 'text-[var(--color-text-faint)] line-through' : 'text-[var(--color-text)]'">{{ item.text }}</span>
               </li>
             </ul>
+
+            <!-- Antes esta pestaña era de solo lectura: ver la entrega "Para
+                 revisar" aquí no daba ninguna forma de actuar, había que
+                 encontrarla de nuevo en Inicio → Tu calendario para aprobarla
+                 o pedir cambios. Mismo componente que usa Inicio. -->
+            <PostReviewActions
+              v-if="expandedPost.status === 'ready_for_review'" class="mt-4 pt-4 border-t border-[var(--color-hairline)]"
+              :post-id="expandedPost.id" @done="expandedPostId = null"
+            />
           </BaseCard>
         </div>
 

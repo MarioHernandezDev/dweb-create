@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { Creator, Post } from '~/types'
-import { contentTypeMeta, statusMeta } from '~/utils/status'
+import { contentTypeMeta, statusMeta, isPostOverdue, overdueLabel } from '~/utils/status'
 import { platformMeta } from '~/utils/mock-data'
 
 const props = withDefaults(defineProps<{
@@ -11,6 +11,8 @@ const props = withDefaults(defineProps<{
 }>(), { interactive: true })
 
 defineEmits<{ open: [post: Post] }>()
+
+const overdue = computed(() => isPostOverdue(props.post))
 
 // Mismo lenguaje que BoardCard/PackageCard/FeaturedDeck: textura de
 // claqueta desaturada (papel + rayas diagonales) en vez de un degradado al
@@ -53,6 +55,10 @@ const coverStyle = computed(() => {
           </div>
 
           <div class="mt-2 flex flex-wrap items-center gap-2">
+            <span v-if="overdue" class="inline-flex items-center gap-1 text-[0.75rem] font-medium text-[var(--color-status-alert)]">
+              <Icon name="ph:warning-fill" class="size-3.5" />
+              {{ overdueLabel(post.dueInDays) }}
+            </span>
             <StatusPill :status="post.status" compact />
             <span v-if="creator" class="inline-flex items-center gap-1 text-[0.75rem] text-[var(--color-text-faint)]">
               <span class="size-1 rounded-full bg-[var(--color-text-faint)]" />

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { contentTypeMeta, dueLabel } from '~/utils/status'
+import { contentTypeMeta, dueLabel, isPostOverdue, overdueLabel, partnerNextStepHint } from '~/utils/status'
 import { platformMeta } from '~/utils/mock-data'
 import type { Creator, Post } from '~/types'
 
@@ -33,9 +33,15 @@ watch(() => props.post?.id, (postId) => { if (postId) ensureItems(postId) }, { i
 
       <div class="flex items-center gap-2 flex-wrap mb-4">
         <StatusPill :status="post.status" />
+        <span v-if="isPostOverdue(post)" class="inline-flex items-center gap-1 text-[0.8125rem] font-medium text-[var(--color-status-alert)]">
+          <Icon name="ph:warning-fill" class="size-4" />
+          {{ overdueLabel(post.dueInDays) }}
+        </span>
         <span v-if="creator" class="text-[0.8125rem] text-[var(--color-text-muted)]">{{ creator.name }}</span>
         <span class="text-[0.8125rem] text-[var(--color-text-faint)]">· {{ dueLabel(post.dueInDays) }}</span>
       </div>
+
+      <p class="text-[0.8125rem] text-[var(--color-text-muted)] leading-relaxed mb-4">{{ partnerNextStepHint(post.status) }}</p>
 
       <p v-if="post.caption" class="text-[0.9375rem] text-[var(--color-text)] leading-relaxed mb-4">{{ post.caption }}</p>
       <p v-else class="text-[0.9375rem] text-[var(--color-text-faint)] italic mb-4">Sin caption todavía.</p>
