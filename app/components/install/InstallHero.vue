@@ -32,7 +32,7 @@ const banner = localPhotos.install
 
       <path
         d="M -40 170 C 140 130, 260 210, 440 175 S 760 120, 900 170 S 1100 210, 1240 160"
-        fill="none" stroke="rgb(255 255 255 / 20%)" stroke-width="2.5" stroke-linecap="round"
+        fill="none" stroke="rgb(255 255 255 / 10%)" stroke-width="2.5" stroke-linecap="round"
         stroke-dasharray="1 13"
       />
 
@@ -41,7 +41,7 @@ const banner = localPhotos.install
     </svg>
 
     <div class="relative z-10 flex-1 flex flex-col justify-end px-5 md:px-10 lg:px-16 pb-14 pt-28 max-w-7xl mx-auto w-full">
-      <p class="text-[0.8125rem] font-medium text-[var(--color-logo-teal)] mb-3">Instalaciones</p>
+      <p class="text-[0.8125rem] font-medium text-[var(--color-logo-teal)] mb-3">Integraciones</p>
       <h1 class="font-display font-light text-white text-[clamp(2.25rem,6vw,4rem)] leading-[1.05] max-w-[18ch] mb-4">
         Llévate FEEDMA contigo.
       </h1>

@@ -205,7 +205,15 @@ async function send() {
 
 <template>
   <AppShell :role="myRole" :title="conversation?.otherName ?? 'Chat'" full-width>
-    <div class="flex flex-col h-[calc(100dvh-7.5rem)] md:h-[calc(100dvh-9rem)] md:max-w-2xl">
+    <!-- Hallazgo #16 de la auditoría de usabilidad: el campo de mensaje
+         quedaba tapado por la barra inferior fija en móvil — medido de
+         verdad en navegador (no a ojo): con 7.5rem aquí, el formulario
+         caía en 769-813px mientras la barra inferior fija ocupaba
+         764.5-844px, justo debajo de ella. 11.25rem dejó ~11px de margen
+         real en viewport de 390×844. En escritorio no hace falta tocar
+         nada — ahí no hay barra inferior fija y el formulario ya caía
+         dentro del viewport. -->
+    <div class="flex flex-col h-[calc(100dvh-11.25rem)] md:h-[calc(100dvh-9rem)] md:max-w-2xl">
       <div v-if="conversation" class="flex items-center gap-3 pb-4 mb-2 border-b border-[var(--color-hairline)] shrink-0">
         <BaseAvatar :initials="initialsFromName(conversation.otherName)" :src="conversation.otherAvatarUrl" :hue="hueFromString(conversation.otherName)" size="sm" />
         <NuxtLink

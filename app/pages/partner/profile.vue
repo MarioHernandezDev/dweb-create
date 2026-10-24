@@ -167,18 +167,16 @@ const previewRangeLabel = computed(() => {
 
 // Barra de "ficha completa al X%" — anima a rellenar lo que de verdad
 // mejora el matching (mismo motivo que ya explica el texto de esta sección).
-const completionPercent = computed(() => {
-  const checks = [
-    !!avatarUrl.value,
-    !!partner.value?.coverUrl,
-    !!ficha.bio.trim(),
-    ficha.categories.length > 0,
-    !!(ficha.minBudgetEuros || ficha.maxBudgetEuros),
-    !!ficha.lookingFor.trim(),
-    (myPackages.value?.length ?? 0) > 0
-  ]
-  return Math.round((checks.filter(Boolean).length / checks.length) * 100)
-})
+const completionItems = computed(() => [
+  { label: 'Foto de perfil', done: !!avatarUrl.value },
+  { label: 'Foto de portada', done: !!partner.value?.coverUrl },
+  { label: 'Biografía', done: !!ficha.bio.trim() },
+  { label: 'Categorías', done: ficha.categories.length > 0 },
+  { label: 'Presupuesto', done: !!(ficha.minBudgetEuros || ficha.maxBudgetEuros) },
+  { label: 'Qué tipo de creador buscas', done: !!ficha.lookingFor.trim() },
+  { label: 'Un paquete publicado', done: (myPackages.value?.length ?? 0) > 0 }
+])
+const completionPercent = computed(() => Math.round((completionItems.value.filter((i) => i.done).length / completionItems.value.length) * 100))
 
 function toggleFichaCategory(cat: string) {
   const i = ficha.categories.indexOf(cat)
@@ -220,7 +218,7 @@ async function saveFicha() {
           </div>
         </section>
 
-        <ProfileCompletionBar :percent="completionPercent" />
+        <ProfileCompletionBar :percent="completionPercent" :items="completionItems" />
       </div>
 
       <div class="md:flex md:gap-10">

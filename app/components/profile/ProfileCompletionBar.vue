@@ -1,6 +1,17 @@
 <script setup lang="ts">
-/** Barra de "ficha completa al X%" — mismo patrón visual que el objetivo semanal de creator/index.vue. Anima a rellenar bio/categorías/tarifas/paquetes porque de verdad mejora el matching (ver copy ya existente en la ficha pública). */
-defineProps<{ percent: number }>()
+/**
+ * Barra de "ficha completa al X%" — mismo patrón visual que el objetivo
+ * semanal de creator/index.vue. Anima a rellenar bio/categorías/tarifas/
+ * paquetes porque de verdad mejora el matching (ver copy ya existente en
+ * la ficha pública).
+ *
+ * `items` es opcional (lista con la misma etiqueta/estado que ya usa cada
+ * página para calcular `percent`, no se recalcula aquí) — antes el
+ * porcentaje no decía qué faltaba en concreto (hallazgo #14 de la
+ * auditoría de usabilidad): un 71%/43% sin más contexto no dice si falta
+ * la portada o el presupuesto.
+ */
+defineProps<{ percent: number; items?: { label: string; done: boolean }[] }>()
 </script>
 
 <template>
@@ -18,5 +29,8 @@ defineProps<{ percent: number }>()
         :style="{ width: `${percent}%` }"
       />
     </div>
+    <p v-if="percent < 100 && items?.some((i) => !i.done)" class="text-[0.75rem] text-[var(--color-text-faint)] mt-1.5">
+      Te falta: {{ items.filter((i) => !i.done).map((i) => i.label).join(', ') }}.
+    </p>
   </div>
 </template>

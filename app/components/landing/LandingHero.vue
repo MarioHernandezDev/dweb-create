@@ -25,7 +25,7 @@
       <path
         d="M -40 260 C 160 200, 260 310, 420 260 S 680 170, 820 250 S 1080 310, 1240 240"
         fill="none" stroke="var(--color-logo-amber)" stroke-width="3" stroke-linecap="round"
-        stroke-dasharray="1 14" opacity="0.55"
+        stroke-dasharray="1 14" opacity="0.2"
       />
 
       <use href="#nx-ant" class="nx-ant" width="26" height="16" transform="translate(-13 -8)" style="animation-delay: 0s" />

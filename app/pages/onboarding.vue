@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { roleMeta } from '~/utils/nav'
 import { localPhotos } from '~/utils/images'
+import { translateAuthError } from '~/utils/auth-errors'
 import type { Role } from '~/types'
 
 useHead({ title: 'Crear cuenta' })
@@ -60,9 +61,7 @@ async function register() {
 
   loading.value = false
   if (signUpError) {
-    error.value = signUpError.message === 'User already registered'
-      ? 'Ya existe una cuenta con ese email — intenta acceder en vez de registrarte.'
-      : signUpError.message
+    error.value = translateAuthError(signUpError.message)
     return
   }
 

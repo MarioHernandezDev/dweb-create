@@ -4,6 +4,95 @@ Registro de qué se hizo, por qué, y qué queda pendiente de verificar — pens
 
 ---
 
+## 2026-10-24 (54) — Fase 5 de CONTEXT.md (hallazgos #11-21): pulido, accesibilidad y un bug real de verdad grave encontrado al medir en navegador
+
+Cierra la Fase 5, la última del plan original de `CONTEXT.md`. Cada hallazgo se investigó en el código real antes de tocar nada; varios resultaron ya resueltos de sesiones anteriores, documentado explícitamente abajo en vez de darlos por hechos sin comprobar.
+
+### #11 — Ya resuelto, confirmado al revisar el código
+
+Métricas y Redes ya usan el mismo criterio de tres estados (`socialAccountState`: conectada y verificada / conectada sin verificar / sin conectar) en `PlatformStatCard.vue` y `SocialAccountRow.vue`, con texto explícito ("Conectada sin verificar · todavía sin datos reales"). No hacía falta ningún cambio.
+
+### #12 — Vista previa de ejemplo en Métricas vacío
+
+`creator/metrics/index.vue`: debajo del estado vacío, una sección atenuada (opacidad 50%, sin interacción) con datos de ejemplo marcados como tal ("ASÍ SE VERÍA CON UNA RED CONECTADA (EJEMPLO)") usando los mismos componentes reales (`StatTile`, `PlatformStatCard`).
+
+### #13 — Créditos de predicción explicados
+
+`creator/profile.vue`, pestaña Cuenta: bajo el saldo, una frase con las cifras reales del sistema (`grant_welcome_credits()` en la base de datos, `stripe-plans.ts` en el servidor): "Cada predicción gasta 1 crédito. Recibiste 3 gratis al crear tu cuenta; con FEEDMA Pro (19,99 €/mes) se renuevan 20 más cada mes."
+
+### #14 — Barra de ficha con detalle de lo que falta
+
+`ProfileCompletionBar.vue` gana una prop opcional `items` (misma lista de comprobaciones que ya usaba cada página para calcular el %, solo que ahora con etiqueta); debajo de la barra, cuando no está al 100%: "Te falta: X, Y, Z." Aplicado en `creator/profile.vue` y `partner/profile.vue`.
+
+### #16 — El campo de mensaje del chat estaba tapado de verdad por la barra inferior en móvil
+
+No era solo "poca altura útil": medido con el navegador real (no a ojo), con el `calc(100dvh-7.5rem)` anterior el formulario de enviar mensaje caía en 769-813px de un viewport de 844px, mientras la barra de navegación inferior fija ocupaba 764.5-844px — **el campo de mensaje estaba literalmente debajo de la barra, invisible e inaccesible en cualquier móvil real**, aunque existía en el DOM. Corregido a `calc(100dvh-11.25rem)` (verificado de nuevo: ahora el formulario termina en 753px, 11,5px de margen limpio antes de la barra). En escritorio no hacía falta tocar nada — ahí no hay barra fija y el formulario ya caía dentro del viewport.
+
+### #17 — Validación del precio de oferta
+
+`ChatOfferSheet.vue`: al vaciar "Precio propuesto (€)", en vez de que "Enviar oferta" se quede gris sin explicación, aparece "Indica un precio para poder enviar la oferta." en rojo.
+
+### #18 — Accesibilidad: dos botones de icono sin nombre real
+
+Revisados todos los `<button>` de icono de la app — la mayoría ya tenían `aria-label`. Dos no: el FAB (botón flotante "+" del Tablero/Hoy, `Fab.vue`) y el botón principal de `AvatarUploader.vue` (foto de perfil circular, sin texto visible siquiera al pasar el ratón, a diferencia de `CoverPhotoUploader.vue`/`CoverUploader.vue`, que sí tienen un `<span>` con texto). Los dos dos llevan ahora `aria-label`.
+
+### #19 — Errores de Supabase Auth traducidos
+
+Nuevo `app/utils/auth-errors.ts` (`translateAuthError`), centraliza la traducción de los mensajes más habituales de GoTrue (credenciales inválidas, cuenta ya registrada, email inválido, contraseña corta, límite de intentos, email sin confirmar) — antes `login.vue` solo traducía uno y `onboarding.vue` dejaba pasar cualquier otro en inglés tal cual (p. ej. "Email address ... is invalid"). Los dos formularios usan ahora la misma función.
+
+### #20 — Página de error propia
+
+`app/error.vue` nuevo — antes cualquier ruta sin capturar caía en el 404 por defecto de Nuxt (inglés, estética distinta al resto de la app). Cubre tanto 404 como otros códigos de error, con el wordmark FEEDMA y "Volver al inicio" (`clearError({ redirect: '/' })`). **Nota real sobre su alcance**: una ruta inventada visitada sin sesión iniciada nunca llega a mostrar esta pantalla — el middleware de autenticación redirige antes a `/login` (comportamiento ya existente, no tocado). Donde sí se dispara siempre, verificado de verdad: cualquier `createError({statusCode: 404, ...})` ya existente en el código (publicación/perfil/conversación no encontrada) y cualquier ruta rota dentro del área ya autenticada.
+
+### #21 — Landing: nombre corregido, línea decorativa menos intrusiva, captura real del panel
+
+- "Instalaciones" → "Integraciones" en nav, pie de página y la propia página (`/instalaciones`, la URL no cambia) — el contenido real de esa página es conectar redes sociales, no instalaciones; "Instalaciones" era, literalmente, la palabra equivocada.
+- Línea decorativa punteada del hero principal: opacidad de 0.55 a 0.2 (`LandingHero.vue`). La de la página de Integraciones: de 20% a 10% (`InstallHero.vue`).
+- El mockup de móvil de "Llévate FEEDMA contigo" mostraba una cuadrícula de iconos genérica, no el producto — ahora muestra una captura real de la pantalla "Hoy" del creador (`public/img/panel-preview.png`, generada contra la cuenta demo y verificada visualmente antes de usarla).
+
+### Verificado de verdad
+
+- `npx vue-tsc --noEmit`: limpio. `npm test -- --run`: 30/30. `npm run build`: limpio.
+- Recorrido completo en navegador real (Playwright, instalado y desinstalado al terminar — mismo criterio que entradas anteriores) de los 9 cambios de arriba, con capturas revisadas una a una: landing, Integraciones, 404 (anónimo y logueado), Métricas vacío, ficha de creador y partner con el desglose, créditos, chat en móvil (antes y después del arreglo), y el aviso de precio vacío en la oferta.
+- Dos fallos reales encontrados solo por verificar en navegador, ninguno visible en tipos/tests: el campo de chat tapado (#16, arriba) y el wordmark "FEEDMA" de `error.vue` en blanco sobre fondo claro (`--color-ink` es un tono casi blanco, `#fbfaff` — no oscuro; confundido con el panel de marca de `login.vue`, que sí es oscuro pero por un degradado explícito aparte, no por `--color-ink`). Corregido a `text-[var(--color-text)]`.
+- Un "error" que no lo era: durante la edición de `InstallGuide.vue`, Vite en caliente (HMR) se quedó con una referencia a un bloque `<style>` ya borrado y lanzaba `CssSyntaxError` en consola — un `npm run build` limpio y un reinicio del servidor de desarrollo confirmaron que no era un fallo real, solo caché de HMR desactualizada.
+
+### Sin verificar
+
+- Accesibilidad real con lector de pantalla — solo se revisó código (presencia de `aria-label`), no una auditoría con Lighthouse/axe ni con un lector de pantalla de verdad.
+- El resto de estados de error HTTP de `error.vue` (solo 404 y el genérico "Algo ha ido mal" se han visto renderizados).
+- Captura del panel: es una imagen estática de la cuenta demo en un momento dado — no se actualiza sola si cambia el diseño del dashboard.
+
+### Con esto, la Fase 5 de `CONTEXT.md` queda cerrada — el plan original (Fases 0 a 5) está completo
+
+Quedan del roadmap (`docs/CONTEXTO_PROYECTO_FEEDMA.md` §7): probar un pago real (modo test) de los dos flujos de Stripe — pendiente a propósito, pedido explícitamente para después de esta fase — y la Fase 2 de la conversación actual (onboarding guiado), todavía sin empezar a petición expresa del usuario.
+
+---
+
+## 2026-10-24 (53) — Dos decisiones pendientes del roadmap: datos ambiguos borrados (con confirmación) y definición de "activa"/"pendiente" cerrada
+
+Antes de seguir con la Fase 5, se resolvieron dos de los pendientes "críticos" del roadmap (`docs/CONTEXTO_PROYECTO_FEEDMA.md` §7.1), ambos con confirmación explícita del usuario antes de actuar.
+
+### Borrado el grupo ambiguo de colaboraciones de prueba
+
+De las 19 colaboraciones reales que había, se identificaron 6 con un criterio explícito: 4 con el texto autogenerado "Oferta aceptada por chat: Reel de lanzamiento 7505/7823" (residuo confirmado de tests repetidos, mismo patrón que ya se investigó en la entrada 49) y 2 más con presupuesto idéntico (32,00 €) y brief de una sola palabra ("OLA" y otra, una palabra ofensiva) — sin el mismo patrón automático que las otras 4, pero presentadas igual al usuario antes de tocarlas. El usuario confirmó borrar las 6. Verificado antes de borrar: ninguna tenía una publicación real ligada (0 posts afectados). Cascada limpia por esquema (`collaboration_offers`, `reports`, `collaboration_ratings`, `collaboration_log_entries` tienen `on delete cascade` hacia `collaborations`; `posts.collaboration_id` es `on delete set null`, así que cualquier post ligado se habría quedado como "contenido propio" en vez de borrarse — no hizo falta en este caso). Quedan 13 colaboraciones reales.
+
+### Definición de "colaboración activa"/"pendiente" confirmada como decisión de producto
+
+Pregunta abierta 4 de `CONTEXT.md`, ya implementada de hecho (`isActiveCollaborationStatus`/`isUnresolvedCollaborationStatus` en `app/utils/status.ts`) pero nunca confirmada explícitamente. El usuario confirmó que es la definición correcta a largo plazo: **activa** = `accepted` o `in_progress`; **pendiente/sin resolver** = `requested`. No se ha tocado código — queda documentado como decisión cerrada, no heredada.
+
+### Verificado de verdad
+
+Consulta antes y después del borrado (19 → 13 colaboraciones), confirmando los 6 ids exactos borrados y que ninguno tenía publicaciones reales ligadas.
+
+### Sin verificar / pendiente
+
+- No se ha repetido `npm run test:integration` — el borrado fue manual con `service_role`, no toca código ni RLS.
+- Sigue pendiente lo más laborioso del roadmap crítico: probar un pago real (en modo test) de los dos flujos de Stripe — aplazado a propósito a petición del usuario, para después de la Fase 5.
+- Empieza ahora la Fase 5 de `CONTEXT.md` (hallazgos #11 a #21).
+
+---
+
 ## 2026-10-24 (52) — Cierra el plan de publicaciones: columnas del Tablero colapsables en móvil
 
 Última pieza pendiente del plan de la entrada 49: en la entrada 50 se había aparcado a propósito "colapsar columnas vacías en móvil" por miedo a esconder el hueco donde se suelta una card al arrastrar. Revisando el propio código se confirmó que ese miedo no aplica: cada card ya tiene su propio selector de fase (`BoardCard.vue`, pensado desde antes como alternativa al arrastre en móvil) que no necesita que la columna de destino esté visible ni desplegada — así que plegar una columna vacía no quita ninguna forma real de mover algo ahí.

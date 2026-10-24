@@ -185,18 +185,16 @@ const previewRangeLabel = computed(() => {
 
 // Barra de "ficha completa al X%" — anima a rellenar lo que de verdad
 // mejora el matching (mismo motivo que ya explica el texto de esta sección).
-const completionPercent = computed(() => {
-  const checks = [
-    !!avatarUrl.value,
-    !!creator.value?.coverUrl,
-    !!ficha.bio.trim(),
-    ficha.categories.length > 0,
-    !!(ficha.minRateEuros || ficha.maxRateEuros),
-    !!ficha.lookingFor.trim(),
-    (myPackages.value?.length ?? 0) > 0
-  ]
-  return Math.round((checks.filter(Boolean).length / checks.length) * 100)
-})
+const completionItems = computed(() => [
+  { label: 'Foto de perfil', done: !!avatarUrl.value },
+  { label: 'Foto de portada', done: !!creator.value?.coverUrl },
+  { label: 'Biografía', done: !!ficha.bio.trim() },
+  { label: 'Categorías', done: ficha.categories.length > 0 },
+  { label: 'Tarifa', done: !!(ficha.minRateEuros || ficha.maxRateEuros) },
+  { label: 'Qué tipo de marcas buscas', done: !!ficha.lookingFor.trim() },
+  { label: 'Un paquete publicado', done: (myPackages.value?.length ?? 0) > 0 }
+])
+const completionPercent = computed(() => Math.round((completionItems.value.filter((i) => i.done).length / completionItems.value.length) * 100))
 
 function toggleFichaCategory(cat: string) {
   const i = ficha.categories.indexOf(cat)
@@ -261,7 +259,7 @@ async function saveFicha() {
           <p class="text-[0.875rem] text-[var(--color-text)]">Cuenta de pagos actualizada.</p>
         </BaseCard>
 
-        <ProfileCompletionBar :percent="completionPercent" />
+        <ProfileCompletionBar :percent="completionPercent" :items="completionItems" />
       </div>
 
       <div class="md:flex md:gap-10">
@@ -287,9 +285,17 @@ async function saveFicha() {
                   <span class="text-[0.9375rem] text-[var(--color-text)]">Redes conectadas</span>
                   <Icon name="ph:caret-right-bold" class="size-4 text-[var(--color-text-faint)]" />
                 </NuxtLink>
-                <div class="flex items-center justify-between px-5 py-4">
-                  <span class="text-[0.9375rem] text-[var(--color-text)]">Créditos de predicción</span>
-                  <span class="text-[0.8125rem] text-[var(--color-text-faint)]">{{ creditsBalance === null ? '…' : `${creditsBalance} restantes` }}</span>
+                <div class="px-5 py-4">
+                  <div class="flex items-center justify-between">
+                    <span class="text-[0.9375rem] text-[var(--color-text)]">Créditos de predicción</span>
+                    <span class="text-[0.8125rem] text-[var(--color-text-faint)]">{{ creditsBalance === null ? '…' : `${creditsBalance} restantes` }}</span>
+                  </div>
+                  <!-- Hallazgo #13: el saldo no explicaba nada de coste ni
+                       renovación — ver grant_welcome_credits() y
+                       stripe-plans.ts (plan "pro") para las cifras reales. -->
+                  <p class="text-[0.75rem] text-[var(--color-text-faint)] mt-1">
+                    Cada predicción gasta 1 crédito. Recibiste 3 gratis al crear tu cuenta; con FEEDMA Pro (19,99 €/mes) se renuevan 20 más cada mes.
+                  </p>
                 </div>
                 <div class="flex items-center justify-between px-5 py-4 gap-3">
                   <div>

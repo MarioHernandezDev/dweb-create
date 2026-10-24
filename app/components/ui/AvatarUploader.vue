@@ -75,7 +75,10 @@ async function onRemove() {
 <template>
   <div>
     <div class="relative size-16 shrink-0">
-      <button type="button" class="group relative size-16 rounded-full block" :disabled="uploading || removing" @click="inputEl?.click()">
+      <button
+        type="button" :aria-label="avatarUrl ? 'Cambiar foto de perfil' : 'Añadir foto de perfil'"
+        class="group relative size-16 rounded-full block" :disabled="uploading || removing" @click="inputEl?.click()"
+      >
         <BaseAvatar :initials="initials" :src="avatarUrl" :hue="hue" size="lg" />
 
         <div

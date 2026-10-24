@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { roleMeta } from '~/utils/nav'
+import { translateAuthError } from '~/utils/auth-errors'
 
 useHead({ title: 'Acceder' })
 
@@ -43,9 +44,7 @@ async function login(loginEmail: string, loginPassword: string) {
 
   const { data, error: signInError } = await supabase.auth.signInWithPassword({ email: loginEmail, password: loginPassword })
   if (signInError) {
-    error.value = signInError.message === 'Invalid login credentials'
-      ? 'Email o contraseña incorrectos.'
-      : signInError.message
+    error.value = translateAuthError(signInError.message)
     loading.value = false
     return
   }

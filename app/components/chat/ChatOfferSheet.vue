@@ -91,7 +91,8 @@ async function send() {
         id="chat-offer-price" v-model.number="priceEuros" type="number" min="1" step="1"
         class="w-full h-11 px-3.5 rounded-[var(--radius-sm)] bg-[var(--color-ink-overlay)] border border-[var(--color-hairline)] text-[0.9375rem] text-[var(--color-text)] focus:outline-none focus:border-[var(--color-primary-500)]/60"
       >
-      <p class="text-[0.75rem] text-[var(--color-text-faint)] mt-1.5">Puedes proponer un precio distinto al listado, para negociar.</p>
+      <p v-if="!priceEuros" class="text-[0.75rem] text-[var(--color-status-alert)] mt-1.5">Indica un precio para poder enviar la oferta.</p>
+      <p v-else class="text-[0.75rem] text-[var(--color-text-faint)] mt-1.5">Puedes proponer un precio distinto al listado, para negociar.</p>
 
       <label class="block text-[0.8125rem] font-medium text-[var(--color-text-muted)] mb-1.5 mt-4" for="chat-offer-message">Mensaje (opcional)</label>
       <textarea

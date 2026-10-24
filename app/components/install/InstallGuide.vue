@@ -71,16 +71,17 @@ const current = computed(() => platforms.find((p) => p.value === active.value)!)
       </div>
 
       <div class="justify-self-center md:justify-self-end">
+        <!-- Captura real del panel (hallazgo #21: antes esto era una
+             cuadrícula de iconos genérica, no se veía el producto de
+             verdad) — cuenta demo del creador, pantalla "Hoy". -->
         <div class="relative w-44 h-[22rem] rounded-[2.25rem] border-[6px] border-[var(--color-primary-900)] bg-[var(--color-ink-overlay)] shadow-[var(--shadow-float)] overflow-hidden">
-          <div class="absolute top-0 inset-x-0 h-5 flex items-center justify-center">
+          <div class="absolute top-0 inset-x-0 h-5 flex items-center justify-center z-10">
             <div class="w-16 h-3.5 rounded-full bg-[var(--color-primary-900)]" />
           </div>
-          <div class="h-full pt-10 pb-6 px-4 grid grid-cols-3 gap-3 content-start">
-            <div v-for="n in 8" :key="n" class="size-9 rounded-[0.65rem] bg-[var(--color-hairline-strong)]" />
-            <div class="relative size-9 rounded-[0.65rem] bg-[var(--color-ink-raised)] shadow-[var(--shadow-float)] flex items-center justify-center nx-install-pulse">
-              <NuxtImg src="/img/logo-svg.png" alt="" width="20" height="20" class="size-5" />
-            </div>
-          </div>
+          <NuxtImg
+            src="/img/panel-preview.png" alt="El panel de FEEDMA abierto como app en un móvil" width="390" height="780"
+            fit="cover" class="absolute inset-0 size-full object-cover object-top"
+          />
           <div class="absolute bottom-4 inset-x-4 flex items-center gap-2 bg-[var(--color-ink-raised)] rounded-[var(--radius-xs)] px-3 py-2 shadow-[var(--shadow-float)]">
             <Icon name="ph:check-circle-fill" class="size-4 text-[var(--color-status-published)] shrink-0" />
             <span class="text-[0.6875rem] text-[var(--color-text)]">FEEDMA añadida a inicio</span>
@@ -90,13 +91,3 @@ const current = computed(() => platforms.find((p) => p.value === active.value)!)
     </div>
   </section>
 </template>
-
-<style scoped>
-@keyframes nx-install-pulse {
-  0%, 100% { box-shadow: 0 0 0 0 color-mix(in oklab, var(--color-primary-500) 35%, transparent); }
-  50% { box-shadow: 0 0 0 6px color-mix(in oklab, var(--color-primary-500) 0%, transparent); }
-}
-.nx-install-pulse {
-  animation: nx-install-pulse 2.2s ease-out infinite;
-}
-</style>

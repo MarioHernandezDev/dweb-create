@@ -24,13 +24,29 @@ function shareFor(acc: SocialAccount) {
 
 <template>
   <AppShell role="creator" title="Tus métricas" subtitle="Datos reales de tus redes conectadas">
-    <EmptyState
-      v-if="!verifiedConnected.length"
-      icon="ph:chart-line-up" title="Conecta una red para ver tus métricas"
-      description="Ve a Redes y conecta Instagram o YouTube para empezar a ver datos reales aquí."
-    >
-      <BaseButton variant="primary" to="/creator/socials">Ir a Redes</BaseButton>
-    </EmptyState>
+    <template v-if="!verifiedConnected.length">
+      <EmptyState
+        icon="ph:chart-line-up" title="Conecta una red para ver tus métricas"
+        description="Ve a Redes y conecta Instagram o YouTube para empezar a ver datos reales aquí."
+      >
+        <BaseButton variant="primary" to="/creator/socials">Ir a Redes</BaseButton>
+      </EmptyState>
+
+      <!-- Hallazgo #12: la pantalla vacía no daba ninguna pista de qué
+           aspecto tendría esto con datos reales — un ejemplo con números
+           falsos, claramente marcado como tal y sin interacción, da ese
+           contexto sin mentir sobre tener datos ya. -->
+      <section class="mt-10 opacity-50 pointer-events-none select-none" aria-hidden="true">
+        <p class="text-[0.6875rem] font-semibold uppercase tracking-wide text-[var(--color-text-faint)] mb-3">Así se vería con una red conectada (ejemplo)</p>
+        <div class="grid grid-cols-2 gap-3 mb-5 md:max-w-sm">
+          <StatTile label="Seguidores totales" value="12,4 mil" />
+          <StatTile label="Redes verificadas" value="1 de 2" />
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:max-w-3xl">
+          <PlatformStatCard platform="instagram" state="connected" :followers="12400" :share-pct="100" />
+        </div>
+      </section>
+    </template>
 
     <template v-else>
       <section class="grid grid-cols-2 gap-3 mb-7 md:max-w-sm">

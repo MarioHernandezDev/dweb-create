@@ -17,7 +17,7 @@ onUnmounted(() => {
 })
 
 const links = [
-  { to: '/instalaciones', label: 'Instalaciones', icon: 'ph:film-reel' }
+  { to: '/instalaciones', label: 'Integraciones', icon: 'ph:film-reel' }
 ]
 
 const isActive = (to: string) => !to.includes('#') && route.path === to

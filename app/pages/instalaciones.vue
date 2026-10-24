@@ -1,5 +1,5 @@
 <script setup lang="ts">
-useHead({ title: 'Instalaciones' })
+useHead({ title: 'Integraciones' })
 </script>
 
 <template>
