@@ -4,26 +4,54 @@
 >
 > Nomenclatura: tareas de Alex = `A-…`, tareas de Mario = `M-…`. Prioridad 1–7: 1 seguridad/datos/pagos · 2 errores en flujos principales · 3 integraciones esenciales · 4 coherencia de estados/notificaciones · 5 usabilidad · 6 onboarding · 7 visual. Complejidad B/M/A = baja/media/alta. "BD" = migración/RPC/RLS.
 > Todo se ha inventariado leyendo código y documentación; **no se ejecutaron tests, build ni navegador** al hacerlo, así que "implementado" significa "hay código", no "está verificado".
-## 0. Estado de avance (2026-10-28)
+## 0. Resumen: qué había, qué se hizo y qué queda (2026-10-28)
 
-Detalle y verificación de cada punto en `docs/CHANGELOG.md` (entradas 55–58, prefijo `[Mario]`).
+Detalle y verificación de cada punto hecho en `docs/CHANGELOG.md` (entradas 55–58, prefijo `[Mario]`). El detalle de cada tarea original sigue en la sección 2.
 
-| Tarea | Estado | Pendiente |
+### A. Lo que había que hacer (antes de tocar nada)
+
+Ninguna tarea estaba implementada. El trabajo asignado a Mario era:
+
+- **Dinero (Stripe):** M-D1 probar pagos en modo test · M-D2 política de cobro · M-D3 portal de suscripción · M-D4 aviso fiscal · M-D5 packs recurrentes (backlog).
+- **Legal y datos:** M-L1 páginas de privacidad y términos · M-L2 exportar y borrar datos (RGPD).
+- **Seguridad:** M-S1 límite de uso general · M-S2 auditar el panel de admin · M-S3 probar el acceso cruzado entre roles · M-U4 decisión sobre backups.
+- **Flujos y calidad:** M-F1 verificar con clics reales ofertas y solicitudes · M-F2 CI/CD básico.
+- **Notificaciones y chat:** M-N1 agrupar avisos duplicados · M-N2 estado leído en el chat · M-N3 decisión sobre `offer_id`.
+- **Onboarding y usabilidad:** M-O1 recorrido de bienvenida · M-U1 verificar Descubrir · M-U2 fotos y personalización del perfil · M-U3 accesibilidad y navegadores.
+
+### B. Lo que se ha hecho
+
+| Tarea | Resultado | Verificado |
 |---|---|---|
-| M-L1 | Hecho (plantilla) | Rellenar `app/utils/legal.ts` y revisión legal (revisado en capturas a 390px y escritorio) |
-| M-F2 | Hecho en el repo | Ejecutarlo en un PR de prueba en GitHub |
-| M-S3 | Hecho y verificado | — |
-| M-S1 | Hecho (predict, discover) | Alta de cuentas, solicitudes y reportes van directos a Supabase: no cubiertos (Q3) |
-| M-S2 | Auditado, 3 arreglos | Decidir: `grant-pro` pisa Stripe, sin registro de acciones del admin, ver admin a 390px |
-| M-N1 | Hecho y verificado | — |
-| M-O1 | Hecho y verificado (localStorage) | Probar con cuenta nueva; decidir Q1 definitiva |
-| M-N2 | Hecho (sin migración) | Probar el refresco con dos sesiones; "entregado" no existe |
-| M-U1 | Verificado | Calidad de IA y filtros combinados |
-| M-F1 | **Sin hacer** | Escribe en datos demo compartidos: confirmar antes |
-| M-L2 | **Sin hacer** | Zona protegida (RPC) + Q13 (qué se conserva): confirmar |
-| M-N3 | Sin hacer | Decisión Q7 (recomendado: mantener `set null`) |
-| M-U2, M-U3, M-U4 | Sin hacer | M-U3 necesita lector de pantalla y Safari/Firefox; M-U4 es decisión (Q12) |
-| M-D1…M-D5 | Fuera de este bloque (Stripe) | — |
+| M-L1 | Páginas `/privacidad` y `/terminos` como plantilla; datos por rellenar en `app/utils/legal.ts`; enlazadas en el pie y en el alta | Capturas a 390px y escritorio; públicas sin login |
+| M-F2 | `.github/workflows/ci.yml` (typecheck, tests unitarios, build) | Los 3 pasos en local y build sin `.env`; **no ejecutado en GitHub** |
+| M-S3 | Matriz de acceso entre roles probada | Navegador real: sin fallos |
+| M-S1 | `enforceRateLimit`; límite en `predict` (10/min) y `discover/search` (20/min) | Tests unitarios |
+| M-S2 | Auditoría del admin y 3 arreglos: sesión al recargar `/admin`, tope global de login, validación de `block` | Navegador real y peticiones directas |
+| M-N1 | Avisos idénticos agrupados con contador | Navegador real y tests unitarios |
+| M-O1 | Recorrido de bienvenida por rol, saltable, guardado en `localStorage`, botón para repetirlo en Perfil | Navegador real a 390px, los dos roles |
+| M-N2 | "Visto" bajo el último mensaje leído, derivado de `last_read_at` (sin migración) | Navegador real, solo lectura |
+| M-U1 | Descubrir comprobado en los dos sentidos, incluida la búsqueda con IA | Navegador real a 390px |
+
+### C. Lo que queda
+
+| Tarea | Qué falta |
+|---|---|
+| M-L1 | Rellenar los datos en `app/utils/legal.ts`; revisión por un gestor/abogado; decidir política de devoluciones y proveedor de alojamiento |
+| M-F2 | Ejecutarlo en un PR de prueba en GitHub |
+| M-S1 | Alta de cuentas, solicitudes y reportes van directos a Supabase y no están cubiertos (Q3); el límite en memoria no vale con varias instancias |
+| M-S2 | Ver el admin a 390px; decidir: registro de acciones del admin, límite de logins correctos, `grant-pro` pisa Stripe (revisar en M-D2), proxy de confianza para `X-Forwarded-For` |
+| M-O1 | Probar con una cuenta nueva creada por `/onboarding`; decidir Q1 definitiva (columna en `profiles` si molesta) |
+| M-N2 | Probar el refresco con dos sesiones a la vez; el estado "entregado" no existe |
+| M-U1 | Calidad de las explicaciones de la IA y filtros combinados |
+| **M-F1** | **Sin hacer**: escribe en datos demo compartidos con Alex; confirmar antes |
+| **M-L2** | **Sin hacer**: zona protegida (RPC) y depende de Q13 (qué se conserva por ley) |
+| M-N3 | **Sin hacer**: decisión Q7 (recomendado mantener `set null`) |
+| M-U2 | Sin hacer: gestión de fotos y personalización del perfil |
+| M-U3 | Sin hacer: necesita lector de pantalla y Safari/Firefox/tablet |
+| M-U4 | Sin hacer: decisión sobre backups de Supabase (Q12) |
+| M-D1…M-D5 | Fuera de este bloque (Stripe): pendientes |
+| Residuos | Unos 25 avisos "Has iniciado sesión" de mis pruebas en las cuentas demo |
 
 ## 1. Objetivo general
 
