@@ -4,6 +4,22 @@ Registro de qué se hizo, por qué, y qué queda pendiente de verificar — pens
 
 ---
 
+## 2026-10-28 (56) — [Mario] M-F2: CI básico con GitHub Actions
+
+### Qué se cambió
+
+- `.github/workflows/ci.yml` (nuevo): en cada PR y push a `main` ejecuta `npm ci`, `vue-tsc --noEmit`, `npm test -- --run` y `npm run build` (Node 24). Los tests de integración quedan **fuera** a propósito (escriben en el Supabase compartido); se lanzan a mano. La build usa valores de relleno de Supabase, sin secretos.
+
+### Verificado de verdad
+
+- Los mismos tres pasos pasan en local; la build también pasa en una copia limpia del commit **sin `.env`** y solo con las tres variables de relleno, que es lo que verá el runner.
+
+### Sin verificar
+
+- **El workflow no se ha ejecutado en GitHub** (aún no hay credenciales para hacer push desde este equipo). Criterio de M-F2 pendiente: que corra en un PR de prueba.
+
+---
+
 ## 2026-10-28 (55) — [Mario] M-L1: páginas públicas de privacidad y términos (plantilla por rellenar)
 
 Primera tarea de `docs/TRABAJO_MARIO.md`. Desbloquea A-R4 de Alex (Meta exige una URL pública de privacidad). **El texto es una plantilla**: no se conocen todavía los datos del responsable.
