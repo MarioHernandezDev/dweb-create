@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { localPhotos } from '~/utils/images'
-import { platformMeta, VERIFIED_SOCIAL_PLATFORMS } from '~/utils/mock-data'
+import { platformMeta, isComingSoonPlatform } from '~/utils/mock-data'
 import type { SocialAccount } from '~/types'
 
 useHead({ title: 'Redes' })
@@ -29,20 +29,12 @@ const syncError = ref('')
 const { confirm } = useConfirm()
 
 async function toggle(acc: SocialAccount) {
+  if (isComingSoonPlatform(acc.platform)) return
   if (acc.connected) {
     const ok = await confirm({
       title: `¿Desconectar ${acc.platform}?`,
       message: 'Dejarás de ver sus seguidores y de poder usarla para predicciones hasta que la vuelvas a conectar.',
       confirmLabel: 'Desconectar', tone: 'danger', icon: 'ph:plugs-fill'
-    })
-    if (!ok) return
-  } else if (!VERIFIED_SOCIAL_PLATFORMS.includes(acc.platform)) {
-    // Para el resto, "conectar" aún no verifica nada de verdad. Mejor
-    // decirlo claro aquí que dejar que parezca una cuenta real conectada.
-    const ok = await confirm({
-      title: 'Esta red todavía no verifica tu cuenta',
-      message: 'Por ahora solo se guarda como "conectada" sin seguidores reales ni datos de verdad — la integración completa todavía no está lista. Instagram y YouTube sí son conexiones reales.',
-      confirmLabel: 'Conectar igualmente', icon: 'ph:info-fill'
     })
     if (!ok) return
   }

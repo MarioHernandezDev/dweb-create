@@ -4,6 +4,33 @@ Registro de qué se hizo, por qué, y qué queda pendiente de verificar — pens
 
 ---
 
+## 2026-10-28 (Alex-3) — [Alex] A-R10: se retiran las conexiones falsas de TikTok, X, Facebook y LinkedIn
+
+### Qué se cambió
+
+Decisión Q4: esas cuatro redes se muestran como **"Próximamente"** y ya no se pueden "conectar".
+- `useMySocialAccounts.ts`: `connect()` ya no inserta desde el navegador una fila sin token para redes sin OAuth; `merge()` ignora cualquier fila antigua de esas redes (no cuenta como conectada).
+- `mock-data.ts`: nuevo `isComingSoonPlatform()`; el estado de una cuenta pasa de tres valores (`unverified` desaparece) a `connected`/`disconnected`.
+- `SocialAccountRow.vue`, `PlatformStatCard.vue`, `creator/socials.vue`, `creator/metrics/[platform].vue`: etiqueta "Próximamente", sin botón de conectar, sin el diálogo "Conectar igualmente".
+- Test nuevo `tests/unit/social-platforms.spec.ts` (7 tests).
+
+### Datos existentes (consulta de solo lectura, sin borrar nada)
+
+Recuento de `social_accounts` en el proyecto compartido (sin leer tokens ni handles): instagram 8 filas (0 con token), youtube 4 (1 con token), tiktok 4 (0 con token), x/facebook/linkedin 0. Todas las filas sin token tienen `followers_count > 0`, lo que apunta a datos de demo/seed. **No se ha borrado ninguna fila**; el criterio de limpieza queda pendiente de decisión.
+
+### Verificado de verdad
+
+- `npx vue-tsc --noEmit`: limpio. `npm test -- --run`: 74/74. `npm run build`: completado.
+
+### Sin verificar / pendiente
+
+- **No visto en navegador** (390 px ni escritorio): pasos manuales en `/creator/socials` y `/creator/metrics`: TikTok/X/Facebook/LinkedIn muestran "Próximamente" y ningún botón; Instagram y YouTube siguen igual.
+- Las 8 filas de Instagram sin token siguen apareciendo como "conectadas" en la interfaz del creador: la interfaz decide por plataforma, no por token (el navegador no debe leer el token). Se resuelve con la propuesta de A-R11 (necesita un campo seguro de "verificada").
+- `discover/search.post.ts` sigue sumando `followers_count` de todas las filas, incluidas las de demo y TikTok. Es de la zona A-R11 y de Mario (M-U1): sin cambios.
+- Los insert/update del navegador siguen permitidos por RLS: no se ha tocado Supabase.
+
+---
+
 ## 2026-10-28 (Alex-2) — [Alex] A-R13b: tests unitarios de `oauth-state`
 
 ### Qué se cambió

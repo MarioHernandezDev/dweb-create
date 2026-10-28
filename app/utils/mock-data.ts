@@ -44,18 +44,25 @@ export const platformMeta: Record<Platform, { label: string; icon: string; color
 }
 
 // Las únicas plataformas con OAuth real detrás (ver useMySocialAccounts.ts,
-// docs/9-INSTAGRAM-OAUTH-SETUP.md y docs/10-YOUTUBE-OAUTH-SETUP.md). El
-// resto, aunque aparezcan "conectadas", son un marcador sin verificar —
+// docs/9-INSTAGRAM-OAUTH-SETUP.md y docs/10-YOUTUBE-OAUTH-SETUP.md) —
 // centralizado aquí para no repetir la lista en cada pantalla que necesite
 // distinguirlas (Redes, Métricas).
 export const VERIFIED_SOCIAL_PLATFORMS: Platform[] = ['instagram', 'youtube']
 
-export type SocialAccountState = 'connected' | 'unverified' | 'disconnected'
+/**
+ * El resto (TikTok, X, Facebook, LinkedIn) se muestra como "Próximamente":
+ * no hay OAuth real detrás, así que la interfaz no ofrece conectarlas ni
+ * las da por conectadas aunque exista una fila antigua sin token (A-R10).
+ */
+export function isComingSoonPlatform(platform: Platform): boolean {
+  return !VERIFIED_SOCIAL_PLATFORMS.includes(platform)
+}
 
-/** El mismo trío de estados que ya usan SocialAccountRow.vue y PlatformStatCard.vue — centralizado para no repetirlo. */
+export type SocialAccountState = 'connected' | 'disconnected'
+
+/** El mismo par de estados que ya usan SocialAccountRow.vue y PlatformStatCard.vue — centralizado para no repetirlo. */
 export function socialAccountState(acc: SocialAccount): SocialAccountState {
-  if (!acc.connected) return 'disconnected'
-  return VERIFIED_SOCIAL_PLATFORMS.includes(acc.platform) ? 'connected' : 'unverified'
+  return acc.connected ? 'connected' : 'disconnected'
 }
 
 export function formatCompactNumber(value: number): string {

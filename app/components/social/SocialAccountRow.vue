@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { SocialAccount } from '~/types'
-import { platformMeta, formatCompactNumber, VERIFIED_SOCIAL_PLATFORMS } from '~/utils/mock-data'
+import { platformMeta, formatCompactNumber, isComingSoonPlatform } from '~/utils/mock-data'
 
 defineProps<{ account: SocialAccount; busy?: boolean; syncing?: boolean }>()
 defineEmits<{ connect: []; disconnect: []; sync: [] }>()
@@ -17,11 +17,11 @@ defineEmits<{ connect: []; disconnect: []; sync: [] }>()
 
     <div class="min-w-0 flex-1">
       <p class="text-[0.9375rem] font-medium text-[var(--color-text)]">{{ platformMeta[account.platform].label }}</p>
-      <p v-if="account.connected && VERIFIED_SOCIAL_PLATFORMS.includes(account.platform)" class="text-[0.8125rem] text-[var(--color-text-muted)]">
-        {{ account.handle }} · {{ formatCompactNumber(account.followers) }} seguidores
+      <p v-if="isComingSoonPlatform(account.platform)" class="text-[0.8125rem] text-[var(--color-text-faint)]">
+        Próximamente · todavía no se puede conectar
       </p>
-      <p v-else-if="account.connected" class="text-[0.8125rem] text-[var(--color-text-faint)]">
-        Conectada sin verificar · todavía sin datos reales
+      <p v-else-if="account.connected" class="text-[0.8125rem] text-[var(--color-text-muted)]">
+        {{ account.handle }} · {{ formatCompactNumber(account.followers) }} seguidores
       </p>
       <p v-else class="text-[0.8125rem] text-[var(--color-text-faint)]">No conectada</p>
     </div>
@@ -34,16 +34,22 @@ defineEmits<{ connect: []; disconnect: []; sync: [] }>()
       +{{ account.deltaPct }}%
     </span>
 
+    <span
+      v-if="isComingSoonPlatform(account.platform)"
+      class="shrink-0 rounded-full px-2.5 py-1 text-[0.75rem] font-medium bg-[var(--color-ink-overlay)] text-[var(--color-text-faint)]"
+    >
+      Próximamente
+    </span>
     <BaseButton
-      v-if="account.connected && VERIFIED_SOCIAL_PLATFORMS.includes(account.platform)" variant="ghost" size="sm" icon="ph:arrows-clockwise-bold" icon-only
+      v-if="!isComingSoonPlatform(account.platform) && account.connected" variant="ghost" size="sm" icon="ph:arrows-clockwise-bold" icon-only
       :icon-spin="syncing" :disabled="busy || syncing"
       aria-label="Actualizar seguidores" @click="$emit('sync')"
     />
     <BaseButton
-      v-if="account.connected" variant="ghost" size="sm" icon="ph:x-bold" icon-only :disabled="busy"
+      v-if="!isComingSoonPlatform(account.platform) && account.connected" variant="ghost" size="sm" icon="ph:x-bold" icon-only :disabled="busy"
       aria-label="Desconectar" @click="$emit('disconnect')"
     />
-    <BaseButton v-else variant="secondary" size="sm" :icon-spin="busy" :disabled="busy" @click="$emit('connect')">
+    <BaseButton v-else-if="!isComingSoonPlatform(account.platform)" variant="secondary" size="sm" :icon-spin="busy" :disabled="busy" @click="$emit('connect')">
       {{ busy ? 'Conectando…' : 'Conectar' }}
     </BaseButton>
   </BaseCard>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { platformMeta, formatCompactNumber, socialAccountState } from '~/utils/mock-data'
+import { platformMeta, formatCompactNumber, socialAccountState, isComingSoonPlatform } from '~/utils/mock-data'
 import { relativeTime } from '~/utils/status'
 import type { Platform } from '~/types'
 
@@ -137,9 +137,9 @@ const projectedSubscribers30d = computed(() => {
     <template v-if="state !== 'connected'">
       <EmptyState
         :icon="meta.icon"
-        :title="state === 'unverified' ? 'Esta red todavía no está verificada' : 'Red no conectada'"
-        :description="state === 'unverified'
-          ? 'Esta conexión es solo un marcador sin OAuth real detrás todavía — no hay estadísticas que mostrar.'
+        :title="isComingSoonPlatform(platform) ? `${meta.label}: próximamente` : 'Red no conectada'"
+        :description="isComingSoonPlatform(platform)
+          ? 'Todavía no se puede conectar esta red, así que no hay estadísticas que mostrar.'
           : `Conecta ${meta.label} desde Redes para empezar a ver sus estadísticas reales aquí.`"
       >
         <BaseButton variant="primary" to="/creator/socials">Ir a Redes</BaseButton>

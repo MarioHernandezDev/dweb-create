@@ -1,4 +1,4 @@
-import { platformMeta } from '~/utils/mock-data'
+import { platformMeta, isComingSoonPlatform } from '~/utils/mock-data'
 import type { SocialAccount } from '~/types'
 
 interface SocialAccountRow {
@@ -18,11 +18,10 @@ interface SocialAccountRow {
  * Instagram (docs/9-INSTAGRAM-OAUTH-SETUP.md) y YouTube
  * (docs/10-YOUTUBE-OAUTH-SETUP.md) ya está hecho: "Conectar" manda el
  * navegador entero a `/api/auth/<red>/start`, que termina escribiendo la
- * fila de verdad (con token cifrado) tras el OAuth. Para TikTok y X, sin
- * OAuth todavía, "Conectar" sigue creando la fila sin token y "..." la
- * borra — un camino de escritura real contra Supabase, pero sin cuenta de
- * verdad detrás (ver el aviso que se le muestra al usuario antes de hacerlo,
- * en creator/socials.vue).
+ * fila de verdad (con token cifrado) tras el OAuth. TikTok, X, Facebook y
+ * LinkedIn no tienen OAuth: se muestran como "Próximamente", `connect()` no
+ * hace nada para ellas y cualquier fila antigua sin token se ignora aquí
+ * (no cuenta como conectada).
  */
 export function useMySocialAccounts() {
   const client = useSupabaseClient()
@@ -34,7 +33,8 @@ export function useMySocialAccounts() {
   function merge(rows: SocialAccountRow[]): SocialAccount[] {
     const byPlatform = new Map(rows.map((r) => [r.platform, r]))
     return Object.keys(platformMeta).map((platform) => {
-      const row = byPlatform.get(platform as SocialAccount['platform'])
+      const comingSoon = isComingSoonPlatform(platform as SocialAccount['platform'])
+      const row = comingSoon ? undefined : byPlatform.get(platform as SocialAccount['platform'])
       return {
         id: row?.id ?? platform,
         platform: platform as SocialAccount['platform'],
@@ -82,12 +82,8 @@ export function useMySocialAccounts() {
       return
     }
 
-    const me = creator.value ?? (await ensureCreator())
-    if (!me) return
-
-    const { error } = await client.from('social_accounts').insert({ creator_id: me.id, platform } as never)
-    if (error) throw error
-    await refresh()
+    // Sin OAuth real no se conecta nada: antes aquí se insertaba una fila sin
+    // token desde el navegador, que parecía una cuenta conectada y no lo era.
   }
 
   // Sin cron todavía que lo haga solo (ver docs/9-INSTAGRAM-OAUTH-SETUP.md

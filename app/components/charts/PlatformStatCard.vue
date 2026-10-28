@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import type { Platform } from '~/types'
-import { platformMeta, formatCompactNumber } from '~/utils/mock-data'
+import { platformMeta, formatCompactNumber, isComingSoonPlatform } from '~/utils/mock-data'
 
 /**
  * Una tarjeta por red social en "Tus métricas" — mismo trío de estados que
- * ya usa SocialAccountRow.vue en Redes (conectada y verificada / conectada
- * sin verificar / sin conectar), pero orientada a mostrar el número, no a
+ * ya usa SocialAccountRow.vue en Redes (conectada / sin conectar /
+ * próximamente, para las redes sin OAuth real), pero orientada a mostrar el número, no a
  * gestionar la conexión. `sharePct` pinta una barra fina relativa al total
  * de seguidores verificados — nunca se calcula aquí, lo decide la página
  * (para no repetir esa suma en cada tarjeta). Si está conectada y
@@ -14,7 +14,7 @@ import { platformMeta, formatCompactNumber } from '~/utils/mock-data'
  */
 const props = defineProps<{
   platform: Platform
-  state: 'connected' | 'unverified' | 'disconnected'
+  state: 'connected' | 'disconnected'
   followers?: number
   sharePct?: number
 }>()
@@ -59,13 +59,10 @@ const meta = computed(() => platformMeta[props.platform])
       </span>
       <div class="min-w-0 flex-1">
         <p class="text-[0.9375rem] font-medium text-[var(--color-text)]">{{ meta.label }}</p>
-        <p v-if="state === 'unverified'" class="text-[0.75rem] text-[var(--color-text-faint)]">Conectada sin verificar</p>
-        <p v-else class="text-[0.75rem] text-[var(--color-text-faint)]">No conectada</p>
+        <p class="text-[0.75rem] text-[var(--color-text-faint)]">{{ isComingSoonPlatform(platform) ? 'Próximamente' : 'No conectada' }}</p>
       </div>
     </div>
 
-    <BaseButton variant="secondary" size="sm" to="/creator/socials">
-      {{ state === 'unverified' ? 'Ver en Redes' : 'Conectar' }}
-    </BaseButton>
+    <BaseButton v-if="!isComingSoonPlatform(platform)" variant="secondary" size="sm" to="/creator/socials">Conectar</BaseButton>
   </BaseCard>
 </template>

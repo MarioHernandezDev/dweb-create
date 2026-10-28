@@ -9,8 +9,8 @@ useHead({ title: 'Métricas' })
 // publicación todavía no están conectados para ninguna red (ver el aviso al
 // fondo), así que de momento solo hay seguidores/suscriptores reales:
 // Instagram y YouTube son las únicas con OAuth real detrás
-// (VERIFIED_SOCIAL_PLATFORMS) — TikTok/X, aunque aparezcan "conectadas", son
-// un marcador sin verificar y no entran en los totales.
+// (VERIFIED_SOCIAL_PLATFORMS) — el resto aparece como "Próximamente" y no
+// entra en los totales.
 const { accounts, ensureLoaded } = useMySocialAccounts()
 await ensureLoaded()
 
