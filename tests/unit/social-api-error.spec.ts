@@ -5,7 +5,7 @@ import { readSocialApiError } from '../../app/utils/social-api-error'
 const apiError = (code: string, statusMessage = 'mensaje seguro') => ({ data: { statusCode: 401, statusMessage, data: { code } } })
 
 describe('readSocialApiError', () => {
-  it.each(['reconnect_required', 'provider_action_required', 'provider_temporarily_unavailable', 'provider_error'])('reconoce el código %s', (code) => {
+  it.each(['reconnect_required', 'provider_action_required', 'provider_temporarily_unavailable', 'provider_error', 'revoke_unconfirmed'])('reconoce el código %s', (code) => {
     expect(readSocialApiError(apiError(code, 'hola'))).toEqual({ code, message: 'hola' })
   })
 

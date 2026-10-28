@@ -29,20 +29,65 @@ const syncError = ref('')
 const syncReconnect = ref<SocialAccount['platform'] | null>(null)
 const { confirm } = useConfirm()
 
+// Resultado de la última desconexión: lo que de verdad se sabe del proveedor.
+const disconnectNotice = ref<{ tone: 'ok' | 'warn' | 'error'; text: string } | null>(null)
+
+function noticeFor(platform: SocialAccount['platform'], revocation: DisconnectRevocation) {
+  const label = platformMeta[platform].label
+  switch (revocation) {
+    case 'revoked': return { tone: 'ok' as const, text: `${label} desconectado y acceso revocado en Google.` }
+    case 'already_invalid': return { tone: 'ok' as const, text: `${label} desconectado. El acceso ya no era válido en Google.` }
+    case 'unconfirmed':
+      return { tone: 'warn' as const, text: `${label} desconectado, pero NO se pudo confirmar la revocación en Google. Quita el acceso a mano en myaccount.google.com/permissions.` }
+    case 'not_supported':
+      return { tone: 'warn' as const, text: `${label} desconectado de FEEDMA. FEEDMA no puede retirar el acceso en Instagram: para quitarlo del todo, hazlo desde los ajustes de tu cuenta de Instagram.` }
+    default: return { tone: 'ok' as const, text: `${label} desconectado.` }
+  }
+}
+
+async function disconnectAccount(acc: SocialAccount) {
+  const isYoutube = acc.platform === 'youtube'
+  const ok = await confirm({
+    title: `¿Desconectar ${platformMeta[acc.platform].label}?`,
+    message: isYoutube
+      ? 'Dejarás de ver sus métricas y de poder usarla para predicciones hasta que la vuelvas a conectar. Revocaremos también el acceso de FEEDMA en tu cuenta de Google.'
+      : 'Dejarás de ver sus métricas y de poder usarla para predicciones hasta que la vuelvas a conectar. Instagram no permite que FEEDMA retire el acceso: para quitarlo del todo tendrás que hacerlo desde los ajustes de tu cuenta de Instagram.',
+    confirmLabel: 'Desconectar', tone: 'danger', icon: 'ph:plugs-fill'
+  })
+  if (!ok) return
+
+  try {
+    disconnectNotice.value = noticeFor(acc.platform, await disconnect(acc.platform))
+  } catch (err) {
+    const { code } = readSocialApiError(err)
+    if (code !== 'revoke_unconfirmed') {
+      console.error(`[creator/socials] fallo al desconectar ${acc.platform}:`, err)
+      disconnectNotice.value = { tone: 'error', text: 'No se ha podido desconectar la cuenta. Inténtalo de nuevo.' }
+      return
+    }
+    // No se pudo confirmar la revocación: no se desconecta sin que el usuario lo decida.
+    const force = await confirm({
+      title: 'No se ha podido confirmar la revocación',
+      message: 'No hemos podido confirmar con Google que se haya retirado el acceso (puede ser un problema temporal). Puedes cancelar y reintentarlo, o desconectar igualmente y quitar el acceso tú a mano en myaccount.google.com/permissions.',
+      confirmLabel: 'Desconectar igualmente', tone: 'danger', icon: 'ph:warning-fill'
+    })
+    if (!force) return
+    try {
+      disconnectNotice.value = noticeFor(acc.platform, await disconnect(acc.platform, true))
+    } catch (err2) {
+      console.error(`[creator/socials] fallo al desconectar ${acc.platform} (forzado):`, err2)
+      disconnectNotice.value = { tone: 'error', text: 'No se ha podido desconectar la cuenta. Inténtalo de nuevo.' }
+    }
+  }
+}
+
 async function toggle(acc: SocialAccount) {
   if (isComingSoonPlatform(acc.platform)) return
-  if (acc.connected) {
-    const ok = await confirm({
-      title: `¿Desconectar ${acc.platform}?`,
-      message: 'Dejarás de ver sus seguidores y de poder usarla para predicciones hasta que la vuelvas a conectar.',
-      confirmLabel: 'Desconectar', tone: 'danger', icon: 'ph:plugs-fill'
-    })
-    if (!ok) return
-  }
+  disconnectNotice.value = null
 
   busyPlatform.value = acc.platform
   try {
-    if (acc.connected) await disconnect(acc.platform)
+    if (acc.connected) await disconnectAccount(acc)
     else await connect(acc.platform)
   } finally {
     busyPlatform.value = null
@@ -96,6 +141,13 @@ const connectedCount = computed(() => accounts.value.filter((a) => a.connected).
       v-else-if="connectResult && !connectResult.ok" class="mb-4 text-[0.8125rem] text-[var(--color-status-alert)] md:max-w-xl"
     >
       {{ connectResult.reason }}
+    </p>
+
+    <p
+      v-if="disconnectNotice" class="mb-4 text-[0.8125rem] md:max-w-xl"
+      :class="disconnectNotice.tone === 'ok' ? 'text-[var(--color-status-published)]' : disconnectNotice.tone === 'warn' ? 'text-[var(--color-text)]' : 'text-[var(--color-status-alert)]'"
+    >
+      {{ disconnectNotice.text }}
     </p>
 
     <div v-if="syncError && !rowAlreadyShowsReconnect" class="mb-4 flex flex-wrap items-center gap-3 md:max-w-xl">

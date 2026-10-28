@@ -114,13 +114,16 @@ export function useMySocialAccounts() {
     }
   }
 
-  async function disconnect(platform: SocialAccount['platform']) {
-    const me = creator.value ?? (await ensureCreator())
-    if (!me) return
-
-    const { error } = await client.from('social_accounts').delete().eq('creator_id', me.id).eq('platform', platform)
-    if (error) throw error
+  // La desconexión la hace el servidor: revoca el acceso en el proveedor
+  // (Google) antes de borrar la fila. Si no puede confirmar la revocación
+  // responde `revoke_unconfirmed` y solo desconecta con `force`.
+  async function disconnect(platform: SocialAccount['platform'], force = false): Promise<DisconnectRevocation> {
+    const res = await $fetch<{ ok: boolean; revocation: DisconnectRevocation }>('/api/social/disconnect', {
+      method: 'POST',
+      body: { platform, force }
+    })
     await refresh()
+    return res.revocation
   }
 
   return { accounts, loaded, refresh, ensureLoaded, connect, disconnect, sync }

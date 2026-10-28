@@ -5,9 +5,12 @@
  * enseñar (por ejemplo "Reconectar"). Un `$fetch` de Nuxt deja el cuerpo
  * JSON del error en `err.data`.
  */
-export type SocialApiErrorCode = 'reconnect_required' | 'provider_action_required' | 'provider_temporarily_unavailable' | 'provider_error'
+export type SocialApiErrorCode = 'reconnect_required' | 'provider_action_required' | 'provider_temporarily_unavailable' | 'provider_error' | 'revoke_unconfirmed'
 
-const KNOWN_CODES: SocialApiErrorCode[] = ['reconnect_required', 'provider_action_required', 'provider_temporarily_unavailable', 'provider_error']
+/** Resultado de `POST /api/social/disconnect` (ver server/api/social/disconnect.post.ts). */
+export type DisconnectRevocation = 'revoked' | 'already_invalid' | 'unconfirmed' | 'not_supported' | 'none'
+
+const KNOWN_CODES: SocialApiErrorCode[] = ['reconnect_required', 'provider_action_required', 'provider_temporarily_unavailable', 'provider_error', 'revoke_unconfirmed']
 
 export function readSocialApiError(err: unknown): { code: SocialApiErrorCode | null; message: string | null } {
   const body = (err as { data?: { statusMessage?: unknown; data?: { code?: unknown } } } | null)?.data

@@ -4,6 +4,38 @@ Registro de qué se hizo, por qué, y qué queda pendiente de verificar — pens
 
 ---
 
+## 2026-10-28 (Alex-14) — [Alex] A-R3: desconexión completa (revoca el acceso en Google antes de borrar)
+
+### Qué se cambió
+
+Antes, "desconectar" solo borraba la fila desde el navegador: el permiso seguía vivo en Google.
+- `server/api/social/disconnect.post.ts` (nuevo): el servidor revoca el token en el proveedor y **después** borra la fila. Si no puede **confirmar** la revocación, no borra y responde `revoke_unconfirmed`; solo desconecta con `force` si el usuario lo decide. Idempotente si ya no hay fila.
+- `server/utils/token-revoke.ts` (nuevo): `revokeGoogleToken` -> `revoked` (200) / `already_invalid` (400 `invalid_token`) / `unconfirmed` (red, tiempo agotado u otra respuesta: significa "no lo sabemos", nunca se afirma que se revocó).
+- Instagram: **sin revocación**; en la referencia consultada de Meta no consta ningún endpoint para revocar un token de Instagram Login. El servidor lo devuelve como `not_supported` y la interfaz lo explica: el acceso se retira desde los ajustes de la cuenta de Instagram.
+- Interfaz (`creator/socials.vue`, `useMySocialAccounts.ts`): el diálogo de confirmación dice qué pasará en cada red; tras desconectar se muestra lo que realmente se sabe ("desconectado y acceso revocado en Google" / "el acceso ya no era válido" / "no se pudo confirmar, quítalo a mano en myaccount.google.com/permissions" / limitación de Instagram). Si no se confirma la revocación, un segundo diálogo ofrece reintentar o "Desconectar igualmente".
+
+### Verificado de verdad
+
+- Tests unitarios nuevos `token-revoke.spec.ts` (12) + caso nuevo en `social-api-error.spec.ts`. Suite completa, `npx vue-tsc --noEmit` limpio (resultados abajo).
+- **Navegador real (Chrome por CDP) en el servidor de desarrollo de Alex, con tokens falsos en la cuenta demo (creadas y borradas) y llamada REAL a Google:**
+  - el diálogo de YouTube avisa de que se revocará el acceso en Google; el de Instagram, de que FEEDMA no puede retirarlo allí;
+  - Google respondió **`400 invalid_token`** a la revocación del token falso (confirma el código de error que la documentación consultada no nombraba) y el aviso fue "YouTube desconectado. El acceso ya no era válido en Google.";
+  - Instagram: "Instagram desconectado de FEEDMA. FEEDMA no puede retirar el acceso en Instagram…";
+  - las filas desaparecieron de la BD (0 restantes; 16 filas en total, como antes). Sin errores de consola.
+- Documentación de Google consultada: `POST https://oauth2.googleapis.com/revoke`, parámetro `token` (access o refresh), 200 si se revoca, 400 con código de error si no; la revocación quita los permisos concedidos al proyecto.
+
+### Sin verificar / pendiente
+
+- **Revocación real con un token válido (200):** necesita un canal real. Prueba manual para Alex: desconectar YouTube en Redes (debe decir "acceso revocado en Google"), comprobar que FEEDMA ya no aparece en myaccount.google.com/permissions y volver a conectar.
+- **Rama `unconfirmed`:** solo cubierta por tests unitarios con respuestas simuladas; no se ha provocado un fallo real de Google ni de red en el servidor. El segundo diálogo ("Desconectar igualmente") no se ha visto en navegador.
+- **`npm run build` NO ejecutado** en esta entrada: el servidor de desarrollo de Alex estaba en marcha y el build lo tumba (comparten carpeta). Pendiente de lanzarlo con el servidor parado.
+- El navegador **aún puede borrar su propia fila** (A-R11 mantuvo el permiso de borrado). Para que la desconexión pase siempre por el servidor habría que retirar ese permiso: es otro cambio de permisos de BD, **sin hacer, necesita aprobación**.
+- Sin límite de uso en el endpoint (el `enforceRateLimit` de Mario está en su rama, aún no integrado).
+- Coordinación con Mario (M-L2, borrado de cuenta): el borrado de cuenta debe revocar también el acceso; falta acordar si reutiliza esta lógica.
+- Notificaciones "Has iniciado sesión" nuevas en la cuenta demo del creador (una por sesión de prueba); sin limpiar.
+
+---
+
 ## 2026-10-28 (Alex-13) — [Alex] M1 aplicada y verificada; A-R2b: estado de las cuentas guardado y visible
 
 ### M1 aplicada
