@@ -4,6 +4,28 @@ Registro de qué se hizo, por qué, y qué queda pendiente de verificar — pens
 
 ---
 
+## 2026-10-28 (Alex-1) — [Alex] A-R13a: tests unitarios de `token-crypto`
+
+### Qué se cambió
+
+Archivo nuevo `tests/unit/token-crypto.spec.ts` (20 tests). No se ha tocado código de producción. Las claves se generan al vuelo en cada ejecución; no hay secretos reales.
+
+Cubre: ida y vuelta (ascii, unicode, 5000 caracteres, cadena vacía); IV aleatorio (dos cifrados del mismo texto difieren y ambos descifran); formato del paquete (iv 12 + tag 16 + texto, base64, sin texto en claro); claves inválidas (vacía, 16 bytes, 33 bytes, no base64) en cifrar y descifrar, sin que el mensaje de error repita la clave; descifrar con otra clave válida; byte alterado en iv, tag y texto cifrado; paquete truncado; entradas vacías, más cortas que iv + tag y que no son un paquete.
+
+### Verificado de verdad
+
+- `npx vitest run tests/unit/token-crypto.spec.ts`: 20/20.
+- `npx vue-tsc --noEmit`: limpio.
+- `npm test -- --run`: 50/50 (los 30 anteriores + los 20 nuevos).
+
+### Sin verificar
+
+- `npm run build` no se ha ejecutado (solo se añade un archivo de test). Tests de integración: no aplican.
+- No se ha hecho un test de mutación (romper a propósito `token-crypto.ts` para ver que los tests fallan); los tests de alteración de iv/tag/texto sí dependen de que GCM valide el tag de verdad.
+- Pendiente de A-R13: `oauth-state` y la integración de RLS de `social_accounts` (esta última espera a A-R11).
+
+---
+
 ## 2026-10-24 (54) — Fase 5 de CONTEXT.md (hallazgos #11-21): pulido, accesibilidad y un bug real de verdad grave encontrado al medir en navegador
 
 Cierra la Fase 5, la última del plan original de `CONTEXT.md`. Cada hallazgo se investigó en el código real antes de tocar nada; varios resultaron ya resueltos de sesiones anteriores, documentado explícitamente abajo en vez de darlos por hechos sin comprobar.
