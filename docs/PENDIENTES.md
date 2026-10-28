@@ -40,9 +40,17 @@ Todo lo verificado en navegador hasta ahora (sesión del 24/10) fue solo con Chr
 - **No hay entorno de Supabase separado para pruebas.** Es una decisión ya tomada explícitamente (de momento se sigue así), pero significa que los tests de integración y el uso manual siguen escribiendo en los mismos datos — hay que seguir limpiando residuos de test de vez en cuando con criterio explícito, nunca a ciegas.
 - **No hay páginas de privacidad ni de términos de servicio.** Para un producto que ya cobra y guarda datos personales, normalmente hace falta antes de abrir a usuarios reales.
 
+## 6b. Riesgos de negocio y seguridad ya detectados en `docs/10-ROADMAP-FUTURO.md`, sin resolver
+
+- **Política de cuándo se puede pagar una colaboración.** Hoy un partner puede pagar en cuanto el creador *acepta* (`payableStatuses` en `partner/requests.vue`), antes de que exista ninguna entrega. Hay que decidir a propósito: pago por hitos, todo al final, o señal + resto. Es dinero real de terceros.
+- **El login del panel de admin no tiene límite de intentos de contraseña** (`/api/admin/login`): se puede probar sin límite ni bloqueo. Barato de arreglar.
+- **Rate limiting en general** (alta de cuentas, solicitudes de colaboración, reportes): hoy nada tiene límite.
+- **RGPD** (política de privacidad, términos, derecho a exportar/borrar datos): ya mencionado arriba como "páginas legales", pero el alcance real es mayor que dos páginas.
+
 ## 7. Aplazado a propósito, con decisión ya tomada de no hacerlo todavía
 
-- **Onboarding guiado para usuarios nuevos** (tutorial interactivo, distinto para creador/partner) — pedido explícitamente, pero aplazado hasta que el resto de la app esté más estable.
+- **Onboarding guiado para usuarios nuevos** (tutorial interactivo, distinto para creador/partner) — pedido explícitamente; la rama `feature/onboarding` está preparada con su `README_TRABAJO.md` (alcance, límites y decisión pendiente sobre dónde guardar el progreso), pero no hay código todavía.
+- **Mejora de UX de publicaciones, segunda vuelta** — rama `feature/publicaciones-ux`, también preparada con su `README_TRABAJO.md`. Gran parte del primer pase ya está hecho (ver entradas 49, 50 y 52 del `CHANGELOG.md`).
 - **Agrupar solicitudes duplicadas** en la bandeja de notificaciones (parte del hallazgo #2 de la auditoría original) — se resolvió la separación Importantes/Actividad, esto no.
 - **Estado de "entregado"/"leído" en el chat** — pedido, pero puede exigir cambio de esquema de datos; se dejó aparte a propósito.
 - **`messages.offer_id` y `collaborations.offer_id` son `on delete set null`**, no `cascade` — es a propósito a nivel conceptual (una oferta borrada no debería borrar el historial del chat), pero obliga a limpiar a mano cualquier residuo de test que los use. Cambiarlo a `cascade` sería una decisión de esquema real, pendiente de confirmar si compensa.
