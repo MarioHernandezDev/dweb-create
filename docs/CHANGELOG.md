@@ -4,6 +4,27 @@ Registro de qué se hizo, por qué, y qué queda pendiente de verificar — pens
 
 ---
 
+## 2026-10-28 (Alex-2) — [Alex] A-R13b: tests unitarios de `oauth-state`
+
+### Qué se cambió
+
+Archivo nuevo `tests/unit/oauth-state.spec.ts` (17 tests). Sin cambios en código de producción. Cubre: ida y vuelta del `creatorId`; nonce distinto en cada estado; caducidad con temporizadores simulados (válido a los 10 min − 1 ms, inválido a +1 ms); firma con otra clave, `creatorId` o `exp` manipulados sin refirmar, y firma alterada; formatos inválidos (vacío, sin separador, sin firma, sin payload, basura, payload firmado que no es JSON, `creatorId` no string).
+
+### Hallazgo documentado por un test (no corregido)
+
+El `state` **no es de un solo uso**: el mismo valor sigue verificándose varias veces dentro de la ventana de 10 min. Un test lo deja registrado como limitación conocida. Evitarlo exige un registro de nonces (almacenamiento nuevo), así que queda pendiente de decisión y no se ha tocado código.
+
+### Verificado de verdad
+
+- `npx vitest run tests/unit/oauth-state.spec.ts`: 17/17.
+- `npx vue-tsc --noEmit`: limpio. `npm test -- --run`: 67/67.
+
+### Sin verificar
+
+- Integración de RLS de `social_accounts` (resto de A-R13): espera a la propuesta de A-R11.
+
+---
+
 ## 2026-10-28 (Alex-1) — [Alex] A-R13a: tests unitarios de `token-crypto`
 
 ### Qué se cambió
