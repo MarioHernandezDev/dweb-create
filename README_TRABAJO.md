@@ -1,170 +1,124 @@
-# README_TRABAJO — rama `feature/publicaciones-ux`
+# README_TRABAJO — rama `feature/publicaciones-ux` (Mario)
 
-> Preparado el 2026-10-28, sobre el commit base `aa7f7bd` de `main`. Esta rama y `feature/onboarding` parten del mismo commit y son independientes entre sí — ninguna depende de la otra. **Esta rama no implementa nada todavía**: este documento solo define alcance y reglas, tal como se pidió.
+> Actualizado el 2026-10-28. **Ninguna tarea está implementada todavía y el reparto está pendiente de aprobación.** La fuente común de planificación es [`docs/PLAN_TRABAJO_PARALELO.md`](docs/PLAN_TRABAJO_PARALELO.md): allí está el detalle de cada tarea (compl., dependencias, BD, criterio de terminado), las decisiones abiertas (Q1–Q13) y la matriz completa. Este archivo es la vista de **esta rama**.
 >
-> ⚠️ Antes de fiarte de cualquier otro documento del repo sobre "cómo está organizado el trabajo", lee la nota de la sección H de este archivo — varios de esos documentos están desactualizados.
+> Cambio respecto a la versión anterior de este README: la rama ya no es solo "publicaciones". Pasa a ser la rama de **redes sociales + dinero (Stripe) + publicaciones**. Motivo: todas las tareas de redes sociales son de Mario por requisito, y Stripe es una pieza indivisible que se asigna al mismo dueño para no repartir una funcionalidad entre dos ramas. El nombre de la rama ya no refleja su alcance (ver decisión Q8 del plan sobre subramas por tarea).
 
-## A. Objetivo
+## 1. Objetivo general
 
-Mejorar la experiencia de uso de las **publicaciones** de FEEDMA (el tablero Kanban de entregas de un creador y todo lo que gira alrededor de una publicación individual), para que un creador — y, donde corresponda, el partner que revisa su trabajo — entienda sin esfuerzo qué es una publicación, en qué fase está, qué puede hacer con ella y cuál es el siguiente paso, en móvil y en escritorio.
+Hacer que FEEDMA mida y cobre de verdad: (a) conexiones con redes sociales fiables, con tokens que se refrescan, métricas reales por publicación y cuentas que se pueden desconectar bien; (b) pagos probados de extremo a extremo y con una política de cobro decidida; (c) terminar la mejora de UX de las publicaciones.
 
-Nota importante antes de empezar: **una parte considerable de este trabajo ya se hizo** en la sesión del 2026-10-24 (ver `docs/CHANGELOG.md`, entradas 49, 50 y 52) — "fuera de plazo" real, revisión del partner desde el Calendario de una colaboración, aviso al saltarse la revisión, unificación del panel de edición con la página completa, explicaciones de contexto, Tablero colapsable en móvil. Antes de proponer una mejora, comprueba en esas entradas si ya está hecha.
+## 2. Inventario de tareas asignadas (22)
 
-## B. Alcance funcional
+**Redes sociales — todas, sin excepción**
 
-Pantallas y piezas que forman parte de "publicaciones":
+| ID | Tarea | Compl. | Prio |
+|---|---|---|---|
+| M-R1 | Verificar OAuth de Instagram y YouTube de extremo a extremo | M | 3 |
+| M-R2 | Ciclo de vida de tokens (refresco de Instagram, caducados/revocados, estado "Reconectar") | A | 3 |
+| M-R3 | Desconexión completa (revocar token en el proveedor) | B–M | 3 |
+| M-R4 | Endpoints de desautorización y borrado de datos exigidos por Meta | M | 3 |
+| M-R5 | Sincronización programada + `last_synced_at` | A | 3 |
+| M-R6 | Métricas de Instagram (alcance, interacciones) | A | 3 |
+| M-R7 | Vincular publicación ↔ cuenta/contenido real (YouTube/Instagram) | A | 3 |
+| M-R8 | Pipeline que escribe en la tabla `metrics` (hoy nada escribe) | A | 3 |
+| M-R9 | Predicción de éxito basada en rendimiento real | A | 5 |
+| M-R10 | TikTok/X/Facebook/LinkedIn: OAuth real o retirar el "Conectar" falso | B / A | 2 |
+| M-R11 | El navegador no debe poder leer las columnas de tokens | B–M | 1 |
+| M-R12 | Redes ↔ perfil público y Descubrir (métricas verificadas) | M | 5 |
+| M-R13 | Tests de redes (cifrado, estado OAuth, RLS de `social_accounts`) | B–M | 2 |
+| M-R14 | Actualizar docs 9 y 10 (OAuth) | B | 7 |
+| M-R15 | Informe de resultados de colaboración para el partner | M–A | 5 |
 
-- El Tablero del creador (`/creator/timeline`) y el detalle de una publicación (`/creator/post/[id]`).
-- El panel de edición rápida de una publicación desde el Tablero.
-- La vista de calendario de publicaciones dentro de una colaboración (pestaña "Calendario" en el detalle de una colaboración, tanto para el creador como para el partner).
-- La revisión de una publicación por parte del partner (aprobar / pedir cambios) allí donde aparece.
-- Etiquetas y checklist de una publicación.
-- El historial de revisión de una publicación.
+**Dinero (Stripe)**: M-D1 probar pagos en modo test (prio 1, M) · M-D2 política de cuándo se paga (prio 1, A) · M-D3 portal de suscripción (prio 2, M) · M-D4 aviso fiscal (prio 5, B) · M-D5 packs recurrentes (backlog, A, **no empezar**).
 
-Lo que **no** es parte de este alcance (son otra cosa, aunque estén cerca):
-- La negociación de una colaboración en sí (aceptar/rechazar/contraoferta) — eso vive en `NegotiationPanel.vue` y es lógica de colaboración, no de publicación.
-- El chat y las ofertas de paquete — es otra funcionalidad.
-- El tutorial/onboarding global de la app — es la rama `feature/onboarding`.
+**Publicaciones**: M-P1 segunda vuelta de UX (prio 5, M) · M-P2 aprobación del partner como puerta real (prio 4, M–A, **decisión Q6**).
 
-## C. Archivos que puede modificar
+## 3. Orden recomendado
 
-Rutas reales, comprobadas en el repo (no inventadas):
+1. **Fase 0**: resolver Q2, Q3, Q4, Q5, Q8; hacer `git merge main` en la rama.
+2. **Fase 1** (no dependen del compañero ni de Meta): M-D1 → M-R2 → M-R13 → M-R10 → M-R11 (tras confirmación) → M-P1.
+3. **Fase 2**: M-D2 (con lo aprendido en M-D1) · M-R3 · M-R8 → M-R7 · M-R1 si ya hay cuenta de Meta · M-R4 cuando el compañero haya publicado las páginas de privacidad (C-L1).
+4. **Fase 3**: M-R6 · M-R5 (necesita Q3) · M-R9 · M-R12 · M-R15 · M-D3 · M-D4 · M-P2 · M-R14 al final.
 
-### Propios de publicaciones (modifícalos con libertad)
-- `app/pages/creator/timeline.vue`
-- `app/pages/creator/post/[id].vue`
-- `app/components/timeline/PhaseBoard.vue`
-- `app/components/timeline/BoardCard.vue`
-- `app/components/timeline/DeliverableCard.vue`
-- `app/components/timeline/WeekBoard.vue`
-- `app/components/timeline/PostComposerSheet.vue`
-- `app/components/timeline/PostEditSheet.vue`
-- `app/components/timeline/PostDetailSheet.vue`
-- `app/components/timeline/PostReviewActions.vue`
-- `app/components/timeline/CoverUploader.vue`
-- `app/composables/useMyPosts.ts`
-- `app/composables/usePartnerPosts.ts`
-- `app/composables/usePostRevisions.ts`
-- `app/composables/useChecklist.ts`
-- `app/composables/useLabels.ts`
-- `app/composables/usePostEditorPanel.ts`
+## 4. Dependencias
 
-### Compartidos que probablemente necesites tocar (ver sección E antes de hacerlo)
-- `app/pages/creator/index.vue` ("Hoy") y `app/pages/partner/index.vue` ("Inicio") — son dashboards mixtos: tienen secciones de publicaciones (próximas entregas, "Tu calendario", el aviso de "fuera de plazo") entrelazadas con secciones que no lo son (sugerencias de Descubrir, mensajes sin leer, consejos de ficha). Es muy probable que `feature/onboarding` también necesite tocar estas dos páginas (para anclar el tour la primera vez que alguien entra). **Ver sección E.**
-- `app/pages/creator/requests.vue` y `app/pages/partner/requests.vue` — la pestaña "Calendario" del detalle de una colaboración es de publicaciones; las pestañas "Brief" y "Registro" no lo son (`CollaborationTermsCard.vue`, `CollaborationLogCard.vue`, `NegotiationPanel.vue`). Si tocas estos archivos, hazlo solo en el bloque de la pestaña Calendario.
-- `app/utils/status.ts` — tiene de todo: lo específico de publicaciones (`statusMeta`, `phaseDescription`, `creatorNextStepHint`, `partnerNextStepHint`, `isPostOverdue`, `overdueLabel`, `movingSkipsPartnerReview`) y lo específico de colaboraciones (`collaborationStatusMeta`, `isActiveCollaborationStatus`, `isUnresolvedCollaborationStatus`), además de utilidades genéricas (`relativeTime`, `dueLabel`, `dateDividerLabel`) que probablemente también use el onboarding para mostrar ejemplos. Añade, no reescribas lo que ya existe.
-- `app/components/ui/EmptyState.vue`, `app/components/ui/StatusPill.vue`, `app/components/ui/StatusGlyph.vue`, `app/components/ui/Fab.vue` — componentes base genéricos que usan más pantallas que solo publicaciones.
-- `app/types/index.ts` — si necesitas un campo nuevo en `Post`, añádelo sin tocar los demás tipos.
+- M-R2 → M-R3, M-R5 · M-R8 → M-R6, M-R7 → M-R9, M-R12, M-R15.
+- M-D1 → M-D2 → M-D4, M-D5.
+- **Con la otra rama**: C-L1 (privacidad/términos públicos) → M-R4. C-L2 (borrar cuenta) debe eliminar `social_accounts`/tokens: coordinar con M-R3. C-S1 es dueño de `server/utils/rate-limit.ts`, que M-R5/M-R2 usarán.
+- Externas: M-R1, M-R4, M-R6 dependen de la app de Meta (cuenta de Facebook, posible App Review); M-D1 necesita Stripe CLI y el onboarding Connect de un creador demo.
 
-### Fuera de tu alcance (no los toques como parte de esta tarea)
-- Todo lo de autenticación/sesión (`app/pages/login.vue`, `app/pages/onboarding.vue`, `app/middleware/role-guard.global.ts`, `app/utils/auth-errors.ts`).
-- El tutorial guiado global y cualquier componente nuevo que cree la otra rama.
-- `app/components/collab/**` (negociación, valoraciones, registro de colaboración) salvo que el cambio sea estrictamente dentro de la pestaña Calendario mencionada arriba.
-- `app/pages/chat/**`, `app/components/chat/**`.
-- Cualquier migración de `supabase/migrations/`, cualquier RPC, cualquier policy de RLS — ver sección F.
-- Stripe (`server/api/stripe/**`, `server/utils/stripe*.ts`) y pagos.
+## 5. Archivos que puede modificar
 
-## D. Límites del trabajo
+**Propios (libertad):**
+- Redes: `server/api/auth/{instagram,youtube}/**`, `server/api/social/**`, `server/utils/{token-crypto,oauth-state,youtube,account-identity}.ts`, `app/pages/creator/socials.vue`, `app/pages/creator/metrics/**`, `app/composables/useMySocialAccounts.ts`, `app/components/social/**` y `PlatformStatCard`, `docs/9-INSTAGRAM-OAUTH-SETUP.md`, `docs/10-YOUTUBE-OAUTH-SETUP.md`.
+- Dinero: `server/api/stripe/**`, `server/utils/stripe*.ts`, `app/composables/useMyBilling.ts`, `docs/7-STRIPE-SETUP.md`.
+- Publicaciones: `app/pages/creator/timeline.vue`, `app/pages/creator/post/[id].vue`, `app/components/timeline/**`, `useMyPosts`, `usePartnerPosts`, `usePostRevisions`, `useChecklist`, `useLabels`, `usePostEditorPanel`.
+- Pruebas: `tests/integration/` y `tests/unit/` relacionados con lo anterior.
 
-- No implementes el tutorial global ni ningún componente de onboarding — eso es de la otra rama.
-- No rediseñes la navegación general (`app/components/layout/AppShell.vue`, `BottomTabBar.vue`, `SideRail.vue`, `TopBar.vue`, `app/utils/nav.ts`) salvo que el cambio sea mínimo y estrictamente necesario para publicaciones (p. ej. un badge nuevo) — y en ese caso, coordínalo primero (sección E).
-- No toques la lógica de aceptar/rechazar una colaboración ni de pago — eso ya funciona y está fuera de este encargo.
-- No cambies el esquema de datos, RLS ni RPCs sin documentar el impacto y confirmar antes (sección F) — aunque te parezca un cambio menor.
+## 6. Archivos compartidos que requieren coordinación
 
-## E. Dependencias compartidas y coordinación
+Ver sección E del plan. Los que más te afectan:
+- `app/pages/creator/index.vue` y `partner/index.vue` (tus bloques de redes y entregas; el tour del compañero se ancla en `AppShell.vue`, no ahí).
+- `app/pages/creator/profile.vue` (tu bloque de facturación, M-D3; el compañero toca la ficha/fotos, C-U2).
+- `app/pages/partner/requests.vue` y `creator/requests.vue` (tu pestaña Calendario y el botón de pago; el resto del detalle es del compañero).
+- `app/types/index.ts`, `app/utils/status.ts`, `nav.ts`, `mock-data.ts` (`platformMeta` y `VERIFIED_SOCIAL_PLATFORMS` son tuyos; solo añadir al final de tu bloque).
+- `nuxt.config.ts` / `.env.example` (variables de redes: añadir líneas, **nunca valores reales**), `docs/CHANGELOG.md` (título con prefijo `[Mario]`), `package.json`.
+- Server: `server/api/discover/search.post.ts` suma `followers_count` de `social_accounts` — si cambias esa tabla, avisa al compañero (C-U1).
 
-**Lo que puedes cambiar sin avisar:** cualquier archivo de la lista "propios de publicaciones" de la sección C, mientras no cambies el comportamiento de una función que use otra parte de la app (por ejemplo, `useMyPosts.ts` lo usa también `creator/index.vue`, que no es tuyo del todo — ver abajo).
+## 7. Cambios de Supabase que podrían hacer falta
 
-**Lo que hay que coordinar antes de tocar:**
-- `creator/index.vue` / `partner/index.vue` — si el onboarding necesita anclar un paso del tour a algo de estas páginas (muy probable, son las páginas de inicio de cada rol), un cambio tuyo en la misma zona puede chocar. Antes de reestructurar algo ahí (no de añadir una línea suelta), avisa a tu compañero.
-- `app/utils/status.ts` — si los dos necesitáis añadir algo aquí el mismo día, añadidlo cada uno al final de su bloque correspondiente, nunca reordenando ni tocando lo que ya existe del otro.
-- `creator/requests.vue` / `partner/requests.vue` — igual que arriba: la pestaña Calendario es tuya, el resto de la hoja de detalle no.
+Todos requieren explicar el impacto y confirmar **antes** de escribir la migración (zonas protegidas), y deben ser aditivos (ver plan, sección E):
 
-**Cómo avisar:** un mensaje corto al otro antes de empezar ("voy a tocar el bloque de 'Tu calendario' en `partner/index.vue`, el resto de la página no lo toco") es suficiente — no hace falta una reunión salvo que el cambio sea estructural (mover secciones de sitio, cambiar el layout general de la página).
+| Tarea | Cambio previsto |
+|---|---|
+| M-R2 / M-R5 | columnas de estado, último error y último sync en `social_accounts` |
+| M-R7 / M-R8 | columna(s) en `posts` (cuenta + id/URL externo) o uso de `posts.metadata`; ajuste de `metrics` y su RLS de lectura |
+| M-R11 | restringir la lectura de `access_token_encrypted`/`refresh_token_encrypted` (grants por columna o vista) — cambia una policy existente |
+| M-R4 | endpoint que borra datos; sin cambio de esquema |
+| M-R12 | posible ajuste de `get_public_social_accounts` (RPC existente) |
+| M-D2 / M-D5 | estados/hitos de pago, posible RPC y cambios en el webhook de Stripe — **zona más sensible** |
+| M-P2 | RLS/RPC sobre `posts` |
 
-**Si los dos necesitáis cambiar el mismo archivo el mismo día:** que lo haga quien lo tenga más avanzado, y el otro aplica su cambio encima después (coordinado, no a ciegas) — o resolvedlo en llamada si no está claro. Nunca seléis "mi versión"/"la suya" sin leer las dos partes del conflicto.
+Recordatorio: el proyecto de Supabase es **único y compartido**; una migración aplicada desde esta rama afecta ya a la otra. Registra aquí (al final de este archivo, sección "Registro de migraciones") cada migración que apliques: fecha, archivo, qué cambia, quién la aprobó.
 
-## F. Supabase y servicios externos
+## 8. Pruebas y criterios de aceptación
 
-- **Entorno**: un único proyecto de Supabase remoto (hosteado, no local) — el que ya está configurado en `.env` (`SUPABASE_URL`/`SUPABASE_ANON_KEY`/`SUPABASE_SERVICE_ROLE_KEY`). Lo comparten las dos ramas y el resto de la app. No existe un proyecto de pruebas separado — es una decisión ya tomada, documentada en `docs/CONTEXTO_PROYECTO_FEEDMA.md` §4.4.
-- **Tablas que puede leer/escribir tu trabajo**: `posts`, `post_labels`, `labels`, `checklist_items`, `post_revision_notes`. Indirectamente lee `collaborations` (para saber si una publicación está ligada a una activa) y `ml_predictions` (predicción de éxito), sin escribir en ellas.
-- **RPCs que ya existen y usa tu trabajo, sin tocarlas**: `approve_post`, `request_post_changes` (las usa `usePartnerPosts.ts`). Si crees que hace falta cambiar su firma o su lógica, es justo el tipo de cambio que necesita justificarlo y confirmarlo antes — no lo hagas sin pasar por esa conversación.
-- **No se necesita ninguna migración nueva para el alcance previsto** de esta rama (textos, estados vacíos, organización visual, ayudas contextuales no tocan el esquema). Si durante el trabajo descubres que hace falta un campo nuevo en `posts` o similar, para — documenta qué tabla/columna, por qué, y qué otras partes de la app podrían verse afectadas, y confírmalo antes de escribir la migración.
-- **Riesgo real de compartir el proyecto**: los tests de integración (`npm run test:integration`) escriben y limpian datos reales contra este mismo proyecto, usando las cuentas demo (`creator@feedma.test`/`partner@feedma.test`). Si tu compañero está probando el onboarding con cuentas nuevas creadas por `/onboarding` al mismo tiempo que tú ejecutas los tests de integración, no deberíais chocar en los datos (cuentas distintas), pero sí podéis chocar en el **límite de autenticación por contraseña** de Supabase si los dos autenticáis mucho en poco tiempo — si ves errores de "Request rate limit reached" sin motivo aparente, espera unos minutos antes de asumir que es un fallo tuyo.
-- **Cómo probar sin interferir**: usa las cuentas demo para tu trabajo normal (es lo que ya se ha hecho en todas las sesiones anteriores sobre publicaciones). Evita ejecutar `npm run test:integration` muchas veces seguidas en poco tiempo.
-- **Tipos generados**: no existen (`types: false` en `nuxt.config.ts`) — los tipos de los datos de Supabase se escriben a mano en cada composable (interfaces `PostRow`, etc.). Si algún día se generan con `supabase gen types`, es un cambio que afecta a toda la app, no solo a esta rama.
+Comandos reales: `npx vue-tsc --noEmit` · `npm test -- --run` · `npm run build` · `npm run test:integration` (solo si tocas datos/RLS/RPC; mesura el límite de autenticación compartido).
 
-## G. Pruebas
+Criterios de cada tarea: ver tabla del plan (sección B). Criterios transversales (sección G del plan): typecheck/tests/build limpios; interfaz vista en navegador real a 390px y escritorio; entrada en `docs/CHANGELOG.md` con "Qué se cambió / Verificado de verdad / Sin verificar"; no declarar nada verificado sin haberlo probado.
 
-Comandos reales del proyecto (`package.json`), no inventados:
+Específicos de esta rama:
+- Stripe: **solo claves `sk_test_`**; comprobar `.env` antes de cada prueba. Ningún pago real.
+- Redes: no pegar tokens, secretos ni `.env` en commits, issues ni documentos.
+- Cuentas demo compartidas (`creator@feedma.test`, `partner@feedma.test`): limpiar lo que crees en las pruebas, con criterio explícito.
 
-```bash
-npx vue-tsc --noEmit      # typecheck — no hay comando de lint en package.json
-npm test -- --run          # tests unitarios (Vitest, sin red, 30 tests a fecha de este documento)
-npm run build               # build de producción completo
-npm run test:integration    # tests contra Supabase real — solo si tocaste composables/RPCs de publicaciones, y con cuidado con el límite de autenticación (ver sección F)
-```
+## 9. Fuera de tu responsabilidad
 
-No hay comprobación visual automática: cualquier cambio de interfaz debe verse en un navegador real (dev server + cuenta demo) antes de darlo por bueno — no basta con que pase `vue-tsc`.
+Onboarding/tour, legal y RGPD, rate limiting general, panel de admin, CI/CD, verificación con clics de los flujos de colaboración y oferta, acceso cruzado entre roles, notificaciones, estados de chat, descubrimiento (salvo el dato de seguidores), perfil/fotos, accesibilidad y backups. Son de `feature/onboarding` (ver su README y la matriz del plan).
 
-## H. Criterios para considerar terminado el trabajo
+## 10. Integración y prevención de conflictos
 
-- `npx vue-tsc --noEmit`, `npm test -- --run` y `npm run build` pasan limpios.
-- Si se tocó algo que usa `usePartnerPosts.ts`/`usePostRevisions.ts`/RPCs, `npm run test:integration` pasa (o se repitió tras el límite de autenticación, no se interpretó un fallo de rate limit como regresión).
-- El cambio se ha visto de verdad en un navegador (no solo deducido del código) en al menos un móvil estrecho (~390px) y en escritorio, con una cuenta demo real.
-- Cada cambio queda documentado en `docs/CHANGELOG.md` (nueva entrada arriba, con qué se cambió, qué se verificó de verdad y qué no) — es la convención que ya sigue todo el proyecto, no la rompas.
-- No se ha tocado ningún archivo fuera del alcance de la sección C sin coordinarlo antes (sección E).
+1. `git fetch origin` y `git merge main` en la rama antes de cada sesión; resolver conflictos leyendo ambos lados.
+2. Commits pequeños, `git add` de archivos concretos, nunca `git add -A` a ciegas ni secretos.
+3. Avisar al compañero antes de: tocar un archivo de la sección 6, aplicar cualquier migración/RPC/policy, añadir dependencias, o lanzar `test:integration` justo antes de que él pruebe login.
+4. Prohibido: `git push --force`, `git reset --hard`, `git clean -fd` y fusionar esta rama con `feature/onboarding`.
+5. Cuando una tarea cumpla sus criterios: PR hacia `main` (o desde la subrama de tarea hacia `main`). Tras fusionar la primera de las dos ramas, la otra hace `git merge main` y re-verifica los archivos compartidos.
+6. Comandos útiles: `git branch --show-current` · `git diff main...feature/publicaciones-ux --stat` · `git log main..feature/publicaciones-ux --oneline`.
 
-> **Nota sobre otros documentos del repo**: `README.md` (raíz) tiene una sección "Fases del proyecto" y `docs/5-FRONTEND-WORK-SPLIT.md` describe un reparto de trabajo — los dos son de una fase muy anterior del proyecto (frontend con datos de mentira, 3 roles en vez de 2) y están desactualizados; el propio `docs/5-FRONTEND-WORK-SPLIT.md` ya se marca a sí mismo como parcialmente desfasado. Para el estado real del proyecto, usa `docs/CHANGELOG.md`, `docs/CONTEXTO_PROYECTO_FEEDMA.md`, `docs/PENDIENTES.md` y `docs/10-ROADMAP-FUTURO.md`.
+---
 
-## I. Procedimiento Git
+## Anexo — alcance y riesgos heredados del README anterior (publicaciones)
 
-Comprobar en qué rama estás:
-```bash
-git branch --show-current
-```
+- El Tablero y el detalle de publicación ya se rediseñaron (CHANGELOG 49, 50 y 52): antes de proponer una mejora, comprueba si ya está hecha.
+- `PhaseBoard.vue` sincroniza `board` con `posts` a mano alrededor de `vuedraggable`: si lo tocas, prueba arrastrando de verdad. El selector de fase de cada card es la única vía en móvil para columnas colapsadas; no lo rompas.
+- No conviertas el aviso de saltarse la revisión en un bloqueo sin cerrar antes Q6 (es un cambio de permisos, no de interfaz).
+- Los textos de contexto no deben repetir lo que ya dice el estado.
+- Si creas publicaciones de prueba contra el proyecto compartido, bórralas al terminar.
+- `README.md` raíz y `docs/5-FRONTEND-WORK-SPLIT.md` están desactualizados; para el estado real usa `docs/CHANGELOG.md`, `docs/CONTEXTO_PROYECTO_FEEDMA.md`, `docs/PENDIENTES.md` y el plan.
 
-Cambiar a esta rama (si no estás ya en ella):
-```bash
-git checkout feature/publicaciones-ux
-```
+## Registro de migraciones aplicadas desde esta rama
 
-Antes de empezar cada sesión de trabajo, traer lo último de `main` por si hubo algo urgente fuera de esta preparación (no debería haberlo, pero por seguridad):
-```bash
-git fetch origin
-git log main..origin/main --oneline   # comprobar si hay algo nuevo antes de mezclarlo
-```
-
-Revisar el estado y los cambios:
-```bash
-git status
-git diff
-```
-
-Hacer commits pequeños y descriptivos (igual que el resto del historial del proyecto — mensaje corto en primera línea, cuerpo opcional con el porqué):
-```bash
-git add <archivos concretos, nunca `git add -A` a ciegas>
-git commit -m "Publicaciones: <qué cambia y por qué>"
-```
-
-Subir la rama (primera vez necesita `-u`):
-```bash
-git push -u origin feature/publicaciones-ux
-```
-
-Comprobar diferencias con `main` antes de proponer integrar:
-```bash
-git diff main...feature/publicaciones-ux --stat   # qué archivos cambiaron
-git diff main...feature/publicaciones-ux           # el diff completo
-git log main..feature/publicaciones-ux --oneline   # commits propios de esta rama
-```
-
-Preparar la integración: cuando el trabajo esté terminado (sección H cumplida), abre un Pull Request hacia `main` en vez de fusionar en local — deja rastro de qué cambió y por qué, y da pie a una revisión cruzada antes de fusionar. No fusiones esta rama con `feature/onboarding` ni al revés por tu cuenta.
-
-## J. Riesgos y precauciones
-
-- **Romper el arrastre del Tablero sin darte cuenta**: `PhaseBoard.vue` tiene lógica no trivial alrededor de `vuedraggable` (el `board` reactive se sincroniza a mano con `posts`, ver los comentarios del propio archivo) — si tocas la lógica de sincronización, prueba arrastrar de verdad en el navegador, no solo leer el código.
-- **El selector de fase de cada card es la alternativa sin arrastrar** — en móvil, es el único camino para mover algo a una columna colapsada. Si cambias `BoardCard.vue`, no rompas ese selector.
-- **No conviertas el aviso de "te vas a saltar la revisión" en un bloqueo real** sin confirmar antes — hoy es solo una confirmación (`movingSkipsPartnerReview` en `utils/status.ts`), convertirlo en un bloqueo de verdad sería un cambio de permisos/RLS, no de interfaz.
-- **Los textos nuevos de contexto (estados vacíos, "qué hacer ahora") no deben repetir lo que ya dice el estado/fase** — el objetivo de este trabajo es reducir confusión, no añadir más texto por añadir.
-- **Cuidado con dejar residuos de prueba reales**: si creas publicaciones de prueba contra el proyecto de Supabase compartido para probar un cambio, bórralas al terminar — ya ha pasado varias veces en este proyecto que datos de prueba se quedan mezclados con datos reales (ver `docs/CONTEXTO_PROYECTO_FEEDMA.md` §4.3 para el precedente).
+| Fecha | Archivo | Qué cambia | Aprobada por |
+|---|---|---|---|
+| — | — | (ninguna todavía) | — |
