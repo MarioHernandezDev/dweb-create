@@ -74,7 +74,7 @@ Ver también las secciones 6 y 11. Los que más te afectan:
 - `creator/profile.vue` / `partner/profile.vue`: tuyos la ficha, las fotos (M-U2) y el bloque de facturación (M-D3).
 - `creator/requests.vue` / `partner/requests.vue`: tuyo el detalle de colaboración y el botón de pago; la pestaña Calendario es de la otra rama.
 - `app/types/index.ts`, `status.ts`, `nav.ts`, `mock-data.ts`: solo añadir al final de tu bloque.
-- `nuxt.config.ts`, `.env.example`, `package.json`, `docs/CHANGELOG.md` (título con prefijo `[Compañero]`).
+- `nuxt.config.ts`, `.env.example`, `package.json`, `docs/CHANGELOG.md` (título con prefijo `[Mario]`).
 - `server/api/discover/search.post.ts` usa `social_accounts.followers_count`: no cambies esa consulta sin avisar a Alex.
 
 ## 7. Cambios de Supabase que podrían hacer falta
