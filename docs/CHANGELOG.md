@@ -4,6 +4,58 @@ Registro de qué se hizo, por qué, y qué queda pendiente de verificar — pens
 
 ---
 
+## 2026-10-28 (57) — [Mario] M-S1, M-S2, M-S3, M-N1, M-O1: límite de uso, auditoría de admin, roles, avisos agrupados y recorrido de bienvenida
+
+Todo verificado con un navegador real (Chromium de Playwright, instalado fuera del proyecto) contra el servidor de desarrollo y las cuentas demo.
+
+### M-S3 — Acceso cruzado entre roles (sin cambios de código)
+
+Matriz probada con clics reales en `/creator`, `/creator/requests`, `/creator/profile`, `/partner`, `/partner/requests`, `/partner/profile`, `/inbox`, `/chat`, `/favorites`, `/privacidad`, `/admin`:
+- **Anónimo:** todas las rutas privadas → `/login`; `/privacidad` pública; `/admin` → `/admin/login`.
+- **Creador:** sus rutas abren; `/partner/*` → `/creator`.
+- **Partner:** sus rutas abren; `/creator/*` → `/partner`.
+- `/admin` no se abre con una cuenta normal (→ `/admin/login`).
+Sin fallos. Sin verificar: la protección a nivel de API/RLS (esto solo cubre la navegación).
+
+### M-S1 — Límite de uso
+
+- `server/utils/rate-limit.ts`: nuevo `enforceRateLimit(event, clave, max, ventana)`, que responde 429 con `Retry-After`. 3 tests unitarios nuevos.
+- Aplicado a `POST /api/ml/predict` (10/min por usuario, llama al LLM) y `POST /api/discover/search` (20/min por usuario). En `search.post.ts` solo se añadió la línea del límite, la consulta no se tocó.
+- **Límite del enfoque (Q3):** el contador vive en memoria de un proceso; con varias instancias o un reinicio no es estricto. Además, el alta de cuentas, las solicitudes y los reportes van **directos de navegador a Supabase**, no por el servidor, así que este límite no los cubre: eso requiere reglas en Supabase o un endpoint intermedio (pendiente).
+- Sin verificar: el 429 de `predict`/`search` no se probó contra el endpoint real (requiere sesión + datos); sí está probado por unidad.
+
+### M-S2 — Auditoría del panel de admin
+
+Hallazgos corregidos (verificados en navegador):
+1. **Recargar `/admin` o abrirlo por URL directa siempre mandaba al login** (y luego a una pantalla de error): las lecturas se hacían con `$fetch`, que en el render del servidor no reenvía la cookie. Corregido con `useRequestFetch()` en `app/pages/admin/index.vue`. Tras el arreglo: recarga conserva la sesión y las 4 pestañas cargan (Usuarios, Actividad, Analíticas, Reportes).
+2. **El límite de login se saltaba falsificando `X-Forwarded-For`**: 10 intentos con cabeceras distintas → todos 401, sin 429. Añadido un tope global (40/10 min) además del de IP. Verificado: tras 40 intentos, 429. Coste asumido: alguien podría bloquear el login de admin unos minutos.
+3. `block.post.ts`: sin cuerpo daba un 500; ahora valida `id` (uuid) y `banned` (400).
+Comprobado: las 6 rutas GET y las 2 POST de `/api/admin/*` devuelven 401 sin sesión.
+
+**Pendiente / sin corregir (decisión tuya):**
+- Los inicios de sesión correctos también cuentan para el límite de 8 por IP (8 entradas en 10 min bastan para bloquearte).
+- `grant-pro` (toca la suscripción, zona Stripe): si el creador ya tiene Pro de pago, el upsert pone `stripe_subscription_id` a null y lo desvincula de Stripe; y pulsarlo dos veces suma créditos dos veces. Revisar en M-D2.
+- No hay registro de qué hace el admin (bloquear, regalar Pro); la contraseña es única y compartida.
+- `users.get` no pagina (1000 máx.). `clientIp` se fía de `X-Forwarded-For`: configurar proxy de confianza según dónde se despliegue (Q3).
+- Sin verificar: aspecto del panel a 390px (el límite de login lo impidió; pendiente).
+
+### M-N1 — Avisos agrupados
+
+`groupNotifications` (`app/utils/notifications.ts`) agrupa avisos idénticos (tipo, título, texto y destino) con contador ×N; leídos y no leídos no se mezclan; abrir uno marca todo el grupo. Solo cliente, sin tocar la base de datos. 5 tests unitarios. Visto en el navegador: "Nueva solicitud de colaboración ×17", "Has iniciado sesión ×20".
+
+### M-O1 — Recorrido de bienvenida
+
+- `app/utils/onboarding-steps.ts` (textos por rol, 5 pasos cada uno), `app/composables/useOnboardingTour.ts`, `app/components/onboarding/OnboardingTour.vue`, montado en `AppShell.vue`. Botón "Ver el recorrido de bienvenida" en Perfil → Cuenta de los dos roles.
+- Progreso en `localStorage` por usuario (Q1, primera versión): **en otro navegador o dispositivo volvería a salir una vez**; si molesta, pasar a columna en `profiles`.
+- Verificado en navegador (390px), creador y partner: sale en la primera entrada; recorre 5 pasos; "Saltar" lo cierra y no vuelve tras recargar ni tras cerrar sesión y volver a entrar; el botón del perfil lo reabre; Escape cierra; sin errores de página.
+- Sin verificar: lector de pantalla; probado con las cuentas demo (con `localStorage` limpio), no con cuentas nuevas creadas por `/onboarding`.
+
+### Residuos de prueba
+
+Las pruebas dejaron ~25 avisos "Has iniciado sesión" en las cuentas demo (por eso salen agrupados ×20).
+
+---
+
 ## 2026-10-28 (56) — [Mario] M-F2: CI básico con GitHub Actions
 
 ### Qué se cambió
