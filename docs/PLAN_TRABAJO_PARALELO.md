@@ -53,15 +53,15 @@ Complejidad: B/M/A. "BD" = migración/RPC/RLS. Todas las tareas con BD requieren
 | M-R14 | Actualizar `docs/9-…` y `docs/10-YOUTUBE-…` al estado final; corregir comentarios obsoletos | Parcial | 7 | B | Final de R1–R8 | No | Docs coinciden con el código |
 | M-R15 | Informe de resultados de una colaboración para el partner (rendimiento de las publicaciones entregadas) | **Nueva, no documentada** | 5 | M–A | M-R7, M-R8 | Lectura RLS (con M-R8) | El partner de una colaboración ve el rendimiento de sus entregas |
 
-### B.2 Dinero (`M-D*`) — Stripe es una sola pieza, un solo dueño
+### B.2 Dinero (`C-D*`) — Stripe es una sola pieza, un solo dueño: el compañero
 
 | ID | Tarea | Estado | Prio | Compl. | Depende de | BD | Criterio |
 |---|---|---|---|---|---|---|---|
-| M-D1 | Probar de verdad en modo test: suscripción Pro y pago de colaboración con Connect (Stripe CLI + onboarding de un creador demo) | Nunca probado | 1 | M | — | No | Ambos flujos completados en test; webhooks recibidos; resultado en CHANGELOG con lo que falló |
-| M-D2 | Política de cuándo se puede pagar (hoy se permite al **aceptar**: `pay-collaboration.post.ts` y `payableStatuses` en `partner/requests.vue`) | Decisión + implementación pendientes | 1 | A | M-D1, Decisión Q2 | Probable: estados/hitos de pago, RPC, webhook — **zona protegida** | Política elegida, implementada servidor y UI, con tests |
-| M-D3 | Portal de gestión de suscripción (cancelar, cambiar tarjeta) | **No existe** | 2 | M | M-D1 | No | Un creador Pro abre el portal desde su perfil |
-| M-D4 | Aviso fiscal en el cobro (IRPF/autónomos), no como asesoría | No implementado | 5 | B | M-D2 | No | Texto visible en el momento del cobro |
-| M-D5 | Packs mensuales/retainers (cobro recurrente) | **Backlog**, no empezar | 5 | A | M-D2, Q10 | Sí, grande | Diseño aprobado antes de código |
+| C-D1 | Probar de verdad en modo test: suscripción Pro y pago de colaboración con Connect (Stripe CLI + onboarding de un creador demo) | Nunca probado | 1 | M | — | No | Ambos flujos completados en test; webhooks recibidos; resultado en CHANGELOG con lo que falló |
+| C-D2 | Política de cuándo se puede pagar (hoy se permite al **aceptar**: `pay-collaboration.post.ts` y `payableStatuses` en `partner/requests.vue`) | Decisión + implementación pendientes | 1 | A | C-D1, Decisión Q2 | Probable: estados/hitos de pago, RPC, webhook — **zona protegida** | Política elegida, implementada servidor y UI, con tests |
+| C-D3 | Portal de gestión de suscripción (cancelar, cambiar tarjeta) | **No existe** | 2 | M | C-D1 | No | Un creador Pro abre el portal desde su perfil |
+| C-D4 | Aviso fiscal en el cobro (IRPF/autónomos), no como asesoría | No implementado | 5 | B | C-D2 | No | Texto visible en el momento del cobro |
+| C-D5 | Packs mensuales/retainers (cobro recurrente) | **Backlog**, no empezar | 5 | A | C-D2, Q10 | Sí, grande | Diseño aprobado antes de código |
 
 ### B.3 Publicaciones (`M-P*`)
 
@@ -100,16 +100,16 @@ Moderación de contenido subido · motor de tendencias con IA (`app/_disabled/cr
 | Área | Mario (`feature/publicaciones-ux`) | Compañero (`feature/onboarding`) |
 |---|---|---|
 | Redes sociales (OAuth, tokens, métricas, sync, perfil↔redes) | **Todo** (M-R1…R15) | Nada |
-| Stripe y pagos | **Todo** (M-D1…D5) | Nada |
+| Stripe y pagos | Nada | **Todo** (C-D1…D5) |
 | Publicaciones | M-P1, M-P2 | Nada |
 | Legal/RGPD/seguridad transversal | M-R11 (tokens) | C-L1, C-L2, C-S1, C-S2, C-S3 |
 | Verificación de flujos, CI | — | C-F1, C-F2 |
 | Notificaciones, chat, estados de colaboración | — | C-N1, C-N2, C-N3 |
 | Onboarding, descubrimiento, perfil, accesibilidad | — | C-O1, C-U1…U4 |
 
-Carga: Mario 22 tareas (varias bloqueadas por terceros —Meta— o en backlog: R1/R4/R6, D5), compañero 15. El reparto se ha desequilibrado a propósito hacia Mario por la condición de "todas las redes", pero las tareas de Mario se concentran en pocos archivos propios y las del compañero son más numerosas y de menor tamaño. **Ver Q11** si se quiere mover algo.
+Carga: Mario 17 tareas (varias bloqueadas por terceros —Meta— o en backlog: R1/R4/R6), compañero 20 (C-D5 es backlog). Mario concentra las redes, que son pocas piezas grandes en archivos propios; el compañero tiene más tareas, algunas pequeñas. **Ver Q11** si se quiere mover algo.
 
-Motivos de cambios respecto a la preparación anterior: (1) `feature/publicaciones-ux` pasa de "solo publicaciones" a redes + dinero + publicaciones, porque el usuario exige todas las redes y Stripe es una pieza indivisible; (2) `feature/onboarding` pasa de "solo tour" a todo el resto, porque la mayoría de lo pendiente (legal, seguridad, verificación, chat/notificaciones) no tiene relación con redes ni con Stripe.
+Motivos de cambios respecto a la preparación anterior: (1) `feature/publicaciones-ux` pasa de "solo publicaciones" a redes + publicaciones, porque el usuario exige todas las redes; (2) `feature/onboarding` pasa de "solo tour" a todo el resto, incluido Stripe (pieza indivisible, asignada por decisión del usuario el 2026-10-28), porque la mayoría de lo pendiente no tiene relación con redes.
 
 ---
 
@@ -118,21 +118,21 @@ Motivos de cambios respecto a la preparación anterior: (1) `feature/publicacion
 **Fase 0 — antes de escribir código (ambos):** resolver las decisiones Q1–Q13 que bloquean (sobre todo Q2, Q3, Q4, Q5); traer `main` a ambas ramas; acordar el protocolo de migraciones (sección E).
 
 **Fase 1 — en paralelo, sin depender el uno del otro**
-- Mario: M-D1 (Stripe test), M-R2 + M-R13 + M-R10 (no necesitan Meta), M-R11 (tras confirmación), M-P1.
-- Compañero: C-L1 (publicar privacidad/términos **primero**), C-S3, C-F1, C-S2, C-F2, C-O1.
+- Mario: M-R2 + M-R13 + M-R10 (no necesitan Meta), M-R11 (tras confirmación), M-P1.
+- Compañero: C-L1 (publicar privacidad/términos **primero**), C-D1 (Stripe test), C-S3, C-F1, C-S2, C-F2, C-O1.
 
 **Fase 2**
-- Mario: M-D2 (con los hallazgos de M-D1), M-R3, M-R8 → M-R7, M-R1 cuando haya cuenta de Meta, M-R4 cuando exista la URL de C-L1.
-- Compañero: C-L2, C-S1, C-N1, C-N3, C-U1.
+- Mario: M-R3, M-R8 → M-R7, M-R1 cuando haya cuenta de Meta, M-R4 cuando exista la URL de C-L1.
+- Compañero: C-D2 (con los hallazgos de C-D1), C-L2, C-S1, C-N1, C-N3, C-U1.
 
 **Fase 3**
-- Mario: M-R6, M-R5 (tras Q3), M-R9, M-R12, M-R15, M-D3, M-D4, M-P2.
-- Compañero: C-N2, C-U2, C-U3, C-U4.
+- Mario: M-R6, M-R5 (tras Q3), M-R9, M-R12, M-R15, M-P2.
+- Compañero: C-D3, C-D4, C-N2, C-U2, C-U3, C-U4.
 
 **Cadenas de dependencia críticas:**
 1. C-L1 → M-R4 (Meta exige URL de privacidad). *Única dependencia entre ramas con fecha.*
 2. M-R2 → M-R3, M-R5 · M-R8 → M-R6, M-R7 → M-R9, M-R12, M-R15.
-3. M-D1 → M-D2 → M-D4, M-D5.
+3. C-D1 → C-D2 → C-D4, C-D5.
 4. C-L2 (borrar cuenta) debe borrar `social_accounts`: **coordinar con M-R3** el formato de borrado/revocación.
 5. C-S1 (utilidad `rate-limit.ts`) y M-R5 (sync): el job de sync no debe pasar por el límite de usuario; Mario usa la utilidad, el compañero es dueño de ella.
 
@@ -144,8 +144,8 @@ Motivos de cambios respecto a la preparación anterior: (1) `feature/publicacion
 | Archivo | Quién lo toca | Regla |
 |---|---|---|
 | `app/pages/creator/index.vue`, `app/pages/partner/index.vue` | Mario (bloques de redes/entregas), compañero (si el tour ancla algo) | El tour se ancla en `AppShell.vue`; si hay que tocarlas, avisar y limitarse al bloque propio |
-| `app/pages/creator/profile.vue`, `partner/profile.vue` | Mario (M-D3 portal, bloque de facturación), compañero (C-U2, ficha) | Cada uno su bloque; avisar antes de mover secciones |
-| `app/pages/partner/requests.vue`, `creator/requests.vue` | Mario (pestaña Calendario, botón de pago M-D2), compañero (C-F1/C-N3, resto del detalle) | Mismo patrón por pestañas/bloques |
+| `app/pages/creator/profile.vue`, `partner/profile.vue` | Compañero (C-D3 portal, bloque de facturación y C-U2, ficha); Mario no necesita tocarlos | Cada uno su bloque; avisar antes de mover secciones |
+| `app/pages/partner/requests.vue`, `creator/requests.vue` | Mario (pestaña Calendario), compañero (botón de pago C-D2, C-F1/C-N3, resto del detalle) | Mismo patrón por pestañas/bloques |
 | `app/types/index.ts`, `app/utils/status.ts`, `app/utils/nav.ts`, `app/utils/mock-data.ts` | Ambos | Solo añadir al final de su bloque; no reordenar ni renombrar |
 | `app/components/layout/AppShell.vue` | Compañero (monta el tour) | Mario no lo toca |
 | `server/utils/rate-limit.ts` | Compañero (dueño); Mario lo usa | — |
@@ -171,13 +171,13 @@ Reglas propuestas (acordarlas en la Fase 0):
 | M-R2 | columnas de estado/último sync en `social_accounts` | Mario |
 | M-R7 / M-R8 | columnas en `posts` y/o ajuste de `metrics` + RLS de lectura | Mario |
 | M-R11 | restringir lectura de columnas de tokens (RLS/grants) | Mario |
-| M-D2 / M-D5 | estados/hitos de pago, posible RPC y webhook | Mario |
+| C-D2 / C-D5 | estados/hitos de pago, posible RPC y webhook | Compañero |
 | M-P2 | RLS/RPC de `posts` | Mario |
 | C-L2 | RPC/endpoint de exportación y borrado | Compañero |
 | C-N2 / C-N3 / C-N1 | columnas en `messages`, FKs `offer_id`, agrupación | Compañero |
 | C-O1 | `profiles.onboarding_completed_at` (opcional) | Compañero |
 
-Posible solapamiento: **`profiles`** (C-O1) y **`collaborations`** (M-D2, C-N3) los tocan ambos. Cualquier cambio ahí se anuncia antes.
+Posible solapamiento: **`profiles`** (C-O1) y **`collaborations`** (C-D2, C-N3) los tocan tareas del mismo desarrollador (el compañero), así que se secuencian ellas mismas; aun así cualquier cambio ahí se anuncia antes, porque Mario lee ambas tablas (publicaciones, Descubrir).
 
 ---
 
@@ -210,8 +210,8 @@ Posible solapamiento: **`profiles`** (C-O1) y **`collaborations`** (M-D2, C-N3) 
 
 | Punto de PENDIENTES | Estado según el código | Tarea |
 |---|---|---|
-| §1 Pagos nunca probados | Pendiente (confirmado: no hay evidencia de lo contrario) | M-D1 |
-| §1 Sin portal de suscripción | Confirmado: no hay ninguna referencia a portal de facturación en `app`/`server` | M-D3 |
+| §1 Pagos nunca probados | Pendiente (confirmado: no hay evidencia de lo contrario) | C-D1 |
+| §1 Sin portal de suscripción | Confirmado: no hay ninguna referencia a portal de facturación en `app`/`server` | C-D3 |
 | §2 Métricas solo seguidores | Confirmado (`creator/metrics/index.vue`). **Añadido:** la tabla `metrics` nunca se escribe | M-R6/R7/R8 |
 | §2 "Predicción basada en heurística" | **Por revisar**: `predict.post.ts` construye un prompt para un LLM además de `ml-heuristic.ts` | M-R9 |
 | §3 Aceptar/rechazar oferta, aprobar/pedir cambios con clics | Pendiente de verificar | C-F1 |
@@ -222,7 +222,7 @@ Posible solapamiento: **`profiles`** (C-O1) y **`collaborations`** (M-D2, C-N3) 
 | §6 Sin CI/CD | Confirmado (no existe `.github/`) | C-F2 |
 | §6 Sin Supabase de pruebas | Decisión tomada, sin cambios | — (Sección E) |
 | §6 Sin páginas legales | Confirmado | C-L1, C-L2 |
-| §6b Política de pago | Confirmado en `pay-collaboration.post.ts` (acepta `accepted`, `in_progress`, `completed`) | M-D2 |
+| §6b Política de pago | Confirmado en `pay-collaboration.post.ts` (acepta `accepted`, `in_progress`, `completed`) | C-D2 |
 | **§6b "login de admin sin límite de intentos"** | **DISCREPANCIA — ya está implementado**: `server/api/admin/login.post.ts` limita 8 intentos/10 min por IP con `checkRateLimit`, y hay `tests/unit/rate-limit.spec.ts`. No verificado en navegador; limitación: en memoria y por IP | — (actualizar PENDIENTES y `10-ROADMAP-FUTURO.md`) |
 | §6b Rate limiting general | Confirmado: `checkRateLimit` solo se usa en el login de admin | C-S1 |
 | §7 Agrupar solicitudes duplicadas | Pendiente | C-N1 |
@@ -245,7 +245,7 @@ Posible solapamiento: **`profiles`** (C-O1) y **`collaborations`** (M-D2, C-N3) 
 | # | Pregunta | Bloquea | Mi recomendación |
 |---|---|---|---|
 | Q1 | Progreso del tour: columna `profiles.onboarding_completed_at` o `localStorage` | C-O1 | `localStorage` en la primera versión; columna después si molesta |
-| Q2 | Política de pago: por hitos, todo al final, o señal + resto | M-D2, M-D5 | Señal + resto al aprobar la entrega; decidir tras M-D1 |
+| Q2 | Política de pago: por hitos, todo al final, o señal + resto | C-D2, C-D5 | Señal + resto al aprobar la entrega; decidir tras C-D1 |
 | Q3 | ¿Dónde se despliega y qué scheduler hay (cron del host, Supabase pg_cron, GitHub Actions)? | M-R5, C-S1 | Decidir antes de diseñar sync; sin respuesta, M-R5 queda en espera |
 | Q4 | TikTok/X/Facebook/LinkedIn: ¿OAuth real o retirar el "Conectar" falso? | M-R10 | Retirar ahora (Instagram/YouTube solo); reabrir cuando haya demanda |
 | Q5 | ¿Hay ya cuenta de Facebook/app de Meta disponible? | M-R1, M-R4, M-R6 | Si no, tratar Instagram como bloqueado y avanzar el resto |
@@ -253,7 +253,7 @@ Posible solapamiento: **`profiles`** (C-O1) y **`collaborations`** (M-D2, C-N3) 
 | Q7 | `offer_id` en cascade o set null | C-N3 | Mantener set null |
 | Q8 | Estrategia de ramas: ¿trabajar en las ramas actuales o crear subramas por tarea (`feature/redes-*`, `feature/pagos-*`)? El nombre `feature/publicaciones-ux` ya no refleja su alcance | Todo | Subramas cortas por tarea, creadas desde la rama actual; PR a `main` |
 | Q9 | Entregado/leído por mensaje: ¿se acepta una columna nueva o se deriva de `last_read_at`? | C-N2 | Derivar primero; columna solo si no basta |
-| Q10 | Packs recurrentes: ¿antes o después de estabilizar redes y pagos? | M-D5 | Después de M-D2 |
-| Q11 | ¿Aceptáis el reparto o se mueve algo para equilibrar (p. ej. M-D3 o M-P1 al compañero)? | — | Mantenerlo; revisar tras la Fase 1 |
+| Q10 | Packs recurrentes: ¿antes o después de estabilizar redes y pagos? | C-D5 | Después de C-D2 |
+| Q11 | ¿Aceptáis el reparto o se mueve algo para equilibrar (p. ej. mover M-P1 a otra persona o dejar C-D5 fuera)? | — | Mantenerlo; revisar tras la Fase 1 |
 | Q12 | Backups: ¿plan de pago de Supabase ahora o al tener usuarios reales? | C-U4 | Antes del primer pago real |
 | Q13 | Al borrar una cuenta, ¿qué se conserva por obligación legal (pagos, facturas)? | C-L2 | Consultar con un gestor antes de implementar |

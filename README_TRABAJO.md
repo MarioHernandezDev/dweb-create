@@ -2,13 +2,13 @@
 
 > Actualizado el 2026-10-28. **Ninguna tarea está implementada todavía y el reparto está pendiente de aprobación.** La fuente común de planificación es [`docs/PLAN_TRABAJO_PARALELO.md`](docs/PLAN_TRABAJO_PARALELO.md): allí está el detalle de cada tarea (compl., dependencias, BD, criterio de terminado), las decisiones abiertas (Q1–Q13) y la matriz completa. Este archivo es la vista de **esta rama**.
 >
-> Cambio respecto a la versión anterior de este README: la rama ya no es solo "publicaciones". Pasa a ser la rama de **redes sociales + dinero (Stripe) + publicaciones**. Motivo: todas las tareas de redes sociales son de Mario por requisito, y Stripe es una pieza indivisible que se asigna al mismo dueño para no repartir una funcionalidad entre dos ramas. El nombre de la rama ya no refleja su alcance (ver decisión Q8 del plan sobre subramas por tarea).
+> Cambio respecto a la versión anterior de este README: la rama ya no es solo "publicaciones". Pasa a ser la rama de **redes sociales + publicaciones**. Motivo: todas las tareas de redes sociales son de Mario por requisito. (Stripe/pagos estuvo asignado a esta rama en un primer borrador; el 2026-10-28 se pasó entero al compañero, ver su README.) El nombre de la rama ya no refleja su alcance (ver decisión Q8 del plan sobre subramas por tarea).
 
 ## 1. Objetivo general
 
-Hacer que FEEDMA mida y cobre de verdad: (a) conexiones con redes sociales fiables, con tokens que se refrescan, métricas reales por publicación y cuentas que se pueden desconectar bien; (b) pagos probados de extremo a extremo y con una política de cobro decidida; (c) terminar la mejora de UX de las publicaciones.
+Hacer que FEEDMA mida de verdad: (a) conexiones con redes sociales fiables, con tokens que se refrescan, métricas reales por publicación y cuentas que se pueden desconectar bien; (b) terminar la mejora de UX de las publicaciones.
 
-## 2. Inventario de tareas asignadas (22)
+## 2. Inventario de tareas asignadas (17)
 
 **Redes sociales — todas, sin excepción**
 
@@ -30,29 +30,25 @@ Hacer que FEEDMA mida y cobre de verdad: (a) conexiones con redes sociales fiabl
 | M-R14 | Actualizar docs 9 y 10 (OAuth) | B | 7 |
 | M-R15 | Informe de resultados de colaboración para el partner | M–A | 5 |
 
-**Dinero (Stripe)**: M-D1 probar pagos en modo test (prio 1, M) · M-D2 política de cuándo se paga (prio 1, A) · M-D3 portal de suscripción (prio 2, M) · M-D4 aviso fiscal (prio 5, B) · M-D5 packs recurrentes (backlog, A, **no empezar**).
-
 **Publicaciones**: M-P1 segunda vuelta de UX (prio 5, M) · M-P2 aprobación del partner como puerta real (prio 4, M–A, **decisión Q6**).
 
 ## 3. Orden recomendado
 
-1. **Fase 0**: resolver Q2, Q3, Q4, Q5, Q8; hacer `git merge main` en la rama.
-2. **Fase 1** (no dependen del compañero ni de Meta): M-D1 → M-R2 → M-R13 → M-R10 → M-R11 (tras confirmación) → M-P1.
-3. **Fase 2**: M-D2 (con lo aprendido en M-D1) · M-R3 · M-R8 → M-R7 · M-R1 si ya hay cuenta de Meta · M-R4 cuando el compañero haya publicado las páginas de privacidad (C-L1).
-4. **Fase 3**: M-R6 · M-R5 (necesita Q3) · M-R9 · M-R12 · M-R15 · M-D3 · M-D4 · M-P2 · M-R14 al final.
+1. **Fase 0**: resolver Q3, Q4, Q5, Q6, Q8; hacer `git merge main` en la rama.
+2. **Fase 1** (no dependen del compañero ni de Meta): M-R2 → M-R13 → M-R10 → M-R11 (tras confirmación) → M-P1.
+3. **Fase 2**: M-R3 · M-R8 → M-R7 · M-R1 si ya hay cuenta de Meta · M-R4 cuando el compañero haya publicado las páginas de privacidad (C-L1).
+4. **Fase 3**: M-R6 · M-R5 (necesita Q3) · M-R9 · M-R12 · M-R15 · M-P2 · M-R14 al final.
 
 ## 4. Dependencias
 
 - M-R2 → M-R3, M-R5 · M-R8 → M-R6, M-R7 → M-R9, M-R12, M-R15.
-- M-D1 → M-D2 → M-D4, M-D5.
 - **Con la otra rama**: C-L1 (privacidad/términos públicos) → M-R4. C-L2 (borrar cuenta) debe eliminar `social_accounts`/tokens: coordinar con M-R3. C-S1 es dueño de `server/utils/rate-limit.ts`, que M-R5/M-R2 usarán.
-- Externas: M-R1, M-R4, M-R6 dependen de la app de Meta (cuenta de Facebook, posible App Review); M-D1 necesita Stripe CLI y el onboarding Connect de un creador demo.
+- Externas: M-R1, M-R4, M-R6 dependen de la app de Meta (cuenta de Facebook, posible App Review).
 
 ## 5. Archivos que puede modificar
 
 **Propios (libertad):**
 - Redes: `server/api/auth/{instagram,youtube}/**`, `server/api/social/**`, `server/utils/{token-crypto,oauth-state,youtube,account-identity}.ts`, `app/pages/creator/socials.vue`, `app/pages/creator/metrics/**`, `app/composables/useMySocialAccounts.ts`, `app/components/social/**` y `PlatformStatCard`, `docs/9-INSTAGRAM-OAUTH-SETUP.md`, `docs/10-YOUTUBE-OAUTH-SETUP.md`.
-- Dinero: `server/api/stripe/**`, `server/utils/stripe*.ts`, `app/composables/useMyBilling.ts`, `docs/7-STRIPE-SETUP.md`.
 - Publicaciones: `app/pages/creator/timeline.vue`, `app/pages/creator/post/[id].vue`, `app/components/timeline/**`, `useMyPosts`, `usePartnerPosts`, `usePostRevisions`, `useChecklist`, `useLabels`, `usePostEditorPanel`.
 - Pruebas: `tests/integration/` y `tests/unit/` relacionados con lo anterior.
 
@@ -60,8 +56,8 @@ Hacer que FEEDMA mida y cobre de verdad: (a) conexiones con redes sociales fiabl
 
 Ver sección E del plan. Los que más te afectan:
 - `app/pages/creator/index.vue` y `partner/index.vue` (tus bloques de redes y entregas; el tour del compañero se ancla en `AppShell.vue`, no ahí).
-- `app/pages/creator/profile.vue` (tu bloque de facturación, M-D3; el compañero toca la ficha/fotos, C-U2).
-- `app/pages/partner/requests.vue` y `creator/requests.vue` (tu pestaña Calendario y el botón de pago; el resto del detalle es del compañero).
+- `app/pages/creator/profile.vue`: normalmente no necesitas tocarlo (facturación y ficha son del compañero).
+- `app/pages/partner/requests.vue` y `creator/requests.vue` (solo tu pestaña Calendario; el botón de pago y el resto del detalle son del compañero).
 - `app/types/index.ts`, `app/utils/status.ts`, `nav.ts`, `mock-data.ts` (`platformMeta` y `VERIFIED_SOCIAL_PLATFORMS` son tuyos; solo añadir al final de tu bloque).
 - `nuxt.config.ts` / `.env.example` (variables de redes: añadir líneas, **nunca valores reales**), `docs/CHANGELOG.md` (título con prefijo `[Mario]`), `package.json`.
 - Server: `server/api/discover/search.post.ts` suma `followers_count` de `social_accounts` — si cambias esa tabla, avisa al compañero (C-U1).
@@ -77,7 +73,6 @@ Todos requieren explicar el impacto y confirmar **antes** de escribir la migraci
 | M-R11 | restringir la lectura de `access_token_encrypted`/`refresh_token_encrypted` (grants por columna o vista) — cambia una policy existente |
 | M-R4 | endpoint que borra datos; sin cambio de esquema |
 | M-R12 | posible ajuste de `get_public_social_accounts` (RPC existente) |
-| M-D2 / M-D5 | estados/hitos de pago, posible RPC y cambios en el webhook de Stripe — **zona más sensible** |
 | M-P2 | RLS/RPC sobre `posts` |
 
 Recordatorio: el proyecto de Supabase es **único y compartido**; una migración aplicada desde esta rama afecta ya a la otra. Registra aquí (al final de este archivo, sección "Registro de migraciones") cada migración que apliques: fecha, archivo, qué cambia, quién la aprobó.
@@ -89,13 +84,12 @@ Comandos reales: `npx vue-tsc --noEmit` · `npm test -- --run` · `npm run build
 Criterios de cada tarea: ver tabla del plan (sección B). Criterios transversales (sección G del plan): typecheck/tests/build limpios; interfaz vista en navegador real a 390px y escritorio; entrada en `docs/CHANGELOG.md` con "Qué se cambió / Verificado de verdad / Sin verificar"; no declarar nada verificado sin haberlo probado.
 
 Específicos de esta rama:
-- Stripe: **solo claves `sk_test_`**; comprobar `.env` antes de cada prueba. Ningún pago real.
 - Redes: no pegar tokens, secretos ni `.env` en commits, issues ni documentos.
 - Cuentas demo compartidas (`creator@feedma.test`, `partner@feedma.test`): limpiar lo que crees en las pruebas, con criterio explícito.
 
 ## 9. Fuera de tu responsabilidad
 
-Onboarding/tour, legal y RGPD, rate limiting general, panel de admin, CI/CD, verificación con clics de los flujos de colaboración y oferta, acceso cruzado entre roles, notificaciones, estados de chat, descubrimiento (salvo el dato de seguidores), perfil/fotos, accesibilidad y backups. Son de `feature/onboarding` (ver su README y la matriz del plan).
+Stripe y pagos (suscripción, Connect, política de cobro, packs recurrentes), onboarding/tour, legal y RGPD, rate limiting general, panel de admin, CI/CD, verificación con clics de los flujos de colaboración y oferta, acceso cruzado entre roles, notificaciones, estados de chat, descubrimiento (salvo el dato de seguidores), perfil/fotos, accesibilidad y backups. Son de `feature/onboarding` (ver su README y la matriz del plan).
 
 ## 10. Integración y prevención de conflictos
 
