@@ -4,6 +4,31 @@ Registro de qué se hizo, por qué, y qué queda pendiente de verificar — pens
 
 ---
 
+## 2026-10-28 (55) — [Mario] M-L1: páginas públicas de privacidad y términos (plantilla por rellenar)
+
+Primera tarea de `docs/TRABAJO_MARIO.md`. Desbloquea A-R4 de Alex (Meta exige una URL pública de privacidad). **El texto es una plantilla**: no se conocen todavía los datos del responsable.
+
+### Qué se cambió
+
+- `app/utils/legal.ts` (nuevo): único sitio con los datos del responsable (titular, NIF, domicilio, email, jurisdicción, plazo de conservación fiscal, comisión, fecha). Todos son `[POR COMPLETAR: …]`; `legalHasPlaceholders` indica si queda alguno.
+- `app/components/legal/LegalDocument.vue` y `LegalValue.vue` (nuevos): plantilla de página y marcado en amarillo de cada hueco. Mientras quede algún hueco, la página muestra un aviso de "Borrador pendiente de completar"; desaparece solo al rellenarlos todos.
+- `app/pages/privacidad.vue` y `app/pages/terminos.vue` (nuevos): contenido adaptado a lo que hace la app (cuentas, redes conectadas con tokens cifrados, Stripe, Supabase, OpenRouter, derechos RGPD, cookies técnicas).
+- `nuxt.config.ts`: `/privacidad` y `/terminos` añadidas a las rutas públicas (`redirectOptions.exclude`).
+- Enlaces: pie de la landing (`LandingFooter.vue`) y aviso bajo el botón de `onboarding.vue` (alta de cuenta). Es solo un texto informativo, no una casilla bloqueante.
+
+### Verificado de verdad
+
+- `vue-tsc --noEmit` limpio, 30 tests unitarios pasan, `npm run build` completo.
+- Con el servidor de desarrollo, sin sesión: `/privacidad`, `/terminos` y `/onboarding` devuelven 200 (sin redirección a `/login`) y el HTML contiene el aviso de borrador y los huecos marcados.
+
+### Sin verificar
+
+- **No se vio en un navegador real** (no hay navegador en este entorno): falta revisar el aspecto a 390px y escritorio.
+- Falta que un gestor/abogado revise el contenido (Q13) y rellenar los datos en `legal.ts`.
+- Pendiente de decidir: política de devoluciones/desistimiento y proveedor de alojamiento (marcados en el texto).
+
+---
+
 ## 2026-10-24 (54) — Fase 5 de CONTEXT.md (hallazgos #11-21): pulido, accesibilidad y un bug real de verdad grave encontrado al medir en navegador
 
 Cierra la Fase 5, la última del plan original de `CONTEXT.md`. Cada hallazgo se investigó en el código real antes de tocar nada; varios resultaron ya resueltos de sesiones anteriores, documentado explícitamente abajo en vez de darlos por hechos sin comprobar.

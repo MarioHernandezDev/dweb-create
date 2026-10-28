@@ -173,6 +173,13 @@ async function register() {
             >
               {{ loading ? 'Creando cuenta…' : 'Crear cuenta' }}
             </BaseButton>
+
+            <p class="text-[0.75rem] text-[var(--color-text-faint)] text-center">
+              Al crear tu cuenta aceptas los
+              <NuxtLink to="/terminos" target="_blank" class="underline underline-offset-2 hover:text-[var(--color-text-muted)]">términos</NuxtLink>
+              y la
+              <NuxtLink to="/privacidad" target="_blank" class="underline underline-offset-2 hover:text-[var(--color-text-muted)]">política de privacidad</NuxtLink>.
+            </p>
           </form>
 
           <!-- Confirmación de email -->
