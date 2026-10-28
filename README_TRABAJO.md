@@ -2,16 +2,21 @@
 
 > Actualizado el 2026-10-28. **Ninguna tarea está implementada todavía y el reparto está pendiente de aprobación.** La fuente común de planificación es [`docs/PLAN_TRABAJO_PARALELO.md`](docs/PLAN_TRABAJO_PARALELO.md): allí está el detalle de cada tarea (complejidad, dependencias, BD, criterio de terminado), las decisiones abiertas (Q1–Q13) y la matriz completa. Este archivo es la vista de **esta rama**.
 >
-> Cambio respecto a la versión anterior: la rama ya no es solo "onboarding". Es la rama de **todo lo que no son redes sociales ni Stripe ni publicaciones**: legal/RGPD, seguridad transversal, verificación de flujos, notificaciones y chat, descubrimiento, perfil, accesibilidad y el onboarding. Motivo: el usuario reservó todas las redes sociales a la otra rama, y el resto del trabajo pendiente no tiene relación con ellas. El nombre de la rama ya no refleja su alcance (ver decisión Q8 sobre subramas por tarea).
+> Cambio respecto a la versión anterior: la rama ya no es solo "onboarding". Es la rama de **todo lo que no son redes sociales ni publicaciones**: Stripe y pagos, legal/RGPD, seguridad transversal, verificación de flujos, notificaciones y chat, descubrimiento, perfil, accesibilidad y el onboarding. Motivo: el usuario reservó todas las redes sociales a la otra rama, y el resto del trabajo pendiente no tiene relación con ellas. El nombre de la rama ya no refleja su alcance (ver decisión Q8 sobre subramas por tarea).
 
 ## 1. Objetivo general
 
-Dejar FEEDMA listo para usuarios reales: páginas legales y borrado de datos, seguridad y límites de uso, flujos principales verificados con clics reales, notificaciones y chat coherentes, y una primera experiencia guiada para quien entra por primera vez.
+Dejar FEEDMA listo para usuarios reales: pagos probados y con política de cobro decidida, páginas legales y borrado de datos, seguridad y límites de uso, flujos principales verificados con clics reales, notificaciones y chat coherentes, y una primera experiencia guiada para quien entra por primera vez.
 
-## 2. Inventario de tareas asignadas (15)
+## 2. Inventario de tareas asignadas (20)
 
 | ID | Tarea | Compl. | Prio |
 |---|---|---|---|
+| C-D1 | Probar en modo test: suscripción Pro y pago de colaboración con Connect | M | 1 |
+| C-D2 | Política de cuándo se puede pagar (hoy se permite al aceptar) — decisión Q2 + implementación | A | 1 |
+| C-D3 | Portal de gestión de suscripción | M | 2 |
+| C-D4 | Aviso fiscal en el cobro | B | 5 |
+| C-D5 | Packs mensuales/retainers (**backlog, no empezar**, Q10) | A | 5 |
 | C-L1 | Páginas públicas de privacidad y términos (**publicarlas pronto: desbloquea M-R4 de la otra rama**) | B–M | 1 |
 | C-L2 | RGPD: exportar y borrar los datos de una persona | A | 1 |
 | C-S1 | Rate limiting general (alta de cuentas, solicitudes, reportes) | M | 1 |
@@ -31,14 +36,16 @@ Dejar FEEDMA listo para usuarios reales: páginas legales y borrado de datos, se
 ## 3. Orden recomendado
 
 1. **Fase 0**: resolver Q1, Q3, Q7, Q8, Q9; `git merge main` en la rama.
-2. **Fase 1**: **C-L1 primero** (la otra rama lo necesita), luego C-S3 → C-F1 → C-S2 → C-F2; C-O1 puede avanzar en paralelo (diseño primero).
-3. **Fase 2**: C-L2 · C-S1 · C-N1 · C-N3 · C-U1.
-4. **Fase 3**: C-N2 · C-U2 · C-U3 · C-U4.
+2. **Fase 1**: **C-L1 primero** (la otra rama lo necesita), luego C-D1 (Stripe en test), C-S3 → C-F1 → C-S2 → C-F2; C-O1 puede avanzar en paralelo (diseño primero).
+3. **Fase 2**: C-D2 (con lo aprendido en C-D1) · C-L2 · C-S1 · C-N1 · C-N3 · C-U1.
+4. **Fase 3**: C-D3 · C-D4 · C-N2 · C-U2 · C-U3 · C-U4.
 
 El onboarding es prio 6 por el orden pedido, pero no depende de nada: puede construirse en paralelo con la Fase 1 si prefieres, siempre que el diseño (pasos, contenido, saltar/volver a ver, persistencia) se revise antes de escribir código.
 
 ## 4. Dependencias
 
+- C-D1 → C-D2 → C-D4, C-D5. Externo: C-D1 necesita Stripe CLI y el onboarding Connect de un creador demo.
+- C-D2 y C-N3 tocan `collaborations`: hacerlos en secuencia.
 - C-L1 → M-R4 (Meta exige URL pública de privacidad). Dependencia entre ramas con fecha.
 - C-L2 debe borrar también `social_accounts`/tokens: coordinar con **M-R3** (revocación en el proveedor).
 - C-L2 ← Q13 (qué se conserva por obligación legal: pagos/facturas).
@@ -49,6 +56,7 @@ El onboarding es prio 6 por el orden pedido, pero no depende de nada: puede cons
 ## 5. Archivos que puede modificar
 
 **Propios (libertad):**
+- Dinero: `server/api/stripe/**`, `server/utils/stripe*.ts`, `app/composables/useMyBilling.ts`, `docs/7-STRIPE-SETUP.md`, botón de pago de `partner/requests.vue`.
 - Nuevos: `app/components/onboarding/**`, `app/composables/useOnboardingTour.ts`, páginas legales (`app/pages/privacidad.vue`, `app/pages/terminos.vue` — rutas por confirmar), `.github/workflows/**`.
 - Existentes: `app/pages/admin/**` y `server/api/admin/**`, `app/pages/chat/**`, `app/components/chat/**`, `app/composables/{useChat,useChatSettings,useNotifications,useDiscover,useProfileSearch}.ts`, `app/components/collab/**`, `app/pages/{creator,partner}/discover.vue`, `app/pages/inbox.vue`, `server/api/discover/**`, `server/utils/rate-limit.ts`, landing y `app/pages/{login,onboarding,confirm}.vue` y `role-guard.global.ts` (con cuidado: afectan a cada alta).
 
@@ -59,8 +67,8 @@ El onboarding es prio 6 por el orden pedido, pero no depende de nada: puede cons
 Ver sección E del plan. Los que más te afectan:
 - `app/components/layout/AppShell.vue`: **eres su único editor previsto** (punto de montaje del tour).
 - `creator/index.vue` y `partner/index.vue`: evítalos; si el tour necesita anclas concretas, avisa antes (la otra rama trabaja en esos bloques).
-- `creator/profile.vue` / `partner/profile.vue`: tuya la ficha y las fotos (C-U2); el bloque de facturación es de la otra rama.
-- `creator/requests.vue` / `partner/requests.vue`: tuyo el detalle de colaboración salvo la pestaña Calendario y el botón de pago.
+- `creator/profile.vue` / `partner/profile.vue`: tuyos la ficha, las fotos (C-U2) y el bloque de facturación (C-D3).
+- `creator/requests.vue` / `partner/requests.vue`: tuyo el detalle de colaboración y el botón de pago; la pestaña Calendario es de la otra rama.
 - `app/types/index.ts`, `status.ts`, `nav.ts`, `mock-data.ts`: solo añadir al final de tu bloque.
 - `nuxt.config.ts`, `.env.example`, `package.json`, `docs/CHANGELOG.md` (título con prefijo `[Compañero]`).
 - `server/api/discover/search.post.ts` usa `social_accounts.followers_count`: no cambies esa consulta sin avisar a Mario.
@@ -71,6 +79,7 @@ Todos requieren explicar el impacto y confirmar **antes** de escribir la migraci
 
 | Tarea | Cambio previsto |
 |---|---|
+| C-D2 / C-D5 | estados/hitos de pago, posible RPC y cambios en el webhook de Stripe — **zona más sensible**, confirmar antes |
 | C-O1 | opcional: `profiles.onboarding_completed_at` (patrón de `chat_privacy`/`avatar_url`). `profiles` la lee casi toda la app: impacto amplio. Alternativa sin esquema: `localStorage` (Q1) |
 | C-L2 | RPC/endpoint de exportación y de borrado — **zona protegida**, con test de integración |
 | C-N1 | posible agrupación en consulta o columna en `notifications` |
@@ -87,6 +96,7 @@ Comandos: `npx vue-tsc --noEmit` · `npm test -- --run` · `npm run build` · `n
 Criterios por tarea: tabla del plan (sección B). Transversales (sección G): typecheck/tests/build limpios; interfaz vista en navegador real a 390px y escritorio; CHANGELOG con "Qué se cambió / Verificado de verdad / Sin verificar".
 
 Específicos de esta rama:
+- **Stripe**: solo claves `sk_test_`; comprobar `.env` antes de cada prueba. Ningún pago real. No tocar Stripe/RPC de pago sin explicar impacto y confirmar.
 - **Onboarding**: probar con cuentas **nuevas** creadas por `/onboarding`, no con las demo (`creator@feedma.test`/`partner@feedma.test`: las usa la otra rama); borrar las de prueba al terminar. Saltar el tour debe dejarlo cerrado en el siguiente login, no solo en esa pestaña. Nunca debe bloquear la app ni reaparecer en cada inicio de sesión.
 - **Verificaciones (C-F1, C-S3)**: documentar en el CHANGELOG qué se pulsó, con qué cuenta y qué ocurrió, también los fallos.
 - **C-L2**: probar el borrado solo con cuentas de prueba creadas para ello.
@@ -94,7 +104,7 @@ Específicos de esta rama:
 
 ## 9. Fuera de tu responsabilidad
 
-Todo lo relacionado con redes sociales (OAuth, tokens, métricas, sincronización, perfil↔redes, `social_accounts`, `metrics`), Stripe y pagos (incluida la política de cobro y los packs recurrentes) y el rediseño de publicaciones (Tablero, edición, revisión). Son de `feature/publicaciones-ux`.
+Todo lo relacionado con redes sociales (OAuth, tokens, métricas, sincronización, perfil↔redes, `social_accounts`, `metrics`) y el rediseño de publicaciones (Tablero, edición, revisión). Son de `feature/publicaciones-ux`.
 
 ## 10. Integración y prevención de conflictos
 
