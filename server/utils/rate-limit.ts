@@ -36,3 +36,22 @@ export function checkRateLimit(key: string, max: number, windowMs: number): { al
 export function clientIp(event: H3Event): string {
   return getRequestIP(event, { xForwardedFor: true }) ?? 'unknown'
 }
+
+/**
+ * Atajo para los endpoints: aplica el límite y, si se supera, corta con un 429
+ * y la cabecera `Retry-After`. `key` suele ser `<ámbito>:<id de usuario>` para
+ * endpoints con sesión, o `<ámbito>:<IP>` para los públicos.
+ *
+ * Limitación conocida (Q3): el contador vive en la memoria del proceso. Con
+ * varias instancias, cada una cuenta por su lado, y un reinicio lo pone a cero.
+ * Vale como freno a abusos y a costes de IA, no como garantía estricta.
+ */
+export function enforceRateLimit(event: H3Event, key: string, max: number, windowMs: number): void {
+  const { allowed, retryAfterSeconds } = checkRateLimit(key, max, windowMs)
+  if (allowed) return
+  setResponseHeader(event, 'Retry-After', retryAfterSeconds)
+  throw createError({
+    statusCode: 429,
+    statusMessage: `Demasiadas peticiones. Vuelve a probar en ${retryAfterSeconds} segundo(s).`
+  })
+}

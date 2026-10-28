@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
-import { checkRateLimit } from '../../server/utils/rate-limit'
+import { checkRateLimit, enforceRateLimit } from '../../server/utils/rate-limit'
 
 /**
  * El límite de intentos del login de admin (server/api/admin/login.post.ts)
@@ -58,5 +58,45 @@ describe('checkRateLimit', () => {
     vi.advanceTimersByTime(30_000)
     const blocked2 = checkRateLimit(key, 1, 60_000)
     expect(blocked2.retryAfterSeconds).toBe(30)
+  })
+})
+
+/**
+ * `enforceRateLimit` usa `createError`/`setResponseHeader`, que Nitro
+ * auto-importa en el servidor; aquí se sustituyen por dobles para comprobar
+ * solo la decisión (pasa / 429 con Retry-After).
+ */
+describe('enforceRateLimit', () => {
+  const headers: Record<string, unknown> = {}
+
+  beforeEach(() => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-01-01T00:00:00Z'))
+    for (const k of Object.keys(headers)) delete headers[k]
+    vi.stubGlobal('setResponseHeader', (_e: unknown, name: string, value: unknown) => { headers[name] = value })
+    vi.stubGlobal('createError', (e: { statusCode: number; statusMessage: string }) => Object.assign(new Error(e.statusMessage), e))
+  })
+  afterEach(() => {
+    vi.useRealTimers()
+    vi.unstubAllGlobals()
+  })
+
+  it('no hace nada mientras no se supere el máximo', () => {
+    const key = `enf-${Math.random()}`
+    expect(() => { for (let i = 0; i < 3; i++) enforceRateLimit({} as never, key, 3, 60_000) }).not.toThrow()
+  })
+
+  it('lanza 429 con Retry-After al excederlo', () => {
+    const key = `enf-${Math.random()}`
+    for (let i = 0; i < 3; i++) enforceRateLimit({} as never, key, 3, 60_000)
+    expect(() => enforceRateLimit({} as never, key, 3, 60_000)).toThrowError(expect.objectContaining({ statusCode: 429 }))
+    expect(headers['Retry-After']).toBe(60)
+  })
+
+  it('cada clave (usuario) cuenta por separado', () => {
+    const a = `enf-a-${Math.random()}`
+    const b = `enf-b-${Math.random()}`
+    enforceRateLimit({} as never, a, 1, 60_000)
+    expect(() => enforceRateLimit({} as never, b, 1, 60_000)).not.toThrow()
   })
 })

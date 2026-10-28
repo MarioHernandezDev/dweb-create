@@ -128,6 +128,8 @@ En "suggestions" incluye 3 o 4 objetos, al menos uno de cada tipo: una mejora de
 export default defineEventHandler(async (event) => {
   const user = await serverSupabaseUser(event)
   if (!user) throw createError({ statusCode: 401, statusMessage: 'No autenticado.' })
+  // Cada predicción puede llamar al LLM: 10 por minuto y usuario frena el abuso.
+  enforceRateLimit(event, `ml-predict:${user.id}`, 10, 60_000)
 
   const body = await readBody<PredictBody>(event)
   if (!body?.postId) throw createError({ statusCode: 400, statusMessage: 'Falta postId.' })
