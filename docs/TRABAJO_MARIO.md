@@ -1,0 +1,168 @@
+# TRABAJO_MARIO — rama `feature/publicaciones-ux`
+
+> Actualizado el 2026-10-28. Este documento es **solo lo que hace Mario**: todo lo que necesitas está aquí, sin tener que leer el de la otra persona. Sustituye al antiguo `PLAN_TRABAJO_PARALELO.md` (ya borrado). Reparto aprobado el 2026-10-28; **ninguna tarea está implementada todavía.**
+>
+> Nomenclatura: tareas de Mario = `M-…`, tareas de Alex = `C-…` (el prefijo `C-` viene del primer borrador, no se ha renombrado para no romper referencias). Prioridad 1–7: 1 seguridad/datos/pagos · 2 errores en flujos principales · 3 integraciones esenciales · 4 coherencia de estados/notificaciones · 5 usabilidad · 6 onboarding · 7 visual. Complejidad B/M/A = baja/media/alta. "BD" = migración/RPC/RLS.
+> Todo se ha inventariado leyendo código y documentación; **no se ejecutaron tests, build ni navegador** al hacerlo, así que "implementado" significa "hay código", no "está verificado".
+## 1. Objetivo general
+
+Hacer que FEEDMA mida de verdad: (a) conexiones con redes sociales fiables, con tokens que se refrescan, métricas reales por publicación y cuentas que se pueden desconectar bien; (b) terminar la mejora de UX de las publicaciones.
+
+## 2. Tareas asignadas — detalle
+### Redes sociales (todas)
+
+| ID | Tarea | Estado actual | Prio | Compl. | Depende de | BD | Criterio de terminado |
+|---|---|---|---|---|---|---|---|
+| M-R1 | Verificar de extremo a extremo la conexión OAuth de Instagram y YouTube (conectar, ver datos, reconectar) | YT: código + doc; el doc dice que el usuario lo conectó, **no verificado por mí**. IG: **bloqueado** (sin cuenta de Facebook/app de Meta) | 3 | M | Decisión Q5 | No | Conexión real de ambas redes con una cuenta de creador, vista en navegador; resultado en CHANGELOG |
+| M-R2 | Ciclo de vida de tokens: refrescar el token de Instagram (dura ~60 días; hoy `token_expires_at` se guarda pero **nada lo refresca**), detectar token caducado/revocado en ambas redes y mostrar estado "Reconectar" en Redes/Métricas | **No implementado** (no estaba en PENDIENTES) | 3 | A | M-R1 (IG) | Probable: columnas `status`/`last_error`/`last_synced_at` en `social_accounts` | Un token caducado simulado produce estado "reconectar" visible, no un error genérico ni datos congelados |
+| M-R3 | Desconexión completa: hoy "..." solo borra la fila, **no revoca el token en el proveedor**; pasar a endpoint de servidor que revoque (Google tiene revoke; Instagram: documentar la limitación) y confirme | Parcial (solo borra fila) | 3 | B–M | M-R2 | No (borrado ya permitido por RLS) | Tras desconectar, el token deja de ser válido en Google; la UI confirma antes |
+| M-R4 | Endpoints de desautorización y borrado de datos que Meta exige para pasar de modo Desarrollo a público | **No implementado** | 3 | M | C-L1 (URL pública de privacidad), M-R1 | No (borra `social_accounts`) | Meta acepta la URL de borrado; borrar desde Meta elimina la fila y tokens |
+| M-R5 | Sincronización programada (hoy solo botón manual "Actualizar") y `last_synced_at` | **No implementado**; no hay scheduler ni se sabe dónde se despliega | 3 | A | Decisión Q3 (hosting) | Posible columna (con M-R2) | Un job refresca todas las cuentas conectadas sin intervención, con límite de peticiones y registro de fallos |
+| M-R6 | Métricas de Instagram: alcance e interacciones (insights) | El scope `instagram_business_manage_insights` ya se pide, pero el código **solo lee `followers_count`**; nombres de métricas "por verificar contra una app real" | 3 | A | M-R1, M-R8; posible App Review de Meta | Ver M-R8 | Datos reales de alcance/interacciones en pantalla, contrastados con la app de Instagram |
+| M-R7 | Vincular cada publicación del Tablero con su contenido real (vídeo de YouTube / post de Instagram) y mostrar sus métricas | **No implementado**; `posts.platform` es solo texto, no apunta a una cuenta ni a un id externo | 3 | A | M-R8 | Sí: columna(s) en `posts` (p. ej. `social_account_id` + id/URL externo) o uso de `posts.metadata` — **decisión de esquema** | Una publicación ligada a un vídeo muestra sus vistas/likes reales |
+| M-R8 | Definir y construir el pipeline que escribe en `metrics` (hoy la tabla existe y **nada escribe**): qué se guarda, histórico vs último valor, idempotencia, lectura segura por RLS | **No implementado** | 3 | A | Decisión de esquema | Sí: posible ajuste de `metrics` + RLS de lectura | Una sincronización escribe filas; el creador (y el partner de una colaboración, ver M-R15) puede leerlas, nadie más |
+| M-R9 | Predicción de éxito basada en rendimiento real de publicaciones anteriores | Hoy: prompt a LLM + `ml-heuristic.ts`; PENDIENTES dice "solo heurística" — **revisar cuál es la lógica real antes de empezar** | 5 | A | M-R6/R7/R8 | No | La predicción usa histórico real cuando existe y lo dice en pantalla |
+| M-R10 | TikTok, X, Facebook, LinkedIn: decidir entre OAuth real o retirar el "Conectar" falso (crea filas sin token que aparecen como "sin verificar") | Decisión pendiente | 2 | B (retirar) / A (implementar) | Decisión Q4 | Posible limpieza de filas sin token (criterio explícito antes de borrar) | La pantalla de Redes no ofrece conexiones que no sean reales |
+| M-R11 | Que el navegador no pueda leer las columnas `access_token_encrypted`/`refresh_token_encrypted`: la policy `social_accounts_select_self` permite `select *` al dueño | Hallazgo nuevo (cifrado, riesgo bajo, pero innecesario) | 1 | B–M | — | **RLS/grants** (restringir columnas o vista) — requiere confirmación | `select access_token_encrypted` desde el navegador falla; Redes y perfil público siguen funcionando; test de integración |
+| M-R12 | Redes ↔ perfiles: métricas verificadas en perfil público y en Descubrir (hoy RPC `get_public_social_accounts`; `discover/search` suma `followers_count`) | Parcial (seguidores) | 5 | M | M-R8 | Posible ajuste del RPC público | Un partner ve en el perfil de un creador cifras verificadas y su fecha |
+| M-R13 | Tests de redes: no hay tests de `token-crypto`/`oauth-state` ni de RLS de `social_accounts` | **No existen** | 2 | B–M | — | No | Unit de cifrado/estado OAuth + integración de RLS; pasan |
+| M-R14 | Actualizar `docs/9-…` y `docs/10-YOUTUBE-…` al estado final; corregir comentarios obsoletos | Parcial | 7 | B | Final de R1–R8 | No | Docs coinciden con el código |
+| M-R15 | Informe de resultados de una colaboración para el partner (rendimiento de las publicaciones entregadas) | **Nueva, no documentada** | 5 | M–A | M-R7, M-R8 | Lectura RLS (con M-R8) | El partner de una colaboración ve el rendimiento de sus entregas |
+### Publicaciones
+
+| ID | Tarea | Estado | Prio | Compl. | Depende de | BD | Criterio |
+|---|---|---|---|---|---|---|---|
+| M-P1 | Segunda vuelta de UX de publicaciones (backlog del README anterior) | Primer pase hecho y verificado (CHANGELOG 49–52) | 5 | M | — | No | Criterios del README; verificado en navegador 390px y escritorio |
+| M-P2 | Hacer de la aprobación del partner una puerta real (hoy el creador puede saltarse "Para revisar" con aviso) | Decisión pendiente | 4 | M–A | Q6 | **RLS/RPC sobre `posts`** | Decisión tomada; si sí: bloqueo en servidor + test de integración |
+## 3. Orden recomendado
+
+1. **Fase 0**: resolver Q3, Q4, Q5, Q6, Q8; hacer `git merge main` en la rama.
+2. **Fase 1** (no dependen del compañero ni de Meta): M-R2 → M-R13 → M-R10 → M-R11 (tras confirmación) → M-P1.
+3. **Fase 2**: M-R3 · M-R8 → M-R7 · M-R1 si ya hay cuenta de Meta · M-R4 cuando el compañero haya publicado las páginas de privacidad (C-L1).
+4. **Fase 3**: M-R6 · M-R5 (necesita Q3) · M-R9 · M-R12 · M-R15 · M-P2 · M-R14 al final.
+
+## 4. Dependencias
+
+- M-R2 → M-R3, M-R5 · M-R8 → M-R6, M-R7 → M-R9, M-R12, M-R15.
+- **Con la otra rama**: C-L1 (privacidad/términos públicos) → M-R4. C-L2 (borrar cuenta) debe eliminar `social_accounts`/tokens: coordinar con M-R3. C-S1 es dueño de `server/utils/rate-limit.ts`, que M-R5/M-R2 usarán.
+- Externas: M-R1, M-R4, M-R6 dependen de la app de Meta (cuenta de Facebook, posible App Review).
+
+## 5. Archivos que puede modificar
+
+**Propios (libertad):**
+- Redes: `server/api/auth/{instagram,youtube}/**`, `server/api/social/**`, `server/utils/{token-crypto,oauth-state,youtube,account-identity}.ts`, `app/pages/creator/socials.vue`, `app/pages/creator/metrics/**`, `app/composables/useMySocialAccounts.ts`, `app/components/social/**` y `PlatformStatCard`, `docs/9-INSTAGRAM-OAUTH-SETUP.md`, `docs/10-YOUTUBE-OAUTH-SETUP.md`.
+- Publicaciones: `app/pages/creator/timeline.vue`, `app/pages/creator/post/[id].vue`, `app/components/timeline/**`, `useMyPosts`, `usePartnerPosts`, `usePostRevisions`, `useChecklist`, `useLabels`, `usePostEditorPanel`.
+- Pruebas: `tests/integration/` y `tests/unit/` relacionados con lo anterior.
+
+## 6. Archivos compartidos que requieren coordinación
+
+Ver también las secciones 6 y 11. Los que más te afectan:
+- `app/pages/creator/index.vue` y `partner/index.vue` (tus bloques de redes y entregas; el tour del compañero se ancla en `AppShell.vue`, no ahí).
+- `app/pages/creator/profile.vue`: normalmente no necesitas tocarlo (facturación y ficha son del compañero).
+- `app/pages/partner/requests.vue` y `creator/requests.vue` (solo tu pestaña Calendario; el botón de pago y el resto del detalle son del compañero).
+- `app/types/index.ts`, `app/utils/status.ts`, `nav.ts`, `mock-data.ts` (`platformMeta` y `VERIFIED_SOCIAL_PLATFORMS` son tuyos; solo añadir al final de tu bloque).
+- `nuxt.config.ts` / `.env.example` (variables de redes: añadir líneas, **nunca valores reales**), `docs/CHANGELOG.md` (título con prefijo `[Mario]`), `package.json`.
+- Server: `server/api/discover/search.post.ts` suma `followers_count` de `social_accounts` — si cambias esa tabla, avisa al compañero (C-U1).
+
+## 7. Cambios de Supabase que podrían hacer falta
+
+Todos requieren explicar el impacto y confirmar **antes** de escribir la migración (zonas protegidas), y deben ser aditivos (ver sección 11):
+
+| Tarea | Cambio previsto |
+|---|---|
+| M-R2 / M-R5 | columnas de estado, último error y último sync en `social_accounts` |
+| M-R7 / M-R8 | columna(s) en `posts` (cuenta + id/URL externo) o uso de `posts.metadata`; ajuste de `metrics` y su RLS de lectura |
+| M-R11 | restringir la lectura de `access_token_encrypted`/`refresh_token_encrypted` (grants por columna o vista) — cambia una policy existente |
+| M-R4 | endpoint que borra datos; sin cambio de esquema |
+| M-R12 | posible ajuste de `get_public_social_accounts` (RPC existente) |
+| M-P2 | RLS/RPC sobre `posts` |
+
+Recordatorio: el proyecto de Supabase es **único y compartido**; una migración aplicada desde esta rama afecta ya a la otra. Registra aquí (al final de este archivo, sección "Registro de migraciones") cada migración que apliques: fecha, archivo, qué cambia, quién la aprobó.
+
+## 8. Pruebas y criterios de aceptación
+
+Comandos reales: `npx vue-tsc --noEmit` · `npm test -- --run` · `npm run build` · `npm run test:integration` (solo si tocas datos/RLS/RPC; mesura el límite de autenticación compartido).
+
+Criterios de cada tarea: ver la tabla de la sección 2. Criterios transversales (sección 12): typecheck/tests/build limpios; interfaz vista en navegador real a 390px y escritorio; entrada en `docs/CHANGELOG.md` con "Qué se cambió / Verificado de verdad / Sin verificar"; no declarar nada verificado sin haberlo probado.
+
+Específicos de esta rama:
+- Redes: no pegar tokens, secretos ni `.env` en commits, issues ni documentos.
+- Cuentas demo compartidas (`creator@feedma.test`, `partner@feedma.test`): limpiar lo que crees en las pruebas, con criterio explícito.
+
+## 9. Fuera de tu responsabilidad
+
+Stripe y pagos (suscripción, Connect, política de cobro, packs recurrentes), onboarding/tour, legal y RGPD, rate limiting general, panel de admin, CI/CD, verificación con clics de los flujos de colaboración y oferta, acceso cruzado entre roles, notificaciones, estados de chat, descubrimiento (salvo el dato de seguidores), perfil/fotos, accesibilidad y backups. Son de `feature/onboarding` (ver su README y la matriz del plan).
+
+## 10. Integración y prevención de conflictos
+
+1. `git fetch origin` y `git merge main` en la rama antes de cada sesión; resolver conflictos leyendo ambos lados.
+2. Commits pequeños, `git add` de archivos concretos, nunca `git add -A` a ciegas ni secretos.
+3. Avisar al compañero antes de: tocar un archivo de la sección 6, aplicar cualquier migración/RPC/policy, añadir dependencias, o lanzar `test:integration` justo antes de que él pruebe login.
+4. Prohibido: `git push --force`, `git reset --hard`, `git clean -fd` y fusionar esta rama con `feature/onboarding`.
+5. Cuando una tarea cumpla sus criterios: PR hacia `main` (o desde la subrama de tarea hacia `main`). Tras fusionar la primera de las dos ramas, la otra hace `git merge main` y re-verifica los archivos compartidos.
+6. Comandos útiles: `git branch --show-current` · `git diff main...feature/publicaciones-ux --stat` · `git log main..feature/publicaciones-ux --oneline`.
+
+## 11. Reglas de Supabase compartidas con Alex
+
+
+Reglas propuestas (acordarlas en la Fase 0):
+1. **Solo migraciones aditivas** mientras haya dos ramas activas (añadir tablas/columnas nullable o con default). Nada de renombrar, borrar columnas ni endurecer RLS de forma que rompa el código de la otra rama; si hace falta, hacerlo en dos pasos (añadir → migrar código → retirar) con aviso.
+2. **Avisar antes de aplicar** cualquier migración, RPC o policy: qué cambia, qué tablas toca, qué código de la otra rama podría verse afectado. Respuesta del otro antes de aplicar.
+3. **Un solo ejecutor por migración y un registro** en la sección "Registro de migraciones" del final de este documento (cada uno anota las suyas en su propio archivo, para no provocar conflictos).
+4. Nombres de migración con marca de tiempo única; si dos coinciden, la segunda se renombra antes de fusionar (ya ocurrió: hay dos `20261021160000_*`).
+5. **Las zonas protegidas** (Stripe, RLS, esquema, OAuth, RPCs de seguridad como `accept_collaboration_request`, `respond_offer`, `approve_post`) requieren explicar el impacto y recibir confirmación antes de tocar, igual que hasta ahora.
+6. Tests de integración y cuentas demo: se escriben datos reales en el mismo proyecto y el límite de autenticación es compartido. Ejecutar `npm run test:integration` con moderación, y **avisar** si se va a lanzar justo antes de que el otro pruebe login. Limpiar residuos de prueba con criterio explícito.
+7. `types: false`: los tipos de Supabase se escriben a mano; si se cambian columnas, actualizar el composable correspondiente en la misma rama.
+
+## 12. Criterios de finalización (valen para toda tarea)
+
+1. `npx vue-tsc --noEmit`, `npm test -- --run` y `npm run build` limpios.
+2. `npm run test:integration` si se tocaron datos/RLS/RPC (respetando el límite de autenticación).
+3. Cambios de interfaz **vistos en un navegador real** (390px y escritorio) con cuenta demo o cuenta nueva según el caso. Que compile no basta.
+4. Entrada en `docs/CHANGELOG.md` con "Qué se cambió / Verificado de verdad / Sin verificar".
+5. Si hay migración: documentada, aprobada por el otro y registrada antes de aplicarse.
+6. Integración: PR hacia `main`; antes, `git merge main` en la rama y repetir 1–3 tras resolver conflictos. Tras fusionar la primera rama, la segunda se actualiza con `main` y se re-verifican los flujos de los archivos compartidos de la sección 6. No se fusionan las dos ramas entre sí.
+7. Una tarea no pasa a "hecha" por existir código: debe constar qué se probó y cómo.
+
+## 13. Decisiones pendientes que te afectan
+
+| # | Pregunta | Bloquea | Mi recomendación |
+|---|---|---|---|
+| Q3 | ¿Dónde se despliega y qué scheduler hay (cron del host, Supabase pg_cron, GitHub Actions)? | M-R5, C-S1 | Decidir antes de diseñar sync; sin respuesta, M-R5 queda en espera |
+| Q4 | TikTok/X/Facebook/LinkedIn: ¿OAuth real o retirar el "Conectar" falso? | M-R10 | Retirar ahora (Instagram/YouTube solo); reabrir cuando haya demanda |
+| Q5 | ¿Hay ya cuenta de Facebook/app de Meta disponible? | M-R1, M-R4, M-R6 | Si no, tratar Instagram como bloqueado y avanzar el resto |
+| Q6 | ¿La aprobación del partner debe ser un bloqueo real (cambio de RLS)? | M-P2 | No por ahora; mantener el aviso |
+| Q8 | Estrategia de ramas: ¿trabajar en las ramas actuales o crear subramas por tarea (`feature/redes-*`, `feature/pagos-*`)? El nombre `feature/publicaciones-ux` ya no refleja su alcance | Todo | Subramas cortas por tarea, creadas desde la rama actual; PR a `main` |
+| Q11 | ¿Aceptáis el reparto o se mueve algo para equilibrar (p. ej. mover M-P1 a otra persona o dejar C-D5 fuera)? | — | Mantenerlo; revisar tras la Fase 1 |
+## 14. Relación con `docs/PENDIENTES.md`
+
+| Punto de PENDIENTES | Estado según el código | Tarea |
+|---|---|---|
+| §2 Métricas solo seguidores | Confirmado (`creator/metrics/index.vue`). **Añadido:** la tabla `metrics` nunca se escribe | M-R6/R7/R8 |
+| §2 "Predicción basada en heurística" | **Por revisar**: `predict.post.ts` construye un prompt para un LLM además de `ml-heuristic.ts` | M-R9 |
+| §3 OAuth Instagram/YouTube de extremo a extremo | Pendiente de verificar; IG bloqueado | M-R1 |
+| §7 Aprobación no es puerta real | Decisión pendiente | M-P2 |
+| §7 Onboarding / publicaciones segunda vuelta | Pendiente | C-O1 / M-P1 |
+Otras discrepancias detectadas (no están en PENDIENTES):
+
+- Doc 9 y el comentario de `useMySocialAccounts.ts` describen el estado de YouTube de forma inconsistente (uno dice "sin OAuth todavía").
+- Nada en PENDIENTES cubre: refresco de tokens de Instagram, revocación al desconectar, callbacks de Meta, tabla `metrics` sin uso, filas falsas de TikTok/X, lectura de columnas de tokens por el navegador.
+## 15. Qué hace la otra persona
+
+Alex lleva Stripe y pagos, legal/RGPD, seguridad transversal (límites de uso, admin, acceso entre roles), verificación con clics, CI, notificaciones y chat, descubrimiento, perfil, accesibilidad y el onboarding. **Lo único de Alex que te bloquea: C-L1 (páginas públicas de privacidad y términos) → tu M-R4.** Y su C-L2 (borrar cuenta) debe borrar también `social_accounts`/tokens: se coordina con tu M-R3.
+---
+
+## Anexo — alcance y riesgos heredados del README anterior (publicaciones)
+
+- El Tablero y el detalle de publicación ya se rediseñaron (CHANGELOG 49, 50 y 52): antes de proponer una mejora, comprueba si ya está hecha.
+- `PhaseBoard.vue` sincroniza `board` con `posts` a mano alrededor de `vuedraggable`: si lo tocas, prueba arrastrando de verdad. El selector de fase de cada card es la única vía en móvil para columnas colapsadas; no lo rompas.
+- No conviertas el aviso de saltarse la revisión en un bloqueo sin cerrar antes Q6 (es un cambio de permisos, no de interfaz).
+- Los textos de contexto no deben repetir lo que ya dice el estado.
+- Si creas publicaciones de prueba contra el proyecto compartido, bórralas al terminar.
+- `README.md` raíz y `docs/5-FRONTEND-WORK-SPLIT.md` están desactualizados; para el estado real usa `docs/CHANGELOG.md`, `docs/CONTEXTO_PROYECTO_FEEDMA.md`, `docs/PENDIENTES.md` y este documento.
+
+## Registro de migraciones aplicadas desde esta rama
+
+| Fecha | Archivo | Qué cambia | Aprobada por |
+|---|---|---|---|
+| — | — | (ninguna todavía) | — |
