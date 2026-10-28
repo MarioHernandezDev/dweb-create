@@ -1,154 +1,123 @@
-# README_TRABAJO — rama `feature/onboarding`
+# README_TRABAJO — rama `feature/onboarding` (compañero)
 
-> Preparado el 2026-10-28, sobre el commit base `aa7f7bd` de `main`. Esta rama y `feature/publicaciones-ux` parten del mismo commit y son independientes entre sí — ninguna depende de la otra. **Esta rama no implementa nada todavía**: este documento solo define alcance y reglas, tal como se pidió.
+> Actualizado el 2026-10-28. **Ninguna tarea está implementada todavía y el reparto está pendiente de aprobación.** La fuente común de planificación es [`docs/PLAN_TRABAJO_PARALELO.md`](docs/PLAN_TRABAJO_PARALELO.md): allí está el detalle de cada tarea (complejidad, dependencias, BD, criterio de terminado), las decisiones abiertas (Q1–Q13) y la matriz completa. Este archivo es la vista de **esta rama**.
+>
+> Cambio respecto a la versión anterior: la rama ya no es solo "onboarding". Es la rama de **todo lo que no son redes sociales ni Stripe ni publicaciones**: legal/RGPD, seguridad transversal, verificación de flujos, notificaciones y chat, descubrimiento, perfil, accesibilidad y el onboarding. Motivo: el usuario reservó todas las redes sociales a la otra rama, y el resto del trabajo pendiente no tiene relación con ellas. El nombre de la rama ya no refleja su alcance (ver decisión Q8 sobre subramas por tarea).
 
-## A. Objetivo
+## 1. Objetivo general
 
-Diseñar y preparar una experiencia de bienvenida guiada para quien entra a FEEDMA por primera vez — un tutorial breve e interactivo, con un recorrido distinto para creador de contenido y para partner, que explique dónde está cada cosa, anime a dar el primer paso útil, y no vuelva a aparecer una vez visto (aunque se pueda consultar después). Para quien ya usa la app, no debe cambiar nada ni molestar.
+Dejar FEEDMA listo para usuarios reales: páginas legales y borrado de datos, seguridad y límites de uso, flujos principales verificados con clics reales, notificaciones y chat coherentes, y una primera experiencia guiada para quien entra por primera vez.
 
-**Aviso importante, para no confundirlo con otra cosa que ya existe:** `app/pages/onboarding.vue` **ya existe**, pero es el formulario de **alta de cuenta** (elegir rol, nombre, email, contraseña) — no tiene nada que ver con el tutorial que vas a diseñar. Tu trabajo empieza *después* de eso: cuando alguien, con su cuenta ya creada y su primer login hecho, entra por primera vez a `/creator` o `/partner`.
+## 2. Inventario de tareas asignadas (15)
 
-## B. Alcance funcional
+| ID | Tarea | Compl. | Prio |
+|---|---|---|---|
+| C-L1 | Páginas públicas de privacidad y términos (**publicarlas pronto: desbloquea M-R4 de la otra rama**) | B–M | 1 |
+| C-L2 | RGPD: exportar y borrar los datos de una persona | A | 1 |
+| C-S1 | Rate limiting general (alta de cuentas, solicitudes, reportes) | M | 1 |
+| C-S2 | Auditoría y revisión del panel de administración (nunca revisado) | M | 1 |
+| C-S3 | Probar el acceso cruzado entre roles en navegador | B | 1 |
+| C-U4 | Backups de Supabase (decisión operativa, Q12) | B | 1 |
+| C-F1 | Verificar con clics reales: oferta en chat, aprobar/pedir cambios, solicitud→aceptación | M | 2 |
+| C-F2 | CI/CD básico con GitHub Actions | B | 2 |
+| C-N1 | Notificaciones: agrupar solicitudes duplicadas | M | 4 |
+| C-N2 | Chat: entregado/leído por mensaje | M | 4 |
+| C-N3 | Coherencia de estados de colaboración y decisión sobre `offer_id` | M | 4 |
+| C-U1 | Descubrimiento: verificar en navegador lo construido y pulir | M | 5 |
+| C-U2 | Perfil: fotos y personalización | M | 5 |
+| C-U3 | Accesibilidad (lector de pantalla) y Safari/Firefox/tablet | M | 5 |
+| C-O1 | Onboarding guiado (tour por rol) | M–A | 6 |
 
-- Bienvenida breve que explique el valor de FEEDMA.
-- Recorrido guiado por los apartados principales de la app.
-- Explicaciones de contexto de las funcionalidades más importantes.
-- Una primera acción recomendada según el rol.
-- Posibilidad de saltarlo, y de volver a consultarlo después.
-- Que no se repita en cada inicio de sesión una vez visto (o saltado).
-- Recorridos distintos para creador y para partner.
+## 3. Orden recomendado
 
-No forma parte de este alcance (todavía):
-- El tutorial no se implementa en esta tarea, solo se prepara la rama y se documenta el plan.
-- No rediseñes las pantallas de publicaciones como parte de este trabajo — es la rama `feature/publicaciones-ux`. Si el tour necesita señalar algo de esas pantallas, apunta a lo que ya existe, no lo cambies.
-- No toques el formulario de alta de cuenta (`app/pages/onboarding.vue`) salvo, como mucho, para redirigir al final del registro — y eso hay que decidirlo con calma (ver sección E), no asumirlo.
+1. **Fase 0**: resolver Q1, Q3, Q7, Q8, Q9; `git merge main` en la rama.
+2. **Fase 1**: **C-L1 primero** (la otra rama lo necesita), luego C-S3 → C-F1 → C-S2 → C-F2; C-O1 puede avanzar en paralelo (diseño primero).
+3. **Fase 2**: C-L2 · C-S1 · C-N1 · C-N3 · C-U1.
+4. **Fase 3**: C-N2 · C-U2 · C-U3 · C-U4.
 
-## C. Archivos que puede modificar
+El onboarding es prio 6 por el orden pedido, pero no depende de nada: puede construirse en paralelo con la Fase 1 si prefieres, siempre que el diseño (pasos, contenido, saltar/volver a ver, persistencia) se revise antes de escribir código.
 
-A diferencia de la rama de publicaciones, **esta funcionalidad no existe todavía** — no hay archivos propios que enumerar porque aún no se han creado. Lo que sigue son **ubicaciones propuestas**, no rutas ya existentes:
+## 4. Dependencias
 
-### Nuevos, de tu funcionalidad (créalos tú cuando toque implementar)
-- `app/components/onboarding/**` — componentes del tour (pasos, overlay, tarjetas de bienvenida).
-- `app/composables/useOnboardingTour.ts` (o el nombre que seleccionéis) — el estado del tour: paso actual, si está visto/saltado, por rol.
-- Si hace falta una página propia para "volver a consultarlo" (en vez de un overlay disparable desde cualquier sitio), decide su ruta antes de crearla y documéntala aquí.
+- C-L1 → M-R4 (Meta exige URL pública de privacidad). Dependencia entre ramas con fecha.
+- C-L2 debe borrar también `social_accounts`/tokens: coordinar con **M-R3** (revocación en el proveedor).
+- C-L2 ← Q13 (qué se conserva por obligación legal: pagos/facturas).
+- C-F1/C-S3 deberían hacerse **antes** que C-N1/C-N3 para partir de un estado conocido.
+- C-S1: `server/utils/rate-limit.ts` es tuyo; la otra rama lo usará para endpoints de redes. Hoy es en memoria y solo vale para una instancia (Q3).
+- C-O1 ← Q1 (dónde se guarda el progreso).
 
-### Existentes, que vas a necesitar leer y probablemente tocar con cuidado
-- `app/components/layout/AppShell.vue` — **punto de anclaje recomendado**: ya monta una sola vez, para toda la app, piezas globales como `ConfirmDialogHost.vue`. El tour encaja ahí con el mismo patrón (un componente que se monta una vez y decide solo, con su propio composable, si debe mostrarse) — así casi no tocas el contenido de las páginas de cada rol, solo añades una línea a `AppShell.vue`. Es preferible a editar `creator/index.vue`/`partner/index.vue` directamente (ver sección E, esas dos las toca también la otra rama).
-- `app/pages/confirm.vue` — es donde aterriza alguien justo después de confirmar su email y antes de ir a `roleMeta[role].home` (`/creator` o `/partner`). Es el sitio más natural para, en el futuro, decidir "esta es tu primera vez" — pero de momento solo léelo, no lo cambies sin coordinar.
-- `app/utils/nav.ts` (`roleMeta`) — ya tiene el texto descriptivo de cada rol (`label`, `description`, `home`, `icon`) que te puede servir de punto de partida para los textos del tour.
-- `app/utils/status.ts` — utilidades genéricas que puedes necesitar para mostrar ejemplos (`relativeTime`, `dueLabel`) — no el resto del archivo, que es de publicaciones/colaboraciones.
+## 5. Archivos que puede modificar
 
-### Fuera de tu alcance (no los toques como parte de esta tarea)
-- `app/pages/creator/timeline.vue`, `app/pages/creator/post/[id].vue`, `app/components/timeline/**`, `app/composables/useMyPosts.ts`/`usePartnerPosts.ts`/`usePostRevisions.ts`/`useChecklist.ts`/`useLabels.ts`/`usePostEditorPanel.ts` — es la rama `feature/publicaciones-ux`.
-- `app/components/collab/**` (negociación, valoraciones).
-- `app/pages/login.vue`, `app/middleware/role-guard.global.ts` salvo que el plan del tour exija tocarlos de verdad — y en ese caso, coordinar primero (sección E).
-- Cualquier migración de `supabase/migrations/`, RPC o policy de RLS sin coordinar antes (sección F).
-- Stripe, pagos, panel de administración.
+**Propios (libertad):**
+- Nuevos: `app/components/onboarding/**`, `app/composables/useOnboardingTour.ts`, páginas legales (`app/pages/privacidad.vue`, `app/pages/terminos.vue` — rutas por confirmar), `.github/workflows/**`.
+- Existentes: `app/pages/admin/**` y `server/api/admin/**`, `app/pages/chat/**`, `app/components/chat/**`, `app/composables/{useChat,useChatSettings,useNotifications,useDiscover,useProfileSearch}.ts`, `app/components/collab/**`, `app/pages/{creator,partner}/discover.vue`, `app/pages/inbox.vue`, `server/api/discover/**`, `server/utils/rate-limit.ts`, landing y `app/pages/{login,onboarding,confirm}.vue` y `role-guard.global.ts` (con cuidado: afectan a cada alta).
 
-## D. Límites del trabajo
+**Aviso importante sobre `app/pages/onboarding.vue`:** es el formulario de **alta de cuenta**, no el tour. El tour empieza después del primer login. Punto de anclaje recomendado para el tour: `app/components/layout/AppShell.vue`, igual que `ConfirmDialogHost.vue` (un componente montado una vez que decide solo si mostrarse), en vez de editar `creator/index.vue`/`partner/index.vue`.
 
-- No rediseñes las pantallas ni los componentes específicos de publicaciones como parte de tu trabajo — si el tour necesita señalar el Tablero o una publicación, hazlo apuntando a lo que ya existe (con un overlay/spotlight encima, por ejemplo), no cambiando esas pantallas.
-- No toques la navegación general (`AppShell.vue`, `BottomTabBar.vue`, `SideRail.vue`, `TopBar.vue`) más allá de añadir el punto de montaje del tour — no es tu tarea rediseñarla.
-- No implementes el tour todavía en esta preparación — primero define el diseño (pasos, contenido por rol, mecanismo de "saltar"/"volver a ver") y revísalo con el resto del equipo antes de construirlo, tal como pidió el usuario.
+## 6. Archivos compartidos que requieren coordinación
 
-## E. Dependencias compartidas y coordinación
+Ver sección E del plan. Los que más te afectan:
+- `app/components/layout/AppShell.vue`: **eres su único editor previsto** (punto de montaje del tour).
+- `creator/index.vue` y `partner/index.vue`: evítalos; si el tour necesita anclas concretas, avisa antes (la otra rama trabaja en esos bloques).
+- `creator/profile.vue` / `partner/profile.vue`: tuya la ficha y las fotos (C-U2); el bloque de facturación es de la otra rama.
+- `creator/requests.vue` / `partner/requests.vue`: tuyo el detalle de colaboración salvo la pestaña Calendario y el botón de pago.
+- `app/types/index.ts`, `status.ts`, `nav.ts`, `mock-data.ts`: solo añadir al final de tu bloque.
+- `nuxt.config.ts`, `.env.example`, `package.json`, `docs/CHANGELOG.md` (título con prefijo `[Compañero]`).
+- `server/api/discover/search.post.ts` usa `social_accounts.followers_count`: no cambies esa consulta sin avisar a Mario.
 
-**Lo que puedes hacer sin avisar:** crear archivos nuevos en `app/components/onboarding/**` y tu propio composable — mientras no dependan de cambiar algo que ya existe.
+## 7. Cambios de Supabase que podrían hacer falta
 
-**Lo que hay que coordinar antes de tocar:**
-- `app/components/layout/AppShell.vue` — es el archivo compartido más probable entre las dos ramas. La otra persona trabaja en publicaciones y no debería necesitar tocar este archivo a menudo, pero si los dos necesitáis añadir algo aquí el mismo día, añadidlo cada uno sin tocar lo que puso el otro, y avisad antes de hacerlo.
-- `creator/index.vue` / `partner/index.vue` — **evítalos si puedes** (ver recomendación de usar `AppShell.vue` como punto de anclaje en la sección C); si el diseño del tour acaba necesitando señalar algo muy concreto de esas páginas con coordenadas/anclas en el propio HTML (no solo un overlay flotante), avisa antes de tocarlas — la otra rama trabaja activamente ahí.
-- `app/pages/confirm.vue`, `app/pages/onboarding.vue`, `app/middleware/role-guard.global.ts` — tocar el flujo de "qué pasa justo después de crear la cuenta" es sensible (afecta a cada alta nueva, incluidas las cuentas demo si no se filtran bien) — decide el diseño, compártelo, y no lo implementes sin que quede claro que no rompe el alta normal.
+Todos requieren explicar el impacto y confirmar **antes** de escribir la migración, y deben ser aditivos:
 
-**Cómo avisar:** igual que en la otra rama — un mensaje corto antes de tocar algo de la lista de arriba. Si los dos necesitáis el mismo archivo compartido el mismo día, que lo use primero quien lo tenga más avanzado y el otro aplica su cambio encima después, coordinado.
+| Tarea | Cambio previsto |
+|---|---|
+| C-O1 | opcional: `profiles.onboarding_completed_at` (patrón de `chat_privacy`/`avatar_url`). `profiles` la lee casi toda la app: impacto amplio. Alternativa sin esquema: `localStorage` (Q1) |
+| C-L2 | RPC/endpoint de exportación y de borrado — **zona protegida**, con test de integración |
+| C-N1 | posible agrupación en consulta o columna en `notifications` |
+| C-N2 | derivar de `last_read_at` primero; columnas en `messages` solo si no basta (Q9) |
+| C-N3 | cambio de FK `offer_id` (`set null`→`cascade`) solo si se decide (Q7) |
+| C-F1/C-S3 | ninguno (solo lectura y pruebas) |
 
-## F. Supabase y servicios externos
+El proyecto de Supabase es **único y compartido**: una migración aplicada desde aquí afecta ya a la otra rama. Registra cada migración en la sección final de este archivo.
 
-- **Entorno**: el mismo proyecto de Supabase remoto compartido que usa toda la app (`SUPABASE_URL`/`SUPABASE_ANON_KEY`/`SUPABASE_SERVICE_ROLE_KEY` en `.env`) — no hay proyecto de pruebas separado. Ver `docs/CONTEXTO_PROYECTO_FEEDMA.md` §4.4 para el porqué.
-- **Persistencia del progreso del tour — pendiente de decidir, no implementar todavía**: hacen falta datos para saber si alguien ya vio (o saltó) el tour. Dos caminos razonables, a decidir antes de construir nada:
-  1. **Una columna nueva en `profiles`** (p. ej. `onboarding_completed_at timestamptz`) — mismo patrón que ya se usó para añadir `chat_privacy` (`20261021160000_chat_packages_offers.sql`) o `avatar_url` (`20261022090000_profile_avatar.sql`): una migración pequeña, con `add column if not exists`. Esto es un cambio de esquema real — documenta la columna exacta, por qué, y qué RLS necesitaría (probablemente ninguna nueva, ya que `profiles` ya tiene policies de lectura/escritura del propio perfil) y confírmalo con el resto del equipo antes de escribir la migración.
-  2. **Guardarlo en el propio navegador** (`localStorage`), sin tocar la base de datos — más simple y sin riesgo de esquema, pero no sigue a la persona entre dispositivos y se pierde si limpia datos del navegador. Puede ser suficiente para una primera versión.
-  - Mientras no se decida, no asumas ninguna de las dos — es justo el tipo de decisión que el usuario pidió explícitamente documentar, no tomar por tu cuenta.
-- **No apliques ninguna migración a este proyecto compartido sin que esté acordada** — un cambio de esquema aquí afecta también a la cuenta de cada creador/partner real, no es un entorno de pruebas aislado.
-- **Cuentas para probar el tour**: usa cuentas nuevas, creadas de verdad a través de `/onboarding` (el alta real), en vez de las cuentas demo del equipo (`creator@feedma.test`/`partner@feedma.test`) — esas las usa constantemente el trabajo de publicaciones y el resto del equipo; si el tour les añade estado (marcado como "visto"), podría interferir con sus pruebas. Borra las cuentas de prueba que crees para probar el tour cuando termines una sesión de trabajo (puede hacerse desde el propio panel de Supabase o pidiendo ayuda con `service_role` si hace falta borrar en cascada).
-- **Rate limit de autenticación**: Supabase limita los intentos de login por contraseña en una ventana de tiempo. Si pruebas el flujo de alta+primer login muchas veces seguidas, puedes agotarlo — si ves "Request rate limit reached", es eso, no un fallo de tu código; espera unos minutos.
-- **Otros servicios compartidos**: ninguno más debería afectarte directamente (Stripe, OpenRouter y OAuth de Instagram/YouTube no son parte de este alcance), salvo que el tour quiera mostrar un ejemplo de alguno de ellos — en ese caso, son solo lectura de datos que ya existen, no una integración nueva.
+## 8. Pruebas y criterios de aceptación
 
-## G. Pruebas
+Comandos: `npx vue-tsc --noEmit` · `npm test -- --run` · `npm run build` · `npm run test:integration` (solo si tocas datos/RLS/RPC, mesurando el límite de autenticación).
 
-Comandos reales del proyecto (`package.json`), no inventados:
+Criterios por tarea: tabla del plan (sección B). Transversales (sección G): typecheck/tests/build limpios; interfaz vista en navegador real a 390px y escritorio; CHANGELOG con "Qué se cambió / Verificado de verdad / Sin verificar".
 
-```bash
-npx vue-tsc --noEmit      # typecheck — no hay comando de lint en package.json
-npm test -- --run          # tests unitarios (Vitest, sin red, 30 tests a fecha de este documento)
-npm run build               # build de producción completo
-```
+Específicos de esta rama:
+- **Onboarding**: probar con cuentas **nuevas** creadas por `/onboarding`, no con las demo (`creator@feedma.test`/`partner@feedma.test`: las usa la otra rama); borrar las de prueba al terminar. Saltar el tour debe dejarlo cerrado en el siguiente login, no solo en esa pestaña. Nunca debe bloquear la app ni reaparecer en cada inicio de sesión.
+- **Verificaciones (C-F1, C-S3)**: documentar en el CHANGELOG qué se pulsó, con qué cuenta y qué ocurrió, también los fallos.
+- **C-L2**: probar el borrado solo con cuentas de prueba creadas para ello.
+- Rate limit de Supabase Auth: "Request rate limit reached" es un límite, no un fallo de tu código; espera.
 
-`npm run test:integration` solo hace falta si tu trabajo acaba tocando de verdad algo de Supabase (por ejemplo, si se decide la columna de `profiles` de la sección F) — mientras el tour sea solo interfaz y estado local/propio, no debería hacer falta.
+## 9. Fuera de tu responsabilidad
 
-No hay comprobación visual automática: el tour es, por naturaleza, una experiencia muy visual y de interacción (pasos, overlays, animaciones) — tiene que verse y probarse de verdad en un navegador, en móvil y escritorio, antes de darlo por terminado.
+Todo lo relacionado con redes sociales (OAuth, tokens, métricas, sincronización, perfil↔redes, `social_accounts`, `metrics`), Stripe y pagos (incluida la política de cobro y los packs recurrentes) y el rediseño de publicaciones (Tablero, edición, revisión). Son de `feature/publicaciones-ux`.
 
-## H. Criterios para considerar terminado el trabajo
+## 10. Integración y prevención de conflictos
 
-Para esta fase de preparación (la que cubre este documento): ninguno — no hay código que terminar todavía. Para cuando se empiece a implementar el tour de verdad:
+1. `git fetch origin` y `git merge main` en la rama antes de cada sesión.
+2. Commits pequeños, `git add` de archivos concretos, sin secretos.
+3. Avisar a Mario antes de: tocar un archivo de la sección 6, aplicar migración/RPC/policy, añadir dependencias, lanzar `test:integration`.
+4. Prohibido: `git push --force`, `git reset --hard`, `git clean -fd` y fusionar esta rama con `feature/publicaciones-ux`.
+5. Cuando una tarea cumpla sus criterios: PR hacia `main`. Tras fusionar la primera de las dos ramas, la otra hace `git merge main` y re-verifica los archivos compartidos.
+6. Comandos útiles: `git branch --show-current` · `git diff main...feature/onboarding --stat` · `git log main..feature/onboarding --oneline`.
 
-- El diseño (pasos, contenido por rol, mecanismo de saltar/volver a ver, dónde se persiste el progreso) se ha compartido y acordado antes de escribir código, tal como pidió el usuario.
-- `npx vue-tsc --noEmit`, `npm test -- --run` y `npm run build` pasan limpios.
-- El tour se ha visto de verdad en un navegador, con una cuenta nueva real (no demo), en móvil estrecho (~390px) y en escritorio.
-- Saltar el tour funciona, y no obliga a nadie que ya lo vio a verlo de nuevo en el siguiente login.
-- Ningún cambio compartido (sección E) se ha hecho sin coordinarlo.
-- Si se tocó Supabase, la migración se documentó y acordó antes de aplicarse (sección F), y queda registrada en `docs/CHANGELOG.md`.
+---
 
-> **Nota sobre otros documentos del repo**: `README.md` (raíz) tiene una sección "Fases del proyecto" y `docs/5-FRONTEND-WORK-SPLIT.md` describe un reparto de trabajo — los dos son de una fase muy anterior del proyecto (frontend con datos de mentira, 3 roles en vez de 2) y están desactualizados. Para el estado real, usa `docs/CHANGELOG.md`, `docs/CONTEXTO_PROYECTO_FEEDMA.md`, `docs/PENDIENTES.md` y `docs/10-ROADMAP-FUTURO.md`.
+## Anexo — diseño previsto del onboarding (heredado del README anterior)
 
-## I. Procedimiento Git
+- Contenido: bienvenida breve, recorrido por los apartados principales, una primera acción recomendada por rol, posibilidad de saltarlo y de volver a verlo. Recorridos distintos para creador y partner.
+- `app/utils/nav.ts` (`roleMeta`) ya tiene `label`/`description`/`home`/`icon` por rol, útil como punto de partida para los textos.
+- `app/pages/confirm.vue` es donde aterriza alguien tras confirmar el email: sitio natural para decidir "primera vez", pero cambiarlo afecta a cada alta; compártelo antes.
+- Anclar el tour a elementos estables (rutas de navegación, landmarks con `aria-label`), no a la estructura interna de pantallas que cambian en la otra rama.
+- Diseñar y revisar con Mario antes de construir, tal como pidió el usuario. No debe aparecer en cada login ni bloquear la app.
+- `README.md` raíz y `docs/5-FRONTEND-WORK-SPLIT.md` están desactualizados; para el estado real usa `docs/CHANGELOG.md`, `docs/CONTEXTO_PROYECTO_FEEDMA.md`, `docs/PENDIENTES.md` y el plan.
 
-Comprobar en qué rama estás:
-```bash
-git branch --show-current
-```
+## Registro de migraciones aplicadas desde esta rama
 
-Cambiar a esta rama (si no estás ya en ella):
-```bash
-git checkout feature/onboarding
-```
-
-Antes de empezar cada sesión de trabajo:
-```bash
-git fetch origin
-git log main..origin/main --oneline   # comprobar si hay algo nuevo en main antes de seguir
-```
-
-Revisar el estado y los cambios:
-```bash
-git status
-git diff
-```
-
-Hacer commits pequeños y descriptivos:
-```bash
-git add <archivos concretos, nunca `git add -A` a ciegas>
-git commit -m "Onboarding: <qué cambia y por qué>"
-```
-
-Subir la rama (primera vez necesita `-u`):
-```bash
-git push -u origin feature/onboarding
-```
-
-Comprobar diferencias con `main` antes de proponer integrar:
-```bash
-git diff main...feature/onboarding --stat   # qué archivos cambiaron
-git diff main...feature/onboarding           # el diff completo
-git log main..feature/onboarding --oneline   # commits propios de esta rama
-```
-
-Preparar la integración: abre un Pull Request hacia `main` cuando el diseño esté implementado y cumpla la sección H — no fusiones en local, y no fusiones esta rama con `feature/publicaciones-ux` ni al revés por tu cuenta.
-
-## J. Riesgos y precauciones
-
-- **El riesgo más real de esta funcionalidad es que moleste en vez de ayudar** — el usuario fue explícito: "no quiero que el tutorial aparezca cada vez que se inicia sesión ni que bloquee la aplicación". Antes de dar nada por terminado, comprueba que cerrar/saltar el tour de verdad lo deja cerrado en el siguiente login, no solo en esa pestaña.
-- **No implementes el tutorial global todavía** — el usuario fue explícito en que primero hay que estabilizar publicaciones; esta rama es para preparar el terreno y, como mucho, diseñar/documentar, no para lanzar el tour a producción sin esa luz verde.
-- **Cuidado con anclar el tour a elementos concretos del HTML de páginas que la otra rama está cambiando activamente** (`creator/index.vue`, `partner/index.vue`, `creator/timeline.vue`) — si el tour depende de que un botón esté exactamente en tal sitio con tal clase, un cambio de la otra rama puede romper el tour en silencio. Prefiere anclar por elementos estables (rutas de navegación, landmarks con `aria-label`) en vez de posiciones o estructuras internas de una pantalla que no es tuya.
-- **No crees cuentas de prueba del tour contra el proyecto compartido sin limpiarlas** — mismo motivo que con publicaciones: ya ha pasado antes que residuos de prueba se queden mezclados con datos reales (ver `docs/CONTEXTO_PROYECTO_FEEDMA.md` §4.3).
-- **Si el diseño acaba necesitando la columna nueva en `profiles`** (sección F), recuerda que es una tabla que lee y escribe prácticamente toda la app (login, perfil, chat, notificaciones) — una migración mal pensada ahí tiene más radio de impacto del que parece a primera vista.
+| Fecha | Archivo | Qué cambia | Aprobada por |
+|---|---|---|---|
+| — | — | (ninguna todavía) | — |
