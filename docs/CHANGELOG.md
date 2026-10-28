@@ -4,6 +4,39 @@ Registro de qué se hizo, por qué, y qué queda pendiente de verificar — pens
 
 ---
 
+## 2026-10-28 (Alex-7) — [Alex] A-R11: migración escrita, pruebas de "antes" ejecutadas; pendiente de aplicar
+
+### Qué se cambió
+
+- `supabase/migrations/20261028120000_social_accounts_lockdown.sql` (**nueva, NO aplicada**): quita insert/update de `social_accounts` al navegador, concede lectura solo de `id, creator_id, platform, handle, followers_count, connected_at`, mantiene el borrado propio. Lleva el rollback documentado en su cabecera.
+- Rollback corregido en `docs/PROPUESTA_A-R11_SEGURIDAD_SOCIAL_ACCOUNTS.md`: ahora es `grant all` (la versión anterior omitía `REFERENCES`, `TRUNCATE` y `TRIGGER`).
+
+### Autorización y verificación previa
+
+- Autorizada por Alex; Mario ha aceptado la propuesta (según Alex).
+- Consulta de solo lectura ejecutada por Alex en el SQL Editor: `anon` y `authenticated` con `SELECT`, `INSERT`, `UPDATE` y `REFERENCES` en las 9 columnas = privilegios por defecto de Supabase, como se suponía.
+
+### Verificado de verdad: el hueco existe (pruebas ANTES de la migración)
+
+`RUN_SOCIAL_ACCOUNTS_RLS=1 npx vitest run --config vitest.integration.config.ts tests/integration/social-accounts-rls.spec.ts` → **8 fallan, 8 pasan**. Con una cuenta demo de creador, contra el Supabase real:
+- se pudieron leer `access_token_encrypted`, `refresh_token_encrypted` y `token_expires_at`;
+- se pudo insertar una cuenta de Facebook con token falso, y la RPC pública `get_public_social_accounts` la devolvió como verificada;
+- se pudo cambiar `followers_count` a 999999 y cambiar el token de una fila.
+
+Los 8 que pasan son los de aislamiento entre usuarios y borrado (comportamiento que no cambia). Limpieza comprobada con consulta de solo lectura: 0 filas de prueba restantes y 16 filas en total, las mismas que antes.
+
+### Sin verificar / pendiente
+
+- **La migración no está aplicada.** No fue posible aplicarla desde esta máquina: la conexión directa a la base de datos no resuelve desde aquí. Debe aplicarla Alex en el SQL Editor (mismo camino que las anteriores).
+- Las pruebas de "después" (deben pasar las 16) y la comprobación en navegador de Redes, Métricas y perfil público, tras aplicarla.
+- Registro en "Registro de migraciones" de `TRABAJO_ALEX.md`: pendiente hasta confirmar que se aplicó.
+
+### Incidente de seguridad (sin impacto externo conocido)
+
+Un comando mío imprimió la `SUPABASE_DB_URL`, con la contraseña de la base de datos, en la salida de mi sesión. No se ha guardado en ningún archivo, commit ni documento. Recomendado: restablecer la contraseña de la base de datos en Supabase y actualizar `.env`.
+
+---
+
 ## 2026-10-28 (Alex-6) — [Alex] A-R10 verificado en navegador (cuenta demo del creador)
 
 ### Cómo se verificó

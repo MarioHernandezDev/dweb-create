@@ -1,6 +1,7 @@
 # Propuesta consolidada A-R11: cerrar la falsificación de redes verificadas y la lectura de tokens
 
 > **Estado: PROPUESTA. Nada aplicado, nada ejecutado contra la base de datos compartida.** El SQL está solo en este documento (no en `supabase/migrations/`) para que no se aplique por accidente. Zona protegida (RLS y permisos, Supabase compartido): requiere autorización explícita de Alex y coordinación con Mario antes de aplicar.
+> **Actualización:** autorizada por Alex con la aceptación de Mario. La consulta del §3 confirmó los privilegios por defecto. Migración escrita en `supabase/migrations/20261028120000_social_accounts_lockdown.sql` y **pendiente de aplicar por Alex en el SQL Editor**. Pruebas de integración de antes ya ejecutadas (8 de 16 fallan, demostrando el hueco).
 > Versión 2 (2026-10-28): sustituye a la anterior; incorpora las pruebas ya escritas, el SQL definitivo, el rollback revisado y el aviso para Mario.
 
 ## 1. Problema
@@ -41,12 +42,11 @@ commit;
 
 Se conservan `social_accounts_select_self` y `social_accounts_delete_self`: RLS sigue limitando a las filas propias. `token_expires_at` no se concede. Al ser lista blanca, toda columna futura nace sin acceso para el navegador (lo deseable para las columnas de A-R2).
 
-### Rollback revisado (devuelve exactamente el estado anterior)
+### Rollback (devuelve exactamente el estado anterior)
 
 ```sql
 begin;
--- Estado anterior asumido: privilegios por defecto de Supabase (ver §3 para confirmarlo ANTES de aplicar).
-grant select, insert, update, delete on public.social_accounts to anon, authenticated;
+grant all on public.social_accounts to anon, authenticated;
 create policy "social_accounts_insert_self" on public.social_accounts for insert
   with check (creator_id = public.current_creator_id());
 create policy "social_accounts_update_self" on public.social_accounts for update
@@ -54,7 +54,7 @@ create policy "social_accounts_update_self" on public.social_accounts for update
 commit;
 ```
 
-Salvedad: el rollback es exacto **solo si** la consulta del §3 confirma que `anon` y `authenticated` tenían esos privilegios. Si el resultado es distinto, el rollback se ajusta a lo que devuelva la consulta antes de aplicar nada.
+Verificado con la consulta del §3 (resultado del 2026-10-28): `anon` y `authenticated` tenían `SELECT`, `INSERT`, `UPDATE` y `REFERENCES` en las 9 columnas, es decir, los privilegios por defecto de Supabase. `grant all` los restaura (incluidos los de nivel de tabla `DELETE`, `TRUNCATE` y `TRIGGER`, que esa vista no muestra). La versión anterior de este rollback omitía `REFERENCES` y esos tres.
 
 ## 3. Consulta de solo lectura que debes ejecutar y cómo interpretarla
 
