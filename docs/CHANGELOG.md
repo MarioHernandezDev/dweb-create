@@ -4,6 +4,29 @@ Registro de qué se hizo, por qué, y qué queda pendiente de verificar — pens
 
 ---
 
+## 2026-10-28 (Alex-16) — [Alex] Instagram: Meta exige HTTPS en la redirect URI; APP_URL para volver a la app tras el túnel
+
+### Hallazgo (primera prueba real con Meta)
+
+Alex creó la app de Meta (caso de uso "API de Instagram") y al guardar `http://localhost:3000/api/auth/instagram/callback` en "Configura el inicio de sesión de empresa de Instagram" Meta respondió **"Error al guardar los URI de redireccionamiento"**; al intentar conectar, "Invalid redirect_uri". Conclusión: **Meta no acepta `http://localhost`**; hace falta una URL HTTPS (túnel). La documentación consultada no dice nada sobre `http://localhost`, así que es un hallazgo empírico. `docs/9-INSTAGRAM-OAUTH-SETUP.md` sugiere ese caso como alternativa ("si el dashboard obliga a HTTPS…") pero lo presenta como excepción: debe pasar a ser el camino por defecto (A-R14).
+
+### Qué se cambió
+
+- `server/utils/app-url.ts` (nuevo): `appRedirectUrl(appUrl, path)`. Con un túnel el callback llega por el dominio del túnel; con una ruta relativa el navegador se quedaría allí, donde **no existe la sesión** (cookies de localhost). Con `APP_URL` definida, los callbacks de Instagram y YouTube devuelven al usuario a la app real. Solo sale de la configuración del servidor (nunca de la petición); un valor no válido o con otro protocolo se ignora.
+- `nuxt.config.ts` y `.env.example`: se añade `appUrl` / `APP_URL` (**sin valor**, opcional). Sin ella el comportamiento es exactamente el de antes (YouTube no cambia).
+
+### Verificado de verdad
+
+- `app-url.spec.ts` (11 tests): sin `APP_URL`, con `APP_URL`, solo el origen, mensajes de error codificados, valores no válidos (`javascript:`, `ftp:`, `data:`, texto) ignorados. `npx vue-tsc --noEmit` limpio.
+
+### Sin verificar
+
+- **Todo el flujo con un túnel real** (ngrok u otro): no hay túnel ni se ha probado desde esta máquina. Posible problema no comprobado: el servidor de desarrollo podría rechazar la cabecera `Host` del túnel ("Blocked request"); si ocurre habría que permitir ese host en `nuxt.config.ts`.
+- El nombre exacto de los menús de Meta usados en la guía es el de la interfaz en español que ve Alex; algunos (invitación de tester en Instagram) no están documentados en lo consultado.
+- Suite completa y `npm run build`: no ejecutados en esta entrada (servidor de desarrollo de Alex en marcha).
+
+---
+
 ## 2026-10-28 (Alex-15) — [Alex] A-R5: endpoint de sincronización programada (sin scheduler) y renovación del token de Instagram
 
 ### Qué se cambió

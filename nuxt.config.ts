@@ -101,6 +101,11 @@ export default defineNuxtConfig({
     // (POST /api/social/sync-all, Authorization: Bearer ...). Sin él, ese
     // endpoint responde 503 y no hace nada. Ver docs/PROPUESTA_A-R5_SYNC_ENDPOINT.md.
     syncCronSecret: process.env.SYNC_CRON_SECRET,
+    // URL base de la app (p. ej. http://localhost:3000). Los callbacks de OAuth
+    // devuelven al usuario aquí. Hace falta en desarrollo cuando el callback
+    // llega por un túnel HTTPS (Meta no acepta http://localhost) para no
+    // quedarse en el dominio del túnel, donde no hay sesión. Opcional.
+    appUrl: process.env.APP_URL,
     // Panel de admin (/admin) — contraseña única compartida por el equipo,
     // sin cuenta de Supabase de por medio a propósito (ver
     // server/utils/admin-session.ts). `adminSessionSecret` solo cifra la
