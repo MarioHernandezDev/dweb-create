@@ -303,3 +303,8 @@ Estado a fecha de este anexo (no es una afirmación de que todo lo anterior est�
 - A-R10: cambio de interfaz hecho; tests unitarios, typecheck y build pasan; no verificado en navegador.
 - Propuestas escritas, pendientes de aprobación: A-R11, esquema conjunto, endpoint A-R5, alcance A-P1.
 - Cada tarea tiene su entrada con prefijo [Alex] en docs/CHANGELOG.md.
+
+Requisito nuevo (2026-10-28): A-R16, dashboard de analítica de YouTube
+- Incorporado como tarea nueva, sin interrumpir el orden vigente. Ver docs/REQUISITO_A-R16_DASHBOARD_YOUTUBE.md (auditoría, catálogo de métricas viables, dependencias).
+- Encaja después de A-R2, A-R3 y A-R1 (YouTube) y en paralelo a A-R8a. La mayor parte (periodos, comparación, vídeos) se puede construir con datos en vivo de la API de YouTube Analytics, sin migración; solo el histórico propio de acumulados (A-R16e) depende del esquema A-R8a.
+- No se implementa nada hasta llegar a esa fase; antes se presentará la estructura de componentes para revisión.

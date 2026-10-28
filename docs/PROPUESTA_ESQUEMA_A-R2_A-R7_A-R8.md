@@ -132,10 +132,12 @@ Tabla nueva `social_account_snapshots`:
 |---|---|
 | `social_account_id` | `uuid not null references social_accounts(id) on delete cascade` |
 | `observed_on` | `date not null` |
-| `followers_count` | `bigint not null` |
+| `followers_count` | `bigint null` (nulable: un canal puede ocultar sus suscriptores; no se guarda un 0 falso) |
+| `views_total` | `bigint null` (visualizaciones acumuladas; YouTube lo da, Instagram no) |
+| `videos_count` | `integer null` (vídeos publicados; ídem) |
 | `created_at` | `timestamptz default now()` |
 
-`primary key (social_account_id, observed_on)` → upsert idempotente. Da el histórico de seguidores (hoy `deltaPct` está fijo a 0). RLS: lectura solo del creador dueño; sin escritura del navegador.
+`primary key (social_account_id, observed_on)` → upsert idempotente. Da el histórico de los **acumulados** de la cuenta (hoy `deltaPct` está fijo a 0). Es lo que Google no conserva con histórico y lo que necesita el dashboard A-R16 (`REQUISITO_A-R16_DASHBOARD_YOUTUBE.md`); las series por día (vistas, suscriptores ganados/perdidos) se piden en vivo a la Analytics API y no se duplican aquí. RLS: lectura solo del creador dueño; sin escritura del navegador.
 
 **Pregunta de diseño:** ¿histórico o último valor? Propuesta: histórico diario (arriba) y "último valor" = la fila más reciente; no se duplica en otra columna.
 

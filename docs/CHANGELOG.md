@@ -4,6 +4,33 @@ Registro de qué se hizo, por qué, y qué queda pendiente de verificar — pens
 
 ---
 
+## 2026-10-28 (Alex-8) — [Alex] Requisito A-R16: dashboard de analítica de YouTube incorporado al plan
+
+### Qué se cambió
+
+Solo documentación; **sin código, esquema ni permisos**:
+- `docs/REQUISITO_A-R16_DASHBOARD_YOUTUBE.md` (nuevo): encaje en el pipeline (A-R16a–f), auditoría de lo que existe frente al requisito, catálogo de métricas viables, qué depende de qué y riesgos.
+- `docs/PROPUESTA_ESQUEMA_A-R2_A-R7_A-R8.md`: `social_account_snapshots` guarda ahora también `views_total` y `videos_count` (nulables) y `followers_count` pasa a nulable.
+- `PIPELINE_IMPLEMENTACION_FEEDMA_ALEX.md`: nota sobre A-R16 en el anexo.
+
+### Hallazgos (de leer el código y la documentación de YouTube)
+
+- Los periodos de 7, 28, 90 y 365 días y la comparación con el periodo anterior se pueden pedir **en vivo** a la YouTube Analytics API (conserva el histórico por fecha): **no requieren migración**. Solo el histórico de acumulados (suscriptores/vistas totales por día) necesita almacenamiento propio.
+- Hoy un `likeCount`/`commentCount` ausente (likes ocultos, comentarios desactivados) se muestra como **0** (`?? 0` en `youtube-channel-stats.get.ts`): contradice el principio del requisito de no tratar lo desconocido como cero. Sin corregir todavía.
+- La proyección a 30 días de la pantalla actual es una extrapolación de FEEDMA, no un dato de YouTube; debe etiquetarse como estimación o retirarse.
+- Impresiones y CTR de miniaturas **no figuran** en la documentación de métricas consultada: no se prometen.
+
+### Verificado de verdad
+
+- Lectura de `youtube-channel-stats.get.ts`, `youtube.ts`, `metrics/[platform].vue` y `components/charts`; consulta de la documentación oficial de métricas de YouTube Analytics.
+
+### Sin verificar
+
+- Todo el catálogo de métricas con un canal real (la validación necesita el canal de Alex).
+- Cuotas de las APIs, latencia de Analytics y si el banner del canal se devuelve con el permiso actual.
+
+---
+
 ## 2026-10-28 (Alex-7) — [Alex] A-R11: migración escrita, pruebas de "antes" ejecutadas; pendiente de aplicar
 
 ### Qué se cambió
