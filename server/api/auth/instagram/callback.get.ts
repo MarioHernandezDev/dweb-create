@@ -108,8 +108,14 @@ export default defineEventHandler(async (event) => {
         // nuevo solo para esta plataforma.
         refresh_token_encrypted: encrypted,
         token_expires_at: expiresAt,
-        connected_at: new Date().toISOString()
+        connected_at: new Date().toISOString(),
+        // Id de la cuenta en Instagram: permite que Meta localice la fila al
+        // desautorizar (A-R4) e impide conectar la misma cuenta a dos creadores.
+        external_account_id: profile.id,
+        ...successPatch()
       } as never, { onConflict: 'creator_id,platform' })
+    // 23505 = la misma cuenta de Instagram ya está conectada a otro creador.
+    if (error?.code === '23505') return redirectWithError('Esa cuenta de Instagram ya está conectada a otro usuario de FEEDMA.')
     if (error) throw error
 
     return sendRedirect(event, '/creator/socials?instagram=connected')

@@ -4,6 +4,42 @@ Registro de qué se hizo, por qué, y qué queda pendiente de verificar — pens
 
 ---
 
+## 2026-10-28 (Alex-13) — [Alex] M1 aplicada y verificada; A-R2b: estado de las cuentas guardado y visible
+
+### M1 aplicada
+
+`supabase/migrations/20261028130000_social_accounts_status_columns.sql` **aplicada por Alex** en el Supabase compartido. Registrada en `docs/TRABAJO_ALEX.md`.
+- `npx vitest run --config vitest.integration.config.ts tests/integration/social-accounts-status-columns.spec.ts`: **23/23**. Residuo: 0 filas de prueba; 16 filas en total, como antes.
+- Primer intento fallido por mi culpa: vitest ejecutó dos archivos de integración a la vez y mi protección ("si el creador demo ya tiene filas de linkedin/x, abortar sin tocar nada") saltó. `vitest.integration.config.ts` ahora usa `fileParallelism: false`: los archivos de integración comparten Supabase y cuentas demo y se pisaban.
+
+### A-R2b: qué se cambió
+
+- `server/utils/social-account-state.ts` (nuevo): qué se guarda tras cada sincronización. Éxito -> `connected`, errores limpios, `last_synced_at`. Fallo que exige reconectar (caducado, revocado, faltan permisos) -> cambia `status`. Fallo temporal o desconocido -> solo `last_error_code`/`last_error_at`, **sin tocar `status`**. Nunca lanza: si no puede guardar, llega el error original al usuario.
+- Callbacks OAuth: guardan `external_account_id` (id de la cuenta de Instagram / del canal de YouTube) y `status = connected`. Si esa cuenta ya está conectada a otro creador (índice único), redirigen con un mensaje claro en vez de un error genérico.
+- Sync (`instagram-sync`, `youtube-sync`, `youtube-channel-stats`): guardan éxito o fallo. En `youtube-channel-stats`, si solo falla el permiso de analíticas la cuenta queda marcada para reconectar; un fallo pasajero no.
+- Interfaz: `useMySocialAccounts` lee `status`, `is_verified` y `last_synced_at`. **Una fila sin token ya no cuenta como conectada** (los datos de demo de Instagram dejan de aparecer como conectados). La fila muestra "Acceso caducado o revocado · reconecta la cuenta" con botón **Reconectar** y sin botón de actualizar; no se duplica el aviso de arriba. La página de Métricas de YouTube no llama a Google si el estado guardado ya dice que hay que reconectar.
+
+### Verificado de verdad
+
+- Unitarios nuevos: `social-account-state.spec.ts` (9). Suite completa **140/140**. `npx vue-tsc --noEmit` limpio. `npm run build` completado.
+- **Navegador real (Chrome por CDP) con tokens falsos en la cuenta demo, respuestas reales de Meta y Google** (filas creadas y borradas):
+  - Antes: Instagram y YouTube aparecen conectadas. Tras pulsar actualizar, ambas pasan a "Acceso caducado o revocado" con botón Reconectar. La BD guarda `youtube: revoked / google_invalid_grant` e `instagram: expired / meta_190`, con la hora del intento y `last_synced_at` vacío.
+  - Tras recargar la página el estado se mantiene (sale de la BD).
+  - Métricas de YouTube muestra Reconectar con **0 llamadas** a `youtube-channel-stats`.
+  - Una fila de Instagram **sin token y con 99999 seguidores** se muestra "No conectada".
+- Limpieza comprobada tras cada escenario: 0 filas de prueba; 16 filas en total.
+
+### Sin verificar / pendiente
+
+- Con una cuenta real: ni el éxito real de `external_account_id` (guardado en los callbacks, nunca ejecutados con credenciales reales aquí) ni el 23505 (misma cuenta en dos creadores) se han ejercitado; solo la unicidad en BD está probada (integración M1).
+- `last_synced_at` tras un éxito real no se ha visto: no hay cuenta real con la que hacerlo. Requiere el canal de Alex.
+- Descubrir (`discover/search.post.ts`, archivo de Mario) sigue sumando seguidores de todas las filas, incluidas las de demo sin token; ahora se puede filtrar por `is_verified`, pero es un cambio en su archivo (coordinar).
+- Renovación automática del token de Instagram y migración de filas existentes (`external_account_id` de la cuenta real de YouTube de Alex queda vacío hasta que reconecte): pendientes.
+- Corrección sobre la entrada Alex-11: una de sus comprobaciones automáticas ("sin el texto 'es antigua'") era vacua por un fallo de mi script (una expresión regular se comía letras 's'); lo comprobé a ojo en la captura, que muestra el texto correcto. Esta vez las comprobaciones se hicieron sobre el texto tal cual.
+- Notificaciones "Has iniciado sesión" nuevas en la cuenta demo del creador (una por sesión de prueba con login, unas 5 en este bloque); sin limpiar.
+
+---
+
 ## 2026-10-28 (Alex-12) — [Alex] M1 (A-R2): migración de columnas de estado escrita, pendiente de aplicar
 
 ### Qué se cambió

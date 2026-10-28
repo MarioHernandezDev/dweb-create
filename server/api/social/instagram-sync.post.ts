@@ -60,7 +60,7 @@ export default defineEventHandler(async (event) => {
 
     const { error } = await client
       .from('social_accounts')
-      .update({ followers_count: profile.followers_count } as never)
+      .update({ followers_count: profile.followers_count, ...successPatch() } as never)
       .eq('id', account.id)
     if (error) throw createError({ statusCode: 500, statusMessage: error.message })
 
@@ -68,7 +68,9 @@ export default defineEventHandler(async (event) => {
   } catch (err) {
     // Errores ya controlados arriba (422, 500 al guardar): se devuelven tal cual.
     if (isError(err)) throw err
+    const classified = classifyProviderError(err)
     console.error('[social/instagram-sync] fallo al sincronizar:', describeErrorForLog(err))
-    throw toSocialHttpError('instagram', classifyProviderError(err))
+    await recordSyncFailure(client, account.id, classified)
+    throw toSocialHttpError('instagram', classified)
   }
 })

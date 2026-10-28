@@ -60,7 +60,8 @@ export default defineEventHandler(async (event) => {
       .update({
         followers_count: subscriberCount,
         access_token_encrypted: encryptToken(refreshed.access_token, config.socialTokenEncryptionKey),
-        token_expires_at: new Date(Date.now() + refreshed.expires_in * 1000).toISOString()
+        token_expires_at: new Date(Date.now() + refreshed.expires_in * 1000).toISOString(),
+        ...successPatch()
       } as never)
       .eq('id', account.id)
     if (error) throw createError({ statusCode: 500, statusMessage: error.message })
@@ -69,7 +70,9 @@ export default defineEventHandler(async (event) => {
   } catch (err) {
     // Errores ya controlados arriba (422, 500 al guardar): se devuelven tal cual.
     if (isError(err)) throw err
+    const classified = classifyProviderError(err)
     console.error('[social/youtube-sync] fallo al sincronizar:', describeErrorForLog(err))
-    throw toSocialHttpError('youtube', classifyProviderError(err))
+    await recordSyncFailure(client, account.id, classified)
+    throw toSocialHttpError('youtube', classified)
   }
 })

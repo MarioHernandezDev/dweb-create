@@ -63,6 +63,13 @@ const statsNeedsReconnect = ref(false)
 
 async function loadStats() {
   if (platform !== 'youtube' || state.value !== 'connected') return
+  // Si ya sabemos que el acceso no sirve (estado guardado), no se llama a
+  // Google para obtener un error que ya conocemos.
+  if (account.value.status && account.value.status !== 'connected') {
+    statsNeedsReconnect.value = true
+    statsError.value = 'El acceso a YouTube ha caducado o se ha revocado. Reconecta la cuenta.'
+    return
+  }
   loadingStats.value = true
   statsError.value = ''
   statsNeedsReconnect.value = false

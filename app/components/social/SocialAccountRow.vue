@@ -2,8 +2,12 @@
 import type { SocialAccount } from '~/types'
 import { platformMeta, formatCompactNumber, isComingSoonPlatform } from '~/utils/mock-data'
 
-defineProps<{ account: SocialAccount; busy?: boolean; syncing?: boolean }>()
-defineEmits<{ connect: []; disconnect: []; sync: [] }>()
+const props = defineProps<{ account: SocialAccount; busy?: boolean; syncing?: boolean }>()
+defineEmits<{ connect: []; disconnect: []; sync: []; reconnect: [] }>()
+
+// La conexión existe pero el acceso ya no sirve (guardado por el servidor en
+// la última sincronización): hay que volver a conectar.
+const needsReconnect = computed(() => props.account.connected && !!props.account.status && props.account.status !== 'connected')
 </script>
 
 <template>
@@ -19,6 +23,9 @@ defineEmits<{ connect: []; disconnect: []; sync: [] }>()
       <p class="text-[0.9375rem] font-medium text-[var(--color-text)]">{{ platformMeta[account.platform].label }}</p>
       <p v-if="isComingSoonPlatform(account.platform)" class="text-[0.8125rem] text-[var(--color-text-faint)]">
         Próximamente · todavía no se puede conectar
+      </p>
+      <p v-else-if="needsReconnect" class="text-[0.8125rem] text-[var(--color-status-alert)]">
+        {{ account.status === 'missing_permissions' ? 'Falta un permiso' : 'Acceso caducado o revocado' }} · reconecta la cuenta
       </p>
       <p v-else-if="account.connected" class="text-[0.8125rem] text-[var(--color-text-muted)]">
         {{ account.handle }} · {{ formatCompactNumber(account.followers) }} seguidores
@@ -41,10 +48,11 @@ defineEmits<{ connect: []; disconnect: []; sync: [] }>()
       Próximamente
     </span>
     <BaseButton
-      v-if="!isComingSoonPlatform(account.platform) && account.connected" variant="ghost" size="sm" icon="ph:arrows-clockwise-bold" icon-only
+      v-if="!isComingSoonPlatform(account.platform) && account.connected && !needsReconnect" variant="ghost" size="sm" icon="ph:arrows-clockwise-bold" icon-only
       :icon-spin="syncing" :disabled="busy || syncing"
       aria-label="Actualizar seguidores" @click="$emit('sync')"
     />
+    <BaseButton v-if="needsReconnect" variant="primary" size="sm" :disabled="busy" @click="$emit('reconnect')">Reconectar</BaseButton>
     <BaseButton
       v-if="!isComingSoonPlatform(account.platform) && account.connected" variant="ghost" size="sm" icon="ph:x-bold" icon-only :disabled="busy"
       aria-label="Desconectar" @click="$emit('disconnect')"

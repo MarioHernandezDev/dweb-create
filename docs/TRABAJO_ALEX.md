@@ -166,3 +166,4 @@ Mario lleva Stripe y pagos, legal/RGPD, seguridad transversal (límites de uso, 
 | Fecha | Archivo | Qué cambia | Aprobada por |
 |---|---|---|---|
 | 2026-10-28 | `20261028120000_social_accounts_lockdown.sql` | `social_accounts`: el navegador ya no inserta ni actualiza; solo lee `id, creator_id, platform, handle, followers_count, connected_at`; mantiene el borrado propio | Alex (con la aceptación de Mario, según Alex); aplicada por Alex en el SQL Editor |
+| 2026-10-28 | `20261028130000_social_accounts_status_columns.sql` | `social_accounts`: añade `status`, `last_error_code`, `last_error_at`, `last_synced_at`, `last_sync_attempt_at`, `sync_lock_until`, `external_account_id`, `is_verified` (generada) e índice único parcial `(platform, external_account_id)`; el navegador solo lee `status`, `last_synced_at`, `last_error_code`, `is_verified` | Alex; aplicada por Alex en el SQL Editor |

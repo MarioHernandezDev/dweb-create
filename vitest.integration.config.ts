@@ -27,6 +27,10 @@ export default defineConfig({
     include: ['tests/integration/**/*.spec.ts'],
     environment: 'node',
     testTimeout: 20_000,
-    hookTimeout: 20_000
+    hookTimeout: 20_000,
+    // Un archivo a la vez: comparten el mismo Supabase y las mismas cuentas
+    // demo (y varios crean filas de prueba en el mismo creador), y el límite
+    // de autenticación es compartido. En paralelo se pisaban entre sí.
+    fileParallelism: false
   }
 })

@@ -67,6 +67,13 @@ async function syncAccount(acc: SocialAccount) {
   }
 }
 
+// Si la fila ya muestra "Reconectar" por el estado guardado, el aviso de
+// arriba solo repetiría lo mismo.
+const rowAlreadyShowsReconnect = computed(() => {
+  const acc = accounts.value.find((a) => a.platform === syncReconnect.value)
+  return !!acc && acc.connected && !!acc.status && acc.status !== 'connected'
+})
+
 const connectedCount = computed(() => accounts.value.filter((a) => a.connected).length)
 </script>
 
@@ -91,7 +98,7 @@ const connectedCount = computed(() => accounts.value.filter((a) => a.connected).
       {{ connectResult.reason }}
     </p>
 
-    <div v-if="syncError" class="mb-4 flex flex-wrap items-center gap-3 md:max-w-xl">
+    <div v-if="syncError && !rowAlreadyShowsReconnect" class="mb-4 flex flex-wrap items-center gap-3 md:max-w-xl">
       <p class="text-[0.8125rem] text-[var(--color-status-alert)]">{{ syncError }}</p>
       <BaseButton v-if="syncReconnect" variant="primary" size="sm" @click="connect(syncReconnect)">Reconectar</BaseButton>
     </div>
@@ -100,7 +107,7 @@ const connectedCount = computed(() => accounts.value.filter((a) => a.connected).
       <SocialAccountRow
         v-for="acc in accounts" :key="acc.platform" :account="acc" :busy="busyPlatform === acc.platform"
         :syncing="syncingPlatform === acc.platform"
-        @connect="toggle(acc)" @disconnect="toggle(acc)" @sync="syncAccount(acc)"
+        @connect="toggle(acc)" @disconnect="toggle(acc)" @sync="syncAccount(acc)" @reconnect="connect(acc.platform)"
       />
     </div>
   </AppShell>

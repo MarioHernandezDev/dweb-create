@@ -126,6 +126,7 @@ export default defineEventHandler(async (event) => {
     // 28 días hacia atrás desde ahí.
     let evolution: YoutubeChannelStats['evolution'] = null
     let evolutionIssue: YoutubeChannelStats['evolutionIssue'] = null
+    let analyticsFailure: ReturnType<typeof classifyProviderError> | null = null
     try {
       const end = new Date(Date.now() - 2 * 86_400_000)
       const start = new Date(end.getTime() - 27 * 86_400_000)
@@ -139,6 +140,7 @@ export default defineEventHandler(async (event) => {
       console.error('[social/youtube-channel-stats] sin histórico:', describeErrorForLog(err))
       evolution = null
       evolutionIssue = classified.reconnect ? 'reconnect' : 'temporary'
+      analyticsFailure = classified
     }
 
     const stats: YoutubeChannelStats = {
@@ -162,7 +164,10 @@ export default defineEventHandler(async (event) => {
       .update({
         ...(typeof stats.subscriberCount === 'number' ? { followers_count: stats.subscriberCount } : {}),
         access_token_encrypted: encryptToken(refreshed.access_token, config.socialTokenEncryptionKey),
-        token_expires_at: new Date(Date.now() + refreshed.expires_in * 1000).toISOString()
+        token_expires_at: new Date(Date.now() + refreshed.expires_in * 1000).toISOString(),
+        // Si lo único que falló fue el permiso de analíticas, la cuenta queda
+        // marcada para reconectar; un fallo pasajero no cambia su estado.
+        ...(analyticsFailure?.reconnect ? failurePatch(analyticsFailure) : successPatch())
       } as never)
       .eq('id', account.id)
     if (error) console.error('[social/youtube-channel-stats] fallo al refrescar la fila (se devuelven los datos igual):', error.message)
@@ -170,7 +175,9 @@ export default defineEventHandler(async (event) => {
     return stats
   } catch (err) {
     if (isError(err)) throw err
+    const classified = classifyProviderError(err)
     console.error('[social/youtube-channel-stats] fallo al leer las estadísticas:', describeErrorForLog(err))
-    throw toSocialHttpError('youtube', classifyProviderError(err))
+    await recordSyncFailure(client, account.id, classified)
+    throw toSocialHttpError('youtube', classified)
   }
 })

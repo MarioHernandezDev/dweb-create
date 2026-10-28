@@ -6,6 +6,10 @@ interface SocialAccountRow {
   platform: SocialAccount['platform']
   handle: string | null
   followers_count: number
+  status: NonNullable<SocialAccount['status']>
+  /** Hay token detrás (columna generada): el navegador no lee el token, solo esto. */
+  is_verified: boolean
+  last_synced_at: string | null
 }
 
 /**
@@ -35,13 +39,17 @@ export function useMySocialAccounts() {
     return Object.keys(platformMeta).map((platform) => {
       const comingSoon = isComingSoonPlatform(platform as SocialAccount['platform'])
       const row = comingSoon ? undefined : byPlatform.get(platform as SocialAccount['platform'])
+      // Una fila sin token (datos antiguos o de demo) no es una conexión real.
+      const verified = !!row && row.is_verified
       return {
         id: row?.id ?? platform,
         platform: platform as SocialAccount['platform'],
-        handle: row?.handle ?? '',
-        followers: row?.followers_count ?? 0,
+        handle: verified ? (row?.handle ?? '') : '',
+        followers: verified ? (row?.followers_count ?? 0) : 0,
         deltaPct: 0,
-        connected: !!row
+        connected: verified,
+        status: verified ? row?.status : undefined,
+        lastSyncedAt: verified ? (row?.last_synced_at ?? null) : null
       }
     })
   }
@@ -52,7 +60,7 @@ export function useMySocialAccounts() {
 
     const { data, error } = await client
       .from('social_accounts')
-      .select('id, platform, handle, followers_count')
+      .select('id, platform, handle, followers_count, status, is_verified, last_synced_at')
       .eq('creator_id', me.id)
     if (error) {
       console.error('[useMySocialAccounts] fallo al cargar redes:', error.message)
@@ -97,8 +105,13 @@ export function useMySocialAccounts() {
   async function sync(platform: SocialAccount['platform']) {
     const endpoint = SYNC_ENDPOINTS[platform]
     if (!endpoint) return
-    await $fetch(endpoint, { method: 'POST' })
-    await refresh()
+    try {
+      await $fetch(endpoint, { method: 'POST' })
+    } finally {
+      // También si falla: el servidor guarda el estado (p. ej. "caducado") y
+      // la pantalla debe reflejarlo sin recargar.
+      await refresh()
+    }
   }
 
   async function disconnect(platform: SocialAccount['platform']) {

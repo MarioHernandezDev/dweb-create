@@ -84,6 +84,9 @@ export interface SocialAccount {
   followers: number
   deltaPct: number
   connected: boolean
+  /** Estado guardado de la conexión (A-R2): distinto de `connected` = hay que reconectar. */
+  status?: 'connected' | 'expired' | 'revoked' | 'missing_permissions'
+  lastSyncedAt?: string | null
 }
 
 export interface TrendSuggestion {

@@ -29,6 +29,7 @@ interface GoogleTokenResponse {
 
 interface YoutubeChannelsResponse {
   items?: {
+    id?: string
     snippet?: { title?: string }
     statistics?: { subscriberCount?: string; viewCount?: string; videoCount?: string; hiddenSubscriberCount?: boolean }
   }[]
@@ -108,8 +109,14 @@ export default defineEventHandler(async (event) => {
         access_token_encrypted: encryptedAccess,
         refresh_token_encrypted: encryptedRefresh,
         token_expires_at: expiresAt,
-        connected_at: new Date().toISOString()
+        connected_at: new Date().toISOString(),
+        // Id del canal: permite localizar la fila y impide conectar el mismo
+        // canal a dos creadores.
+        external_account_id: channel.id ?? null,
+        ...successPatch()
       } as never, { onConflict: 'creator_id,platform' })
+    // 23505 = el mismo canal de YouTube ya está conectado a otro creador.
+    if (error?.code === '23505') return redirectWithError('Ese canal de YouTube ya está conectado a otro usuario de FEEDMA.')
     if (error) throw error
 
     return sendRedirect(event, '/creator/socials?youtube=connected')
