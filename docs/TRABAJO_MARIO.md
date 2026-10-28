@@ -10,7 +10,7 @@ Detalle y verificación de cada punto en `docs/CHANGELOG.md` (entradas 55–58, 
 
 | Tarea | Estado | Pendiente |
 |---|---|---|
-| M-L1 | Hecho (plantilla) | Rellenar `app/utils/legal.ts` y revisión legal; ver en navegador a 390px lo hice en capturas |
+| M-L1 | Hecho (plantilla) | Rellenar `app/utils/legal.ts` y revisión legal (revisado en capturas a 390px y escritorio) |
 | M-F2 | Hecho en el repo | Ejecutarlo en un PR de prueba en GitHub |
 | M-S3 | Hecho y verificado | — |
 | M-S1 | Hecho (predict, discover) | Alta de cuentas, solicitudes y reportes van directos a Supabase: no cubiertos (Q3) |
