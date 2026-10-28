@@ -1,6 +1,6 @@
 # Plan de trabajo en paralelo — FEEDMA
 
-> Elaborado el 2026-10-28 sobre `main` (`dace066`). **Es una propuesta pendiente de aprobación: no se ha implementado nada.** Sustituye el reparto "publicaciones / onboarding" de la preparación anterior (los `README_TRABAJO.md` de cada rama se han actualizado para reflejar este plan).
+> Elaborado el 2026-10-28 sobre `main` (`dace066`). **Es una propuesta pendiente de aprobación: no se ha implementado nada.** Sustituye el reparto "publicaciones / onboarding" de la preparación anterior (los `TRABAJO_MARIO.md y TRABAJO_ALEX.md` de cada rama se han actualizado para reflejar este plan).
 >
 > **Cómo se ha hecho el inventario:** leyendo `docs/PENDIENTES.md`, `docs/10-ROADMAP-FUTURO.md`, los docs de OAuth, el esquema y las migraciones, y el código de `server/api/**`, `app/composables/**` y las páginas relevantes. **No se han ejecutado tests, build ni navegador en esta tarea** — todo lo marcado como "implementado" significa "hay código que lo hace", no "está verificado". Donde no he podido comprobar algo, se dice.
 
@@ -97,7 +97,7 @@ Moderación de contenido subido · motor de tendencias con IA (`app/_disabled/cr
 
 ## C. Matriz de responsabilidades
 
-| Área | Mario (`feature/publicaciones-ux`) | Compañero (`feature/onboarding`) |
+| Área | Mario (`feature/publicaciones-ux`) | Alex (`feature/onboarding`) |
 |---|---|---|
 | Redes sociales (OAuth, tokens, métricas, sync, perfil↔redes) | **Todo** (M-R1…R15) | Nada |
 | Stripe y pagos | Nada | **Todo** (C-D1…D5) |
@@ -159,7 +159,7 @@ Una rama de Git **no aísla** la base de datos. Una migración aplicada desde un
 Reglas propuestas (acordarlas en la Fase 0):
 1. **Solo migraciones aditivas** mientras haya dos ramas activas (añadir tablas/columnas nullable o con default). Nada de renombrar, borrar columnas ni endurecer RLS de forma que rompa el código de la otra rama; si hace falta, hacerlo en dos pasos (añadir → migrar código → retirar) con aviso.
 2. **Avisar antes de aplicar** cualquier migración, RPC o policy: qué cambia, qué tablas toca, qué código de la otra rama podría verse afectado. Respuesta del otro antes de aplicar.
-3. **Un solo ejecutor por migración y un registro** en la tabla de abajo (se rellena en el `README_TRABAJO.md` de la rama que la aplica, no en este archivo, para no provocar conflictos).
+3. **Un solo ejecutor por migración y un registro** en la tabla de abajo (se rellena en el `TRABAJO_MARIO.md y TRABAJO_ALEX.md` de la rama que la aplica, no en este archivo, para no provocar conflictos).
 4. Nombres de migración con marca de tiempo única; si dos coinciden, la segunda se renombra antes de fusionar (ya ocurrió: hay dos `20261021160000_*`).
 5. **Las zonas protegidas** (Stripe, RLS, esquema, OAuth, RPCs de seguridad como `accept_collaboration_request`, `respond_offer`, `approve_post`) requieren explicar el impacto y recibir confirmación antes de tocar, igual que hasta ahora.
 6. Tests de integración y cuentas demo: se escriben datos reales en el mismo proyecto y el límite de autenticación es compartido. Ejecutar `npm run test:integration` con moderación, y **avisar** si se va a lanzar justo antes de que el otro pruebe login. Limpiar residuos de prueba con criterio explícito.
