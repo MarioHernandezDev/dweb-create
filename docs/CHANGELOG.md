@@ -4,6 +4,25 @@ Registro de qué se hizo, por qué, y qué queda pendiente de verificar — pens
 
 ---
 
+## 2026-10-28 (Alex-10) — [Alex] A-R11 aplicada y verificada
+
+### Qué se cambió
+
+`supabase/migrations/20261028120000_social_accounts_lockdown.sql` **aplicada por Alex** en el Supabase compartido (SQL Editor), con la aceptación de Mario. Registrada en `docs/TRABAJO_ALEX.md`.
+
+### Verificado de verdad
+
+- `RUN_SOCIAL_ACCOUNTS_RLS=1 npx vitest run --config vitest.integration.config.ts tests/integration/social-accounts-rls.spec.ts`: **16/16 pasan** (antes de la migración, 8 fallaban). Un creador ya no puede leer `access_token_encrypted`, `refresh_token_encrypted` ni `token_expires_at`, ni insertar cuentas, ni cambiar `followers_count` ni el token; el aislamiento entre usuarios, la RPC pública y el borrado propio siguen funcionando.
+- Limpieza comprobada: 0 filas de prueba y 16 filas en total, las mismas que antes.
+
+### Sin verificar
+
+- No he ejecutado el resto de la suite de integración ni mirado Redes/Métricas/perfil público en navegador tras la migración. Cubre la lectura con columnas explícitas el test de integración; la comprobación visual con una cuenta que tenga redes reales (la de Alex, con YouTube) queda para Alex.
+- Las filas demo sin token siguen existiendo y siguen contando en Descubrir (se resuelve con `is_verified`, propuesta de esquema).
+- El `connect()` antiguo de la rama de Mario fallará con "permission denied" hasta que integre `main` con A-R10.
+
+---
+
 ## 2026-10-28 (Alex-9) — [Alex] A-P1 (P1-a y P1-b): arrastre real verificado, un fallo real corregido y estado vacío con acción
 
 ### Qué se cambió

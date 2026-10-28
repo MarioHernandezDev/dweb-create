@@ -165,4 +165,4 @@ Mario lleva Stripe y pagos, legal/RGPD, seguridad transversal (límites de uso, 
 
 | Fecha | Archivo | Qué cambia | Aprobada por |
 |---|---|---|---|
-| — | — | (ninguna todavía) | — |
+| 2026-10-28 | `20261028120000_social_accounts_lockdown.sql` | `social_accounts`: el navegador ya no inserta ni actualiza; solo lee `id, creator_id, platform, handle, followers_count, connected_at`; mantiene el borrado propio | Alex (con la aceptación de Mario, según Alex); aplicada por Alex en el SQL Editor |

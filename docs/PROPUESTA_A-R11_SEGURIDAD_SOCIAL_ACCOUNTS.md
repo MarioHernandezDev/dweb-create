@@ -1,7 +1,7 @@
 # Propuesta consolidada A-R11: cerrar la falsificación de redes verificadas y la lectura de tokens
 
 > **Estado: PROPUESTA. Nada aplicado, nada ejecutado contra la base de datos compartida.** El SQL está solo en este documento (no en `supabase/migrations/`) para que no se aplique por accidente. Zona protegida (RLS y permisos, Supabase compartido): requiere autorización explícita de Alex y coordinación con Mario antes de aplicar.
-> **Actualización:** autorizada por Alex con la aceptación de Mario. La consulta del §3 confirmó los privilegios por defecto. Migración escrita en `supabase/migrations/20261028120000_social_accounts_lockdown.sql` y **pendiente de aplicar por Alex en el SQL Editor**. Pruebas de integración de antes ya ejecutadas (8 de 16 fallan, demostrando el hueco).
+> **Estado: APLICADA** el 2026-10-28 por Alex en el SQL Editor (con la aceptación de Mario). Pruebas de integración: antes 8 de 16 fallaban (hueco demostrado); después **16 de 16 pasan**. Registrada en `TRABAJO_ALEX.md`.
 > Versión 2 (2026-10-28): sustituye a la anterior; incorpora las pruebas ya escritas, el SQL definitivo, el rollback revisado y el aviso para Mario.
 
 ## 1. Problema
