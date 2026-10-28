@@ -4,6 +4,33 @@ Registro de qué se hizo, por qué, y qué queda pendiente de verificar — pens
 
 ---
 
+## 2026-10-28 (Alex-6) — [Alex] A-R10 verificado en navegador (cuenta demo del creador)
+
+### Cómo se verificó
+
+Chrome real en modo sin pantalla, manejado por su protocolo de depuración desde un script de Node **sin instalar dependencias** (el script no está en el repositorio). Una sesión con `creator@feedma.test` contra el servidor de desarrollo en `localhost:3000`, solo lectura. Capturas revisadas a 1280 y 390 px.
+
+### Verificado de verdad
+
+- `/creator/socials`: TikTok, X, Facebook y LinkedIn muestran "Próximamente · todavía no se puede conectar" y una etiqueta "Próximamente", **sin botón de conectar**. YouTube e Instagram muestran "No conectada" y su botón "Conectar". Igual a 1280 y a 390 px, sin desbordamiento horizontal.
+- `/creator/metrics/tiktok`: "TikTok: próximamente — Todavía no se puede conectar esta red, así que no hay estadísticas que mostrar".
+- `/creator/metrics`: carga sin errores; sin red conectada muestra el estado vacío con el ejemplo ya existente.
+- Sin errores de consola en ninguna de las páginas.
+
+### Efecto sobre datos reales
+
+El login generó **1 notificación** "Has iniciado sesión" en la cuenta demo del creador (comprobado con una consulta de solo lectura). No se modificó ni borró nada más. No se ha limpiado: queda a criterio de Alex y Mario junto con las demás.
+
+### Sin verificar
+
+- **Filas antiguas existentes:** el creador demo no tiene filas en `social_accounts`, así que no se vio cómo se muestran las ya existentes. Se intentó con un creador de demo con Instagram (sin token) y TikTok antiguo, pero el login falló (se quedó en `/login`, causa desconocida; no se reintentó para no gastar el límite de autenticación compartido). Por lectura del código: la fila antigua de TikTok se ignora, y la de Instagram sin token **seguirá apareciendo como conectada** (limitación conocida, se resuelve con `is_verified`).
+- No se pulsó "Conectar" (iniciaría OAuth; Instagram daría error porque falta la configuración de Meta).
+- No se probó en Safari/Firefox ni tablet.
+- La imagen de portada de Redes salió en blanco en el modo sin pantalla (probablemente carga diferida o de imagen); no es de este cambio y no se ha investigado.
+- A-P1 (arrastre real y estados vacíos) sigue sin verificar en navegador.
+
+---
+
 ## 2026-10-28 (Alex-5) — [Alex] A-R9 auditada, A-R11 consolidada con pruebas preparadas y datos por proveedor
 
 ### Qué se cambió
