@@ -40,6 +40,20 @@ if (!summary) {
 
 const conversation = computed(() => conversations.value.find((c) => c.id === conversationId))
 
+// M-N2: "Visto" solo bajo MI último mensaje que la otra persona ya ha leído.
+// Sale de `last_read_at` de la conversación (granularidad de conversación, no
+// por mensaje) y de que `otherLastReadAt` se refresque mientras el chat está
+// abierto (cada 15 s; no hay Realtime sobre `conversations`).
+const lastSeenMessageId = computed(() => {
+  const otherRead = conversation.value?.otherLastReadAt
+  if (!otherRead) return null
+  const mine = (messagesByConversation.value[conversationId] ?? []).filter((m) => m.senderId === myProfileId && m.kind !== 'system')
+  const last = mine[mine.length - 1]
+  return last && last.createdAt <= otherRead ? last.id : null
+})
+const seenTimer = import.meta.client ? setInterval(() => loadConversationSummary(conversationId), 15_000) : null
+onUnmounted(() => { if (seenTimer) clearInterval(seenTimer) })
+
 // Se captura ANTES de marcar como leído (markRead pisaría esta marca). Con
 // ella se fija, una sola vez, a partir de qué mensaje empieza lo no leído
 // de esta visita — igual que el divisor de WhatsApp, no se mueve aunque
@@ -245,7 +259,7 @@ async function send() {
             </div>
             <MessageBubble
               v-else :message="item.message" :mine="item.message.senderId === myProfileId"
-              :group-start="item.groupStart" :show-time="item.showTime"
+              :group-start="item.groupStart" :show-time="item.showTime" :seen="item.message.id === lastSeenMessageId"
             />
           </template>
           <TypingDots v-if="isOtherTyping" />

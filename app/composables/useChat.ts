@@ -44,6 +44,8 @@ export interface ConversationSummary {
   unreadCount: number
   /** Marca de tiempo cruda de mi último "leído" en esta conversación — la usa chat/[id].vue para fijar el divisor de "X mensajes nuevos" antes de que markRead() la pise. */
   myLastReadAt: string | null
+  /** Marca de tiempo del último "leído" de la OTRA persona — de aquí sale el "Visto" bajo mis mensajes (M-N2): se deriva de `last_read_at`, sin columnas nuevas en `messages`. */
+  otherLastReadAt: string | null
 }
 
 function mapMessageRow(row: MessageRow): ChatMessage {
@@ -210,6 +212,7 @@ export function useChat() {
     conversations.value = rows.map((c) => {
       const otherId = c.participant_one_id === me ? c.participant_two_id : c.participant_one_id
       const myLastRead = c.participant_one_id === me ? c.participant_one_last_read_at : c.participant_two_last_read_at
+      const otherLastRead = c.participant_one_id === me ? c.participant_two_last_read_at : c.participant_one_last_read_at
       const last = previews[c.id]
       const unreadCount = (messagesByConv.get(c.id) ?? []).filter(
         (m) => m.sender_id !== me && (!myLastRead || m.created_at > myLastRead)
@@ -225,7 +228,8 @@ export function useChat() {
         lastMessageAt: c.last_message_at,
         unread: unreadCount > 0,
         unreadCount,
-        myLastReadAt: myLastRead
+        myLastReadAt: myLastRead,
+        otherLastReadAt: otherLastRead
       }
     })
     conversationsLoaded.value = true
@@ -257,6 +261,7 @@ export function useChat() {
     const otherId = data.participant_one_id === me ? data.participant_two_id : data.participant_one_id
     const names = await resolveNames([otherId])
     const myLastRead = data.participant_one_id === me ? data.participant_one_last_read_at : data.participant_two_last_read_at
+    const otherLastRead = data.participant_one_id === me ? data.participant_two_last_read_at : data.participant_one_last_read_at
     const existing = conversations.value.find((c) => c.id === conversationId)
 
     const summary: ConversationSummary = {
@@ -270,7 +275,8 @@ export function useChat() {
       lastMessageAt: data.last_message_at,
       unread: existing?.unread ?? false,
       unreadCount: existing?.unreadCount ?? 0,
-      myLastReadAt: myLastRead
+      myLastReadAt: myLastRead,
+      otherLastReadAt: otherLastRead
     }
 
     conversations.value = [summary, ...conversations.value.filter((c) => c.id !== conversationId)]

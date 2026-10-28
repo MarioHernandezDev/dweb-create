@@ -2,9 +2,10 @@
 import { relativeTime } from '~/utils/status'
 import type { ChatMessage } from '~/composables/useChat'
 
-withDefaults(defineProps<{ message: ChatMessage; mine: boolean; showTime?: boolean; groupStart?: boolean }>(), {
+withDefaults(defineProps<{ message: ChatMessage; mine: boolean; showTime?: boolean; groupStart?: boolean; seen?: boolean }>(), {
   showTime: true,
-  groupStart: true
+  groupStart: true,
+  seen: false
 })
 </script>
 
@@ -27,4 +28,8 @@ withDefaults(defineProps<{ message: ChatMessage; mine: boolean; showTime?: boole
       <p v-if="showTime" class="text-[0.6875rem] mt-1 opacity-70">{{ relativeTime(message.createdAt) }}</p>
     </div>
   </div>
+
+  <p v-if="mine && seen" class="text-right text-[0.6875rem] text-[var(--color-text-faint)] mt-0.5 flex items-center justify-end gap-1">
+    <Icon name="ph:checks-bold" class="size-3" />Visto
+  </p>
 </template>

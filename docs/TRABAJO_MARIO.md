@@ -4,6 +4,27 @@
 >
 > Nomenclatura: tareas de Alex = `A-…`, tareas de Mario = `M-…`. Prioridad 1–7: 1 seguridad/datos/pagos · 2 errores en flujos principales · 3 integraciones esenciales · 4 coherencia de estados/notificaciones · 5 usabilidad · 6 onboarding · 7 visual. Complejidad B/M/A = baja/media/alta. "BD" = migración/RPC/RLS.
 > Todo se ha inventariado leyendo código y documentación; **no se ejecutaron tests, build ni navegador** al hacerlo, así que "implementado" significa "hay código", no "está verificado".
+## 0. Estado de avance (2026-10-28)
+
+Detalle y verificación de cada punto en `docs/CHANGELOG.md` (entradas 55–58, prefijo `[Mario]`).
+
+| Tarea | Estado | Pendiente |
+|---|---|---|
+| M-L1 | Hecho (plantilla) | Rellenar `app/utils/legal.ts` y revisión legal; ver en navegador a 390px lo hice en capturas |
+| M-F2 | Hecho en el repo | Ejecutarlo en un PR de prueba en GitHub |
+| M-S3 | Hecho y verificado | — |
+| M-S1 | Hecho (predict, discover) | Alta de cuentas, solicitudes y reportes van directos a Supabase: no cubiertos (Q3) |
+| M-S2 | Auditado, 3 arreglos | Decidir: `grant-pro` pisa Stripe, sin registro de acciones del admin, ver admin a 390px |
+| M-N1 | Hecho y verificado | — |
+| M-O1 | Hecho y verificado (localStorage) | Probar con cuenta nueva; decidir Q1 definitiva |
+| M-N2 | Hecho (sin migración) | Probar el refresco con dos sesiones; "entregado" no existe |
+| M-U1 | Verificado | Calidad de IA y filtros combinados |
+| M-F1 | **Sin hacer** | Escribe en datos demo compartidos: confirmar antes |
+| M-L2 | **Sin hacer** | Zona protegida (RPC) + Q13 (qué se conserva): confirmar |
+| M-N3 | Sin hacer | Decisión Q7 (recomendado: mantener `set null`) |
+| M-U2, M-U3, M-U4 | Sin hacer | M-U3 necesita lector de pantalla y Safari/Firefox; M-U4 es decisión (Q12) |
+| M-D1…M-D5 | Fuera de este bloque (Stripe) | — |
+
 ## 1. Objetivo general
 
 Dejar FEEDMA listo para usuarios reales: pagos probados y con política de cobro decidida, páginas legales y borrado de datos, seguridad y límites de uso, flujos principales verificados con clics reales, notificaciones y chat coherentes, y una primera experiencia guiada para quien entra por primera vez.

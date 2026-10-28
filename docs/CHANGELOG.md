@@ -4,6 +4,21 @@ Registro de qué se hizo, por qué, y qué queda pendiente de verificar — pens
 
 ---
 
+## 2026-10-28 (58) — [Mario] M-N2 ("Visto" en el chat) y M-U1 (Descubrir verificado)
+
+### M-N2 — "Visto" bajo tu último mensaje
+
+- Se deriva de `last_read_at` de la conversación, **sin columnas nuevas ni migración** (opción preferida en Q9). `useChat.ts` expone `otherLastReadAt`; `chat/[id].vue` marca el último mensaje propio leído por la otra persona y `MessageBubble.vue` pinta "✓✓ Visto".
+- `chat/[id].vue` refresca ese dato cada 15 s mientras está abierto (no hay Realtime sobre `conversations`; activarlo sería un cambio en Supabase).
+- **Limitaciones:** granularidad de conversación, no por mensaje; no hay estado "entregado" separado de "enviado".
+- Verificado en navegador (390px) con las dos cuentas demo, solo lectura: sale "Visto" bajo el último mensaje propio ya leído y no sale donde no corresponde; sin errores de página. Sin verificar: el refresco en vivo con dos sesiones a la vez (habría que escribir mensajes de prueba).
+
+### M-U1 — Descubrir
+
+Verificado en navegador (390px, sin desbordes ni errores): `/creator/discover` (10 marcas) y `/partner/discover` (11 creadores) cargan, `POST /api/discover/search` devuelve 200 en los dos sentidos y la búsqueda con IA ("marcas de música o educación, 100 a 300 €") devolvió resultados ordenados con SoundWave Academy primero. La migración de Discovery está aplicada en el proyecto real (el endpoint escribe en `discovery_searches` sin error). Sin verificar: calidad de las explicaciones de la IA y el modo Filtros con combinaciones concretas.
+
+---
+
 ## 2026-10-28 (57) — [Mario] M-S1, M-S2, M-S3, M-N1, M-O1: límite de uso, auditoría de admin, roles, avisos agrupados y recorrido de bienvenida
 
 Todo verificado con un navegador real (Chromium de Playwright, instalado fuera del proyecto) contra el servidor de desarrollo y las cuentas demo.
