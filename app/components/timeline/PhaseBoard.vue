@@ -29,6 +29,12 @@ const collaborationFilter = ref<string | ''>('')
 const platformOptions = Object.entries(platformMeta).map(([value, meta]) => ({ value: value as Platform, label: meta.label }))
 const hasFilters = computed(() => !!(search.value || platformFilter.value || collaborationFilter.value))
 
+function clearFilters() {
+  search.value = ''
+  platformFilter.value = ''
+  collaborationFilter.value = ''
+}
+
 const filteredPosts = computed(() =>
   posts.value.filter((p) => {
     if (search.value && !p.title.toLowerCase().includes(search.value.toLowerCase())) return false
@@ -112,6 +118,10 @@ async function moveTo(post: Post, phase: PostStatus, fromDrag = false) {
       // que `sync()` la vuelva a colocar donde diga el servidor.
       const idx = board[phase].findIndex((p) => p.id === post.id)
       if (idx !== -1) board[phase].splice(idx, 1)
+      // Devolverla ya a su columna de origen: si el `refresh()` de abajo
+      // también falla (p. ej. sin red), no hay nada que la recoloque y la
+      // card desaparecía del tablero hasta recargar la página.
+      if (!board[fromPhase].some((p) => p.id === post.id)) board[fromPhase].push(post)
     }
     await refresh()
   }
@@ -257,7 +267,9 @@ async function bulkDelete() {
       v-else-if="hasFilters && !filteredPosts.length"
       icon="ph:funnel" title="Ningún resultado con estos filtros"
       description="Prueba a quitar el buscador o alguno de los filtros de arriba."
-    />
+    >
+      <BaseButton variant="secondary" size="sm" icon="ph:x-bold" @click="clearFilters">Quitar filtros</BaseButton>
+    </EmptyState>
     <div v-else class="grid grid-cols-1 gap-6 lg:grid-cols-5 lg:gap-4 lg:items-start select-none">
       <!-- Solo en móvil: las 5 columnas se apilan en vertical (hallazgo #15
            de la auditoría de usabilidad) — bajar hasta "Publicado" a mano

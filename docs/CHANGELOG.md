@@ -4,6 +4,46 @@ Registro de qué se hizo, por qué, y qué queda pendiente de verificar — pens
 
 ---
 
+## 2026-10-28 (Alex-9) — [Alex] A-P1 (P1-a y P1-b): arrastre real verificado, un fallo real corregido y estado vacío con acción
+
+### Qué se cambió
+
+`app/components/timeline/PhaseBoard.vue` (único archivo de código):
+1. **Fallo corregido:** si el guardado de un arrastre fallaba (p. ej. sin red), la card se quitaba de la columna destino y confiaba en `refresh()` para recolocarla; sin red `refresh()` también falla, así que **la card desaparecía del tablero hasta recargar la página** (el servidor no había cambiado). Ahora se devuelve a su columna de origen antes de refrescar.
+2. **P1-b:** el estado vacío "Ningún resultado con estos filtros" ahora tiene el botón **"Quitar filtros"** (antes solo decía que quitaras los filtros). Nueva función `clearFilters()`.
+
+### Cómo se verificó
+
+Chrome real en modo sin pantalla manejado por su protocolo de depuración desde un script de Node sin dependencias (fuera del repositorio), contra el servidor de desarrollo, con la cuenta demo `creator@feedma.test`. El arrastre usa los eventos de ratón reales de `vuedraggable` (`force-fallback`). Se creó **una** publicación de prueba ("A-P1 prueba - borrar") con la service role y se **borró al terminar**.
+
+### Verificado de verdad
+
+- **Antes del arreglo:** 10 de 11 comprobaciones OK; fallaba solo la de "sin red": la card desaparecía (confirmado en captura).
+- **Tras el arreglo:** 11/11 OK:
+  - arrastre real Idea → En producción cambia la card de columna y **persiste tras recargar**;
+  - arrastre sin red: la card se queda en su columna y, al recuperar la red y recargar, coincide con el servidor (el estado del servidor no cambió);
+  - filtro sin resultados muestra el estado vacío (escritorio);
+  - móvil (390 px): 5 columnas, la vacía "Programado" plegada, sin desbordamiento horizontal;
+  - móvil: el selector de fase mueve la card a una columna plegada;
+  - móvil: arrastrar hacia una columna plegada no pierde ni rompe la card (se queda donde estaba).
+- Nuevo botón "Quitar filtros": aparece y, al pulsarlo, vuelven las 4 cards y se vacía el buscador (sin errores de consola).
+- `npx vue-tsc --noEmit` limpio; `npm test -- --run` 74/74; `npm run build` completado.
+- Limpieza comprobada: 0 publicaciones de prueba restantes; el creador demo conserva sus 3 publicaciones con el mismo estado que antes.
+
+### Sin verificar
+
+- No hay test automatizado del componente (el proyecto no tiene pruebas de componentes Vue): la verificación fue en navegador.
+- El aviso de "saltarte la revisión del partner" al arrastrar no se probó (requiere una publicación ligada a una colaboración activa).
+- Arrastre con puntero táctil real, Safari/Firefox y tablet: no probados (solo Chromium con ratón, 1280 y 390 px).
+- P1-b: del resto de estados vacíos (sin publicaciones, Calendario) solo se revisaron los textos por código; no se ha encontrado nada que corregir sin ver el estado vacío real, que la cuenta demo no tiene.
+- P1-c y P1-d (textos de contexto, `aria-label`): no solicitados, sin hacer.
+
+### Efecto sobre datos reales
+
+Cada inicio de sesión de las pruebas generó una notificación "Has iniciado sesión" en la cuenta demo del creador (4 mías: una en la verificación de A-R10 y tres en las de A-P1). Hay 25 en las últimas 3 horas en total; no he borrado ninguna.
+
+---
+
 ## 2026-10-28 (Alex-8) — [Alex] Requisito A-R16: dashboard de analítica de YouTube incorporado al plan
 
 ### Qué se cambió
