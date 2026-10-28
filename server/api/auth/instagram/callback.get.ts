@@ -114,7 +114,7 @@ export default defineEventHandler(async (event) => {
 
     return sendRedirect(event, '/creator/socials?instagram=connected')
   } catch (err) {
-    console.error('[auth/instagram/callback] fallo al completar el OAuth:', err)
+    console.error('[auth/instagram/callback] fallo al completar el OAuth:', describeErrorForLog(err))
     return redirectWithError('No se ha podido completar la conexión con Instagram. Inténtalo otra vez.')
   }
 })

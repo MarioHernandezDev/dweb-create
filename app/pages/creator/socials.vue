@@ -26,6 +26,7 @@ const connectResult = oauthQueryValue === 'connected'
 const busyPlatform = ref<SocialAccount['platform'] | null>(null)
 const syncingPlatform = ref<SocialAccount['platform'] | null>(null)
 const syncError = ref('')
+const syncReconnect = ref<SocialAccount['platform'] | null>(null)
 const { confirm } = useConfirm()
 
 async function toggle(acc: SocialAccount) {
@@ -51,11 +52,16 @@ async function toggle(acc: SocialAccount) {
 async function syncAccount(acc: SocialAccount) {
   syncingPlatform.value = acc.platform
   syncError.value = ''
+  syncReconnect.value = null
   try {
     await sync(acc.platform)
   } catch (err) {
     console.error(`[creator/socials] fallo al sincronizar ${acc.platform}:`, err)
-    syncError.value = 'No se han podido actualizar los seguidores. Si la conexión es antigua, reconecta la cuenta.'
+    // Solo se pide reconectar si el servidor dice que el acceso está caducado,
+    // revocado o sin permiso; un fallo pasajero no debe pedirle nada al usuario.
+    const { code, message } = readSocialApiError(err)
+    if (code === 'reconnect_required') syncReconnect.value = acc.platform
+    syncError.value = message ?? 'No se han podido actualizar los seguidores. Inténtalo de nuevo en unos minutos.'
   } finally {
     syncingPlatform.value = null
   }
@@ -85,7 +91,10 @@ const connectedCount = computed(() => accounts.value.filter((a) => a.connected).
       {{ connectResult.reason }}
     </p>
 
-    <p v-if="syncError" class="mb-4 text-[0.8125rem] text-[var(--color-status-alert)] md:max-w-xl">{{ syncError }}</p>
+    <div v-if="syncError" class="mb-4 flex flex-wrap items-center gap-3 md:max-w-xl">
+      <p class="text-[0.8125rem] text-[var(--color-status-alert)]">{{ syncError }}</p>
+      <BaseButton v-if="syncReconnect" variant="primary" size="sm" @click="connect(syncReconnect)">Reconectar</BaseButton>
+    </div>
 
     <div class="flex flex-col gap-2.5 md:max-w-xl">
       <SocialAccountRow

@@ -67,7 +67,9 @@ export default defineEventHandler(async (event) => {
 
     return { followersCount: subscriberCount }
   } catch (err) {
-    console.error('[social/youtube-sync] fallo al sincronizar:', err)
-    throw err
+    // Errores ya controlados arriba (422, 500 al guardar): se devuelven tal cual.
+    if (isError(err)) throw err
+    console.error('[social/youtube-sync] fallo al sincronizar:', describeErrorForLog(err))
+    throw toSocialHttpError('youtube', classifyProviderError(err))
   }
 })

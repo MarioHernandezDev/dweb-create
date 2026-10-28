@@ -17,7 +17,7 @@ const meta = platformMeta[platform]
 
 useHead({ title: `Métricas · ${meta.label}` })
 
-const { accounts, ensureLoaded } = useMySocialAccounts()
+const { accounts, ensureLoaded, connect } = useMySocialAccounts()
 await ensureLoaded()
 
 const account = computed(() => accounts.value.find((a) => a.platform === platform)!)
@@ -53,16 +53,19 @@ interface YoutubeChannelStats {
   avgViewsPerVideo: number
   recentVideos: YoutubeRecentVideo[]
   evolution: YoutubeEvolutionDay[] | null
+  evolutionIssue: 'reconnect' | 'temporary' | null
 }
 
 const stats = ref<YoutubeChannelStats | null>(null)
 const loadingStats = ref(false)
 const statsError = ref('')
+const statsNeedsReconnect = ref(false)
 
 async function loadStats() {
   if (platform !== 'youtube' || state.value !== 'connected') return
   loadingStats.value = true
   statsError.value = ''
+  statsNeedsReconnect.value = false
   try {
     // `timeout`: son varias llamadas encadenadas a la API de Google — si
     // alguna se queda colgada (red, cuota, lo que sea), mejor un error
@@ -70,7 +73,11 @@ async function loadStats() {
     stats.value = await $fetch<YoutubeChannelStats>('/api/social/youtube-channel-stats', { timeout: 20_000 })
   } catch (err) {
     console.error('[creator/metrics/[platform]] fallo al cargar estadísticas de YouTube:', err)
-    statsError.value = 'No se han podido cargar las estadísticas. Si la conexión es antigua, reconecta la cuenta en Redes.'
+    // Mensaje distinto según el motivo real: solo se pide reconectar si el
+    // acceso está caducado, revocado o sin permiso; un fallo pasajero no.
+    const { code, message } = readSocialApiError(err)
+    statsNeedsReconnect.value = code === 'reconnect_required'
+    statsError.value = message ?? 'No se han podido cargar las estadísticas. Inténtalo de nuevo en unos minutos.'
   } finally {
     loadingStats.value = false
   }
@@ -154,7 +161,8 @@ const projectedSubscribers30d = computed(() => {
 
       <div v-else-if="statsError" class="flex flex-col gap-3">
         <p class="text-[0.875rem] text-[var(--color-status-alert)]">{{ statsError }}</p>
-        <BaseButton variant="secondary" size="sm" class="self-start" @click="loadStats">Reintentar</BaseButton>
+        <BaseButton v-if="statsNeedsReconnect" variant="primary" size="sm" class="self-start" @click="connect('youtube')">Reconectar YouTube</BaseButton>
+        <BaseButton v-else variant="secondary" size="sm" class="self-start" @click="loadStats">Reintentar</BaseButton>
       </div>
 
       <template v-else-if="stats">
@@ -189,15 +197,27 @@ const projectedSubscribers30d = computed(() => {
           <h2 class="font-display text-[1.25rem] text-[var(--color-text)] mb-3.5">Evolución (últimos 28 días)</h2>
 
           <BaseCard v-if="!stats.evolution" radius="lg" padding="lg" class="flex items-start gap-3">
-            <Icon name="ph:lock-key-fill" class="size-5 shrink-0 text-[var(--color-text-faint)] mt-0.5" />
-            <div>
-              <p class="text-[0.875rem] text-[var(--color-text)] mb-1">Reconecta tu cuenta para ver la evolución</p>
-              <p class="text-[0.8125rem] text-[var(--color-text-muted)] leading-relaxed mb-3">
-                Esta cuenta se conectó antes de añadir el permiso de analíticas — reconéctala en Redes para ver el
-                histórico de vistas y suscriptores de los últimos 28 días.
-              </p>
-              <BaseButton variant="secondary" size="sm" to="/creator/socials">Ir a Redes</BaseButton>
-            </div>
+            <template v-if="stats.evolutionIssue === 'temporary'">
+              <Icon name="ph:cloud-slash-fill" class="size-5 shrink-0 text-[var(--color-text-faint)] mt-0.5" />
+              <div>
+                <p class="text-[0.875rem] text-[var(--color-text)] mb-1">No se ha podido cargar la evolución ahora mismo</p>
+                <p class="text-[0.8125rem] text-[var(--color-text-muted)] leading-relaxed mb-3">
+                  Es un problema pasajero (límite o corte de YouTube): no hace falta reconectar. Vuelve a intentarlo en unos minutos.
+                </p>
+                <BaseButton variant="secondary" size="sm" @click="loadStats">Reintentar</BaseButton>
+              </div>
+            </template>
+            <template v-else>
+              <Icon name="ph:lock-key-fill" class="size-5 shrink-0 text-[var(--color-text-faint)] mt-0.5" />
+              <div>
+                <p class="text-[0.875rem] text-[var(--color-text)] mb-1">Reconecta tu cuenta para ver la evolución</p>
+                <p class="text-[0.8125rem] text-[var(--color-text-muted)] leading-relaxed mb-3">
+                  Falta el permiso de analíticas o el acceso a YouTube se ha revocado. Reconecta la cuenta para ver el
+                  histórico de vistas y suscriptores de los últimos 28 días.
+                </p>
+                <BaseButton variant="primary" size="sm" @click="connect('youtube')">Reconectar YouTube</BaseButton>
+              </div>
+            </template>
           </BaseCard>
 
           <template v-else>

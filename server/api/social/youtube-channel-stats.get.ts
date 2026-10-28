@@ -33,6 +33,12 @@ export interface YoutubeChannelStats {
    * significa que hay que reconectar la cuenta en Redes para verlo.
    */
   evolution: { date: string; views: number; subscribersGained: number; subscribersLost: number }[] | null
+  /**
+   * Por qué falta `evolution`: `reconnect` = hay que reconectar (falta el
+   * permiso o el acceso se revocó); `temporary` = fallo pasajero (cuota,
+   * red) y NO hace falta reconectar; `null` = hay histórico.
+   */
+  evolutionIssue: 'reconnect' | 'temporary' | null
 }
 
 /** "PT4M13S" -> 253 (segundos). YouTube siempre devuelve la duración en este formato ISO 8601. */
@@ -119,17 +125,20 @@ export default defineEventHandler(async (event) => {
     // "hasta hoy" devolvería días vacíos al final. `endDate` = hace 2 días,
     // 28 días hacia atrás desde ahí.
     let evolution: YoutubeChannelStats['evolution'] = null
+    let evolutionIssue: YoutubeChannelStats['evolutionIssue'] = null
     try {
       const end = new Date(Date.now() - 2 * 86_400_000)
       const start = new Date(end.getTime() - 27 * 86_400_000)
       evolution = await fetchYoutubeAnalytics(refreshed.access_token, isoDate(start), isoDate(end))
     } catch (err) {
-      // No es un fallo del endpoint entero — lo más probable es que el
-      // token no tenga el permiso `yt-analytics.readonly` todavía (cuentas
-      // conectadas antes de añadirlo). El cliente lo trata como "reconecta
-      // para ver la evolución", no como un error de verdad.
-      console.error('[social/youtube-channel-stats] sin histórico (probablemente falta reconectar con el nuevo permiso):', err)
+      // No es un fallo del endpoint entero. Se distingue por qué falta el
+      // histórico: sin el permiso `yt-analytics.readonly` (o con el acceso
+      // revocado) hay que reconectar; un corte de red o una cuota agotada
+      // es pasajero y NO debe pedirle nada al usuario.
+      const classified = classifyProviderError(err)
+      console.error('[social/youtube-channel-stats] sin histórico:', describeErrorForLog(err))
       evolution = null
+      evolutionIssue = classified.reconnect ? 'reconnect' : 'temporary'
     }
 
     const stats: YoutubeChannelStats = {
@@ -141,7 +150,8 @@ export default defineEventHandler(async (event) => {
       videoCount,
       avgViewsPerVideo: videoCount > 0 ? Math.round(viewCount / videoCount) : 0,
       recentVideos,
-      evolution
+      evolution,
+      evolutionIssue
     }
 
     // Aprovecha el token ya refrescado para dejar la fila al día — no hace
@@ -159,7 +169,8 @@ export default defineEventHandler(async (event) => {
 
     return stats
   } catch (err) {
-    console.error('[social/youtube-channel-stats] fallo al leer las estadísticas:', err)
-    throw err
+    if (isError(err)) throw err
+    console.error('[social/youtube-channel-stats] fallo al leer las estadísticas:', describeErrorForLog(err))
+    throw toSocialHttpError('youtube', classifyProviderError(err))
   }
 })

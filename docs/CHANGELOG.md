@@ -4,6 +4,41 @@ Registro de qué se hizo, por qué, y qué queda pendiente de verificar — pens
 
 ---
 
+## 2026-10-28 (Alex-11) — [Alex] A-R2a: errores de token clasificados, "Reconectar" solo cuando hace falta y logs sin secretos
+
+### Qué se cambió
+
+Primera mitad de A-R2 (la que **no necesita cambios en Supabase**). Hasta ahora cualquier fallo de la API de Instagram o YouTube acababa en un mensaje genérico ("si la conexión es antigua, reconecta"), igual para un token revocado que para un corte de red.
+
+- `server/utils/social-errors.ts` (nuevo): `classifyProviderError` distingue **caducado / revocado / faltan permisos / el usuario debe actuar en el proveedor / temporal / desconocido**. Códigos de Meta contrastados con su documentación oficial de errores (190 y subcódigos 458/460/463/467, 459/464, 10 y 200–299, 4/17/32/613, 1/2); Google: `invalid_grant`, motivos de permisos y de cuota. `toSocialHttpError` devuelve al navegador un mensaje seguro y un `data.code` estable (`reconnect_required`, `provider_temporarily_unavailable`…).
+- Endpoints `instagram-sync`, `youtube-sync` y `youtube-channel-stats` usan el clasificador. `youtube-channel-stats` añade `evolutionIssue` (`reconnect` / `temporary` / `null`) para no confundir "falta permiso" con "fallo pasajero".
+- Interfaz (`creator/socials.vue`, `creator/metrics/[platform].vue`, `app/utils/social-api-error.ts`): el botón **"Reconectar"** aparece solo si el servidor dice que hace falta; un fallo temporal dice "no hace falta reconectar, inténtalo más tarde".
+- **Fallo de seguridad corregido:** los `console.error(err)` de los dos endpoints de sync, `youtube-channel-stats` y los dos callbacks de OAuth volcaban el error completo; un `FetchError` incluye la URL con `access_token` y, en Instagram, `client_secret` en la query, que acababan en los logs del servidor. Ahora se registra un resumen saneado (`describeErrorForLog`/`redactSecrets`).
+
+### Verificado de verdad
+
+- Tests unitarios nuevos: `social-errors.spec.ts` (44) y `social-api-error.spec.ts` (13). Suite completa: **131/131**. `npx vue-tsc --noEmit` limpio. `npm run build` completado.
+- **Prueba de principio a fin con respuestas reales de los proveedores, sin cuentas reales:** con la cuenta demo del creador y filas con **tokens falsos** (creadas y borradas después), Instagram respondió con su error real 190 y Google con `invalid_grant`:
+  - `POST /api/social/instagram-sync` → 401 `reconnect_required` (`expired/meta_190`);
+  - `POST /api/social/youtube-sync` → 401 `reconnect_required` (`revoked/google_invalid_grant`);
+  - `GET /api/social/youtube-channel-stats` → 401 `reconnect_required`;
+  - ningún mensaje contiene el token.
+- En navegador real (Chrome por CDP, 1280 px): Redes muestra "El acceso a Instagram ha caducado o se ha revocado. Reconecta la cuenta." con botón **Reconectar**; Métricas de YouTube muestra el aviso y **Reconectar YouTube**, ya sin el texto "si la conexión es antigua". Capturas revisadas.
+- De paso: la pantalla de Redes cargó las filas con la migración de A-R11 aplicada (lectura por columnas permitidas).
+- Limpieza comprobada: 0 filas de prueba y 16 filas en total, las mismas que antes.
+
+### Sin verificar
+
+- **Estado persistente:** nada de esto se guarda todavía (no hay columnas `status`/`last_error_code`); el aviso aparece al intentar sincronizar o abrir Métricas, no antes. Es la segunda mitad de A-R2, que **depende de aprobar la migración M1** de la propuesta de esquema.
+- **Renovación automática del token de Instagram (~60 días):** sin implementar; el diseño está en `PROPUESTA_A-R5_SYNC_ENDPOINT.md` y necesita la app de Meta para probarse.
+- Casos reales no ejercitados: faltan permisos de Google (403), cuota agotada, corte de red y errores 459/464 de Meta: solo cubiertos por tests unitarios con errores simulados.
+- Subcódigo exacto de Instagram: el token falso devolvió 190 **sin subcódigo** (`meta_190`), clasificado como caducado; no se puede distinguir caducado de revocado en ese caso.
+- No se pulsó "Reconectar" (inicia OAuth). Safari/Firefox/táctil: no probados.
+- Mi servidor de desarrollo se arrancó y se detuvo durante esta prueba; el que tenía Alex en el puerto 3000 se había caído antes (probablemente tras un `npm run build`, que comparte carpeta con el modo desarrollo).
+- 2 notificaciones de login más en la cuenta demo del creador (una por cada sesión de prueba con login); sin limpiar.
+
+---
+
 ## 2026-10-28 (Alex-10) — [Alex] A-R11 aplicada y verificada
 
 ### Qué se cambió
