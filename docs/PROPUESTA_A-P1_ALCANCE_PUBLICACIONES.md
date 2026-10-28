@@ -34,11 +34,12 @@
 
 ## 4. Necesidades y riesgos
 
-- Verificar P1-a/P1-b exige un navegador. En la entrada 51 se instaló Playwright temporalmente como dependencia de desarrollo y se retiró después. Haría lo mismo; **necesito tu OK** porque toca `package.json` temporalmente.
+- **Herramienta de navegador (revisado 2026-10-28):** no hay herramienta de navegador integrada en esta sesión ni `playwright`/`puppeteer` en `node_modules`. Sí hay Chrome y Edge instalados, Node 22 con `WebSocket` global y un servidor de desarrollo en `localhost:3000`. **No hace falta instalar ninguna dependencia:** se puede manejar Chrome por su protocolo de depuración (CDP) con un script de Node sin paquetes, guardado fuera del repositorio. Si resultara demasiado frágil para el arrastre, la alternativa sería `playwright-core` como dependencia de desarrollo temporal (como en la entrada 51), y solo entonces se pediría autorización.
+- **Efecto sobre datos reales:** iniciar sesión con una cuenta demo genera una notificación "Has iniciado sesión" (Mario ya limpió ~25 de ellas). Es un residuo mínimo pero real; las pruebas de solo lectura (A-R10) lo producirían igualmente.
 - Las pruebas usarían las cuentas demo y crearían publicaciones de prueba que se borrarían al terminar. Comparten datos con Mario (M-F1 también las usa): avisarle.
 - Sin riesgo para Supabase: no se prevén migraciones, RLS ni RPC. `PhaseBoard.vue` sincroniza `board` con `posts` a mano alrededor de `vuedraggable`: cualquier cambio exige probar arrastrando de verdad.
 
 ## 5. Qué necesito de ti
 
 - [ ] ¿Qué mejoras apruebas (P1-a … P1-d)?
-- [ ] ¿OK a instalar Playwright temporalmente para verificar en navegador?
+- [ ] ¿OK a que el login de las pruebas genere esas notificaciones en las cuentas demo?

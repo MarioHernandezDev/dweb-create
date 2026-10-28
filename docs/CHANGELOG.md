@@ -4,6 +4,31 @@ Registro de qué se hizo, por qué, y qué queda pendiente de verificar — pens
 
 ---
 
+## 2026-10-28 (Alex-5) — [Alex] A-R9 auditada, A-R11 consolidada con pruebas preparadas y datos por proveedor
+
+### Qué se cambió
+
+- `docs/AUDITORIA_A-R9_PREDICCION.md` (nuevo): la predicción es heurística de forma + nota de un LLM (solo si hay clave y responde); **no usa histórico real** ni lee `metrics`. Sin cambios de comportamiento.
+- `docs/PROPUESTA_A-R11_SEGURIDAD_SOCIAL_ACCOUNTS.md` (reescrito, versión 2): problema, solución, SQL definitivo, rollback, consulta de solo lectura con tabla de interpretación, riesgos, procedimiento y aviso para Mario. Nada aplicado.
+- `tests/integration/social-accounts-rls.spec.ts` (nuevo, 16 tests): preparado y **no ejecutado contra la BD**. Requiere `RUN_SOCIAL_ACCOUNTS_RLS=1`; solo toca filas propias (handle `a-r11-test`, plataformas linkedin/x) y aborta si el creador demo ya tiene filas de esas plataformas.
+- `docs/PROPUESTA_ESQUEMA_A-R2_A-R7_A-R8.md`: nueva sección 2b, métricas de cuenta frente a métricas de publicación y qué ofrece cada proveedor (contrastado con la documentación oficial de Meta y Google).
+- `docs/PROPUESTA_A-P1_ALCANCE_PUBLICACIONES.md`: sección de herramientas de navegador actualizada (no hace falta instalar nada).
+
+### Verificado de verdad
+
+- `npx vue-tsc --noEmit`: limpio. `npm test -- --run`: 74/74 (tras el merge de `main`).
+- `npx vitest run --config vitest.integration.config.ts tests/integration/social-accounts-rls.spec.ts` **sin** la variable de activación: 16 saltados, 0 ejecutados (comprobado que no escribe en la BD).
+- Documentación de Meta (media insights) y de Google (YouTube Analytics, informes de canal) consultada el 2026-10-28.
+
+### Sin verificar / pendiente
+
+- Las pruebas de integración de A-R11 no se han ejecutado, ni antes ni después de la migración; la migración no está escrita en `supabase/migrations/` ni aplicada.
+- Los privilegios reales de `social_accounts` siguen sin comprobarse (consulta pendiente de ejecutar por Alex).
+- Nada de lo documentado sobre Instagram se ha probado con una cuenta real (bloqueado). YouTube: latencia de datos sin confirmar.
+- A-R10 sigue sin verlo en navegador.
+
+---
+
 ## 2026-10-28 (Alex-4) — [Alex] Propuestas de diseño (A-R11 ampliada, esquema A-R2/R7/R8, endpoint A-R5, alcance A-P1) y revisión de configuración OAuth
 
 ### Qué se cambió

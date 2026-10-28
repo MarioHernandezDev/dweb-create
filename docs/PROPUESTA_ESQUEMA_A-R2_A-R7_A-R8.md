@@ -36,6 +36,42 @@ El resto del orden que confirmaste no cambia.
 4. **`posts_update_self` deja al creador modificar cualquier columna de `posts`.** Si el vínculo externo viviera en columnas de `posts`, el creador podría escribir ids ajenos o falsos. Además `posts` es de las tablas más compartidas con Mario.
 5. **`metrics` y `ml_predictions` no tienen policy de escritura para el navegador (correcto)**; solo `metrics_select_scoped` (creador dueño, o partner de la colaboración del post). Eso ya cubre la lectura que necesitaría A-R15.
 
+## 2b. Qué datos se pueden obtener realmente de cada proveedor
+
+Contrastado con la documentación oficial de Meta (media insights) y de Google (YouTube Analytics, channel reports) el 2026-10-28. **Nada de esto se ha probado contra una cuenta real**: Instagram está bloqueado (sin app de Meta) y YouTube no se ha ejecutado en esta sesión. El pipeline obliga a confirmar nombres de métricas con una cuenta real antes de darlos por buenos.
+
+### A nivel de cuenta (A-R8a)
+
+| Dato | Instagram | YouTube |
+|---|---|---|
+| Seguidores / suscriptores | `followers_count` en `/me` (ya se lee) | `statistics.subscriberCount` (Data API v3, ya se lee). **Puede estar oculto** por el canal (`hiddenSubscriberCount`) → no se guarda un 0 falso |
+| Visualizaciones totales | No como dato de cuenta en el flujo actual | `statistics.viewCount`, `videoCount` (ya se leen) |
+| Histórico diario | No se pide hoy; hay que construirlo con snapshots propios | **Sí, nativo:** Analytics API `views`, `subscribersGained`, `subscribersLost` por día (`dimensions=day`, ya implementado en `youtube.ts`) |
+
+Consecuencia: para Instagram el histórico de seguidores solo existirá **desde que empecemos a guardar snapshots**; para YouTube se puede reconstruir hacia atrás. Por eso la tabla `social_account_snapshots` es necesaria.
+
+### A nivel de publicación (A-R8b, depende de A-R7)
+
+| Métrica | Instagram (Instagram Login, `instagram_business_manage_insights`) | YouTube |
+|---|---|---|
+| Vistas | `views` (marcada "en desarrollo"); `impressions` está **obsoleta** para contenido posterior al 2-jul-2024 | `views` (Data API `videos.statistics.viewCount`, o Analytics por vídeo) |
+| Alcance | `reach` (estimado); disponible en feed, reels y stories | No hay "alcance" como tal |
+| Me gusta | `likes` (feed y reels; **no** en stories) | `likeCount` (puede estar oculto) / Analytics `likes` |
+| Comentarios | `comments` (feed y reels) | `commentCount` / Analytics `comments` |
+| Compartidos | `shares` | Analytics `shares` (no está en `videos.list`) |
+| Guardados | `saved` (feed y reels) | No existe |
+| Interacciones totales | `total_interactions` ("en desarrollo") | — |
+| Tiempo de visionado | `ig_reels_avg_watch_time` solo en reels | Analytics `estimatedMinutesWatched` |
+
+Condiciones que el diseño debe respetar:
+- **Carruseles:** Instagram **no ofrece insights** para el contenido de un álbum.
+- **Stories:** los insights solo están disponibles 24 h y con menos de 5 espectadores devuelven error `10`. En esta fase **no se promete métrica de stories**.
+- **Retraso y datos ausentes:** los datos pueden tardar hasta 48 h y, si faltan, Meta devuelve un conjunto vacío, **no un 0**. Por eso `metrics` necesita `unavailable_metrics` y columnas nulables: guardar 0 sería inventar un dato.
+- **Retención:** Meta conserva las métricas hasta 2 años.
+- **Tipos de cuenta:** Instagram requiere cuenta profesional; no se indica mínimo de seguidores.
+- **Webhook de insights:** no está soportado con Instagram Login, así que la sincronización será por consulta (polling), no por eventos.
+- **YouTube:** el ámbito `yt-analytics.readonly` (ya solicitado) cubre las métricas básicas y permite filtrar por vídeo con `filters=video==ID`. La documentación consultada no indicaba latencia de los datos: **sin verificar**.
+
 ## 3. Propuesta
 
 ### M1. `social_accounts` (A-R2): columnas nuevas, todas nullable o con valor por defecto
