@@ -4,6 +4,32 @@ Registro de qué se hizo, por qué, y qué queda pendiente de verificar — pens
 
 ---
 
+## 2026-10-28 (Alex-12) — [Alex] M1 (A-R2): migración de columnas de estado escrita, pendiente de aplicar
+
+### Qué se cambió
+
+- `supabase/migrations/20261028130000_social_accounts_status_columns.sql` (**nueva, NO aplicada**): solo **añade** a `social_accounts` las columnas `status` (connected / expired / revoked / missing_permissions, por defecto `connected`), `last_error_code`, `last_error_at`, `last_synced_at`, `last_sync_attempt_at`, `sync_lock_until`, `external_account_id` e `is_verified` (generada: hay token). Índice único parcial `(platform, external_account_id)` para que la misma cuenta del proveedor no esté en dos creadores. Rollback en su cabecera.
+- Permisos: solo se concede lectura al navegador de `status`, `last_synced_at`, `last_error_code` e `is_verified`. `last_error_at`, `last_sync_attempt_at`, `sync_lock_until` y `external_account_id` **no** (se mantiene la lista blanca de A-R11). No se toca ninguna policy ni se concede insert/update.
+- `tests/integration/social-accounts-status-columns.spec.ts` (nuevo, 23 tests): valores por defecto, columna generada, restricción de `status`, unicidad de la cuenta del proveedor, qué columnas puede y no puede leer el dueño, aislamiento (otro creador, partner) y que el navegador no puede escribir el estado.
+
+### Autorización
+
+Alex aprobó la migración M1 ("adelante"). Se escribe, se prueba y **Alex la aplica** en el SQL Editor (esta máquina no puede conectar a la base de datos). No se ha aplicado.
+
+### Verificado de verdad
+
+- `npx vue-tsc --noEmit`: limpio.
+- La nueva prueba de integración **sin** la variable de activación: 23 saltados, 0 ejecutados (no escribe en la BD).
+- Comprobado por lectura (`git grep`) que ningún código actual usa esos nombres de columna y que las escrituras existentes indican sus columnas de forma explícita, así que la migración no rompe nada. La rama de Mario no tiene migraciones nuevas.
+
+### Sin verificar
+
+- **El SQL no se ha ejecutado contra Postgres** (no hay acceso desde aquí): se valida al aplicarla y con las 23 pruebas.
+- Tests de integración: ni antes ni después de aplicar.
+- Nada de código usa todavía las columnas nuevas: callbacks (guardar `external_account_id`, `status`), sync (`last_synced_at`, errores) y pantallas (estado persistente, `is_verified`) se implementan **después** de aplicar la migración.
+
+---
+
 ## 2026-10-28 (Alex-11) — [Alex] A-R2a: errores de token clasificados, "Reconectar" solo cuando hace falta y logs sin secretos
 
 ### Qué se cambió

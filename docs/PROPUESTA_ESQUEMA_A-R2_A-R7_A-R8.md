@@ -1,6 +1,7 @@
 # Propuesta conjunta de esquema: A-R2 (estado de cuentas), A-R7 (vínculo publicación↔contenido externo) y A-R8 (métricas)
 
-> Estado: **PROPUESTA de diseño, ninguna migración escrita ni aplicada.** Todo es aditivo (regla 1 de `TRABAJO_ALEX.md` §11). Zona protegida (esquema + RLS + Supabase compartido): requiere tu aprobación explícita sobre el SQL final y aviso previo a Mario.
+> **Actualización 2026-10-28:** M1 aprobada por Alex; el SQL definitivo está en `supabase/migrations/20261028130000_social_accounts_status_columns.sql` (pendiente de aplicar por Alex). M2 y M3 siguen siendo propuesta.
+> Estado del resto: **PROPUESTA de diseño, ninguna migración escrita ni aplicada.** Todo es aditivo (regla 1 de `TRABAJO_ALEX.md` §11). Zona protegida (esquema + RLS + Supabase compartido): requiere tu aprobación explícita sobre el SQL final y aviso previo a Mario.
 > Fecha: 2026-10-28. Basada en leer el esquema inicial, las migraciones de RLS y el código de ambas ramas. **Nada comprobado contra la BD real**, salvo los recuentos de A-R10.
 
 ## 1. Cómo se relacionan las tres piezas
