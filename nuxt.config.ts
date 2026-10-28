@@ -97,6 +97,10 @@ export default defineNuxtConfig({
     // docs/9-INSTAGRAM-OAUTH-SETUP.md para cómo generarla. Compartida entre
     // todas las plataformas — no una por red.
     socialTokenEncryptionKey: process.env.SOCIAL_TOKEN_ENCRYPTION_KEY,
+    // Secreto compartido con quien lance la sincronización programada
+    // (POST /api/social/sync-all, Authorization: Bearer ...). Sin él, ese
+    // endpoint responde 503 y no hace nada. Ver docs/PROPUESTA_A-R5_SYNC_ENDPOINT.md.
+    syncCronSecret: process.env.SYNC_CRON_SECRET,
     // Panel de admin (/admin) — contraseña única compartida por el equipo,
     // sin cuenta de Supabase de por medio a propósito (ver
     // server/utils/admin-session.ts). `adminSessionSecret` solo cifra la

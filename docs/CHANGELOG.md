@@ -4,6 +4,42 @@ Registro de qué se hizo, por qué, y qué queda pendiente de verificar — pens
 
 ---
 
+## 2026-10-28 (Alex-15) — [Alex] A-R5: endpoint de sincronización programada (sin scheduler) y renovación del token de Instagram
+
+### Qué se cambió
+
+**No se ha configurado ni activado ningún scheduler** (Q3 sigue pendiente): el endpoint existe pero nadie lo llama.
+
+- `server/api/social/sync-all.post.ts` (nuevo): `POST /api/social/sync-all`, independiente del scheduler.
+  - Autenticación: `Authorization: Bearer <SYNC_CRON_SECRET>`, comparación en tiempo constante. **Falla cerrado**: sin secreto configurado responde 503 y no hace nada. Intentos con secreto incorrecto: 401, y a partir de 5 en 10 min por IP, 429.
+  - Límite de uso: una ejecución por minuto (en memoria: vale para una sola instancia; no es la defensa principal).
+  - Ejecuciones simultáneas: cerrojo por cuenta en la BD (`sync_lock_until`, atómico, caduca solo a los 5 min).
+  - Idempotencia: solo cuentas verificadas en `connected`, no sincronizadas hace menos de 1 h ni intentadas hace menos de 15 min; lote de 25, las más antiguas primero, 3 a la vez.
+  - Respuesta y log: solo recuentos y códigos (sin ids de cuenta ni datos personales).
+- `server/utils/sync-batch.ts` (lógica pura), `sync-lease.ts` (cerrojo), `social-sync.ts` (sincronizar UNA cuenta, **compartida** con los botones manuales: no hay dos sistemas).
+- **Renovación del token de Instagram** (parte pendiente de A-R2): al sincronizar se renueva si le quedan 14 días o menos y tiene más de 24 h, con `GET https://graph.instagram.com/refresh_access_token?grant_type=ig_refresh_token` (confirmado en la documentación de Meta: token de 60 días, renovable si tiene más de 24 h y no ha caducado). El token nuevo se guarda ANTES de seguir. Con la fecha de caducidad ya superada no se llama a Meta: se registra como caducado.
+- `instagram-sync` y `youtube-sync` ahora usan esa lógica compartida y además llevan tiempo máximo (8 s) en las llamadas a Meta.
+- `nuxt.config.ts` y `.env.example`: solo se añaden líneas (`syncCronSecret` / `SYNC_CRON_SECRET`, **sin valor**).
+
+### Verificado de verdad
+
+- Unitarios nuevos: `sync-batch.spec.ts` (36: secreto válido/inválido/ausente y fallo cerrado, límites de fechas, decisión de renovar, resumen sin datos personales, concurrencia máxima). `npx vue-tsc --noEmit` limpio. Suite completa (ver abajo).
+- **Integración contra el Supabase real** (`social-sync-lease.spec.ts`, 6/6): la primera ejecución toma el cerrojo y la segunda no; con **8 intentos simultáneos solo uno lo gana**; se puede liberar y volver a tomar; un cerrojo caducado se puede tomar; tomarlo no cambia el estado de la cuenta. Limpieza: 0 filas de prueba, 16 en total.
+- **Servidor de Alex, sin secreto configurado:** el endpoint responde 503 a una llamada sin cabecera y a otra con una cabecera inventada (falla cerrado).
+- **Refactor de los botones manuales verificado en navegador** (Chrome por CDP, tokens falsos con respuestas reales de Meta y Google, filas borradas después): siguen devolviendo "Acceso caducado o revocado" con Reconectar y guardando `expired`/`revoked` en la BD. 7/7 comprobaciones.
+- Comprobado (solo lectura) que el canal real de YouTube de Alex NO entraba en el lote de las pruebas (sincronizado hacía 6 min).
+
+### Sin verificar
+
+- **El endpoint con secreto correcto, de principio a fin** (autorización, lote, estado de las cuentas, liberación del cerrojo, 429 por exceso de llamadas): no se ha ejecutado. Para probarlo hace falta `SYNC_CRON_SECRET` en el `.env` (lo pone Alex) y que el servidor de desarrollo lo recoja. No arranqué un segundo servidor porque comparte carpeta con el de Alex.
+- **Renovación real del token de Instagram:** necesita la app de Meta; solo hay tests de la decisión (cuándo renovar), no de la llamada.
+- Detalle que Meta no documenta en lo consultado: si las 24 h mínimas cuentan desde la emisión o desde la última renovación (con la ventana de 14 días da igual).
+- Sin scheduler, sin reintentos con espera creciente (solo el espaciado de 15 min) y sin alertas: pendientes de Q3.
+- `npm run build` NO ejecutado: el servidor de desarrollo de Alex está en marcha y el build lo tumba.
+- Límite de uso sin la versión de Mario (`enforceRateLimit`, en su rama): se usa el `checkRateLimit` existente.
+
+---
+
 ## 2026-10-28 (Alex-14) — [Alex] A-R3: desconexión completa (revoca el acceso en Google antes de borrar)
 
 ### Qué se cambió

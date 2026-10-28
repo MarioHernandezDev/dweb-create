@@ -1,6 +1,7 @@
 # Propuesta A-R5 (Q3): endpoint de sincronización independiente del scheduler
 
-> Estado: **PROPUESTA de diseño, nada implementado ni activado.** No se añade ningún cron ni workflow programado hasta decidir el despliegue. Depende de la columnas de M1 (`PROPUESTA_ESQUEMA_A-R2_A-R7_A-R8.md`), que requieren tu aprobación.
+> **Actualización 2026-10-28:** endpoint implementado (`server/api/social/sync-all.post.ts`), SIN scheduler. Ver CHANGELOG Alex-15 para lo verificado y lo pendiente.
+> Estado original: **PROPUESTA de diseño, nada implementado ni activado.** No se añade ningún cron ni workflow programado hasta decidir el despliegue. Depende de la columnas de M1 (`PROPUESTA_ESQUEMA_A-R2_A-R7_A-R8.md`), que requieren tu aprobación.
 > Fecha: 2026-10-28.
 
 ## 1. Idea

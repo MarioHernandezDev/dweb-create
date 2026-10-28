@@ -2,18 +2,17 @@ import { serverSupabaseServiceRole, serverSupabaseUser } from '#supabase/server'
 
 interface SocialAccountRow {
   id: string
-  refresh_token_encrypted: string
+  refresh_token_encrypted: string | null
 }
 
 /**
  * POST /api/social/youtube-sync — refresco manual del número de
  * suscriptores (botón "Actualizar" en Redes), mismo patrón que
  * instagram-sync.post.ts. El refresco de token y las llamadas a la API
- * viven en server/utils/youtube.ts, compartidas con
- * youtube-channel-stats.get.ts (el detalle por red en Métricas).
- *
- * Sin cron todavía que lo haga solo — ver el mismo hueco documentado en
- * docs/9-INSTAGRAM-OAUTH-SETUP.md §5 para Instagram.
+ * viven en server/utils/youtube.ts y la lógica de una cuenta en
+ * server/utils/social-sync.ts, compartida con la sincronización programada
+ * (`sync-all.post.ts`) y con youtube-channel-stats.get.ts (el detalle por
+ * red en Métricas).
  */
 export default defineEventHandler(async (event) => {
   const user = await serverSupabaseUser(event)
@@ -35,40 +34,17 @@ export default defineEventHandler(async (event) => {
     .eq('creator_id', creator.id)
     .eq('platform', 'youtube')
     .maybeSingle<SocialAccountRow>()
-  if (!account) throw createError({ statusCode: 404, statusMessage: 'No tienes YouTube conectado todavía.' })
-
-  const refreshToken = decryptToken(account.refresh_token_encrypted, config.socialTokenEncryptionKey)
+  if (!account?.refresh_token_encrypted) throw createError({ statusCode: 404, statusMessage: 'No tienes YouTube conectado todavía.' })
 
   try {
-    const refreshed = await refreshYoutubeAccessToken(refreshToken, config.youtubeClientId, config.youtubeClientSecret)
-    const channels = await fetchYoutubeChannel(refreshed.access_token)
-    const stats = channels.items?.[0]?.statistics
-    if (!stats || stats.hiddenSubscriberCount) {
-      throw createError({
-        statusCode: 422,
-        statusMessage: 'YouTube no ha devuelto el número de suscriptores — puede que el canal los tenga ocultos en su configuración.'
-      })
-    }
-
-    const subscriberCount = Number(stats.subscriberCount ?? 'NaN')
-    if (!Number.isFinite(subscriberCount)) {
-      throw createError({ statusCode: 422, statusMessage: 'YouTube ha devuelto un número de suscriptores inválido.' })
-    }
-
-    const { error } = await client
-      .from('social_accounts')
-      .update({
-        followers_count: subscriberCount,
-        access_token_encrypted: encryptToken(refreshed.access_token, config.socialTokenEncryptionKey),
-        token_expires_at: new Date(Date.now() + refreshed.expires_in * 1000).toISOString(),
-        ...successPatch()
-      } as never)
-      .eq('id', account.id)
-    if (error) throw createError({ statusCode: 500, statusMessage: error.message })
-
-    return { followersCount: subscriberCount }
+    const result = await syncYoutubeAccount(
+      client,
+      { id: account.id, refresh_token_encrypted: account.refresh_token_encrypted },
+      { socialTokenEncryptionKey: config.socialTokenEncryptionKey, youtubeClientId: config.youtubeClientId, youtubeClientSecret: config.youtubeClientSecret }
+    )
+    return { followersCount: result.followersCount }
   } catch (err) {
-    // Errores ya controlados arriba (422, 500 al guardar): se devuelven tal cual.
+    // Errores ya controlados (422, 500 al guardar): se devuelven tal cual.
     if (isError(err)) throw err
     const classified = classifyProviderError(err)
     console.error('[social/youtube-sync] fallo al sincronizar:', describeErrorForLog(err))
