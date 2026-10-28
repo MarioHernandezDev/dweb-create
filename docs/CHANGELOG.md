@@ -4,6 +4,40 @@ Registro de qué se hizo, por qué, y qué queda pendiente de verificar — pens
 
 ---
 
+## 2026-10-28 (Alex-4) — [Alex] Propuestas de diseño (A-R11 ampliada, esquema A-R2/R7/R8, endpoint A-R5, alcance A-P1) y revisión de configuración OAuth
+
+### Qué se cambió
+
+Solo documentación nueva en `docs/`; **ningún código, migración, RLS ni RPC**:
+- `PROPUESTA_A-R11_SEGURIDAD_SOCIAL_ACCOUNTS.md`: cierra la falsificación de cuentas "verificadas" y de seguidores, y la lectura de tokens desde el navegador. SQL en borrador dentro del documento (no en `supabase/migrations/`), con rollback y plan de pruebas.
+- `PROPUESTA_ESQUEMA_A-R2_A-R7_A-R8.md`: estado de cuentas, vínculo publicación↔contenido externo y métricas. Propone partir A-R8 (cuenta primero, publicación después de A-R7) porque las métricas por publicación necesitan el vínculo.
+- `PROPUESTA_A-R5_SYNC_ENDPOINT.md`: endpoint independiente del scheduler (secreto, límite de uso, cerrojo en BD). No activa nada.
+- `PROPUESTA_A-P1_ALCANCE_PUBLICACIONES.md`: alcance reconstruido desde el CHANGELOG y el código.
+
+### Hallazgos nuevos (de leer el código)
+
+- Los callbacks de OAuth descartan el id de la cuenta en el proveedor: sin él, A-R4 no puede localizar la fila cuando Meta desautoriza y no se puede impedir que una misma cuenta de Instagram se conecte a dos creadores.
+- `metrics` guarda ceros por defecto: no distingue "0" de "no disponible".
+- La rama de Mario conserva el `connect()` antiguo con `insert` desde el navegador; fallaría si se aplica A-R11 antes de que integre `main`.
+
+### Configuración OAuth (Q5), comprobada sin mostrar valores
+
+- Instagram: `INSTAGRAM_APP_ID` e `INSTAGRAM_APP_SECRET` **vacías/ausentes**; `INSTAGRAM_REDIRECT_URI` definida (localhost:3000). El flujo de Instagram no puede ejecutarse hoy → **bloqueado** (hace falta cuenta de Facebook, app de Meta con el producto Instagram, cuenta profesional de Instagram y rol de tester).
+- YouTube: client id, secret y redirect (localhost:3000) **definidos**; `SOCIAL_TOKEN_ENCRYPTION_KEY` definida y decodifica a 32 bytes. **No verificable desde aquí:** que las credenciales sean válidas, que las dos APIs (Data v3 y Analytics) estén habilitadas, el estado de publicación de la app de Google (en modo Prueba solo conectan los usuarios de prueba, y Google puede caducar los refresh tokens en ese modo: confirmar en su documentación) y la pantalla de consentimiento. Requiere acceso a Google Cloud Console y una cuenta con canal de YouTube.
+- Una consulta de solo lectura confirmó 0 filas de Instagram con token en la BD compartida.
+
+### Verificado de verdad
+
+- Lectura de código y migraciones en ambas ramas (`git grep`); comprobación de presencia de variables de entorno.
+- No se ha ejecutado ninguna prueba nueva (no hay código nuevo). Los privilegios reales de `social_accounts` en Supabase **no se han podido comprobar**; la propuesta A-R11 incluye la consulta de solo lectura para hacerlo.
+
+### Sin verificar
+
+- Todo el SQL de las propuestas: ninguno probado contra Postgres.
+- Un detalle de PostgREST/Postgres a confirmar antes de aplicar A-R11: que `delete … where creator_id = …` siga funcionando con permiso de lectura solo por columnas.
+
+---
+
 ## 2026-10-28 (Alex-3) — [Alex] A-R10: se retiran las conexiones falsas de TikTok, X, Facebook y LinkedIn
 
 ### Qué se cambió
