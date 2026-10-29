@@ -1,3 +1,5 @@
+import type { AnalyticsReport } from './youtube-period'
+
 /**
  * Llamadas a la API de YouTube compartidas entre `youtube-sync.post.ts`
  * (botón "Actualizar" en Redes) y `youtube-channel-stats.get.ts` (el
@@ -118,4 +120,21 @@ export async function fetchYoutubeAnalytics(accessToken: string, startDate: stri
     subscribersGained: Number(row[2] ?? 0),
     subscribersLost: Number(row[3] ?? 0)
   }))
+}
+
+/**
+ * Informe genérico de la YouTube Analytics API (A-R16b): el que llama elige
+ * métricas y dimensión. Devuelve la respuesta tal cual (cabeceras + filas) para
+ * que `server/utils/youtube-period.ts` la interprete por NOMBRE de columna.
+ * Mismo permiso que el resto de Analytics (`yt-analytics.readonly`).
+ */
+export async function fetchYoutubeAnalyticsReport(
+  accessToken: string,
+  params: { startDate: string; endDate: string; metrics: string; dimensions?: string; sort?: string }
+): Promise<AnalyticsReport> {
+  return await $fetch<AnalyticsReport>('https://youtubeanalytics.googleapis.com/v2/reports', {
+    params: { ids: 'channel==MINE', ...params },
+    headers: { Authorization: `Bearer ${accessToken}` },
+    timeout: GOOGLE_FETCH_TIMEOUT_MS
+  })
 }

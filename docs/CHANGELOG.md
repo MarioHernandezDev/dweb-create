@@ -4,6 +4,37 @@ Registro de qué se hizo, por qué, y qué queda pendiente de verificar — pens
 
 ---
 
+## 2026-10-29 (Alex-18) — [Alex] A-R16b: informe de YouTube por periodos (backend, en vivo) y primera cuenta real de Instagram
+
+### Observación: Instagram ya está conectado de verdad
+
+Lectura de solo lectura de la BD: existe una fila de Instagram **verificada (con token) y `connected`**, handle `aalex.06_`, conectada el 2026-10-29 a las 08:32, **con `external_account_id` guardado**. Es la primera conexión real con Meta y confirma, con una cuenta real, que el callback guarda el id de la cuenta (A-R2b). Esto es lo único que he comprobado: **no la he visto en navegador ni he probado su sincronización** (botón "Actualizar", seguidores, renovación de token). El total de filas de `social_accounts` pasa de 16 a 17 por esa fila (no es residuo de pruebas: las mías se borran por handle y quedan 0).
+
+### Qué se cambió (sin interfaz todavía)
+
+- `GET /api/social/youtube-analytics?days=7|28|90|365` (`server/api/social/youtube-analytics.get.ts`, nuevo): totales del periodo, totales del periodo anterior equivalente, comparación y serie día a día, **en vivo** desde la YouTube Analytics API. **No guarda nada nuevo ni toca el esquema.**
+- `server/utils/youtube-period.ts` (nuevo, lógica pura): rangos de fechas (el periodo termina hace 2 días por la latencia de Analytics), qué periodos se pueden ofrecer según la edad del canal, lectura de la respuesta de Google **por nombre de columna** y comparación.
+- `server/utils/youtube.ts`: `fetchYoutubeAnalyticsReport` genérico.
+- Reglas de "no inventar datos": un dato que Google no da es `null` (nunca 0); los días sin fila no se rellenan; un periodo solo se ofrece si el canal ya existía durante todo él (si no, 422 `period_unavailable` con los periodos disponibles); sin porcentaje de variación si el periodo anterior es incompleto o vale 0.
+- Si la cuenta ya consta como caducada/revocada/sin permiso responde `reconnect_required` **sin llamar a Google**. Los errores se clasifican y se guardan como en el resto de endpoints de redes. Solo devuelve datos del propio usuario; los tokens no salen del servidor.
+- Métricas pedidas (todas del informe "Basic user activity" de Analytics, permiso `yt-analytics.readonly` que ya se pide): vistas, minutos vistos, duración media, % medio visto, me gusta, comentarios, compartidos, suscriptores ganados y perdidos.
+
+### Verificado de verdad
+
+- `youtube-period.spec.ts` (41 tests): rangos (incluido cambio de mes y de año), periodos según edad del canal, totales por nombre de columna, serie sin rellenar huecos, y comparaciones (sin porcentaje con periodo incompleto, con anterior 0 ni con valores desconocidos). El test encontró un fallo real: una fecha de creación inválida lanzaba una excepción (corregido). Suite completa **249/249**, `npx vue-tsc --noEmit` limpio.
+- **Contra el servidor y con respuestas reales de Google** (cuenta demo con token falso, filas creadas y borradas): sin sesión -> 401; `days=5/30/0/abc` -> 400; token falso -> 401 `reconnect_required` (`google_invalid_grant`) y la cuenta queda `revoked` en la BD; la segunda llamada responde `reconnect_required` desde el estado guardado (`stored_revoked`) sin llamar a Google; ninguna respuesta contiene el token.
+- Primer intento de la prueba fallido por mi script (el servidor recién arrancado no había compilado el login): repetido con espera suficiente.
+
+### Sin verificar
+
+- **Nada de esto se ha ejecutado con un canal real**: el éxito, los nombres de métricas aceptados por Google (podría rechazar alguna combinación), el `publishedAt` del canal, la cobertura de días y los totales no se han visto con datos. Las cuentas demo no tienen canal. **Lo puede probar Alex** abriendo, con la sesión iniciada, `http://localhost:3000/api/social/youtube-analytics?days=28` en el navegador.
+- Cuota de la API y latencia real de los datos (la documentación consultada no da cifras).
+- Sin interfaz: la estructura del dashboard se propondrá a Alex **antes** de construirla (requisito A-R16).
+- `npm run build` no ejecutado en esta entrada (el último, sobre la rama de integración, se completó antes de este cambio).
+- Mi servidor de desarrollo se arrancó y se paró para estas pruebas; el de Alex no estaba en marcha.
+
+---
+
 ## 2026-10-29 (Alex-17) — [Alex] Rama de integración: trabajo de Alex + trabajo de Mario
 
 ### Qué se hizo
