@@ -72,7 +72,7 @@ const updated = computed(() => {
           Ver en YouTube
           <Icon name="ph:arrow-square-out-bold" class="size-3.5" />
         </a>
-        <NuxtLink to="/creator/socials" class="font-medium text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:underline">
+        <NuxtLink to="/creator/metrics#conexiones" class="font-medium text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:underline">
           Gestionar conexión
         </NuxtLink>
       </p>

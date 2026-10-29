@@ -34,7 +34,6 @@ export const roleNav: Record<Role, NavItem[]> = {
     { to: '/creator/timeline', label: 'Tablero', icon: 'ph:kanban-fill' },
     { to: '/creator/discover', label: 'Descubrir', icon: 'ph:compass-fill' },
     { to: '/creator/requests', label: 'Colaboraciones', icon: 'ph:handshake-fill' },
-    { to: '/creator/socials', label: 'Redes', icon: 'ph:share-network-fill' },
     { to: '/creator/metrics', label: 'Métricas', icon: 'ph:chart-line-up-fill' }
   ],
   partner: [

@@ -157,7 +157,7 @@ function onRetry() {
         :kind="bannerKind ?? 'temporary'" :message="error || null" :busy="loading"
         @reconnect="$emit('reconnect')" @retry="$emit('reload')"
       />
-      <NuxtLink to="/creator/socials" class="text-[0.8125rem] font-medium text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:underline w-fit">
+      <NuxtLink to="/creator/metrics#conexiones" class="text-[0.8125rem] font-medium text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:underline w-fit">
         Gestionar conexión
       </NuxtLink>
     </template>

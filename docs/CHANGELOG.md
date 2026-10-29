@@ -4,6 +4,31 @@ Registro de qué se hizo, por qué, y qué queda pendiente de verificar — pens
 
 ---
 
+## 2026-10-29 (Alex-26) — [Alex] Se elimina la página Redes y se propone A-R17 (Métricas a ancho completo)
+
+### Qué se cambió
+
+- **Página `/creator/socials` eliminada** por redundante, como se pidió. **Antes de borrarla se comprobó qué hacía:** era el único sitio para **conectar, desconectar (con revocación en Google) y sincronizar** una red, y los callbacks de OAuth redirigían allí. Para no perder esas funciones:
+  - La lógica se movió **sin cambios de comportamiento** al composable `useSocialAccountActions` (confirmación de desconexión, avisos honestos sobre si la revocación se confirmó, "Desconectar igualmente" si no se pudo confirmar, reconexión solo cuando el servidor lo dice).
+  - **Métricas (`/creator/metrics`) tiene ahora la sección "Conexiones"** con las seis redes, sus botones y todos los avisos (vuelta de OAuth correcta o con error, desconexión, sincronización).
+  - "Redes" desaparece del menú lateral; los enlaces de Hoy, Perfil, el panel de YouTube, la tarjeta de red y las pantallas vacías apuntan a `/creator/metrics#conexiones`.
+  - Los callbacks de YouTube e Instagram redirigen ahora a `/creator/metrics?…`; el enlace antiguo `/creator/socials` se conserva como **redirección a Métricas** (marcadores).
+- **Propuesta A-R17** (`docs/PROPUESTA_A-R17_METRICAS_FULL_WIDTH.md`), **solo auditoría y diseño, sin implementar**: qué existe ya de lo pedido (casi todo lo funcional lo cubre A-R16), qué limita el ancho (opción `fullWidth` de `AppShell` sin usar y `max-w-4xl` en cada bloque; no son contenedores compartidos), distribución de 12 columnas para escritorio/tablet/móvil, mejoras de usabilidad, qué funcionalidades son viables y cuáles dependen de datos reales o de esquema (impresiones/CTR por confirmar; histórico y métricas por publicación ligados a A-R8a/A-R7/A-R8b), fases A-R17a–f y su sitio en el pipeline (anotado en `PIPELINE_IMPLEMENTACION_FEEDMA_ALEX.md`).
+
+### Verificado de verdad
+
+- `npx vue-tsc --noEmit` limpio; **suite unitaria 423/423**.
+- **Navegador real (Chrome por CDP), 11 comprobaciones OK** con las filas de prueba (token falso) de siempre: el menú ya no tiene "Redes" y conserva "Métricas"; ningún enlace de la página apunta a `/creator/socials`; el enlace antiguo redirige a Métricas; la sección "Conexiones" lista las 6 redes ("2 de 6 conectadas") con las no disponibles como "Próximamente"; sincronizar con un acceso inválido deja la fila de YouTube en "Reconectar" (estado guardado, no queda mudo); desconectar abre la confirmación que explica la revocación y **cancelar no desconecta nada**; la vuelta de OAuth muestra "Cuenta de YouTube conectada." o el motivo del error; móvil sin desbordes. Capturas revisadas a ojo. El único error de consola es el 401 esperado de la sincronización con token falso.
+
+### Sin verificar
+
+- **No he probado conectar ni desconectar una cuenta REAL** (el flujo de OAuth completo con tu cuenta): el código de la lógica es el mismo que había, pero la vuelta real desde Google/Instagram a la nueva URL (`/creator/metrics?…`) la ves tú en tu próxima conexión.
+- Si tienes la URL de retorno de Meta/Google registrada con `/creator/socials`: no hace falta cambiarla (los redirect URI de OAuth apuntan a `/api/auth/.../callback`, no a la página); solo cambia a dónde te devuelve FEEDMA después.
+- `CONTEXT.md` (auditoría histórica del 2026-10-2x) sigue nombrando la página Redes porque es un registro de lo que había entonces.
+- A-R17 es una propuesta: **no se ha cambiado el ancho ni el diseño de Métricas todavía.**
+
+---
+
 ## 2026-10-29 (Alex-25) — [Alex] A-R16f: animaciones discretas del dashboard de YouTube
 
 ### Qué se cambió

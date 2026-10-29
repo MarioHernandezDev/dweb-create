@@ -65,6 +65,11 @@ export default defineNuxtConfig({
     }
   },
 
+  // La página Redes (/creator/socials) se eliminó: sus funciones viven en Métricas > Conexiones. Se conserva el enlace antiguo (marcadores, correos).
+  routeRules: {
+    '/creator/socials': { redirect: { to: '/creator/metrics', statusCode: 302 } }
+  },
+
   runtimeConfig: {
     // Privado: solo visible en el servidor (rutas de server/api), nunca en
     // el bundle del cliente — por eso no llevan prefijo NUXT_PUBLIC_.

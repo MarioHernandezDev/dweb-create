@@ -136,7 +136,7 @@ const tips = computed(() => {
     list.push({ icon: 'ph:package-fill', text: 'Publica tu primer paquete para que puedan hacerte una oferta desde el chat.', cta: 'Publicar', to: '/creator/profile' })
   }
   if (!hasConnectedSocials.value) {
-    list.push({ icon: 'ph:share-network-fill', text: 'Conecta una red social para ver tus métricas reales aquí.', cta: 'Conectar', to: '/creator/socials' })
+    list.push({ icon: 'ph:share-network-fill', text: 'Conecta una red social para ver tus métricas reales aquí.', cta: 'Conectar', to: '/creator/metrics#conexiones' })
   }
   return list
 })

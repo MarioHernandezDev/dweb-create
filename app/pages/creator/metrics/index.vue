@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { formatCompactNumber, VERIFIED_SOCIAL_PLATFORMS, socialAccountState } from '~/utils/mock-data'
+import { formatCompactNumber, VERIFIED_SOCIAL_PLATFORMS, socialAccountState, platformMeta } from '~/utils/mock-data'
 import type { SocialAccount } from '~/types'
 
 useHead({ title: 'Métricas' })
@@ -13,6 +13,12 @@ useHead({ title: 'Métricas' })
 // entra en los totales.
 const { accounts, ensureLoaded } = useMySocialAccounts()
 await ensureLoaded()
+// Conectar, desconectar y sincronizar viven aquí desde que se eliminó la página Redes.
+const {
+  connect, connectResult, busyPlatform, syncingPlatform, syncError, syncReconnect, disconnectNotice, rowAlreadyShowsReconnect,
+  toggle, syncAccount
+} = useSocialAccountActions()
+const connectedCount = computed(() => accounts.value.filter((a) => a.connected).length)
 
 const verifiedConnected = computed(() => accounts.value.filter((a) => a.connected && VERIFIED_SOCIAL_PLATFORMS.includes(a.platform)))
 const totalFollowers = computed(() => verifiedConnected.value.reduce((sum, a) => sum + a.followers, 0))
@@ -24,13 +30,29 @@ function shareFor(acc: SocialAccount) {
 
 <template>
   <AppShell role="creator" title="Tus métricas" subtitle="Datos reales de tus redes conectadas">
+    <!-- Avisos de la última acción sobre una red (vuelta del OAuth, desconexión, sincronización) -->
+    <div class="flex flex-col gap-2 mb-5 md:max-w-xl" aria-live="polite">
+      <p v-if="connectResult?.ok" class="text-[0.8125rem] text-[var(--color-status-published)]">
+        Cuenta de {{ platformMeta[connectResult.platform].label }} conectada.
+      </p>
+      <p v-else-if="connectResult && !connectResult.ok" class="text-[0.8125rem] text-[var(--color-status-alert)]">{{ connectResult.reason }}</p>
+      <p
+        v-if="disconnectNotice" class="text-[0.8125rem]"
+        :class="disconnectNotice.tone === 'ok' ? 'text-[var(--color-status-published)]' : disconnectNotice.tone === 'warn' ? 'text-[var(--color-text)]' : 'text-[var(--color-status-alert)]'"
+      >
+        {{ disconnectNotice.text }}
+      </p>
+      <div v-if="syncError && !rowAlreadyShowsReconnect" class="flex flex-wrap items-center gap-3">
+        <p class="text-[0.8125rem] text-[var(--color-status-alert)]">{{ syncError }}</p>
+        <BaseButton v-if="syncReconnect" variant="primary" size="sm" @click="connect(syncReconnect)">Reconectar</BaseButton>
+      </div>
+    </div>
+
     <template v-if="!verifiedConnected.length">
       <EmptyState
         icon="ph:chart-line-up" title="Conecta una red para ver tus métricas"
-        description="Ve a Redes y conecta Instagram o YouTube para empezar a ver datos reales aquí."
-      >
-        <BaseButton variant="primary" to="/creator/socials">Ir a Redes</BaseButton>
-      </EmptyState>
+        description="Conecta Instagram o YouTube aquí abajo para empezar a ver datos reales."
+      />
 
       <!-- Hallazgo #12: la pantalla vacía no daba ninguna pista de qué
            aspecto tendría esto con datos reales — un ejemplo con números
@@ -62,7 +84,7 @@ function shareFor(acc: SocialAccount) {
         />
       </div>
 
-      <BaseCard radius="lg" padding="lg" class="md:max-w-xl flex items-start gap-3">
+      <BaseCard radius="lg" padding="lg" class="md:max-w-xl flex items-start gap-3 mb-2">
         <Icon name="ph:info-fill" class="size-5 shrink-0 text-[var(--color-text-faint)] mt-0.5" />
         <p class="text-[0.875rem] text-[var(--color-text-muted)] leading-relaxed">
           Alcance e interacciones por publicación todavía no están conectados para ninguna red — en Instagram falta el
@@ -71,5 +93,23 @@ function shareFor(acc: SocialAccount) {
         </p>
       </BaseCard>
     </template>
+
+    <!-- Conexiones: conectar, actualizar y desconectar cada red -->
+    <section id="conexiones" class="mt-10 scroll-mt-24" aria-labelledby="conexiones-titulo">
+      <div class="flex flex-wrap items-baseline justify-between gap-x-4 mb-1 md:max-w-xl">
+        <h2 id="conexiones-titulo" class="font-display text-[1.25rem] text-[var(--color-text)]">Conexiones</h2>
+        <p class="text-[0.75rem] text-[var(--color-text-faint)]">{{ connectedCount }} de {{ accounts.length }} conectadas</p>
+      </div>
+      <p class="text-[0.875rem] text-[var(--color-text-muted)] leading-relaxed mb-4 md:max-w-xl">
+        Conecta tus cuentas para que tus métricas se actualicen solas y podamos calcular predicciones con tu historial real.
+      </p>
+      <div class="flex flex-col gap-2.5 md:max-w-xl">
+        <SocialAccountRow
+          v-for="acc in accounts" :key="acc.platform" :account="acc" :busy="busyPlatform === acc.platform"
+          :syncing="syncingPlatform === acc.platform"
+          @connect="toggle(acc)" @disconnect="toggle(acc)" @sync="syncAccount(acc)" @reconnect="connect(acc.platform)"
+        />
+      </div>
+    </section>
   </AppShell>
 </template>

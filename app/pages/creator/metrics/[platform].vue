@@ -104,9 +104,9 @@ function formatShortDate(iso: string): string {
         :title="isComingSoonPlatform(platform) ? `${meta.label}: próximamente` : 'Red no conectada'"
         :description="isComingSoonPlatform(platform)
           ? 'Todavía no se puede conectar esta red, así que no hay estadísticas que mostrar.'
-          : `Conecta ${meta.label} desde Redes para empezar a ver sus estadísticas reales aquí.`"
+          : `Conecta ${meta.label} desde Métricas > Conexiones para empezar a ver sus estadísticas reales aquí.`"
       >
-        <BaseButton variant="primary" to="/creator/socials">Ir a Redes</BaseButton>
+        <BaseButton variant="primary" to="/creator/metrics#conexiones">Ir a conexiones</BaseButton>
       </EmptyState>
     </template>
 

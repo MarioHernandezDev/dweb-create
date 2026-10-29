@@ -63,6 +63,6 @@ const meta = computed(() => platformMeta[props.platform])
       </div>
     </div>
 
-    <BaseButton v-if="!isComingSoonPlatform(platform)" variant="secondary" size="sm" to="/creator/socials">Conectar</BaseButton>
+    <BaseButton v-if="!isComingSoonPlatform(platform)" variant="secondary" size="sm" to="/creator/metrics#conexiones">Conectar</BaseButton>
   </BaseCard>
 </template>

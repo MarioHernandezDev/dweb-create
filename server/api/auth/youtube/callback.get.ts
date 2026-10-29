@@ -40,7 +40,7 @@ export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig(event)
 
   const redirectWithError = (reason: string) =>
-    sendRedirect(event, appRedirectUrl(config.appUrl, `/creator/socials?youtube=error&reason=${encodeURIComponent(reason)}`))
+    sendRedirect(event, appRedirectUrl(config.appUrl, `/creator/metrics?youtube=error&reason=${encodeURIComponent(reason)}`))
 
   if (query.error) {
     const reason = typeof query.error_description === 'string' ? query.error_description : String(query.error)
@@ -119,7 +119,7 @@ export default defineEventHandler(async (event) => {
     if (error?.code === '23505') return redirectWithError('Ese canal de YouTube ya está conectado a otro usuario de FEEDMA.')
     if (error) throw error
 
-    return sendRedirect(event, appRedirectUrl(config.appUrl, '/creator/socials?youtube=connected'))
+    return sendRedirect(event, appRedirectUrl(config.appUrl, '/creator/metrics?youtube=connected'))
   } catch (err) {
     console.error('[auth/youtube/callback] fallo al completar el OAuth:', describeErrorForLog(err))
     return redirectWithError('No se ha podido completar la conexión con YouTube. Inténtalo otra vez.')

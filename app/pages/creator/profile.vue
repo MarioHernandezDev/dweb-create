@@ -287,7 +287,7 @@ async function saveFicha() {
                     <Icon :name="profileLinkCopied ? 'ph:check-bold' : 'ph:link-simple-bold'" class="size-4" />
                   </button>
                 </div>
-                <NuxtLink to="/creator/socials" class="flex items-center justify-between px-5 py-4">
+                <NuxtLink to="/creator/metrics#conexiones" class="flex items-center justify-between px-5 py-4">
                   <span class="text-[0.9375rem] text-[var(--color-text)]">Redes conectadas</span>
                   <Icon name="ph:caret-right-bold" class="size-4 text-[var(--color-text-faint)]" />
                 </NuxtLink>

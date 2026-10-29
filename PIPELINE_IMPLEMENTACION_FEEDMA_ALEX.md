@@ -308,3 +308,8 @@ Requisito nuevo (2026-10-28): A-R16, dashboard de analítica de YouTube
 - Incorporado como tarea nueva, sin interrumpir el orden vigente. Ver docs/REQUISITO_A-R16_DASHBOARD_YOUTUBE.md (auditoría, catálogo de métricas viables, dependencias).
 - Encaja después de A-R2, A-R3 y A-R1 (YouTube) y en paralelo a A-R8a. La mayor parte (periodos, comparación, vídeos) se puede construir con datos en vivo de la API de YouTube Analytics, sin migración; solo el histórico propio de acumulados (A-R16e) depende del esquema A-R8a.
 - No se implementa nada hasta llegar a esa fase; antes se presentará la estructura de componentes para revisión.
+
+Requisito nuevo (2026-10-29): A-R17, Métricas a ancho completo (rediseño y usabilidad)
+- Propuesta en docs/PROPUESTA_A-R17_METRICAS_FULL_WIDTH.md (auditoría, distribución, funcionalidades viables, fases A-R17a–f). Solo presentación, sin cambios de esquema; no interrumpe seguridad ni arquitectura. Va después de A-R16 y reutiliza sus componentes.
+- Impresiones/CTR y otros informes de Analytics: por confirmar con el canal real. Histórico propio y métricas por publicación: dependen de A-R8a / A-R7 / A-R8b (migraciones aprobadas).
+- Página Redes (/creator/socials) eliminada: conectar, desconectar y sincronizar viven en Métricas > Conexiones (`useSocialAccountActions`); el enlace antiguo redirige a Métricas.
