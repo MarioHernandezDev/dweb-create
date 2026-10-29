@@ -4,6 +4,35 @@ Registro de qué se hizo, por qué, y qué queda pendiente de verificar — pens
 
 ---
 
+## 2026-10-29 (Alex-17) — [Alex] Rama de integración: trabajo de Alex + trabajo de Mario
+
+### Qué se hizo
+
+Por petición expresa de Alex se mezcló en una **rama nueva, `feature/integracion-alex-mario`**, la rama de Mario (`origin/feature/onboarding`, último commit `eeb515c`) con el trabajo de redes y publicaciones de Alex (`feature/redes-r13-token-crypto`). **No se tocó la rama de Mario ni `main`**, y no se abrió ningún PR. Hasta ahora el plan decía lo contrario ("no fusionar las ramas entre sí"); esta integración es una decisión explícita de Alex y queda registrada aquí.
+
+- Conflictos: **solo en documentación** (`CHANGELOG.md`, `TRABAJO_ALEX.md`, `TRABAJO_MARIO.md`). El código se mezcló sin conflictos, incluido `nuxt.config.ts`.
+  - `CHANGELOG.md`: se conservan las dos series de entradas (las de Alex arriba, luego las de Mario 55–58).
+  - `TRABAJO_ALEX.md`: versión de Alex (con el registro de migraciones). Mario no la había modificado respecto al original.
+  - `TRABAJO_MARIO.md`: versión de Mario. Alex no la había modificado.
+- Efecto buscado: el `connect()` antiguo de Mario (insert desde el navegador, que A-R11 hace fallar) queda sustituido por el de A-R10.
+
+### Verificado de verdad
+
+- `npx vue-tsc --noEmit`: limpio sobre el resultado de la mezcla.
+- `npm test -- --run`: **208/208** (15 archivos; tests de Alex y de Mario juntos).
+- `npm run build`: **completado**, ejecutado en una copia temporal (git worktree) para no tumbar el servidor de desarrollo de Alex; la copia se eliminó y `node_modules` quedó intacto.
+- Sin marcadores de conflicto en el repositorio.
+
+### Sin verificar
+
+- **No se ha probado la aplicación mezclada en navegador**: ni el recorrido de bienvenida de Mario con las pantallas de Redes de Alex, ni el límite de uso de Mario con los endpoints de Alex. Solo compilación, tipos, tests unitarios y build.
+- Tests de integración (Supabase real) no ejecutados sobre la rama mezclada.
+- El CI de GitHub Actions de Mario (`.github/workflows/ci.yml`) llega con esta mezcla pero **no se ha ejecutado en GitHub** en esta rama.
+- `enforceRateLimit` de Mario existe ya en la rama; el endpoint `sync-all` de Alex sigue usando `checkRateLimit` (sin cambios).
+- Las migraciones de Alex (A-R11 y M1) ya están aplicadas en el Supabase compartido: la rama de Mario debe tener claro que ahora `social_accounts` no admite escritura desde el navegador.
+
+---
+
 ## 2026-10-28 (Alex-16) — [Alex] Instagram: Meta exige HTTPS en la redirect URI; APP_URL para volver a la app tras el túnel
 
 ### Hallazgo (primera prueba real con Meta)
