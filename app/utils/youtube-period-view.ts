@@ -155,6 +155,9 @@ const SPECS: Spec[] = [
   }
 ]
 
+/** Métricas que son un recuento acumulable (se animan al aparecer); las medias, porcentajes y netos se muestran de golpe. */
+const COUNTABLE = new Set<keyof PeriodTotalsDto>(['views', 'estimatedMinutesWatched', 'likes', 'comments', 'shares'])
+
 function buildDelta(spec: Spec, delta: DeltaDto | undefined): KpiDelta | null {
   if (!delta || delta.abs === null) return null
   const tone: KpiDelta['tone'] = delta.abs > 0 ? 'good' : delta.abs < 0 ? 'bad' : 'neutral'
@@ -187,7 +190,8 @@ export function periodKpis(report: Pick<AnalyticsReportDto, 'totals' | 'comparis
       icon: spec.icon,
       hint: spec.hint,
       source: 'youtube',
-      delta: raw === null ? null : buildDelta(spec, report.comparison?.[spec.key])
+      delta: raw === null ? null : buildDelta(spec, report.comparison?.[spec.key]),
+      ...(raw !== null && COUNTABLE.has(spec.key) ? { count: { to: raw, format: spec.format } } : {})
     }
   })
 }

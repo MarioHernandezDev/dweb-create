@@ -30,6 +30,8 @@ const innerH = computed(() => H.value - M.value.top - M.value.bottom)
 
 const previous = computed<ChartPoint[] | null>(() => (props.showCompare ? props.series.previous : null))
 const n = computed(() => props.series.current.length)
+/** Cambia al cambiar de métrica o de periodo: el SVG se vuelve a montar y la línea se dibuja otra vez. */
+const drawKey = computed(() => `${props.metric}|${n.value}|${props.series.current[0]?.date ?? ''}`)
 
 function niceStep(range: number): number {
   const pow = 10 ** Math.floor(Math.log10(range))
@@ -144,11 +146,13 @@ const spoken = computed(() => {
       <circle v-for="(r, i) in previousRuns.filter((r) => r.length === 1)" :key="`pd${i}`" :cx="r[0]!.x" :cy="r[0]!.y" r="2.5" fill="var(--color-text-faint)" />
 
       <!-- Periodo actual: área suave + línea; cada tramo continuo por separado -->
-      <template v-for="(r, i) in currentRuns" :key="`c${i}`">
-        <path v-if="r.length > 1" :d="toArea(r)" fill="var(--color-chart-primary)" fill-opacity="0.1" stroke="none" />
-        <path v-if="r.length > 1" :d="toLine(r)" fill="none" stroke="var(--color-chart-primary)" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" />
-        <circle v-else :cx="r[0]!.x" :cy="r[0]!.y" r="3" fill="var(--color-chart-primary)" />
-      </template>
+      <g :key="drawKey">
+        <template v-for="(r, i) in currentRuns" :key="`c${i}`">
+          <path v-if="r.length > 1" class="yt-fade" :d="toArea(r)" fill="var(--color-chart-primary)" fill-opacity="0.1" stroke="none" />
+          <path v-if="r.length > 1" class="yt-draw" pathLength="1" :d="toLine(r)" fill="none" stroke="var(--color-chart-primary)" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" />
+          <circle v-else :cx="r[0]!.x" :cy="r[0]!.y" r="3" fill="var(--color-chart-primary)" />
+        </template>
+      </g>
 
       <!-- Punto activo -->
       <template v-if="active">

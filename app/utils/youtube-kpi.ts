@@ -29,6 +29,8 @@ export interface Kpi {
   hint: string
   /** `youtube` = dato que da YouTube; `feedma` = cálculo nuestro, no una cifra oficial. */
   source: 'youtube' | 'feedma'
+  /** Valor numérico y su formato, para el contador animado. El texto final es SIEMPRE `value`; sin esto no se anima. */
+  count?: { to: number; format: (n: number) => string }
 }
 
 const exactFormat = new Intl.NumberFormat('es-ES')
@@ -37,7 +39,7 @@ export function channelKpis(stats: ChannelStatsInput): Kpi[] {
   const subscribersHidden = stats.subscriberCount === null
   const noVideos = stats.videoCount <= 0
 
-  return [
+  const kpis: Kpi[] = [
     {
       key: 'subscribers',
       label: 'Suscriptores',
@@ -83,4 +85,13 @@ export function channelKpis(stats: ChannelStatsInput): Kpi[] {
       source: 'feedma'
     }
   ]
+
+  // Contador animado solo donde hay un número real: el texto final sigue siendo `value`.
+  const raw: Record<string, number | null> = {
+    subscribers: subscribersHidden ? null : stats.subscriberCount,
+    views: stats.viewCount,
+    videos: stats.videoCount,
+    avgViews: noVideos ? null : stats.avgViewsPerVideo
+  }
+  return kpis.map((k) => (raw[k.key] == null ? k : { ...k, count: { to: raw[k.key]!, format: formatCompactNumber } }))
 }

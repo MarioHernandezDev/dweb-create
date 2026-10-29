@@ -4,6 +4,38 @@ Registro de qué se hizo, por qué, y qué queda pendiente de verificar — pens
 
 ---
 
+## 2026-10-29 (Alex-25) — [Alex] A-R16f: animaciones discretas del dashboard de YouTube
+
+### Qué se cambió
+
+- **Contadores animados** en las tarjetas con un recuento (suscriptores, visualizaciones, vídeos, media por vídeo; en el periodo: visualizaciones, tiempo de visualización, me gusta, comentarios y compartidos). Medias, porcentajes, duraciones y netos se muestran de golpe. Al cambiar de periodo las tarjetas cuentan hasta el valor nuevo.
+- **Entrada escalonada** de los bloques (cabecera, totales, periodo, evolución, observaciones y vídeos): aparición con ligero desplazamiento, con un retraso máximo de 300 ms.
+- **La línea de la gráfica se dibuja** al cambiar de métrica o de periodo (y el área se desvanece); la línea del periodo anterior no se anima.
+- Pasar el ratón por tarjetas y vídeos ya elevaba la tarjeta (de fases anteriores).
+- **Sin dependencias nuevas:** el contador usa `gsap`, que ya estaba en el proyecto (nuevo composable `useCountUp`); la entrada y la línea son CSS en `main.css`.
+
+### Reglas que se han respetado
+
+- **La animación nunca es la fuente del dato.** El texto final de cada tarjeta es SIEMPRE el valor real ya formateado: en servidor, con "menos movimiento", o si algo falla en la animación se ve directamente. `aria-label` de la tarjeta ya lleva el valor final, así que lectores de pantalla no leen números intermedios.
+- **`prefers-reduced-motion`:** los contadores se saltan y las entradas y la línea se reducen a ~0 ms (regla global ya existente).
+- Un dato ausente (`null`) no tiene contador (no se anima un "—" ni se convierte en 0); un 0 real sí cuenta y acaba en "0".
+
+### Verificado de verdad
+
+- Unitarios nuevos (`youtube-count.spec.ts`, 5): el formato del contador reproduce exactamente `value` en todas las tarjetas, nada se anima si falta el dato, el 0 real sí. **Suite completa 423/423**; `npx vue-tsc --noEmit` limpio; `npm run build` completado en copia temporal.
+- **Navegador real (Chrome por CDP), 10 comprobaciones OK:** con "menos movimiento" las entradas duran ~0 ms y sirven de referencia; sin reducción la entrada se anima y el contador pasa por valores intermedios (1,9 mil → 6,7 mil → 8,4 mil → 12,4 mil); **al terminar, todas las tarjetas muestran exactamente los mismos valores que sin animación**; ningún bloque queda a medio aparecer; al cambiar a 7 días el valor pasa por 11 valores intermedios y acaba en el exacto anunciado por la tarjeta (2577); la línea se dibuja al cambiar de métrica y acaba completa; móvil sin desbordes. **Regresión:** repetidas las baterías de rendimiento por vídeo (22/22) y de detalle y observaciones (22/22) con las animaciones activas, sin fallos.
+
+### Cómo se probó (importante)
+
+Datos **FICTICIOS** interceptados en mi script de navegador (cuentas demo sin canal); filas de prueba borradas al terminar. **No he visto las animaciones a ojo en movimiento**: comprobé por código que existen, pasan por valores intermedios y terminan en el valor real, y revisé capturas del estado final; la sensación (duración, ritmo) la juzgas tú en tu navegador. Si te resultan lentas o excesivas se ajusta con dos números (0,8 s del contador, 0,45 s de la entrada).
+
+### Sin verificar
+
+- Lectura de pantalla real y dispositivos táctiles reales; rendimiento en móviles lentos.
+- Con muchas tarjetas animando a la vez no se ha medido el coste en equipos modestos (son 9-13 contadores de 0,8 s).
+
+---
+
 ## 2026-10-29 (Alex-24) — [Alex] A-R16d.3 y A-R16g: detalle de un vídeo y observaciones con criterio visible
 
 ### Qué se cambió

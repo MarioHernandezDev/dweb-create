@@ -164,6 +164,7 @@ function onRetry() {
 
     <template v-else>
       <YoutubeChannelHeader
+        class="yt-reveal" style="--i: 0"
         :title="stats.title" :thumbnail-url="stats.thumbnailUrl" :published-at="stats.publishedAt" :channel-id="stats.channelId"
         :connection="connection" :last-synced-at="lastSyncedAt ?? null" :loading="loading || analyticsLoading" @reload="onReload"
       />
@@ -173,7 +174,7 @@ function onRetry() {
         @reconnect="$emit('reconnect')" @retry="onRetry"
       />
 
-      <section aria-labelledby="yt-totals" class="md:max-w-4xl">
+      <section aria-labelledby="yt-totals" class="md:max-w-4xl yt-reveal" style="--i: 1">
         <h2 id="yt-totals" class="text-[0.6875rem] font-semibold uppercase tracking-wide text-[var(--color-text-faint)] mb-3">Total del canal</h2>
         <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
           <YoutubeKpiCard v-if="hero" :kpi="hero" class="col-span-2 sm:col-span-3 lg:col-span-2" />
@@ -191,7 +192,7 @@ function onRetry() {
           @update:model-value="selectPeriod"
         />
 
-        <section aria-labelledby="yt-period" class="md:max-w-4xl" :aria-busy="analyticsLoading">
+        <section aria-labelledby="yt-period" class="md:max-w-4xl yt-reveal" style="--i: 2" :aria-busy="analyticsLoading">
           <h2 id="yt-period" class="text-[0.6875rem] font-semibold uppercase tracking-wide text-[var(--color-text-faint)]">{{ periodLabel(days) }}</h2>
           <p v-if="report" class="mt-0.5 mb-3 text-[0.75rem] text-[var(--color-text-faint)]">
             {{ formatRangeLabel(report.range) }} · YouTube tarda 1-2 días en procesar los datos, por eso el periodo termina hace 2 días
@@ -208,9 +209,9 @@ function onRetry() {
           </div>
         </section>
 
-        <YoutubeEvolutionPanel :report="report" :loading="analyticsLoading" :show-compare="showCompare" />
+        <YoutubeEvolutionPanel class="yt-reveal" style="--i: 3" :report="report" :loading="analyticsLoading" :show-compare="showCompare" />
 
-        <YoutubeInsights v-if="report" :observations="observations" :loading="analyticsLoading" />
+        <YoutubeInsights class="yt-reveal" style="--i: 4" v-if="report" :observations="observations" :loading="analyticsLoading" />
       </template>
 
       <p v-else-if="channelTooNew" class="md:max-w-4xl text-[0.8125rem] text-[var(--color-text-muted)] rounded-[var(--radius-md)] border border-[var(--color-hairline)] bg-[var(--color-paper)] p-4">
@@ -218,6 +219,7 @@ function onRetry() {
       </p>
 
       <YoutubeVideosPanel
+        class="yt-reveal" style="--i: 5"
         v-if="analyticsEnabled"
         :videos="videos" :total="videosTotal" :has-more="!!nextPageToken" :loading="videosLoading" :loading-more="videosLoadingMore" :error="videosError"
         :period-days="days" :period-range="perfReport?.range ?? null" :performance="perfById" :truncated="perfReport?.truncated ?? false"

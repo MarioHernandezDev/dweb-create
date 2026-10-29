@@ -315,3 +315,25 @@ body {
 .nx-hero-blob {
   animation: nx-hero-drift 16s var(--ease-spring) infinite;
 }
+
+/* Dashboard de YouTube (A-R16f): entrada escalonada de los bloques y línea de la gráfica que se dibuja.
+   Solo animan opacidad/posición y siempre acaban en el estado final: los datos nunca dependen de la animación.
+   `prefers-reduced-motion` ya los reduce a ~0 ms con la regla global de arriba. */
+@keyframes yt-reveal {
+  from { opacity: 0; transform: translateY(10px); }
+}
+.yt-reveal {
+  animation: yt-reveal 0.45s var(--ease-spring-out, ease-out) backwards;
+  animation-delay: calc(min(var(--i, 0), 5) * 60ms);
+}
+@keyframes yt-draw {
+  from { stroke-dashoffset: 1; }
+}
+.yt-draw {
+  stroke-dasharray: 1;
+  animation: yt-draw 0.9s ease-out backwards;
+}
+@keyframes yt-fade {
+  from { opacity: 0; }
+}
+.yt-fade { animation: yt-fade 0.9s ease-out backwards; }

@@ -14,6 +14,8 @@ import type { KpiDelta } from '~/utils/youtube-period-view'
 const props = defineProps<{ kpi: Kpi & { delta?: KpiDelta | null }; scope?: string }>()
 const accent = 'var(--color-platform-youtube)'
 
+const shownValue = useCountUp(() => props.kpi.count, () => props.kpi.value)
+
 const provenance = computed(() => [props.scope, props.kpi.source === 'youtube' ? 'Dato de YouTube' : 'Cálculo de FEEDMA'].filter(Boolean).join(' · '))
 
 const deltaColor = computed(() =>
@@ -55,7 +57,7 @@ const ariaValue = computed(() => {
         :class="kpi.hero ? 'text-[2.75rem] sm:text-[3.25rem]' : 'text-[1.75rem]'"
         style="font-variant-numeric: proportional-nums"
       >
-        {{ kpi.value }}
+        {{ shownValue }}
       </p>
       <template v-else>
         <p class="font-display leading-none text-[var(--color-text-faint)]" :class="kpi.hero ? 'text-[2.75rem]' : 'text-[1.75rem]'">—</p>
