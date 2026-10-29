@@ -17,6 +17,8 @@ export interface YoutubeRecentVideo {
 }
 
 export interface YoutubeChannelStats {
+  /** Id del canal en YouTube (para el enlace "Ver en YouTube"); no es un secreto. */
+  channelId: string | null
   title: string | null
   thumbnailUrl: string | null
   publishedAt: string | null
@@ -144,6 +146,7 @@ export default defineEventHandler(async (event) => {
     }
 
     const stats: YoutubeChannelStats = {
+      channelId: channel.id ?? null,
       title: channel.snippet?.title ?? null,
       thumbnailUrl: channel.snippet?.thumbnails?.high?.url ?? channel.snippet?.thumbnails?.default?.url ?? null,
       publishedAt: channel.snippet?.publishedAt ?? null,

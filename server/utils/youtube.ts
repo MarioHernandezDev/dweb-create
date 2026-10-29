@@ -37,6 +37,7 @@ export async function refreshYoutubeAccessToken(refreshToken: string, clientId: 
 
 export interface YoutubeChannelResponse {
   items?: {
+    id?: string
     snippet?: { title?: string; thumbnails?: { high?: { url?: string }; default?: { url?: string } }; publishedAt?: string }
     statistics?: { subscriberCount?: string; viewCount?: string; videoCount?: string; hiddenSubscriberCount?: boolean }
     contentDetails?: { relatedPlaylists?: { uploads?: string } }

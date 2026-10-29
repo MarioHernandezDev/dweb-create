@@ -4,6 +4,50 @@ Registro de qué se hizo, por qué, y qué queda pendiente de verificar — pens
 
 ---
 
+## 2026-10-29 (Alex-20) — [Alex] A-R16c.1: cabecera del canal, estados y totales del dashboard de YouTube
+
+### Qué se cambió (estructura aprobada por Alex en la entrada anterior)
+
+- **Componentes nuevos** (`app/components/youtube/`): `YoutubeDashboard` (orquesta, presentacional), `YoutubeChannelHeader`, `YoutubeStateBanner`, `YoutubeKpiCard`; y `ui/SkeletonBlock` (no existía ningún skeleton). Lógica pura en `app/utils/youtube-kpi.ts`.
+- **Cabecera:** avatar, nombre, estado de la conexión (Conectada / Conectada · analíticas no disponibles / Necesita reconexión / Error), "actualizado hace…" (solo si hay una sincronización correcta registrada: no se inventa una hora), "miembro desde", "Ver en YouTube" (enlace al canal, pestaña nueva con `noopener`), "Gestionar conexión" y botón Actualizar. El estado sale de lo que guarda el servidor, no de que exista una fila.
+- **Banner de estado** con su acción: reconectar (caducado/revocado/sin permiso), fallo pasajero ("no hace falta reconectar"), analíticas sin permiso y analíticas con fallo temporal (los totales del canal se siguen viendo).
+- **Totales del canal:** Suscriptores como tarjeta protagonista, más visualizaciones totales, vídeos publicados y media de vistas por vídeo. **Cada tarjeta indica su origen** ("Dato de YouTube" o "Cálculo de FEEDMA"), para no presentar un cálculo nuestro como cifra oficial. Suscriptores ocultos por el canal y media sin vídeos se muestran como "—" **con su motivo, nunca como 0**.
+- **Carga:** skeletons con la forma exacta de lo que llega (sin saltos de maquetación); al recargar con datos ya cargados se conserva el contenido.
+- `GET /api/social/youtube-channel-stats` devuelve ahora `channelId` (para el enlace).
+- **Sin regresión:** la evolución de 28 días y los vídeos recientes que ya existían se conservan tal cual, dentro del hueco (slot) del dashboard, hasta que las fases siguientes los sustituyan. Sin dependencias nuevas.
+
+### Verificado de verdad
+
+- `youtube-kpi.spec.ts` (9 tests, reglas de "no mostrar 0 cuando no se sabe"). Suite completa **258/258**, `npx vue-tsc --noEmit` limpio, `npm run build` completado (en una copia temporal con git worktree, para no tumbar el servidor de desarrollo; la copia se eliminó y `node_modules` quedó intacto).
+- **Navegador real (Chrome por CDP), 17 comprobaciones OK** y capturas revisadas a ojo:
+  - carga con skeletons y paso al contenido; cabecera, enlaces y atributos del enlace externo;
+  - 4 tarjetas con su origen (3 de YouTube y 1 cálculo de FEEDMA); sin banner con datos normales;
+  - lo que ya existía sigue ahí; sin desbordamiento horizontal a 1280 y a 390 px;
+  - analíticas sin permiso (banner + Reconectar + totales visibles) y con fallo temporal (dice que no hace falta reconectar);
+  - suscriptores ocultos y canal sin vídeos ("—" con motivo);
+  - **estado real con token falso** (respuesta real de Google): "Hay que reconectar YouTube" y, al volver, sale del estado guardado **sin llamar a Google**.
+- Defectos de diseño encontrados al mirar las capturas y corregidos: "TOTAL DEL CANAL" se repetía 5 veces y los valores de las tarjetas no quedaban alineados (se sustituyó por la línea de origen, igual en todas).
+
+### Cómo se probó (importante)
+
+Las cuentas demo no tienen canal de YouTube. Los casos de **maquetación** (normal, ocultos, analíticas) usan **respuestas FICTICIAS** interceptadas en mi script de navegador (el canal se llama "Canal de prueba (datos ficticios)"); no entran en el producto. **No se ha visto este dashboard con el canal real de Alex.** Solo el caso de reconectar usa respuestas reales (de Google, con un token falso).
+
+### Errores míos durante la verificación (sin consecuencias en el producto)
+
+- Mi primera revisión visual no valía: el recorrido de bienvenida de Mario (llegó con la integración) se abre en un navegador de pruebas nuevo y tapaba la pantalla; el script ahora lo salta con su botón "Saltar" (solo afecta al almacenamiento local de mi navegador temporal).
+- Lancé el script dos veces seguidas y la segunda tanda sobrescribió las capturas con el estado "revocado" de la cuenta de prueba; las 17 comprobaciones válidas eran las de la primera y las capturas se repitieron limpiamente.
+
+### Sin verificar
+
+- **Con el canal real**: cabecera, totales, "actualizado hace…" y el enlace al canal. Lo puede comprobar Alex en `/creator/metrics/youtube`.
+- Táctil real, Safari/Firefox y tablet; lector de pantalla (hay `aria-label` y `title` por tarjeta, pero no se ha probado con uno).
+- Comportamiento del botón Actualizar con datos reales (recarga las estadísticas y el estado de la cuenta; probado solo su flujo de error).
+- Pendiente de las fases siguientes: selector de periodo y comparación (c.2), vídeos (d), animaciones (f) y observaciones.
+- El recorrido de bienvenida de Mario se mostró en cada navegador de pruebas nuevo; es esperable (se recuerda en `localStorage`), pero no he comprobado qué pasa para un usuario real que lo cierra y vuelve.
+- Notificaciones de login en la cuenta demo por mis sesiones de prueba (unas 6 en este bloque); sin limpiar.
+
+---
+
 ## 2026-10-29 (Alex-19) — [Alex] A-R16: propuesta de estructura del dashboard de YouTube
 
 Solo documentación: `docs/PROPUESTA_A-R16_ESTRUCTURA_DASHBOARD.md`. Alex confirmó que el JSON de `GET /api/social/youtube-analytics` llega bien con su canal real (primera comprobación con datos reales de A-R16b).

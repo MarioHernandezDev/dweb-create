@@ -17,7 +17,7 @@ const meta = platformMeta[platform]
 
 useHead({ title: `Métricas · ${meta.label}` })
 
-const { accounts, ensureLoaded, connect } = useMySocialAccounts()
+const { accounts, ensureLoaded, connect, refresh } = useMySocialAccounts()
 await ensureLoaded()
 
 const account = computed(() => accounts.value.find((a) => a.platform === platform)!)
@@ -44,6 +44,7 @@ interface YoutubeEvolutionDay {
   subscribersLost: number
 }
 interface YoutubeChannelStats {
+  channelId: string | null
   title: string | null
   thumbnailUrl: string | null
   publishedAt: string | null
@@ -96,6 +97,14 @@ async function loadStats() {
 onMounted(() => {
   if (platform === 'youtube' && state.value === 'connected') loadStats()
 })
+
+// "Actualizar": recarga las estadísticas y después el estado guardado de la
+// cuenta (una carga correcta actualiza `last_synced_at`), para que la cabecera
+// diga "actualizado ahora" sin recargar la página.
+async function reload() {
+  await loadStats()
+  await refresh()
+}
 
 function formatMonthYear(iso: string | null): string {
   if (!iso) return '—'
@@ -161,137 +170,106 @@ const projectedSubscribers30d = computed(() => {
     </template>
 
     <template v-else-if="platform === 'youtube'">
-      <div v-if="loadingStats" class="flex flex-col items-center gap-3 py-16 text-[var(--color-text-faint)]">
-        <Icon name="ph:circle-notch-bold" class="size-7 animate-spin" />
-        <p class="text-[0.875rem]">Leyendo tu canal de YouTube…</p>
-      </div>
+      <YoutubeDashboard
+        :stats="stats" :loading="loadingStats" :error="statsError" :needs-reconnect="statsNeedsReconnect"
+        :account-status="account.status" :last-synced-at="account.lastSyncedAt ?? null"
+        @reload="reload" @reconnect="connect('youtube')"
+      >
+        <!-- Fases siguientes (A-R16c.2 / d): evolución y vídeos se sustituyen por componentes propios. Mientras tanto se conserva lo que ya funcionaba. -->
+        <template v-if="stats">
+          <section class="mb-8 md:max-w-2xl">
+            <h2 class="font-display text-[1.25rem] text-[var(--color-text)] mb-3.5">Evolución (últimos 28 días)</h2>
 
-      <div v-else-if="statsError" class="flex flex-col gap-3">
-        <p class="text-[0.875rem] text-[var(--color-status-alert)]">{{ statsError }}</p>
-        <BaseButton v-if="statsNeedsReconnect" variant="primary" size="sm" class="self-start" @click="connect('youtube')">Reconectar YouTube</BaseButton>
-        <BaseButton v-else variant="secondary" size="sm" class="self-start" @click="loadStats">Reintentar</BaseButton>
-      </div>
+            <BaseCard v-if="!stats.evolution" radius="lg" padding="lg" class="flex items-start gap-3">
+              <template v-if="stats.evolutionIssue === 'temporary'">
+                <Icon name="ph:cloud-slash-fill" class="size-5 shrink-0 text-[var(--color-text-faint)] mt-0.5" />
+                <div>
+                  <p class="text-[0.875rem] text-[var(--color-text)] mb-1">No se ha podido cargar la evolución ahora mismo</p>
+                  <p class="text-[0.8125rem] text-[var(--color-text-muted)] leading-relaxed mb-3">
+                    Es un problema pasajero (límite o corte de YouTube): no hace falta reconectar. Vuelve a intentarlo en unos minutos.
+                  </p>
+                  <BaseButton variant="secondary" size="sm" @click="loadStats">Reintentar</BaseButton>
+                </div>
+              </template>
+              <template v-else>
+                <Icon name="ph:lock-key-fill" class="size-5 shrink-0 text-[var(--color-text-faint)] mt-0.5" />
+                <div>
+                  <p class="text-[0.875rem] text-[var(--color-text)] mb-1">Reconecta tu cuenta para ver la evolución</p>
+                  <p class="text-[0.8125rem] text-[var(--color-text-muted)] leading-relaxed mb-3">
+                    Falta el permiso de analíticas o el acceso a YouTube se ha revocado. Reconecta la cuenta para ver el
+                    histórico de vistas y suscriptores de los últimos 28 días.
+                  </p>
+                  <BaseButton variant="primary" size="sm" @click="connect('youtube')">Reconectar YouTube</BaseButton>
+                </div>
+              </template>
+            </BaseCard>
 
-      <template v-else-if="stats">
-        <BaseCard radius="lg" padding="lg" class="flex items-center gap-4 mb-6 md:max-w-2xl">
-          <div class="relative size-16 rounded-full shrink-0 overflow-hidden border-2" :style="{ borderColor: meta.colorVar }">
-            <img v-if="stats.thumbnailUrl" :src="stats.thumbnailUrl" alt="" class="absolute inset-0 size-full object-cover">
-            <div v-else class="absolute inset-0 flex items-center justify-center" :style="{ background: meta.colorVar }">
-              <Icon :name="meta.icon" class="size-7 text-white" />
-            </div>
-          </div>
-          <div class="min-w-0 flex-1">
-            <p class="font-display text-[1.25rem] text-[var(--color-text)] truncate">{{ stats.title ?? meta.label }}</p>
-            <p class="text-[0.8125rem] text-[var(--color-text-muted)]">Miembro desde {{ formatMonthYear(stats.publishedAt) }}</p>
-          </div>
-          <BaseButton
-            variant="ghost" size="sm" icon="ph:arrows-clockwise-bold" icon-only :icon-spin="loadingStats"
-            aria-label="Actualizar" @click="loadStats"
-          />
-        </BaseCard>
-
-        <section class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8 md:max-w-2xl">
-          <StatTile
-            label="Suscriptores"
-            :value="stats.subscriberCount !== null ? formatCompactNumber(stats.subscriberCount) : 'Oculto'"
-          />
-          <StatTile label="Vistas totales" :value="formatCompactNumber(stats.viewCount)" />
-          <StatTile label="Vídeos publicados" :value="formatCompactNumber(stats.videoCount)" />
-          <StatTile label="Media de vistas/vídeo" :value="formatCompactNumber(stats.avgViewsPerVideo)" />
-        </section>
-
-        <section class="mb-8 md:max-w-2xl">
-          <h2 class="font-display text-[1.25rem] text-[var(--color-text)] mb-3.5">Evolución (últimos 28 días)</h2>
-
-          <BaseCard v-if="!stats.evolution" radius="lg" padding="lg" class="flex items-start gap-3">
-            <template v-if="stats.evolutionIssue === 'temporary'">
-              <Icon name="ph:cloud-slash-fill" class="size-5 shrink-0 text-[var(--color-text-faint)] mt-0.5" />
-              <div>
-                <p class="text-[0.875rem] text-[var(--color-text)] mb-1">No se ha podido cargar la evolución ahora mismo</p>
-                <p class="text-[0.8125rem] text-[var(--color-text-muted)] leading-relaxed mb-3">
-                  Es un problema pasajero (límite o corte de YouTube): no hace falta reconectar. Vuelve a intentarlo en unos minutos.
-                </p>
-                <BaseButton variant="secondary" size="sm" @click="loadStats">Reintentar</BaseButton>
-              </div>
-            </template>
             <template v-else>
-              <Icon name="ph:lock-key-fill" class="size-5 shrink-0 text-[var(--color-text-faint)] mt-0.5" />
-              <div>
-                <p class="text-[0.875rem] text-[var(--color-text)] mb-1">Reconecta tu cuenta para ver la evolución</p>
-                <p class="text-[0.8125rem] text-[var(--color-text-muted)] leading-relaxed mb-3">
-                  Falta el permiso de analíticas o el acceso a YouTube se ha revocado. Reconecta la cuenta para ver el
-                  histórico de vistas y suscriptores de los últimos 28 días.
-                </p>
-                <BaseButton variant="primary" size="sm" @click="connect('youtube')">Reconectar YouTube</BaseButton>
+              <div class="grid grid-cols-2 gap-3 mb-4">
+                <StatTile label="Vistas (28 días)" :value="formatCompactNumber(windowViews)" />
+                <StatTile label="Suscriptores netos (28 días)" :value="`${windowNetSubs >= 0 ? '+' : ''}${windowNetSubs}`" />
               </div>
-            </template>
-          </BaseCard>
 
-          <template v-else>
-            <div class="grid grid-cols-2 gap-3 mb-4">
-              <StatTile label="Vistas (28 días)" :value="formatCompactNumber(windowViews)" />
-              <StatTile label="Suscriptores netos (28 días)" :value="`${windowNetSubs >= 0 ? '+' : ''}${windowNetSubs}`" />
-            </div>
-
-            <BaseCard radius="lg" padding="lg" class="mb-3">
-              <p class="text-[0.8125rem] font-medium text-[var(--color-text-muted)] mb-3">Vistas por día</p>
-              <EvolutionLineChart :data="viewsSeries" :format-value="formatCompactNumber" />
-            </BaseCard>
-
-            <BaseCard radius="lg" padding="lg" class="mb-4">
-              <p class="text-[0.8125rem] font-medium text-[var(--color-text-muted)] mb-3">Suscriptores netos por día</p>
-              <NetChangeBarChart :data="netSubsSeries" />
-            </BaseCard>
-
-            <p v-if="bestDay" class="text-[0.8125rem] text-[var(--color-text-muted)] mb-4">
-              Tu mejor día fue el <strong class="text-[var(--color-text)] font-medium">{{ formatShortDate(bestDay.date) }}</strong>,
-              con <strong class="text-[var(--color-text)] font-medium">{{ formatCompactNumber(bestDay.views) }}</strong> vistas.
-            </p>
-
-            <BaseCard v-if="projectedSubscribers30d !== null" radius="lg" padding="lg" class="flex items-start gap-3 bg-[var(--color-primary-50)] border-[var(--color-primary-500)]/20">
-              <Icon name="ph:trend-up-bold" class="size-5 shrink-0 text-[var(--color-primary-600)] mt-0.5" />
-              <p class="text-[0.875rem] text-[var(--color-text)] leading-relaxed">
-                A tu ritmo de los últimos 7 días (<strong class="font-medium">{{ recentDailyNetAvg! >= 0 ? '+' : '' }}{{ recentDailyNetAvg!.toFixed(1) }}/día</strong>),
-                en 30 días podrías rondar los <strong class="font-medium">{{ formatCompactNumber(projectedSubscribers30d) }}</strong> suscriptores.
-                <span class="block text-[0.75rem] text-[var(--color-text-faint)] mt-1">Estimación simple sobre tu ritmo reciente, no una predicción de IA.</span>
-              </p>
-            </BaseCard>
-          </template>
-        </section>
-
-        <section>
-          <h2 class="font-display text-[1.25rem] text-[var(--color-text)] mb-3.5">Vídeos recientes</h2>
-          <EmptyState
-            v-if="!stats.recentVideos.length"
-            icon="ph:video-camera" title="Sin vídeos todavía"
-            description="Cuando subas contenido a este canal, aparecerá aquí con sus estadísticas reales."
-          />
-          <div v-else class="flex flex-col gap-2.5 md:max-w-2xl">
-            <a
-              v-for="video in stats.recentVideos" :key="video.id"
-              :href="`https://www.youtube.com/watch?v=${video.id}`" target="_blank" rel="noopener noreferrer" class="block"
-            >
-              <BaseCard radius="lg" padding="none" interactive class="flex gap-3 overflow-hidden">
-                <div class="relative w-32 sm:w-40 aspect-video shrink-0 bg-[var(--color-ink-overlay)]">
-                  <img v-if="video.thumbnailUrl" :src="video.thumbnailUrl" alt="" class="absolute inset-0 size-full object-cover">
-                  <span class="absolute bottom-1 right-1 px-1.5 py-0.5 rounded-[var(--radius-xs)] bg-black/70 text-white text-[0.6875rem] font-medium leading-none">
-                    {{ formatDuration(video.durationSeconds) }}
-                  </span>
-                </div>
-                <div class="flex-1 min-w-0 py-2.5 pr-3 flex flex-col justify-center gap-1">
-                  <p class="text-[0.875rem] font-medium text-[var(--color-text)] leading-snug line-clamp-2">{{ video.title }}</p>
-                  <p class="text-[0.75rem] text-[var(--color-text-faint)]">{{ relativeTime(video.publishedAt) }}</p>
-                  <div class="flex items-center gap-3 mt-0.5 text-[0.75rem] text-[var(--color-text-muted)]">
-                    <span class="inline-flex items-center gap-1"><Icon name="ph:eye-fill" class="size-3.5" /> {{ formatCompactNumber(video.viewCount) }}</span>
-                    <span class="inline-flex items-center gap-1"><Icon name="ph:thumbs-up-fill" class="size-3.5" /> {{ formatCompactNumber(video.likeCount) }}</span>
-                    <span class="inline-flex items-center gap-1"><Icon name="ph:chat-circle-fill" class="size-3.5" /> {{ formatCompactNumber(video.commentCount) }}</span>
-                  </div>
-                </div>
+              <BaseCard radius="lg" padding="lg" class="mb-3">
+                <p class="text-[0.8125rem] font-medium text-[var(--color-text-muted)] mb-3">Vistas por día</p>
+                <EvolutionLineChart :data="viewsSeries" :format-value="formatCompactNumber" />
               </BaseCard>
-            </a>
-          </div>
-        </section>
-      </template>
+
+              <BaseCard radius="lg" padding="lg" class="mb-4">
+                <p class="text-[0.8125rem] font-medium text-[var(--color-text-muted)] mb-3">Suscriptores netos por día</p>
+                <NetChangeBarChart :data="netSubsSeries" />
+              </BaseCard>
+
+              <p v-if="bestDay" class="text-[0.8125rem] text-[var(--color-text-muted)] mb-4">
+                Tu mejor día fue el <strong class="text-[var(--color-text)] font-medium">{{ formatShortDate(bestDay.date) }}</strong>,
+                con <strong class="text-[var(--color-text)] font-medium">{{ formatCompactNumber(bestDay.views) }}</strong> vistas.
+              </p>
+
+              <BaseCard v-if="projectedSubscribers30d !== null" radius="lg" padding="lg" class="flex items-start gap-3 bg-[var(--color-primary-50)] border-[var(--color-primary-500)]/20">
+                <Icon name="ph:trend-up-bold" class="size-5 shrink-0 text-[var(--color-primary-600)] mt-0.5" />
+                <p class="text-[0.875rem] text-[var(--color-text)] leading-relaxed">
+                  A tu ritmo de los últimos 7 días (<strong class="font-medium">{{ recentDailyNetAvg! >= 0 ? '+' : '' }}{{ recentDailyNetAvg!.toFixed(1) }}/día</strong>),
+                  en 30 días podrías rondar los <strong class="font-medium">{{ formatCompactNumber(projectedSubscribers30d) }}</strong> suscriptores.
+                  <span class="block text-[0.75rem] text-[var(--color-text-faint)] mt-1">Estimación simple sobre tu ritmo reciente, no una predicción de IA.</span>
+                </p>
+              </BaseCard>
+            </template>
+          </section>
+
+          <section>
+            <h2 class="font-display text-[1.25rem] text-[var(--color-text)] mb-3.5">Vídeos recientes</h2>
+            <EmptyState
+              v-if="!stats.recentVideos.length"
+              icon="ph:video-camera" title="Sin vídeos todavía"
+              description="Cuando subas contenido a este canal, aparecerá aquí con sus estadísticas reales."
+            />
+            <div v-else class="flex flex-col gap-2.5 md:max-w-2xl">
+              <a
+                v-for="video in stats.recentVideos" :key="video.id"
+                :href="`https://www.youtube.com/watch?v=${video.id}`" target="_blank" rel="noopener noreferrer" class="block"
+              >
+                <BaseCard radius="lg" padding="none" interactive class="flex gap-3 overflow-hidden">
+                  <div class="relative w-32 sm:w-40 aspect-video shrink-0 bg-[var(--color-ink-overlay)]">
+                    <img v-if="video.thumbnailUrl" :src="video.thumbnailUrl" alt="" class="absolute inset-0 size-full object-cover">
+                    <span class="absolute bottom-1 right-1 px-1.5 py-0.5 rounded-[var(--radius-xs)] bg-black/70 text-white text-[0.6875rem] font-medium leading-none">
+                      {{ formatDuration(video.durationSeconds) }}
+                    </span>
+                  </div>
+                  <div class="flex-1 min-w-0 py-2.5 pr-3 flex flex-col justify-center gap-1">
+                    <p class="text-[0.875rem] font-medium text-[var(--color-text)] leading-snug line-clamp-2">{{ video.title }}</p>
+                    <p class="text-[0.75rem] text-[var(--color-text-faint)]">{{ relativeTime(video.publishedAt) }}</p>
+                    <div class="flex items-center gap-3 mt-0.5 text-[0.75rem] text-[var(--color-text-muted)]">
+                      <span class="inline-flex items-center gap-1"><Icon name="ph:eye-fill" class="size-3.5" /> {{ formatCompactNumber(video.viewCount) }}</span>
+                      <span class="inline-flex items-center gap-1"><Icon name="ph:thumbs-up-fill" class="size-3.5" /> {{ formatCompactNumber(video.likeCount) }}</span>
+                      <span class="inline-flex items-center gap-1"><Icon name="ph:chat-circle-fill" class="size-3.5" /> {{ formatCompactNumber(video.commentCount) }}</span>
+                    </div>
+                  </div>
+                </BaseCard>
+              </a>
+            </div>
+          </section>
+        </template>
+      </YoutubeDashboard>
     </template>
 
     <template v-else>
