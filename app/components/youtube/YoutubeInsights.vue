@@ -10,7 +10,7 @@ defineProps<{ observations: Observation[]; loading: boolean }>()
 </script>
 
 <template>
-  <section aria-labelledby="yt-insights" class="md:max-w-4xl">
+  <section aria-labelledby="yt-insights">
     <h2 id="yt-insights" class="font-display text-[1.25rem] text-[var(--color-text)]">Observaciones</h2>
     <p class="mt-0.5 mb-3 text-[0.75rem] text-[var(--color-text-faint)]">
       Cálculos de FEEDMA con reglas fijas sobre tus datos de YouTube. Describen lo que pasó, no por qué.

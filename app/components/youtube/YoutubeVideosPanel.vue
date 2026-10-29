@@ -62,7 +62,7 @@ const compact = (n: number) => formatCompactNumber(n)
 </script>
 
 <template>
-  <section aria-labelledby="yt-videos" class="md:max-w-4xl">
+  <section aria-labelledby="yt-videos">
     <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 mb-3">
       <h2 id="yt-videos" class="font-display text-[1.25rem] text-[var(--color-text)]">Vídeos</h2>
       <p v-if="videos.length" class="text-[0.75rem] text-[var(--color-text-faint)]" aria-live="polite">{{ counter }}</p>
@@ -113,8 +113,8 @@ const compact = (n: number) => formatCompactNumber(n)
       </p>
 
       <!-- Cargando la primera página -->
-      <div v-if="showSkeleton" class="grid gap-3 md:grid-cols-2" aria-busy="true" aria-label="Cargando vídeos">
-        <SkeletonBlock v-for="n in 4" :key="n" height="6.25rem" rounded="var(--radius-md)" />
+      <div v-if="showSkeleton" class="grid gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4" aria-busy="true" aria-label="Cargando vídeos">
+        <SkeletonBlock v-for="n in 6" :key="n" height="6.25rem" rounded="var(--radius-md)" />
       </div>
 
       <!-- Sin vídeos -->
@@ -133,7 +133,7 @@ const compact = (n: number) => formatCompactNumber(n)
         <BaseButton v-if="filtering" variant="secondary" size="sm" icon="ph:x-bold" @click="clearFilters">Quitar filtros</BaseButton>
       </EmptyState>
 
-      <ul v-else class="grid gap-3 md:grid-cols-2">
+      <ul v-else class="grid gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
         <li v-for="video in visible" :key="video.id">
           <article class="group flex h-full gap-3 overflow-hidden rounded-[var(--radius-md)] border border-[var(--color-hairline)] bg-[var(--color-paper)] transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-md">
             <a

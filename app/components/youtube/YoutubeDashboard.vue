@@ -135,7 +135,7 @@ function onRetry() {
   <div class="flex flex-col gap-5">
     <!-- Cargando por primera vez: skeletons con la forma exacta de lo que llega -->
     <template v-if="firstLoad">
-      <div class="flex items-center gap-4 rounded-[var(--radius-lg)] border border-[var(--color-hairline)] bg-[var(--color-paper)] p-6 md:max-w-4xl" aria-busy="true" aria-label="Cargando tu canal de YouTube">
+      <div class="flex items-center gap-4 rounded-[var(--radius-lg)] border border-[var(--color-hairline)] bg-[var(--color-paper)] p-6" aria-busy="true" aria-label="Cargando tu canal de YouTube">
         <SkeletonBlock width="4rem" height="4rem" rounded="999px" />
         <div class="flex-1 flex flex-col gap-2">
           <SkeletonBlock width="55%" height="1.375rem" />
@@ -143,7 +143,7 @@ function onRetry() {
         </div>
         <SkeletonBlock width="6.5rem" height="2rem" rounded="var(--radius-sm)" />
       </div>
-      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 md:max-w-4xl" aria-hidden="true">
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3" aria-hidden="true">
         <SkeletonBlock class="col-span-2 sm:col-span-3 lg:col-span-2" height="8.5rem" rounded="var(--radius-md)" />
         <SkeletonBlock height="6.5rem" rounded="var(--radius-md)" />
         <SkeletonBlock height="6.5rem" rounded="var(--radius-md)" />
@@ -174,7 +174,7 @@ function onRetry() {
         @reconnect="$emit('reconnect')" @retry="onRetry"
       />
 
-      <section aria-labelledby="yt-totals" class="md:max-w-4xl yt-reveal" style="--i: 1">
+      <section aria-labelledby="yt-totals" class="yt-reveal" style="--i: 1">
         <h2 id="yt-totals" class="text-[0.6875rem] font-semibold uppercase tracking-wide text-[var(--color-text-faint)] mb-3">Total del canal</h2>
         <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
           <YoutubeKpiCard v-if="hero" :kpi="hero" class="col-span-2 sm:col-span-3 lg:col-span-2" />
@@ -192,14 +192,14 @@ function onRetry() {
           @update:model-value="selectPeriod"
         />
 
-        <section aria-labelledby="yt-period" class="md:max-w-4xl yt-reveal" style="--i: 2" :aria-busy="analyticsLoading">
+        <section aria-labelledby="yt-period" class="yt-reveal" style="--i: 2" :aria-busy="analyticsLoading">
           <h2 id="yt-period" class="text-[0.6875rem] font-semibold uppercase tracking-wide text-[var(--color-text-faint)]">{{ periodLabel(days) }}</h2>
           <p v-if="report" class="mt-0.5 mb-3 text-[0.75rem] text-[var(--color-text-faint)]">
             {{ formatRangeLabel(report.range) }} · YouTube tarda 1-2 días en procesar los datos, por eso el periodo termina hace 2 días
           </p>
           <div v-else class="mb-3 mt-0.5"><SkeletonBlock width="14rem" height="0.75rem" /></div>
 
-          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3" :class="analyticsLoading && report && 'opacity-60 transition-opacity'">
+          <div class="grid grid-cols-2 sm:grid-cols-4 2xl:grid-cols-8 gap-3" :class="analyticsLoading && report && 'opacity-60 transition-opacity'">
             <template v-if="report">
               <YoutubeKpiCard v-for="kpi in kpis" :key="kpi.key" :kpi="kpi" />
             </template>
@@ -209,12 +209,14 @@ function onRetry() {
           </div>
         </section>
 
-        <YoutubeEvolutionPanel class="yt-reveal" style="--i: 3" :report="report" :loading="analyticsLoading" :show-compare="showCompare" />
-
-        <YoutubeInsights class="yt-reveal" style="--i: 4" v-if="report" :observations="observations" :loading="analyticsLoading" />
+        <!-- Gráfica ancha con las observaciones al lado en escritorio; apiladas en tablet y móvil -->
+        <div class="grid gap-5 2xl:grid-cols-12 items-start">
+          <YoutubeEvolutionPanel class="yt-reveal 2xl:col-span-8" style="--i: 3" :report="report" :loading="analyticsLoading" :show-compare="showCompare" />
+          <YoutubeInsights v-if="report" class="yt-reveal 2xl:col-span-4" style="--i: 4" :observations="observations" :loading="analyticsLoading" />
+        </div>
       </template>
 
-      <p v-else-if="channelTooNew" class="md:max-w-4xl text-[0.8125rem] text-[var(--color-text-muted)] rounded-[var(--radius-md)] border border-[var(--color-hairline)] bg-[var(--color-paper)] p-4">
+      <p v-else-if="channelTooNew" class="text-[0.8125rem] text-[var(--color-text-muted)] rounded-[var(--radius-md)] border border-[var(--color-hairline)] bg-[var(--color-paper)] p-4">
         {{ analyticsError?.message }}
       </p>
 

@@ -41,7 +41,7 @@ const content = computed(() => {
 
 <template>
   <BaseCard
-    radius="lg" padding="md" class="flex items-start gap-3 md:max-w-4xl"
+    radius="lg" padding="md" class="flex items-start gap-3"
     :role="content.tone === 'alert' ? 'alert' : 'status'" aria-live="polite"
   >
     <Icon

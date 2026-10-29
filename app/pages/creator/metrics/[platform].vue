@@ -97,7 +97,7 @@ function formatShortDate(iso: string): string {
 </script>
 
 <template>
-  <AppShell role="creator" :title="meta.label" subtitle="Estadísticas reales de tu red">
+  <AppShell role="creator" :title="meta.label" subtitle="Estadísticas reales de tu red" full-width>
     <template v-if="state !== 'connected'">
       <EmptyState
         :icon="meta.icon"

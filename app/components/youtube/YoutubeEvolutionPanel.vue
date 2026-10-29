@@ -15,7 +15,7 @@ const comparing = computed(() => props.showCompare && !!series.value?.previous)
 </script>
 
 <template>
-  <section aria-labelledby="yt-evolution" class="md:max-w-4xl">
+  <section aria-labelledby="yt-evolution">
     <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
       <h2 id="yt-evolution" class="font-display text-[1.25rem] text-[var(--color-text)]">Evolución</h2>
       <SegmentedTabs :options="CHART_METRICS" :model-value="metric" @update:model-value="metric = $event as ChartMetric" />
@@ -29,7 +29,7 @@ const comparing = computed(() => props.showCompare && !!series.value?.previous)
       </p>
 
       <div v-else :class="loading && 'opacity-60 transition-opacity'">
-        <YoutubeEvolutionChart :series="series" :metric="metric" :show-compare="comparing" />
+        <YoutubeEvolutionChart :series="series" :metric="metric" :show-compare="comparing" :height="320" />
 
         <ul class="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1.5 text-[0.75rem] text-[var(--color-text-muted)]">
           <li class="inline-flex items-center gap-2">

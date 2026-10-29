@@ -32,7 +32,7 @@ const options = computed(() =>
 </script>
 
 <template>
-  <div class="flex flex-wrap items-center gap-x-5 gap-y-3 md:max-w-4xl">
+  <div class="flex flex-wrap items-center gap-x-5 gap-y-3">
     <div class="inline-flex items-center gap-1 rounded-[var(--radius-xs)] bg-[var(--color-ink-overlay)] border border-[var(--color-hairline)] p-1" role="group" aria-label="Periodo">
       <button
         v-for="o in options" :key="o.days" type="button"

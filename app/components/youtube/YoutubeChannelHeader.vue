@@ -46,7 +46,7 @@ const updated = computed(() => {
 </script>
 
 <template>
-  <BaseCard radius="lg" padding="lg" class="flex flex-wrap items-center gap-4 md:max-w-4xl">
+  <BaseCard radius="lg" padding="lg" class="flex flex-wrap items-center gap-4">
     <div class="relative size-16 rounded-full shrink-0 overflow-hidden border-2" :style="{ borderColor: meta.colorVar }">
       <img v-if="thumbnailUrl" :src="thumbnailUrl" alt="" class="absolute inset-0 size-full object-cover">
       <div v-else class="absolute inset-0 flex items-center justify-center" :style="{ background: meta.colorVar }">

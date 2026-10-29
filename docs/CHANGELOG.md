@@ -4,6 +4,36 @@ Registro de qué se hizo, por qué, y qué queda pendiente de verificar — pens
 
 ---
 
+## 2026-10-29 (Alex-27) — [Alex] A-R17a: el dashboard de YouTube usa todo el ancho
+
+### Qué se cambió
+
+- **Página de cada red (`/creator/metrics/<red>`) a ancho completo:** se activa `full-width` de `AppShell` (opción que ya existía y usan Tablero, Descubrir y Chat) **solo en esa página**. Ninguna otra página cambia de ancho; el índice de Métricas conserva su tope (comprobado).
+- **Se retiran los topes `md:max-w-4xl` (896 px)** de los once bloques del dashboard de YouTube (cabecera, avisos, selector de periodo, totales, métricas del periodo, evolución, observaciones, vídeos y esqueletos). El tope no venía de un contenedor compartido sino de cada componente.
+- **Rejilla que aprovecha el espacio, por anchos:**
+  - Tarjetas del periodo: 2 columnas en móvil, 4 desde tablet y **8 en pantallas muy anchas (≥ 1536 px)**.
+  - Vídeos: 1 columna en móvil, 2 en tablet, 3 en escritorio y **4 en pantallas muy anchas**.
+  - Gráfica y observaciones: **lado a lado solo en pantallas muy anchas** (gráfica 8/12, observaciones 4/12); en escritorio normal y tablet van apiladas, con la gráfica a todo el ancho. La gráfica pasa de 260 a 320 px de alto.
+- **Un cambio descartado tras medirlo:** había puesto las observaciones al lado de la gráfica ya desde 1280 px, pero dejaba la gráfica en 575 px, **más estrecha que antes**; se movió el umbral a ≥ 1536 px (allí la gráfica mide 1002 px).
+
+### Verificado de verdad
+
+- `npx vue-tsc --noEmit` limpio; suite unitaria 423/423 (no hay lógica nueva, solo clases y composición); `npm run build` completado en copia temporal.
+- **Navegador real (Chrome por CDP) a 390, 768, 1280 y 1920 px, 25 comprobaciones OK** con medidas reales, no solo a ojo: sin desbordamiento horizontal en ninguno; a 1920 px la cabecera ocupa 1600 de 1664 px disponibles, la gráfica 1002 px, 8 tarjetas del periodo en una fila y 4 columnas de vídeos; a 1280 px, 4 tarjetas y 3 columnas de vídeos; a 768 px, 2 columnas de vídeos y gráfica y observaciones apiladas; a 390 px, 1 columna; ningún texto ni miniatura se sale de su tarjeta; el índice de Métricas sigue en 1100 px. Capturas revisadas.
+- **Dos fallos reales de diseño que encontré midiendo y corregí en la misma fase:** (1) las 4 columnas de vídeos no se aplicaban a 1920 px (la variante de ancho que usé no se generaba): ahora 3 → 4 con `2xl`; (2) lo del umbral de la gráfica descrito arriba.
+
+### Cómo se probó (importante)
+
+Datos **FICTICIOS** interceptados en mi script de navegador (cuentas demo sin canal); filas de prueba borradas al terminar. No se ha visto con tu canal real ni en un monitor físico: los anchos se simulan con el emulador de dispositivo de Chrome.
+
+### Conocido y pendiente (no se oculta)
+
+- A 1920 px la tarjeta de la gráfica queda más baja que la columna de observaciones y deja un hueco debajo; se afina en **A-R17c** (alto de la gráfica y columna lateral).
+- A 768 px el título de la barra superior ("YouTube") se corta por el buscador. Es un efecto de `TopBar`, componente compartido de todas las páginas: **no se ha tocado**; se valorará aparte para no alterar otras pantallas.
+- Aún no hay jerarquía nueva (héroe, barra de periodo fija, mini-tendencias, rejilla de vídeos con filtros fijos): son las fases A-R17b–f.
+
+---
+
 ## 2026-10-29 (Alex-26) — [Alex] Se elimina la página Redes y se propone A-R17 (Métricas a ancho completo)
 
 ### Qué se cambió
