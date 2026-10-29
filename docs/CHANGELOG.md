@@ -4,6 +4,16 @@ Registro de qué se hizo, por qué, y qué queda pendiente de verificar — pens
 
 ---
 
+## 2026-10-29 (Alex-19) — [Alex] A-R16: propuesta de estructura del dashboard de YouTube
+
+Solo documentación: `docs/PROPUESTA_A-R16_ESTRUCTURA_DASHBOARD.md`. Alex confirmó que el JSON de `GET /api/social/youtube-analytics` llega bien con su canal real (primera comprobación con datos reales de A-R16b).
+
+La propuesta reutiliza lo existente (gráficos SVG propios con tooltip, `SegmentedTabs`, `StatTile`, `gsap` y su manejo de `prefers-reduced-motion`), **sin dependencias nuevas**; define 8 componentes nuevos en `app/components/youtube/`, 2 composables, el orden de los bloques en escritorio y móvil, los estados de interfaz y 4 fases con su forma de validación. Además propone quitar la evolución de 28 días de `youtube-channel-stats` (la da ya `youtube-analytics`) para no llamar dos veces a la API.
+
+**Sin verificar:** nada está construido. Queda pendiente la aprobación de Alex. Las cuentas demo no tienen canal: el diseño se revisará con respuestas fabricadas y claramente marcadas en el script de navegador (fuera del producto); lo que cuenta es lo que Alex vea con su canal real.
+
+---
+
 ## 2026-10-29 (Alex-18) — [Alex] A-R16b: informe de YouTube por periodos (backend, en vivo) y primera cuenta real de Instagram
 
 ### Observación: Instagram ya está conectado de verdad
