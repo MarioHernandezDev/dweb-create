@@ -107,7 +107,7 @@ export async function fetchYoutubeVideos(accessToken: string, ids: string[]) {
  */
 export async function fetchYoutubeAnalyticsReport(
   accessToken: string,
-  params: { startDate: string; endDate: string; metrics: string; dimensions?: string; sort?: string }
+  params: { startDate: string; endDate: string; metrics: string; dimensions?: string; sort?: string; maxResults?: number }
 ): Promise<AnalyticsReport> {
   return await $fetch<AnalyticsReport>('https://youtubeanalytics.googleapis.com/v2/reports', {
     params: { ids: 'channel==MINE', ...params },

@@ -4,6 +4,42 @@ Registro de qué se hizo, por qué, y qué queda pendiente de verificar — pens
 
 ---
 
+## 2026-10-29 (Alex-23) — [Alex] A-R16d.2: rendimiento de cada vídeo dentro del periodo
+
+### Qué se cambió
+
+- **Endpoint nuevo `GET /api/social/youtube-video-performance?days=7|28|90|365`:** qué hizo cada vídeo DENTRO del periodo (visualizaciones, tiempo de visualización, me gusta y comentarios), en vivo desde la YouTube Analytics API con `dimensions=video` ordenado por visualizaciones y tope de 200 vídeos. Mismo rango de fechas que `youtube-analytics`, así que las cifras por vídeo cuadran con los totales del periodo. No guarda nada en la base de datos ni añade dependencias. Mismo patrón de seguridad que el resto (solo datos propios, tokens solo en servidor, sin llamar a Google si la cuenta ya consta como caducada o revocada, errores clasificados).
+- **Reglas de datos (lógica pura en `server/utils/youtube-video-performance.ts`):** columnas leídas por nombre; métrica que no llega = `null` (nunca 0); ids que no tienen forma de id de YouTube o repetidos se descartan; `truncated` si el informe llega al tope de 200 (puede faltar algún vídeo con actividad).
+- **Total acumulado frente a periodo (requisito 5.3):** cada tarjeta de vídeo muestra ahora dos bloques rotulados, **TOTAL** (acumulado desde la publicación, Data API) y **ÚLTIMOS N DÍAS** (Analytics API, el periodo elegido arriba). Una nota sobre la lista explica la diferencia con el rango de fechas real.
+- **Sin inventar ceros:** un vídeo que Google no devuelve en el informe NO se pinta con 0. Cada caso dice lo suyo, con motivo al pasar el ratón: "sin cifras en el periodo" (sin actividad registrada, o publicado hace muy poco), "fuera de los 200 más vistos" (informe recortado, con aviso sobre la lista) y "cifras no disponibles ahora" (la petición falló o aún no ha llegado; es distinto de "sin actividad"). Una métrica concreta que falta dentro de una fila es "—"; un 0 real sigue siendo 0.
+- **Nuevo orden "Más vistos en el periodo"** (el antiguo pasa a "Más vistos (total)"). Los vídeos sin cifras del periodo van al final, no como 0.
+- **Comportamiento:** al cambiar el selector de periodo se piden las cifras de ese periodo (caché en memoria por periodo y cancelación de la petición anterior, igual que las analíticas); "Actualizar" las recarga. **Un fallo de esta petición no esconde la lista:** los totales de cada vídeo siguen visibles y aparece un aviso en línea con Reintentar. Con la cuenta caducada/revocada no se llama a este endpoint.
+
+### Verificado de verdad
+
+- Unitarios nuevos (`youtube-video-performance.spec.ts`, 14): lectura por nombre de columna, ausente = null / 0 real = 0, ids inválidos o repetidos, tope de 200, estados `unknown` / `data` / `none` / `unlisted` y orden por vistas del periodo (independiente del orden por total, sin datos al final, 0 real por delante de "sin dato"). **Suite completa 396/396**; `npx vue-tsc --noEmit` limpio.
+- **Navegador real (Chrome por CDP), 22 comprobaciones OK** y capturas revisadas a ojo (escritorio, 7 días, recortado, fallo, cargando y móvil 390 px): cifras correctas con unidades, "—" para métricas ausentes y 0 reales, tarjetas sin fila con su motivo, orden por periodo, cambio a 7 días (nueva llamada y cifras distintas) y vuelta a 28 con caché (sin llamada extra), informe recortado, fallo con totales conservados y Reintentar, estado de carga, móvil sin desbordes, y con el token falso real **cero llamadas** a este endpoint.
+
+### Cómo se probó (importante)
+
+Las cuentas demo no tienen canal. **Todos los datos de vídeos y de rendimiento son FICTICIOS** (títulos con "(ficticio)"), interceptados en mi script de navegador; no entran en el producto. Las filas de cuenta con token falso que creé para que la página mostrara el panel se borraron al terminar (0 restos).
+
+### Errores míos durante la verificación (ninguno en el producto salvo el primero)
+
+1. **Defecto de producto que encontré yo al revisar la captura del fallo y corregí en la misma fase:** con la petición caída, cada tarjeta decía "sin cifras en el periodo", que sugiere "sin actividad" cuando en realidad no se sabía. Ahora dice "cifras no disponibles ahora" y hay una comprobación nueva para ello.
+2. Mi script empezó sin cuenta conectada la primera vez (la limpieza de la fase anterior había borrado la fila de prueba) y, en la repetición, mi último paso (token falso real) deja la fila como revocada a propósito; el script de siembra se niega a pisar filas ajenas, así que hubo que limpiar y volver a sembrar. Dos veces la página mostró "Red no conectada" y todos los resultados salían en rojo por eso, no por el producto.
+3. Una expectativa mía mal escrita (`slice(0, 12)` incluye el espacio final de "Cómo montar "): la app ordenaba bien. Es la misma errata de 12 caracteres de la fase anterior.
+
+### Sin verificar
+
+- **Con el canal real de Alex:** que Analytics acepte `dimensions=video` con estas métricas y el orden por visualizaciones, y qué devuelve de verdad (si algún canal devuelve filas sin me gusta, etc.). Alex puede abrir `/api/social/youtube-video-performance?days=28` con la sesión iniciada para ver el JSON.
+- El **tope de 200 vídeos** es el máximo de la API; en canales con más vídeos activos en el periodo habrá vídeos "fuera de los 200 más vistos" (se avisa).
+- Los datos de Analytics tardan 1-2 días: un vídeo recién subido aparece como "sin cifras" hasta entonces (el motivo lo dice).
+- **Vista de detalle de un vídeo** (requisito 5.4) y comparación con el periodo anterior por vídeo: **no hechas**. Tampoco las observaciones con criterio visible ni las animaciones (fase f). Lectura de pantalla y táctil real: no probados.
+- Cuota de la API: este endpoint añade 1 llamada de Analytics por periodo visto (más 1 por renovar el token), sin medir.
+
+---
+
 ## 2026-10-29 (Alex-22) — [Alex] A-R16d: lista de vídeos con búsqueda, orden, filtro y paginación
 
 ### Qué se cambió

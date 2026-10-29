@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { formatCompactNumber } from '~/utils/mock-data'
 import { relativeTime } from '~/utils/status'
+import { formatHours, formatRangeLabel, periodLabel } from '~/utils/youtube-period-view'
 import {
-  ENGAGEMENT_HINT, VIDEO_RANGES, VIDEO_SORTS, countDisplay, engagementRate, filterVideos, formatEngagement, formatVideoDuration,
-  hasActiveFilters, sortVideos, videoUrl, type VideoDto, type VideoRange, type VideoSort
+  ENGAGEMENT_HINT, PERIOD_STATUS_LABELS, PERIOD_STATUS_REASONS, VIDEO_RANGES, VIDEO_SORTS, countDisplay, engagementRate, filterVideos, formatEngagement, formatVideoDuration,
+  hasActiveFilters, periodStatus, sortVideos, videoUrl, type PerformanceById, type VideoDto, type VideoRange, type VideoSort
 } from '~/utils/youtube-videos-view'
 
 /**
@@ -11,6 +12,10 @@ import {
  * los vídeos cargados y avisa para cargar más o reintentar. Búsqueda, filtro
  * por fecha y orden se aplican a los vídeos CARGADOS (el contador lo dice).
  * Un me gusta o comentario ausente es "—" con su motivo, nunca 0.
+ *
+ * Cada tarjeta separa dos cosas (A-R16d.2): el TOTAL ACUMULADO del vídeo desde
+ * que se publicó (Data API) y lo ocurrido EN el periodo elegido (Analytics API).
+ * Sin cifras del periodo, el total acumulado se sigue viendo.
  */
 const props = defineProps<{
   videos: VideoDto[]
@@ -19,8 +24,14 @@ const props = defineProps<{
   loading: boolean
   loadingMore: boolean
   error: { code: string | null; message: string } | null
+  periodDays: number
+  periodRange: { start: string; end: string } | null
+  performance: PerformanceById | null
+  truncated: boolean
+  performanceLoading: boolean
+  performanceError: string | null
 }>()
-defineEmits<{ loadMore: []; retry: []; reconnect: [] }>()
+defineEmits<{ loadMore: []; retry: []; reconnect: []; retryPerformance: [] }>()
 
 const query = ref('')
 const range = ref<VideoRange>('all')
@@ -28,7 +39,8 @@ const sort = ref<VideoSort>('recent')
 
 const filters = computed(() => ({ query: query.value, range: range.value }))
 const filtered = computed(() => filterVideos(props.videos, filters.value))
-const visible = computed(() => sortVideos(filtered.value, sort.value))
+const visible = computed(() => sortVideos(filtered.value, sort.value, props.performance))
+const periodName = computed(() => periodLabel(props.periodDays).toLowerCase())
 const filtering = computed(() => hasActiveFilters(filters.value))
 
 function clearFilters() {
@@ -85,6 +97,21 @@ const compact = (n: number) => formatCompactNumber(n)
         </select>
       </div>
 
+      <p v-if="videos.length" class="-mt-1 mb-4 text-[0.75rem] leading-relaxed text-[var(--color-text-faint)]">
+        <strong class="font-medium text-[var(--color-text-muted)]">Total</strong> = acumulado desde la publicación (dato de YouTube).
+        <strong class="font-medium text-[var(--color-text-muted)]">Periodo</strong> = lo ocurrido
+        <template v-if="periodRange">del {{ formatRangeLabel(periodRange) }}</template><template v-else>en el periodo elegido arriba</template>
+        (dato de YouTube).
+        <template v-if="performanceLoading && !performance"> Cargando las cifras del periodo…</template>
+      </p>
+      <p v-if="performanceError && videos.length" class="-mt-2 mb-4 text-[0.8125rem] text-[var(--color-status-alert)]" role="alert">
+        {{ performanceError }}
+        <button type="button" class="font-medium underline" @click="$emit('retryPerformance')">Reintentar</button>
+      </p>
+      <p v-if="truncated && performance" class="-mt-2 mb-4 text-[0.75rem] text-[var(--color-text-faint)]">
+        YouTube solo devuelve los 200 vídeos más vistos del periodo: los demás pueden no tener cifras.
+      </p>
+
       <!-- Cargando la primera página -->
       <div v-if="showSkeleton" class="grid gap-3 md:grid-cols-2" aria-busy="true" aria-label="Cargando vídeos">
         <SkeletonBlock v-for="n in 4" :key="n" height="6.25rem" rounded="var(--radius-md)" />
@@ -128,7 +155,8 @@ const compact = (n: number) => formatCompactNumber(n)
                 {{ relativeTime(video.publishedAt) }}
               </p>
 
-              <dl class="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[0.8125rem] text-[var(--color-text-muted)]" style="font-variant-numeric: tabular-nums">
+              <p class="mt-2 text-[0.625rem] font-semibold uppercase tracking-wide text-[var(--color-text-faint)]">Total</p>
+              <dl class="mt-0.5 flex flex-wrap gap-x-4 gap-y-1 text-[0.8125rem] text-[var(--color-text-muted)]" style="font-variant-numeric: tabular-nums">
                 <div class="flex items-center gap-1" :title="countDisplay('views', video.viewCount).reason ?? 'Visualizaciones'">
                   <dt class="sr-only">Visualizaciones</dt>
                   <Icon name="ph:eye" class="size-3.5" />
@@ -150,6 +178,37 @@ const compact = (n: number) => formatCompactNumber(n)
                   <dd>{{ engagementRate(video) !== null ? formatEngagement(engagementRate(video)!) : '—' }}</dd>
                 </div>
               </dl>
+
+              <!-- Lo ocurrido EN el periodo: sin fila no se inventan ceros -->
+              <template v-for="st in [periodStatus(video.id, performance, truncated)]" :key="st.kind">
+                <p class="mt-2 text-[0.625rem] font-semibold uppercase tracking-wide text-[var(--color-text-faint)]">{{ periodName }}</p>
+                <SkeletonBlock v-if="st.kind === 'unknown' && performanceLoading" class="mt-1" width="70%" height="0.875rem" />
+                <dl v-else-if="st.kind === 'data'" class="mt-0.5 flex flex-wrap gap-x-4 gap-y-1 text-[0.8125rem] text-[var(--color-text)]" style="font-variant-numeric: tabular-nums" data-period-stats>
+                  <div class="flex items-center gap-1" title="Visualizaciones en el periodo">
+                    <dt class="sr-only">Visualizaciones en el periodo</dt>
+                    <Icon name="ph:eye" class="size-3.5" />
+                    <dd>{{ st.performance.views === null ? '—' : compact(st.performance.views) }}</dd>
+                  </div>
+                  <div class="flex items-center gap-1" title="Tiempo de visualización en el periodo">
+                    <dt class="sr-only">Tiempo de visualización en el periodo</dt>
+                    <Icon name="ph:clock" class="size-3.5" />
+                    <dd>{{ st.performance.estimatedMinutesWatched === null ? '—' : formatHours(st.performance.estimatedMinutesWatched) }}</dd>
+                  </div>
+                  <div class="flex items-center gap-1" title="Me gusta en el periodo">
+                    <dt class="sr-only">Me gusta en el periodo</dt>
+                    <Icon name="ph:thumbs-up" class="size-3.5" />
+                    <dd>{{ st.performance.likes === null ? '—' : compact(st.performance.likes) }}</dd>
+                  </div>
+                  <div class="flex items-center gap-1" title="Comentarios en el periodo">
+                    <dt class="sr-only">Comentarios en el periodo</dt>
+                    <Icon name="ph:chat-circle-text" class="size-3.5" />
+                    <dd>{{ st.performance.comments === null ? '—' : compact(st.performance.comments) }}</dd>
+                  </div>
+                </dl>
+                <p v-else class="mt-0.5 text-[0.8125rem] text-[var(--color-text-faint)]" :title="PERIOD_STATUS_REASONS[st.kind]" data-period-none>
+                  — <span class="text-[0.75rem]">{{ PERIOD_STATUS_LABELS[st.kind] }}</span>
+                </p>
+              </template>
             </div>
           </article>
         </li>

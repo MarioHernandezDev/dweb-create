@@ -20,12 +20,30 @@ export interface VideoDto {
   commentCount: number | null
 }
 
-export type VideoSort = 'recent' | 'views' | 'engagement'
+/** Espejo de `VideoPerformance` en server/utils/youtube-video-performance.ts: lo ocurrido DENTRO del periodo. */
+export interface VideoPerformanceDto {
+  id: string
+  views: number | null
+  estimatedMinutesWatched: number | null
+  likes: number | null
+  comments: number | null
+}
+
+export interface VideoPerformanceReport {
+  days: number
+  range: { start: string; end: string }
+  videos: VideoPerformanceDto[]
+  /** El informe llegó al tope de 200 vídeos: puede faltar alguno con actividad. */
+  truncated: boolean
+}
+
+export type VideoSort = 'recent' | 'views' | 'period-views' | 'engagement'
 export type VideoRange = 'all' | '30' | '90' | '365'
 
 export const VIDEO_SORTS: { value: VideoSort; label: string }[] = [
   { value: 'recent', label: 'Más recientes' },
-  { value: 'views', label: 'Más vistos' },
+  { value: 'views', label: 'Más vistos (total)' },
+  { value: 'period-views', label: 'Más vistos en el periodo' },
   { value: 'engagement', label: 'Mayor interacción' }
 ]
 
@@ -73,10 +91,48 @@ export function filterVideos(list: VideoDto[], filters: VideoFilters, now: Date 
   })
 }
 
+export type PerformanceById = ReadonlyMap<string, VideoPerformanceDto>
+
+export function performanceMap(report: Pick<VideoPerformanceReport, 'videos'> | null): PerformanceById | null {
+  return report ? new Map(report.videos.map((p) => [p.id, p])) : null
+}
+
+export type PeriodStatus =
+  /** Informe aún no disponible (cargando o falló): no se sabe nada del periodo. */
+  | { kind: 'unknown' }
+  /** Hay cifras del vídeo en el periodo. */
+  | { kind: 'data'; performance: VideoPerformanceDto }
+  /** El informe cubre todos los vídeos y este no aparece: sin actividad registrada (o publicado hace muy poco). */
+  | { kind: 'none' }
+  /** El informe llegó al tope: no se puede afirmar nada de este vídeo. */
+  | { kind: 'unlisted' }
+
+/** Qué sabemos de un vídeo en el periodo. Nunca devuelve ceros inventados: sin fila es "sin datos", no 0. */
+export function periodStatus(videoId: string, perf: PerformanceById | null, truncated: boolean): PeriodStatus {
+  if (!perf) return { kind: 'unknown' }
+  const found = perf.get(videoId)
+  if (found) return { kind: 'data', performance: found }
+  return truncated ? { kind: 'unlisted' } : { kind: 'none' }
+}
+
+export const PERIOD_STATUS_REASONS = {
+  none: 'YouTube no registra actividad de este vídeo en el periodo (sin visualizaciones, o publicado hace muy poco: los datos tardan 1-2 días).',
+  unlisted: 'Este vídeo no aparece entre los 200 más vistos del periodo, así que no hay cifras suyas.',
+  unknown: 'Las cifras del periodo no están disponibles ahora.'
+} as const
+
+/** Texto visible de cada caso sin cifras: no es lo mismo "no hubo actividad" que "no lo sabemos". */
+export const PERIOD_STATUS_LABELS = {
+  none: 'sin cifras en el periodo',
+  unlisted: 'fuera de los 200 más vistos',
+  unknown: 'cifras no disponibles ahora'
+} as const
+
 /** Orden estable; los vídeos sin el dato por el que se ordena van AL FINAL. No modifica la lista original. */
-export function sortVideos(list: VideoDto[], sort: VideoSort): VideoDto[] {
+export function sortVideos(list: VideoDto[], sort: VideoSort, perf: PerformanceById | null = null): VideoDto[] {
   const key = (v: VideoDto): number | null => {
     if (sort === 'views') return v.viewCount
+    if (sort === 'period-views') return perf?.get(v.id)?.views ?? null
     if (sort === 'engagement') return engagementRate(v)
     if (!v.publishedAt) return null
     const t = new Date(v.publishedAt).getTime()

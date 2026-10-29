@@ -51,12 +51,22 @@ const {
   load: loadVideos, loadMore: loadMoreVideos, reload: reloadVideos
 } = useYoutubeVideos()
 
+// Rendimiento de cada vídeo en el periodo elegido (se pide aparte: un fallo no esconde la lista).
+const {
+  report: perfReport, byId: perfById, loading: perfLoading, error: perfError,
+  load: loadPerformance, reload: reloadPerformance
+} = useYoutubeVideoPerformance(days)
+
 // Solo con el canal ya cargado y la conexión válida: así nunca se pide en el servidor ni se llama a Google a ciegas.
 const analyticsEnabled = computed(() => !!props.stats && !mustReconnect.value)
 watch(analyticsEnabled, (ok) => {
   if (!ok) return
   void loadAnalytics()
   void loadVideos()
+}, { immediate: true })
+// Al cambiar de periodo se piden las cifras por vídeo de ese periodo (la caché evita repetir).
+watch([analyticsEnabled, days], ([ok]) => {
+  if (ok) void loadPerformance()
 }, { immediate: true })
 
 const analyticsProblem = computed(() => (analyticsError.value && analyticsError.value.code !== 'period_unavailable' ? analyticsError.value : null))
@@ -92,6 +102,7 @@ function onReload() {
   if (!analyticsEnabled.value) return
   void reloadAnalytics()
   void reloadVideos()
+  void reloadPerformance()
 }
 
 // Si falló la primera página se pide de nuevo todo; si falló "cargar más", solo esa página (sin borrar lo ya cargado).
@@ -194,6 +205,8 @@ function onRetry() {
       <YoutubeVideosPanel
         v-if="analyticsEnabled"
         :videos="videos" :total="videosTotal" :has-more="!!nextPageToken" :loading="videosLoading" :loading-more="videosLoadingMore" :error="videosError"
+        :period-days="days" :period-range="perfReport?.range ?? null" :performance="perfById" :truncated="perfReport?.truncated ?? false"
+        :performance-loading="perfLoading" :performance-error="perfError?.message ?? null" @retry-performance="loadPerformance(days, { force: true })"
         @load-more="loadMoreVideos" @retry="onVideosRetry" @reconnect="$emit('reconnect')"
       />
     </template>
