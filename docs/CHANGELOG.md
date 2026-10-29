@@ -4,6 +4,42 @@ Registro de qué se hizo, por qué, y qué queda pendiente de verificar — pens
 
 ---
 
+## 2026-10-29 (Alex-24) — [Alex] A-R16d.3 y A-R16g: detalle de un vídeo y observaciones con criterio visible
+
+### Qué se cambió
+
+- **Detalle de un vídeo (requisito 5.4).** Cada tarjeta de la lista tiene "Ver detalle", que abre una hoja modal accesible (la existente `BottomSheet`: foco dentro, Escape cierra y el foco vuelve al botón). Muestra: miniatura y enlace a YouTube, **TOTAL desde la publicación** (Data API) frente a **lo ocurrido en el periodo elegido** (Analytics API), siete tarjetas del periodo con variación (vs. periodo anterior), gráfica de visualizaciones por día y la sección "Frente a lo habitual del canal". Un fallo muestra el mensaje con Reintentar (o Reconectar) **dentro de la hoja**, con el total del vídeo ya visible. Cambiar de periodo con la hoja abierta pide ese periodo; con caché por vídeo y periodo.
+- **Endpoint nuevo `GET /api/social/youtube-video-detail?id=&days=`** (Analytics con `filters=video==ID`: totales, periodo anterior y serie diaria). **Seguridad:** el id se valida (forma de id de YouTube) y **se comprueba que el vídeo pertenece al canal del usuario ANTES de llamar a Analytics** (la Data API devuelve cualquier vídeo público, y Analytics sobre un vídeo ajeno devolvería 403 y marcaría por error la cuenta como "sin permiso"). "No existe" y "no es tuyo" dan el mismo 404, para no confirmar vídeos ajenos. No guarda nada ni añade dependencias.
+- **Vídeo publicado dentro del periodo:** aviso visible ("las cifras cubren solo desde su publicación") y **sin comparación** con el periodo anterior ni con las visualizaciones de los demás vídeos (no sería justa).
+- **"Frente a lo habitual del canal", con el CRITERIO escrito en cada fila** (`youtube-insights.ts`): % medio visto y duración media del vídeo frente a la media del canal en el mismo periodo, y visualizaciones frente a la **mediana** de los vídeos con actividad en el periodo. "Similar" = dentro de ±10 %. La fila de visualizaciones solo existe con **al menos 5 vídeos con actividad, informe no recortado y vídeo presente todo el periodo**; si falta cualquier dato, la fila no se genera (no se compara con 0).
+- **Observaciones del canal (A-R16g)**, nueva sección entre la evolución y los vídeos, con reglas fijas y **criterio visible bajo cada una**: vídeo más visto del periodo, qué parte de las visualizaciones concentra, cambio de visualizaciones frente al periodo anterior (solo con porcentaje válido), mejor día (los días sin dato no cuentan como cero) y vídeos publicados en el periodo (solo cuando ya están cargados todos los del rango). **Sin IA, sin causas ("porque…") y sin consejos.** Sin datos: lo dice, no inventa.
+- Los números de las observaciones usan separador de miles también en 4 cifras ("8.549 → 10.686"): `Intl` en es-ES no lo pone por defecto y quedaba incoherente.
+
+### Verificado de verdad
+
+- Unitarios nuevos (`youtube-insights.spec.ts`, 22): reglas de cada observación, veredictos y márgenes, mediana, mínimo de vídeos, informe recortado, vídeo parcial y datos ausentes. **Suite completa 418/418**; `npx vue-tsc --noEmit` limpio.
+- **Navegador real (Chrome por CDP), 22 comprobaciones OK** (con capturas revisadas en escritorio y móvil 390 px): observaciones con criterio y sin causas ni consejos; detalle con título, TOTAL frente a PERIODO, 7 tarjetas, comparaciones con su criterio y veredicto correcto ("por encima" en % visto, "por debajo" en duración), gráfica, sin desbordes; cambio a 7 días con la hoja abierta (nueva llamada `v1:7`); Escape cierra y **el foco vuelve al botón**; vídeo parcial (aviso, sin variaciones, 2 filas en vez de 3); fallo con Reintentar dentro de la hoja; cargando; móvil.
+
+### Cómo se probó (importante)
+
+Las cuentas demo no tienen canal. **Todos los datos son FICTICIOS** (títulos con "(ficticio)"), interceptados en mi script de navegador; no entran en el producto. La fila de cuenta con token falso que uso para que la página muestre el panel se borra al terminar (0 restos). **No se ha visto el detalle ni las observaciones con el canal real de Alex.**
+
+### Errores míos durante la verificación (ninguno en el producto)
+
+1. La primera comprobación de foco falló porque mi script abría el detalle con `click()` sin enfocar el botón: en el navegador real el foco sí vuelve (comprobado al corregir el script).
+2. Mi interceptor genérico respondía con las estadísticas del canal también a la ruta nueva del detalle (doble respuesta); corregido en el script. Una expectativa mía suponía separador de miles en "1000" (comportamiento de `Intl`); de ahí el retoque de formato de arriba.
+3. Algún error de escapado al generar el script (el shell expandía `\n`); sin consecuencia en el producto.
+
+### Sin verificar
+
+- **Con el canal real:** que Analytics acepte `filters=video==ID` con estas métricas (se pidió **sin `subscribersLost`** por no estar confirmado en informes de un solo vídeo; por eso no hay "suscriptores netos" en el detalle). Si Google rechaza alguna otra métrica, el detalle fallará con el mensaje y Reintentar, sin afectar al resto.
+- La **mediana de "lo habitual"** solo cubre vídeos con actividad en el periodo (no los que no tuvieron vistas) y un canal con pocos vídeos no tendrá esa fila. "Lo habitual" es un criterio de FEEDMA, no una cifra de YouTube.
+- Cuota: el detalle son 5 llamadas por apertura (canal, vídeo y 3 informes), solo bajo demanda y con caché; sin medir.
+- Lectura de pantalla y táctil real: no probados.
+- **A-R16e (histórico propio con snapshots) no se hace:** exige una tabla nueva en Supabase (propuesta M3) y tu aprobación/coordinación con Mario antes de cualquier migración.
+
+---
+
 ## 2026-10-29 (Alex-23) — [Alex] A-R16d.2: rendimiento de cada vídeo dentro del periodo
 
 ### Qué se cambió

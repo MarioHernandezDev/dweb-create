@@ -1,3 +1,5 @@
+import type { AnalyticsReportDto } from './youtube-period-view'
+
 /**
  * Presentación de la lista de vídeos de YouTube (A-R16d): búsqueda, filtro por
  * fecha de publicación, orden e interacción. Pura y sin Vue, para probar las
@@ -35,6 +37,13 @@ export interface VideoPerformanceReport {
   videos: VideoPerformanceDto[]
   /** El informe llegó al tope de 200 vídeos: puede faltar alguno con actividad. */
   truncated: boolean
+}
+
+/** Respuesta de `GET /api/social/youtube-video-detail`: lo mismo que el informe del canal, pero de un solo vídeo. */
+export interface VideoDetailReport extends Pick<AnalyticsReportDto, 'days' | 'range' | 'previousRange' | 'totals' | 'previousTotals' | 'comparison' | 'series' | 'previousSeries' | 'coverage'> {
+  video: VideoDto
+  /** El vídeo se publicó dentro del periodo: las cifras son solo desde su publicación y no hay comparación. */
+  partialPeriod: boolean
 }
 
 export type VideoSort = 'recent' | 'views' | 'period-views' | 'engagement'

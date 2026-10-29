@@ -84,7 +84,7 @@ export async function fetchUploadsPage(accessToken: string, uploadsPlaylistId: s
 export interface YoutubeVideosResponse {
   items?: {
     id: string
-    snippet?: { title?: string; thumbnails?: { medium?: { url?: string }; default?: { url?: string } }; publishedAt?: string }
+    snippet?: { title?: string; channelId?: string; thumbnails?: { medium?: { url?: string }; default?: { url?: string } }; publishedAt?: string }
     statistics?: { viewCount?: string; likeCount?: string; commentCount?: string }
     contentDetails?: { duration?: string }
   }[]
@@ -107,7 +107,7 @@ export async function fetchYoutubeVideos(accessToken: string, ids: string[]) {
  */
 export async function fetchYoutubeAnalyticsReport(
   accessToken: string,
-  params: { startDate: string; endDate: string; metrics: string; dimensions?: string; sort?: string; maxResults?: number }
+  params: { startDate: string; endDate: string; metrics: string; dimensions?: string; sort?: string; maxResults?: number; filters?: string }
 ): Promise<AnalyticsReport> {
   return await $fetch<AnalyticsReport>('https://youtubeanalytics.googleapis.com/v2/reports', {
     params: { ids: 'channel==MINE', ...params },

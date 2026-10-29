@@ -31,7 +31,7 @@ const props = defineProps<{
   performanceLoading: boolean
   performanceError: string | null
 }>()
-defineEmits<{ loadMore: []; retry: []; reconnect: []; retryPerformance: [] }>()
+defineEmits<{ loadMore: []; retry: []; reconnect: []; retryPerformance: []; openDetail: [video: VideoDto] }>()
 
 const query = ref('')
 const range = ref<VideoRange>('all')
@@ -209,6 +209,13 @@ const compact = (n: number) => formatCompactNumber(n)
                   — <span class="text-[0.75rem]">{{ PERIOD_STATUS_LABELS[st.kind] }}</span>
                 </p>
               </template>
+
+              <button
+                type="button" class="mt-2.5 inline-flex items-center gap-1 text-[0.8125rem] font-medium text-[var(--color-text)] hover:underline"
+                :aria-label="`Ver el detalle de «${video.title}»`" data-open-detail @click="$emit('openDetail', video)"
+              >
+                Ver detalle <Icon name="ph:caret-right-bold" class="size-3" />
+              </button>
             </div>
           </article>
         </li>

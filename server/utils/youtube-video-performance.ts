@@ -38,6 +38,10 @@ function numberOrNull(value: unknown): number | null {
 /** Los ids de vídeo de YouTube: 11 caracteres de [A-Za-z0-9_-]. Cualquier otra cosa se descarta. */
 const VIDEO_ID = /^[A-Za-z0-9_-]{11}$/
 
+export function isVideoId(value: unknown): value is string {
+  return typeof value === 'string' && VIDEO_ID.test(value)
+}
+
 export function parseVideoPerformance(report: AnalyticsReport): { videos: VideoPerformance[]; truncated: boolean } {
   const idx: Record<string, number> = {}
   ;(report.columnHeaders ?? []).forEach((h, i) => {
@@ -50,7 +54,7 @@ export function parseVideoPerformance(report: AnalyticsReport): { videos: VideoP
   const videos: VideoPerformance[] = []
   for (const row of rows) {
     const id = String(row[idx.video!] ?? '')
-    if (!VIDEO_ID.test(id) || seen.has(id)) continue
+    if (!isVideoId(id) || seen.has(id)) continue
     seen.add(id)
     const get = (name: string) => (name in idx ? numberOrNull(row[idx[name]!]) : null)
     videos.push({

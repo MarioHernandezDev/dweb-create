@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { channelObservations } from '~/utils/youtube-insights'
 import { channelKpis } from '~/utils/youtube-kpi'
 import { formatRangeLabel, periodKpis, periodLabel } from '~/utils/youtube-period-view'
 import type { YoutubeBannerKind } from '~/components/youtube/YoutubeStateBanner.vue'
@@ -56,6 +57,18 @@ const {
   report: perfReport, byId: perfById, loading: perfLoading, error: perfError,
   load: loadPerformance, reload: reloadPerformance
 } = useYoutubeVideoPerformance(days)
+
+// Detalle de un vídeo (hoja modal); se pide solo al abrirlo.
+const {
+  videoId: detailId, report: detailReport, loading: detailLoading, error: detailError,
+  open: openDetail, close: closeDetail, reload: reloadDetail
+} = useYoutubeVideoDetail(days)
+const detailVideo = computed(() => videos.value.find((v) => v.id === detailId.value) ?? null)
+
+// Observaciones con criterio visible (reglas fijas sobre los datos ya cargados).
+const observations = computed(() =>
+  channelObservations({ report: report.value, performance: perfReport.value, videos: videos.value, hasMoreVideos: !!nextPageToken.value })
+)
 
 // Solo con el canal ya cargado y la conexión válida: así nunca se pide en el servidor ni se llama a Google a ciegas.
 const analyticsEnabled = computed(() => !!props.stats && !mustReconnect.value)
@@ -196,6 +209,8 @@ function onRetry() {
         </section>
 
         <YoutubeEvolutionPanel :report="report" :loading="analyticsLoading" :show-compare="showCompare" />
+
+        <YoutubeInsights v-if="report" :observations="observations" :loading="analyticsLoading" />
       </template>
 
       <p v-else-if="channelTooNew" class="md:max-w-4xl text-[0.8125rem] text-[var(--color-text-muted)] rounded-[var(--radius-md)] border border-[var(--color-hairline)] bg-[var(--color-paper)] p-4">
@@ -207,7 +222,13 @@ function onRetry() {
         :videos="videos" :total="videosTotal" :has-more="!!nextPageToken" :loading="videosLoading" :loading-more="videosLoadingMore" :error="videosError"
         :period-days="days" :period-range="perfReport?.range ?? null" :performance="perfById" :truncated="perfReport?.truncated ?? false"
         :performance-loading="perfLoading" :performance-error="perfError?.message ?? null" @retry-performance="loadPerformance(days, { force: true })"
-        @load-more="loadMoreVideos" @retry="onVideosRetry" @reconnect="$emit('reconnect')"
+        @load-more="loadMoreVideos" @retry="onVideosRetry" @reconnect="$emit('reconnect')" @open-detail="(v) => openDetail(v.id)"
+      />
+
+      <YoutubeVideoDetail
+        :open="!!detailId" :video="detailVideo" :report="detailReport" :loading="detailLoading" :error="detailError"
+        :days="days" :compare="showCompare" :channel-totals="report?.totals ?? null"
+        :performance="perfReport" @close="closeDetail" @retry="reloadDetail" @reconnect="$emit('reconnect')"
       />
     </template>
   </div>
