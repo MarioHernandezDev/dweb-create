@@ -467,6 +467,114 @@ Cubre: ida y vuelta (ascii, unicode, 5000 caracteres, cadena vacía); IV aleator
 
 ---
 
+## 2026-10-28 (58) — [Mario] M-N2 ("Visto" en el chat) y M-U1 (Descubrir verificado)
+
+### M-N2 — "Visto" bajo tu último mensaje
+
+- Se deriva de `last_read_at` de la conversación, **sin columnas nuevas ni migración** (opción preferida en Q9). `useChat.ts` expone `otherLastReadAt`; `chat/[id].vue` marca el último mensaje propio leído por la otra persona y `MessageBubble.vue` pinta "✓✓ Visto".
+- `chat/[id].vue` refresca ese dato cada 15 s mientras está abierto (no hay Realtime sobre `conversations`; activarlo sería un cambio en Supabase).
+- **Limitaciones:** granularidad de conversación, no por mensaje; no hay estado "entregado" separado de "enviado".
+- Verificado en navegador (390px) con las dos cuentas demo, solo lectura: sale "Visto" bajo el último mensaje propio ya leído y no sale donde no corresponde; sin errores de página. Sin verificar: el refresco en vivo con dos sesiones a la vez (habría que escribir mensajes de prueba).
+
+### M-U1 — Descubrir
+
+Verificado en navegador (390px, sin desbordes ni errores): `/creator/discover` (10 marcas) y `/partner/discover` (11 creadores) cargan, `POST /api/discover/search` devuelve 200 en los dos sentidos y la búsqueda con IA ("marcas de música o educación, 100 a 300 €") devolvió resultados ordenados con SoundWave Academy primero. La migración de Discovery está aplicada en el proyecto real (el endpoint escribe en `discovery_searches` sin error). Sin verificar: calidad de las explicaciones de la IA y el modo Filtros con combinaciones concretas.
+
+---
+
+## 2026-10-28 (57) — [Mario] M-S1, M-S2, M-S3, M-N1, M-O1: límite de uso, auditoría de admin, roles, avisos agrupados y recorrido de bienvenida
+
+Todo verificado con un navegador real (Chromium de Playwright, instalado fuera del proyecto) contra el servidor de desarrollo y las cuentas demo.
+
+### M-S3 — Acceso cruzado entre roles (sin cambios de código)
+
+Matriz probada con clics reales en `/creator`, `/creator/requests`, `/creator/profile`, `/partner`, `/partner/requests`, `/partner/profile`, `/inbox`, `/chat`, `/favorites`, `/privacidad`, `/admin`:
+- **Anónimo:** todas las rutas privadas → `/login`; `/privacidad` pública; `/admin` → `/admin/login`.
+- **Creador:** sus rutas abren; `/partner/*` → `/creator`.
+- **Partner:** sus rutas abren; `/creator/*` → `/partner`.
+- `/admin` no se abre con una cuenta normal (→ `/admin/login`).
+Sin fallos. Sin verificar: la protección a nivel de API/RLS (esto solo cubre la navegación).
+
+### M-S1 — Límite de uso
+
+- `server/utils/rate-limit.ts`: nuevo `enforceRateLimit(event, clave, max, ventana)`, que responde 429 con `Retry-After`. 3 tests unitarios nuevos.
+- Aplicado a `POST /api/ml/predict` (10/min por usuario, llama al LLM) y `POST /api/discover/search` (20/min por usuario). En `search.post.ts` solo se añadió la línea del límite, la consulta no se tocó.
+- **Límite del enfoque (Q3):** el contador vive en memoria de un proceso; con varias instancias o un reinicio no es estricto. Además, el alta de cuentas, las solicitudes y los reportes van **directos de navegador a Supabase**, no por el servidor, así que este límite no los cubre: eso requiere reglas en Supabase o un endpoint intermedio (pendiente).
+- Sin verificar: el 429 de `predict`/`search` no se probó contra el endpoint real (requiere sesión + datos); sí está probado por unidad.
+
+### M-S2 — Auditoría del panel de admin
+
+Hallazgos corregidos (verificados en navegador):
+1. **Recargar `/admin` o abrirlo por URL directa siempre mandaba al login** (y luego a una pantalla de error): las lecturas se hacían con `$fetch`, que en el render del servidor no reenvía la cookie. Corregido con `useRequestFetch()` en `app/pages/admin/index.vue`. Tras el arreglo: recarga conserva la sesión y las 4 pestañas cargan (Usuarios, Actividad, Analíticas, Reportes).
+2. **El límite de login se saltaba falsificando `X-Forwarded-For`**: 10 intentos con cabeceras distintas → todos 401, sin 429. Añadido un tope global (40/10 min) además del de IP. Verificado: tras 40 intentos, 429. Coste asumido: alguien podría bloquear el login de admin unos minutos.
+3. `block.post.ts`: sin cuerpo daba un 500; ahora valida `id` (uuid) y `banned` (400).
+Comprobado: las 6 rutas GET y las 2 POST de `/api/admin/*` devuelven 401 sin sesión.
+
+**Pendiente / sin corregir (decisión tuya):**
+- Los inicios de sesión correctos también cuentan para el límite de 8 por IP (8 entradas en 10 min bastan para bloquearte).
+- `grant-pro` (toca la suscripción, zona Stripe): si el creador ya tiene Pro de pago, el upsert pone `stripe_subscription_id` a null y lo desvincula de Stripe; y pulsarlo dos veces suma créditos dos veces. Revisar en M-D2.
+- No hay registro de qué hace el admin (bloquear, regalar Pro); la contraseña es única y compartida.
+- `users.get` no pagina (1000 máx.). `clientIp` se fía de `X-Forwarded-For`: configurar proxy de confianza según dónde se despliegue (Q3).
+- Sin verificar: aspecto del panel a 390px (el límite de login lo impidió; pendiente).
+
+### M-N1 — Avisos agrupados
+
+`groupNotifications` (`app/utils/notifications.ts`) agrupa avisos idénticos (tipo, título, texto y destino) con contador ×N; leídos y no leídos no se mezclan; abrir uno marca todo el grupo. Solo cliente, sin tocar la base de datos. 5 tests unitarios. Visto en el navegador: "Nueva solicitud de colaboración ×17", "Has iniciado sesión ×20".
+
+### M-O1 — Recorrido de bienvenida
+
+- `app/utils/onboarding-steps.ts` (textos por rol, 5 pasos cada uno), `app/composables/useOnboardingTour.ts`, `app/components/onboarding/OnboardingTour.vue`, montado en `AppShell.vue`. Botón "Ver el recorrido de bienvenida" en Perfil → Cuenta de los dos roles.
+- Progreso en `localStorage` por usuario (Q1, primera versión): **en otro navegador o dispositivo volvería a salir una vez**; si molesta, pasar a columna en `profiles`.
+- Verificado en navegador (390px), creador y partner: sale en la primera entrada; recorre 5 pasos; "Saltar" lo cierra y no vuelve tras recargar ni tras cerrar sesión y volver a entrar; el botón del perfil lo reabre; Escape cierra; sin errores de página.
+- Sin verificar: lector de pantalla; probado con las cuentas demo (con `localStorage` limpio), no con cuentas nuevas creadas por `/onboarding`.
+
+### Residuos de prueba
+
+Las pruebas dejaron ~25 avisos "Has iniciado sesión" en las cuentas demo (por eso salen agrupados ×20).
+
+---
+
+## 2026-10-28 (56) — [Mario] M-F2: CI básico con GitHub Actions
+
+### Qué se cambió
+
+- `.github/workflows/ci.yml` (nuevo): en cada PR y push a `main` ejecuta `npm ci`, `vue-tsc --noEmit`, `npm test -- --run` y `npm run build` (Node 24). Los tests de integración quedan **fuera** a propósito (escriben en el Supabase compartido); se lanzan a mano. La build usa valores de relleno de Supabase, sin secretos.
+
+### Verificado de verdad
+
+- Los mismos tres pasos pasan en local; la build también pasa en una copia limpia del commit **sin `.env`** y solo con las tres variables de relleno, que es lo que verá el runner.
+
+### Sin verificar
+
+- **El workflow no se ha ejecutado en GitHub** (aún no hay credenciales para hacer push desde este equipo). Criterio de M-F2 pendiente: que corra en un PR de prueba.
+
+---
+
+## 2026-10-28 (55) — [Mario] M-L1: páginas públicas de privacidad y términos (plantilla por rellenar)
+
+Primera tarea de `docs/TRABAJO_MARIO.md`. Desbloquea A-R4 de Alex (Meta exige una URL pública de privacidad). **El texto es una plantilla**: no se conocen todavía los datos del responsable.
+
+### Qué se cambió
+
+- `app/utils/legal.ts` (nuevo): único sitio con los datos del responsable (titular, NIF, domicilio, email, jurisdicción, plazo de conservación fiscal, comisión, fecha). Todos son `[POR COMPLETAR: …]`; `legalHasPlaceholders` indica si queda alguno.
+- `app/components/legal/LegalDocument.vue` y `LegalValue.vue` (nuevos): plantilla de página y marcado en amarillo de cada hueco. Mientras quede algún hueco, la página muestra un aviso de "Borrador pendiente de completar"; desaparece solo al rellenarlos todos.
+- `app/pages/privacidad.vue` y `app/pages/terminos.vue` (nuevos): contenido adaptado a lo que hace la app (cuentas, redes conectadas con tokens cifrados, Stripe, Supabase, OpenRouter, derechos RGPD, cookies técnicas).
+- `nuxt.config.ts`: `/privacidad` y `/terminos` añadidas a las rutas públicas (`redirectOptions.exclude`).
+- Enlaces: pie de la landing (`LandingFooter.vue`) y aviso bajo el botón de `onboarding.vue` (alta de cuenta). Es solo un texto informativo, no una casilla bloqueante.
+
+### Verificado de verdad
+
+- `vue-tsc --noEmit` limpio, 30 tests unitarios pasan, `npm run build` completo.
+- Con el servidor de desarrollo, sin sesión: `/privacidad`, `/terminos` y `/onboarding` devuelven 200 (sin redirección a `/login`) y el HTML contiene el aviso de borrador y los huecos marcados.
+
+### Sin verificar
+
+- **No se vio en un navegador real** (no hay navegador en este entorno): falta revisar el aspecto a 390px y escritorio.
+- Falta que un gestor/abogado revise el contenido (Q13) y rellenar los datos en `legal.ts`.
+- Pendiente de decidir: política de devoluciones/desistimiento y proveedor de alojamiento (marcados en el texto).
+
+---
+
 ## 2026-10-24 (54) — Fase 5 de CONTEXT.md (hallazgos #11-21): pulido, accesibilidad y un bug real de verdad grave encontrado al medir en navegador
 
 Cierra la Fase 5, la última del plan original de `CONTEXT.md`. Cada hallazgo se investigó en el código real antes de tocar nada; varios resultaron ya resueltos de sesiones anteriores, documentado explícitamente abajo en vez de darlos por hechos sin comprobar.

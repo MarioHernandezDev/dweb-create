@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { AppNotification } from '~/composables/useNotifications'
 import { relativeTime } from '~/utils/status'
+import { groupNotifications, type NotificationGroup } from '~/utils/notifications'
 
 useHead({ title: 'Bandeja de entrada' })
 
@@ -25,7 +26,8 @@ const tabs = computed(() => [
   { value: 'important', label: important.value.some((n) => !n.readAt) ? `Importantes (${important.value.filter((n) => !n.readAt).length})` : 'Importantes' },
   { value: 'activity', label: 'Actividad' }
 ])
-const visible = computed(() => (tab.value === 'important' ? important.value : activity.value))
+// M-N1: avisos idénticos se muestran agrupados, con contador.
+const visible = computed(() => groupNotifications(tab.value === 'important' ? important.value : activity.value))
 
 const typeIcon: Record<string, string> = {
   welcome: 'ph:hand-waving-fill',
@@ -48,8 +50,8 @@ function iconFor(n: AppNotification) {
 
 const hasUnread = computed(() => important.value.some((n) => !n.readAt) || activity.value.some((n) => !n.readAt))
 
-async function open(n: AppNotification) {
-  await markRead(n.id)
+async function open(n: NotificationGroup<AppNotification>) {
+  await Promise.all(n.ids.map((id) => markRead(id)))
   if (n.link) router.push(n.link)
 }
 </script>
@@ -73,15 +75,18 @@ async function open(n: AppNotification) {
       <button v-for="n in visible" :key="n.id" type="button" class="text-left" @click="open(n)">
         <BaseCard
           radius="lg" padding="md" interactive class="flex items-start gap-3"
-          :class="!n.readAt && 'border-[var(--color-primary-500)]/30 bg-[var(--color-primary-500)]/[0.06]'"
+          :class="n.unread && 'border-[var(--color-primary-500)]/30 bg-[var(--color-primary-500)]/[0.06]'"
         >
           <span class="flex items-center justify-center size-9 rounded-full bg-[var(--color-ink-overlay)] text-[var(--color-primary-500)] shrink-0">
             <Icon :name="iconFor(n)" class="size-4" />
           </span>
           <div class="min-w-0 flex-1">
             <div class="flex items-center justify-between gap-2">
-              <p class="text-[0.9375rem] font-medium text-[var(--color-text)] truncate">{{ n.title }}</p>
-              <span v-if="!n.readAt" class="shrink-0 size-2 rounded-full bg-[var(--color-primary-500)]" />
+              <p class="text-[0.9375rem] font-medium text-[var(--color-text)] truncate">
+                {{ n.title }}
+                <span v-if="n.count > 1" class="ml-1 text-[0.75rem] font-normal text-[var(--color-text-faint)]" :aria-label="`${n.count} avisos iguales`">×{{ n.count }}</span>
+              </p>
+              <span v-if="n.unread" class="shrink-0 size-2 rounded-full bg-[var(--color-primary-500)]" />
             </div>
             <p v-if="n.body" class="text-[0.8125rem] text-[var(--color-text-muted)] leading-relaxed mt-0.5">{{ n.body }}</p>
             <p class="text-[0.75rem] text-[var(--color-text-faint)] mt-1">{{ relativeTime(n.createdAt) }}</p>

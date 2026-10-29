@@ -134,7 +134,7 @@ export default defineNuxtConfig({
       // usa cuentas de Supabase en absoluto (ver server/utils/admin-
       // session.ts) — sin esto, este módulo las mandaría a /login antes de
       // que nuestra propia comprobación de contraseña entrara en juego.
-      exclude: ['/', '/onboarding', '/instalaciones', '/admin', '/admin/*']
+      exclude: ['/', '/onboarding', '/instalaciones', '/privacidad', '/terminos', '/admin', '/admin/*']
     }
   }
 })

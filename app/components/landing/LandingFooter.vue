@@ -68,7 +68,11 @@ const year = new Date().getFullYear()
 
       <div class="mt-12 pt-6 border-t border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <p class="text-[0.75rem] text-white/35">© {{ year }} FEEDMA. Hecho para equipos de contenido.</p>
-        <p class="text-[0.75rem] text-white/35">Fotografía de portada: Unsplash License</p>
+        <div class="flex flex-wrap items-center gap-x-5 gap-y-1.5 text-[0.75rem] text-white/35">
+          <NuxtLink to="/privacidad" class="hover:text-white transition-colors">Privacidad</NuxtLink>
+          <NuxtLink to="/terminos" class="hover:text-white transition-colors">Términos</NuxtLink>
+          <span>Fotografía de portada: Unsplash License</span>
+        </div>
       </div>
     </div>
   </footer>

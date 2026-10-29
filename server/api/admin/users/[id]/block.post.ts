@@ -16,7 +16,16 @@ export default defineEventHandler(async (event) => {
   const id = getRouterParam(event, 'id')
   if (!id) throw createError({ statusCode: 400, statusMessage: 'Falta el id de usuario.' })
 
+  // Solo ids con forma de uuid: evita mandar a Supabase basura arbitraria.
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
+    throw createError({ statusCode: 400, statusMessage: 'Id de usuario no válido.' })
+  }
+
+  // Sin cuerpo, `body` llegaba undefined y `body.banned` reventaba con un 500.
   const body = await readBody<BlockBody>(event)
+  if (typeof body?.banned !== 'boolean') {
+    throw createError({ statusCode: 400, statusMessage: 'Falta `banned` (true o false).' })
+  }
   const client = serverSupabaseServiceRole(event)
 
   const { error } = await client.auth.admin.updateUserById(id, {

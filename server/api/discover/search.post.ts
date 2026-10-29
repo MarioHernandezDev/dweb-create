@@ -219,6 +219,8 @@ Devuelve ÚNICAMENTE un objeto JSON (sin texto adicional, sin markdown) con esta
 export default defineEventHandler(async (event) => {
   const user = await serverSupabaseUser(event)
   if (!user) throw createError({ statusCode: 401, statusMessage: 'No autenticado.' })
+  // El modo `ai` llama al LLM y cada búsqueda escribe en `discovery_searches`.
+  enforceRateLimit(event, `discover-search:${user.id}`, 20, 60_000)
 
   const body = await readBody<DiscoverBody>(event)
   const mode = body.mode === 'ai' ? 'ai' : 'filters'

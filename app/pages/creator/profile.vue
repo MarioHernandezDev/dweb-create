@@ -121,6 +121,12 @@ async function duplicateOnePackage(pkg: Package) {
 const activePackagesCount = computed(() => (myPackages.value ?? []).filter((p) => p.active).length)
 const pendingOffersTotal = computed(() => Object.values(pendingCountByPackage.value).reduce((sum, n) => sum + n, 0))
 
+// M-O1: volver a ver el recorrido de bienvenida.
+const onboardingTour = useOnboardingTour()
+function replayTour() {
+  if (myProfileId) onboardingTour.start(myProfileId, 'creator')
+}
+
 async function confirmLogout() {
   const ok = await confirm({ title: '¿Cerrar sesión?', confirmLabel: 'Cerrar sesión' })
   if (!ok) return
@@ -318,6 +324,7 @@ async function saveFicha() {
               </BaseCard>
             </section>
 
+            <BaseButton variant="secondary" icon="ph:compass-tool-bold" class="w-full mb-3" @click="replayTour">Ver el recorrido de bienvenida</BaseButton>
             <BaseButton variant="secondary" icon="ph:sign-out-bold" class="w-full" @click="confirmLogout">Cerrar sesión</BaseButton>
           </div>
 

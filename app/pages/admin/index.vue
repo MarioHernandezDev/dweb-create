@@ -71,7 +71,11 @@ const reasonLabels: Record<string, string> = {
   other: 'Otro motivo'
 }
 
-const me = await $fetch('/api/admin/me').catch(() => ({ authenticated: false }))
+// `useRequestFetch()` reenvía la cookie de sesión también en el render del
+// servidor; con `$fetch` a secas, al recargar /admin o abrirlo por URL
+// directa la petición salía sin cookie y siempre mandaba al login (M-S2).
+const requestFetch = useRequestFetch()
+const me = await requestFetch('/api/admin/me').catch(() => ({ authenticated: false }))
 if (!me.authenticated) await navigateTo('/admin/login')
 
 const tab = ref<'users' | 'activity' | 'analytics' | 'reports'>('users')
@@ -87,7 +91,7 @@ const loadingUsers = ref(false)
 async function loadUsers() {
   loadingUsers.value = true
   try {
-    const res = await $fetch('/api/admin/users')
+    const res = await requestFetch('/api/admin/users')
     users.value = res.users as AdminUser[]
   } finally {
     loadingUsers.value = false
@@ -101,7 +105,7 @@ let reportsLoaded = false
 async function loadReports() {
   loadingReports.value = true
   try {
-    const res = await $fetch('/api/admin/reports')
+    const res = await requestFetch('/api/admin/reports')
     reports.value = res.reports as AdminReport[]
     reportsLoaded = true
   } finally {
@@ -115,7 +119,7 @@ let activityLoaded = false
 async function loadActivity() {
   loadingActivity.value = true
   try {
-    const res = await $fetch('/api/admin/activity')
+    const res = await requestFetch('/api/admin/activity')
     activity.value = res.events as ActivityEvent[]
     activityLoaded = true
   } finally {
@@ -129,7 +133,7 @@ const loadingAnalytics = ref(false)
 async function loadAnalytics() {
   loadingAnalytics.value = true
   try {
-    analytics.value = await $fetch('/api/admin/analytics', { query: { unit: analyticsUnit.value } })
+    analytics.value = await requestFetch('/api/admin/analytics', { query: { unit: analyticsUnit.value } })
   } finally {
     loadingAnalytics.value = false
   }
@@ -140,7 +144,7 @@ const loadingDiscoveryAnalytics = ref(false)
 async function loadDiscoveryAnalytics() {
   loadingDiscoveryAnalytics.value = true
   try {
-    discoveryAnalytics.value = await $fetch('/api/admin/discovery-analytics')
+    discoveryAnalytics.value = await requestFetch('/api/admin/discovery-analytics')
   } finally {
     loadingDiscoveryAnalytics.value = false
   }
