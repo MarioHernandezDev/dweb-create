@@ -84,45 +84,6 @@ export async function fetchYoutubeVideos(accessToken: string, ids: string[]) {
   })
 }
 
-export interface YoutubeAnalyticsDay {
-  date: string
-  views: number
-  subscribersGained: number
-  subscribersLost: number
-}
-
-interface YoutubeAnalyticsResponse {
-  rows?: (string | number)[][]
-}
-
-/**
- * Histórico día a día real (YouTube Analytics API, distinta de la YouTube
- * Data API v3 que usa el resto de este archivo — necesita el scope
- * `yt-analytics.readonly`, ver start.get.ts). Si el token no lo tiene
- * (cuentas conectadas antes de añadir este permiso), Google devuelve un 403
- * aquí — quien llama a esto decide qué hacer con ese error, no se oculta.
- */
-export async function fetchYoutubeAnalytics(accessToken: string, startDate: string, endDate: string): Promise<YoutubeAnalyticsDay[]> {
-  const res = await $fetch<YoutubeAnalyticsResponse>('https://youtubeanalytics.googleapis.com/v2/reports', {
-    params: {
-      ids: 'channel==MINE',
-      startDate,
-      endDate,
-      metrics: 'views,subscribersGained,subscribersLost',
-      dimensions: 'day',
-      sort: 'day'
-    },
-    headers: { Authorization: `Bearer ${accessToken}` },
-    timeout: GOOGLE_FETCH_TIMEOUT_MS
-  })
-  return (res.rows ?? []).map((row) => ({
-    date: String(row[0]),
-    views: Number(row[1] ?? 0),
-    subscribersGained: Number(row[2] ?? 0),
-    subscribersLost: Number(row[3] ?? 0)
-  }))
-}
-
 /**
  * Informe genérico de la YouTube Analytics API (A-R16b): el que llama elige
  * métricas y dimensión. Devuelve la respuesta tal cual (cabeceras + filas) para

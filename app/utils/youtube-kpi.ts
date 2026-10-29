@@ -15,7 +15,8 @@ export interface ChannelStatsInput {
 }
 
 export interface Kpi {
-  key: 'subscribers' | 'views' | 'videos' | 'avgViews'
+  /** Identificador estable de la tarjeta (totales del canal o métricas del periodo). */
+  key: string
   label: string
   /** Valor compacto ("12,4 mil"); `null` si no se puede mostrar. */
   value: string | null

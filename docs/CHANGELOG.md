@@ -4,6 +4,44 @@ Registro de qué se hizo, por qué, y qué queda pendiente de verificar — pens
 
 ---
 
+## 2026-10-29 (Alex-21) — [Alex] A-R16c.2: selector de periodo, métricas del periodo con variación y gráfica con comparación
+
+### Qué se cambió
+
+- **Selector de periodo** (`YoutubePeriodBar`): 7 / 28 / 90 / 365 días y casilla "Comparar con el periodo anterior". Un periodo solo se puede elegir si el canal existía durante todo él (los demás salen deshabilitados **con el motivo**); la comparación se desactiva si el periodo anterior no es completo.
+- **Ocho métricas del periodo** con su variación (`YoutubeKpiCard` ampliada): visualizaciones, tiempo de visualización, suscriptores netos, duración media, % medio visto, me gusta, comentarios y compartidos. Cada una dice su origen ("Dato de YouTube"). El porcentaje solo aparece si el servidor lo da; si no, se enseña la diferencia absoluta y se rotula "(sin %)". La variación del % medio visto se da en puntos porcentuales.
+- **Gráfica nueva** (`YoutubeEvolutionChart`, SVG propio): eje Y con valores, periodo anterior en discontinuo alineado día a día, **huecos reales donde YouTube no da dato** (la línea y el área se cortan; la leyenda dice "N días sin dato… no se rellenan con ceros"), tooltip con fecha y valor de los dos periodos, teclado (←/→/Esc) con región `aria-live`, y **se dibuja al ancho real del contenedor** (no se encoge un lienzo fijo). Pestañas Vistas / Suscriptores / Tiempo (`YoutubeEvolutionPanel`).
+- `useYoutubeAnalytics` (composable): caché por periodo en memoria (volver a un periodo ya visto **no llama a Google**), cancela la petición anterior al cambiar (una respuesta lenta no pisa a la nueva), y si el periodo pedido no es válido para el canal pasa solo al mayor que sí lo es.
+- `YoutubeDashboard` reescrito: orquesta todo; un fallo de las analíticas **no esconde los totales del canal**; sin permiso -> aviso + Reconectar; fallo pasajero -> "no hace falta reconectar" + Reintentar; canal demasiado reciente -> mensaje propio; no se piden analíticas si la cuenta ya consta como caducada/revocada.
+- **Servidor:** `youtube-channel-stats` ya no pide la evolución a Google (la da `youtube-analytics`): **una llamada menos por visita**; se retiran `evolution`/`evolutionIssue` y la función antigua `fetchYoutubeAnalytics`. **Se retira la "proyección a 30 días"** de la pantalla antigua (era una extrapolación de FEEDMA presentada como dato; si se quiere volver a ofrecer irá rotulada como estimación).
+- Sin dependencias nuevas (`@vueuse/core` ya estaba).
+
+### Verificado de verdad
+
+- Unitarios: `youtube-period-view.spec.ts` (42 tests: formatos, tarjetas, variación, series con huecos y alineación del periodo anterior, rangos). **Suite completa 300/300**, `npx vue-tsc --noEmit` limpio, `npm run build` completado (en copia temporal con git worktree, sin tumbar el servidor de Alex; copia eliminada y `node_modules` intacto).
+- **Los tests encontraron dos fallos míos:** la diferencia absoluta salía con **doble signo** ("++0:25"), corregido; una fecha de creación inválida lanzaba una excepción (entrada anterior).
+- **Navegador real (Chrome por CDP), 29 comprobaciones OK** más capturas revisadas a ojo: 4 periodos y selección; 12 tarjetas (4 del canal + 8 del periodo) con variación; llamada única por periodo y **volver a uno ya visto sin nueva llamada**; casilla de comparar apagada (desaparecen variaciones y línea discontinua sin pedir datos); periodos no disponibles deshabilitados con su motivo y comparación desactivada; huecos; datos nulos ("—" con motivo, nunca 0); **tooltip con el ratón y con el teclado**; carrera (pedir 90 y enseguida 7 aunque la de 90 llegue tarde: se queda en 7); canal joven (cae a 7); analíticas sin permiso y con fallo pasajero (con Reintentar que recupera); skeletons de carga; y el estado real con token falso (reconectar y **cero** llamadas a analíticas).
+- **Defectos reales encontrados al mirar las capturas en móvil y corregidos:** la gráfica se dibujaba diminuta (un lienzo de 720 px encogido: ejes ilegibles) y las pestañas se partían en dos líneas. Ahora la escala medida es 1 y las pestañas miden 32 px de alto.
+
+### Cómo se probó (importante)
+
+Las cuentas demo no tienen canal de YouTube. **Todos los casos de datos usan respuestas FICTICIAS** que intercepta mi script de navegador (el canal se llama "Canal de prueba (datos ficticios)"); no entran en el producto. Solo el último caso (token falso) usa respuestas reales de Google. **Este dashboard no se ha visto con el canal real de Alex.**
+
+### Errores míos durante la verificación (sin consecuencias en el producto)
+
+Mi selector `svg[role=img]` también coincidía con los iconos (7 falsos fallos), la prueba de carga miraba demasiado tarde, y el ratón se movía a coordenadas fuera de la pantalla porque la gráfica queda por debajo de la parte visible. Todos corregidos en el script, no en el producto.
+
+### Sin verificar
+
+- **Con el canal real**: ni los nombres de métricas que acepta Google combinados en un informe, ni los valores, ni la cobertura de días, ni que `publishedAt` decida bien los periodos disponibles. Lo comprueba Alex en `/creator/metrics/youtube` (y puede abrir `/api/social/youtube-analytics?days=28` para ver el JSON).
+- Táctil real (el tooltip responde al puntero; no se ha probado con un dedo), Safari/Firefox, tablet y lector de pantalla (hay `aria-label`, `title` y región `aria-live`, pero no se ha probado con uno).
+- **La gráfica queda por debajo de las 12 tarjetas** (hay que desplazarse para verla). Es el orden aprobado, pero conviene valorarlo con datos reales.
+- Los vídeos siguen siendo la sección antigua (con likes/comentarios ausentes mostrados como 0: es la parte de A-R16d). Animaciones: fase f.
+- Cuota de la API con más llamadas por visita (ahora 5 a Google en la primera carga con comparación): sin medir.
+- Notificaciones de login en la cuenta demo por mis sesiones de prueba (unas 10 en este bloque); sin limpiar.
+
+---
+
 ## 2026-10-29 (Alex-20) — [Alex] A-R16c.1: cabecera del canal, estados y totales del dashboard de YouTube
 
 ### Qué se cambió (estructura aprobada por Alex en la entrada anterior)

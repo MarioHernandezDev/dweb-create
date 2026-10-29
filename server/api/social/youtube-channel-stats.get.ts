@@ -27,20 +27,6 @@ export interface YoutubeChannelStats {
   videoCount: number
   avgViewsPerVideo: number
   recentVideos: YoutubeRecentVideo[]
-  /**
-   * Histórico real día a día de los últimos 28 días (YouTube Analytics
-   * API) — `null` si el token no tiene el permiso `yt-analytics.readonly`
-   * todavía (cuentas conectadas antes de añadir ese scope, ver
-   * start.get.ts): no es un error que rompa el resto del detalle, solo
-   * significa que hay que reconectar la cuenta en Redes para verlo.
-   */
-  evolution: { date: string; views: number; subscribersGained: number; subscribersLost: number }[] | null
-  /**
-   * Por qué falta `evolution`: `reconnect` = hay que reconectar (falta el
-   * permiso o el acceso se revocó); `temporary` = fallo pasajero (cuota,
-   * red) y NO hace falta reconectar; `null` = hay histórico.
-   */
-  evolutionIssue: 'reconnect' | 'temporary' | null
 }
 
 /** "PT4M13S" -> 253 (segundos). YouTube siempre devuelve la duración en este formato ISO 8601. */
@@ -50,10 +36,6 @@ function parseIsoDuration(iso: string | undefined): number {
   if (!match) return 0
   const [, h, m, s] = match
   return Number(h ?? 0) * 3600 + Number(m ?? 0) * 60 + Number(s ?? 0)
-}
-
-function isoDate(d: Date): string {
-  return d.toISOString().slice(0, 10)
 }
 
 /**
@@ -123,28 +105,6 @@ export default defineEventHandler(async (event) => {
     // se ordena aquí a propósito, más reciente primero.
     recentVideos.sort((a, b) => b.publishedAt.localeCompare(a.publishedAt))
 
-    // YouTube Analytics tiene 1-2 días de retraso de procesado — pedir
-    // "hasta hoy" devolvería días vacíos al final. `endDate` = hace 2 días,
-    // 28 días hacia atrás desde ahí.
-    let evolution: YoutubeChannelStats['evolution'] = null
-    let evolutionIssue: YoutubeChannelStats['evolutionIssue'] = null
-    let analyticsFailure: ReturnType<typeof classifyProviderError> | null = null
-    try {
-      const end = new Date(Date.now() - 2 * 86_400_000)
-      const start = new Date(end.getTime() - 27 * 86_400_000)
-      evolution = await fetchYoutubeAnalytics(refreshed.access_token, isoDate(start), isoDate(end))
-    } catch (err) {
-      // No es un fallo del endpoint entero. Se distingue por qué falta el
-      // histórico: sin el permiso `yt-analytics.readonly` (o con el acceso
-      // revocado) hay que reconectar; un corte de red o una cuota agotada
-      // es pasajero y NO debe pedirle nada al usuario.
-      const classified = classifyProviderError(err)
-      console.error('[social/youtube-channel-stats] sin histórico:', describeErrorForLog(err))
-      evolution = null
-      evolutionIssue = classified.reconnect ? 'reconnect' : 'temporary'
-      analyticsFailure = classified
-    }
-
     const stats: YoutubeChannelStats = {
       channelId: channel.id ?? null,
       title: channel.snippet?.title ?? null,
@@ -154,9 +114,7 @@ export default defineEventHandler(async (event) => {
       viewCount,
       videoCount,
       avgViewsPerVideo: videoCount > 0 ? Math.round(viewCount / videoCount) : 0,
-      recentVideos,
-      evolution,
-      evolutionIssue
+      recentVideos
     }
 
     // Aprovecha el token ya refrescado para dejar la fila al día — no hace
@@ -168,9 +126,7 @@ export default defineEventHandler(async (event) => {
         ...(typeof stats.subscriberCount === 'number' ? { followers_count: stats.subscriberCount } : {}),
         access_token_encrypted: encryptToken(refreshed.access_token, config.socialTokenEncryptionKey),
         token_expires_at: new Date(Date.now() + refreshed.expires_in * 1000).toISOString(),
-        // Si lo único que falló fue el permiso de analíticas, la cuenta queda
-        // marcada para reconectar; un fallo pasajero no cambia su estado.
-        ...(analyticsFailure?.reconnect ? failurePatch(analyticsFailure) : successPatch())
+        ...successPatch()
       } as never)
       .eq('id', account.id)
     if (error) console.error('[social/youtube-channel-stats] fallo al refrescar la fila (se devuelven los datos igual):', error.message)

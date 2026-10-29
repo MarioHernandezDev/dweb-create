@@ -37,12 +37,6 @@ interface YoutubeRecentVideo {
   commentCount: number
   durationSeconds: number
 }
-interface YoutubeEvolutionDay {
-  date: string
-  views: number
-  subscribersGained: number
-  subscribersLost: number
-}
 interface YoutubeChannelStats {
   channelId: string | null
   title: string | null
@@ -53,8 +47,6 @@ interface YoutubeChannelStats {
   videoCount: number
   avgViewsPerVideo: number
   recentVideos: YoutubeRecentVideo[]
-  evolution: YoutubeEvolutionDay[] | null
-  evolutionIssue: 'reconnect' | 'temporary' | null
 }
 
 const stats = ref<YoutubeChannelStats | null>(null)
@@ -123,36 +115,6 @@ function formatDuration(totalSeconds: number): string {
   const ss = String(s).padStart(2, '0')
   return h > 0 ? `${h}:${mm}:${ss}` : `${mm}:${ss}`
 }
-
-// Todo lo de abajo son cálculos reales sobre `stats.evolution` (histórico
-// de verdad, YouTube Analytics API) — ninguno es una llamada aparte.
-const viewsSeries = computed(() => (stats.value?.evolution ?? []).map((d) => ({ label: formatShortDate(d.date), value: d.views })))
-const netSubsSeries = computed(() =>
-  (stats.value?.evolution ?? []).map((d) => ({ label: formatShortDate(d.date), value: d.subscribersGained - d.subscribersLost }))
-)
-const windowViews = computed(() => (stats.value?.evolution ?? []).reduce((sum, d) => sum + d.views, 0))
-const windowNetSubs = computed(() => (stats.value?.evolution ?? []).reduce((sum, d) => sum + d.subscribersGained - d.subscribersLost, 0))
-const bestDay = computed(() => {
-  const days = stats.value?.evolution
-  if (!days?.length) return null
-  return [...days].sort((a, b) => b.views - a.views)[0]!
-})
-
-// Proyección: ritmo medio de los últimos 7 días (más representativo del
-// momento actual que la media de los 28), extrapolado a 30 días — una
-// cuenta simple sobre datos reales, NUNCA una predicción de IA. Solo se
-// muestra si hay histórico Y se conoce el nº de suscriptores actual.
-const recentDailyNetAvg = computed(() => {
-  const days = stats.value?.evolution
-  if (!days || days.length < 7) return null
-  const last7 = days.slice(-7)
-  const total = last7.reduce((sum, d) => sum + d.subscribersGained - d.subscribersLost, 0)
-  return total / last7.length
-})
-const projectedSubscribers30d = computed(() => {
-  if (recentDailyNetAvg.value === null || stats.value?.subscriberCount == null) return null
-  return Math.max(0, Math.round(stats.value.subscriberCount + recentDailyNetAvg.value * 30))
-})
 </script>
 
 <template>
@@ -177,65 +139,6 @@ const projectedSubscribers30d = computed(() => {
       >
         <!-- Fases siguientes (A-R16c.2 / d): evolución y vídeos se sustituyen por componentes propios. Mientras tanto se conserva lo que ya funcionaba. -->
         <template v-if="stats">
-          <section class="mb-8 md:max-w-2xl">
-            <h2 class="font-display text-[1.25rem] text-[var(--color-text)] mb-3.5">Evolución (últimos 28 días)</h2>
-
-            <BaseCard v-if="!stats.evolution" radius="lg" padding="lg" class="flex items-start gap-3">
-              <template v-if="stats.evolutionIssue === 'temporary'">
-                <Icon name="ph:cloud-slash-fill" class="size-5 shrink-0 text-[var(--color-text-faint)] mt-0.5" />
-                <div>
-                  <p class="text-[0.875rem] text-[var(--color-text)] mb-1">No se ha podido cargar la evolución ahora mismo</p>
-                  <p class="text-[0.8125rem] text-[var(--color-text-muted)] leading-relaxed mb-3">
-                    Es un problema pasajero (límite o corte de YouTube): no hace falta reconectar. Vuelve a intentarlo en unos minutos.
-                  </p>
-                  <BaseButton variant="secondary" size="sm" @click="loadStats">Reintentar</BaseButton>
-                </div>
-              </template>
-              <template v-else>
-                <Icon name="ph:lock-key-fill" class="size-5 shrink-0 text-[var(--color-text-faint)] mt-0.5" />
-                <div>
-                  <p class="text-[0.875rem] text-[var(--color-text)] mb-1">Reconecta tu cuenta para ver la evolución</p>
-                  <p class="text-[0.8125rem] text-[var(--color-text-muted)] leading-relaxed mb-3">
-                    Falta el permiso de analíticas o el acceso a YouTube se ha revocado. Reconecta la cuenta para ver el
-                    histórico de vistas y suscriptores de los últimos 28 días.
-                  </p>
-                  <BaseButton variant="primary" size="sm" @click="connect('youtube')">Reconectar YouTube</BaseButton>
-                </div>
-              </template>
-            </BaseCard>
-
-            <template v-else>
-              <div class="grid grid-cols-2 gap-3 mb-4">
-                <StatTile label="Vistas (28 días)" :value="formatCompactNumber(windowViews)" />
-                <StatTile label="Suscriptores netos (28 días)" :value="`${windowNetSubs >= 0 ? '+' : ''}${windowNetSubs}`" />
-              </div>
-
-              <BaseCard radius="lg" padding="lg" class="mb-3">
-                <p class="text-[0.8125rem] font-medium text-[var(--color-text-muted)] mb-3">Vistas por día</p>
-                <EvolutionLineChart :data="viewsSeries" :format-value="formatCompactNumber" />
-              </BaseCard>
-
-              <BaseCard radius="lg" padding="lg" class="mb-4">
-                <p class="text-[0.8125rem] font-medium text-[var(--color-text-muted)] mb-3">Suscriptores netos por día</p>
-                <NetChangeBarChart :data="netSubsSeries" />
-              </BaseCard>
-
-              <p v-if="bestDay" class="text-[0.8125rem] text-[var(--color-text-muted)] mb-4">
-                Tu mejor día fue el <strong class="text-[var(--color-text)] font-medium">{{ formatShortDate(bestDay.date) }}</strong>,
-                con <strong class="text-[var(--color-text)] font-medium">{{ formatCompactNumber(bestDay.views) }}</strong> vistas.
-              </p>
-
-              <BaseCard v-if="projectedSubscribers30d !== null" radius="lg" padding="lg" class="flex items-start gap-3 bg-[var(--color-primary-50)] border-[var(--color-primary-500)]/20">
-                <Icon name="ph:trend-up-bold" class="size-5 shrink-0 text-[var(--color-primary-600)] mt-0.5" />
-                <p class="text-[0.875rem] text-[var(--color-text)] leading-relaxed">
-                  A tu ritmo de los últimos 7 días (<strong class="font-medium">{{ recentDailyNetAvg! >= 0 ? '+' : '' }}{{ recentDailyNetAvg!.toFixed(1) }}/día</strong>),
-                  en 30 días podrías rondar los <strong class="font-medium">{{ formatCompactNumber(projectedSubscribers30d) }}</strong> suscriptores.
-                  <span class="block text-[0.75rem] text-[var(--color-text-faint)] mt-1">Estimación simple sobre tu ritmo reciente, no una predicción de IA.</span>
-                </p>
-              </BaseCard>
-            </template>
-          </section>
-
           <section>
             <h2 class="font-display text-[1.25rem] text-[var(--color-text)] mb-3.5">Vídeos recientes</h2>
             <EmptyState

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { Kpi } from '~/utils/youtube-kpi'
+import type { KpiDelta } from '~/utils/youtube-period-view'
 
 /**
  * Tarjeta de una métrica del canal. La protagonista (`hero`) es más grande. Si
@@ -10,12 +11,20 @@ import type { Kpi } from '~/utils/youtube-kpi'
  * El detalle ("qué es esto") va en un `title`: accesible por teclado con el
  * foco en el icono de información.
  */
-const props = defineProps<{ kpi: Kpi; scope?: string }>()
+const props = defineProps<{ kpi: Kpi & { delta?: KpiDelta | null }; scope?: string }>()
 const accent = 'var(--color-platform-youtube)'
 
 const provenance = computed(() => [props.scope, props.kpi.source === 'youtube' ? 'Dato de YouTube' : 'Cálculo de FEEDMA'].filter(Boolean).join(' · '))
 
-const ariaValue = computed(() => (props.kpi.value !== null ? `${props.kpi.label}: ${props.kpi.exact ?? props.kpi.value}` : `${props.kpi.label}: sin dato. ${props.kpi.reason ?? ''}`))
+const deltaColor = computed(() =>
+  props.kpi.delta?.tone === 'good' ? 'var(--color-status-published)' : props.kpi.delta?.tone === 'bad' ? 'var(--color-status-alert)' : 'var(--color-text-faint)'
+)
+const deltaIcon = computed(() => (props.kpi.delta?.tone === 'good' ? 'ph:trend-up-bold' : props.kpi.delta?.tone === 'bad' ? 'ph:trend-down-bold' : 'ph:minus-bold'))
+
+const ariaValue = computed(() => {
+  const base = props.kpi.value !== null ? `${props.kpi.label}: ${props.kpi.exact ?? props.kpi.value}` : `${props.kpi.label}: sin dato. ${props.kpi.reason ?? ''}`
+  return props.kpi.delta ? `${base}. ${props.kpi.delta.text} ${props.kpi.delta.label}` : base
+})
 </script>
 
 <template>
@@ -52,6 +61,11 @@ const ariaValue = computed(() => (props.kpi.value !== null ? `${props.kpi.label}
         <p class="font-display leading-none text-[var(--color-text-faint)]" :class="kpi.hero ? 'text-[2.75rem]' : 'text-[1.75rem]'">—</p>
         <p class="mt-1.5 text-[0.75rem] text-[var(--color-text-muted)] leading-snug">{{ kpi.reason }}</p>
       </template>
+      <p v-if="kpi.delta" class="mt-1.5 flex flex-wrap items-center gap-x-1.5 text-[0.75rem] font-medium" :style="{ color: deltaColor }">
+        <Icon :name="deltaIcon" class="size-3.5 shrink-0" />
+        {{ kpi.delta.text }}
+        <span class="font-normal text-[var(--color-text-faint)]">{{ kpi.delta.label }}</span>
+      </p>
       <p class="mt-2 text-[0.6875rem] uppercase tracking-wide text-[var(--color-text-faint)]">{{ provenance }}</p>
     </div>
   </div>
