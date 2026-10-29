@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const props = defineProps<{ modelValue: boolean; title: string }>()
+const props = defineProps<{ modelValue: boolean; title: string; /** Hoja ancha para contenido denso (p. ej. paneles con gráficas). Por defecto, estrecha. */ wide?: boolean }>()
 const emit = defineEmits<{ 'update:modelValue': [value: boolean] }>()
 
 function close() {
@@ -67,7 +67,7 @@ onUnmounted(() => {
         class="fixed z-50 inset-x-0 bottom-0 md:inset-0 md:flex md:items-center md:justify-center outline-none"
         role="dialog" aria-modal="true" :aria-label="title" tabindex="-1"
       >
-        <div class="bg-[var(--color-ink-raised)] rounded-t-[var(--radius-lg)] md:rounded-[var(--radius-lg)] w-full md:max-w-md md:mx-auto border border-[var(--color-hairline)] shadow-[var(--shadow-float)] max-h-[88dvh] flex flex-col">
+        <div class="bg-[var(--color-ink-raised)] rounded-t-[var(--radius-lg)] md:rounded-[var(--radius-lg)] w-full md:mx-auto border border-[var(--color-hairline)] shadow-[var(--shadow-float)] max-h-[88dvh] flex flex-col" :class="wide ? 'md:max-w-4xl' : 'md:max-w-md'">
           <div class="flex items-center justify-between px-5 pt-4 pb-3 border-b border-[var(--color-hairline)] shrink-0">
             <span class="mx-auto md:hidden h-1 w-9 rounded-full bg-[var(--color-hairline-strong)] absolute top-2 left-1/2 -translate-x-1/2" />
             <h2 class="font-display text-[1.0625rem] text-[var(--color-text)]">{{ title }}</h2>

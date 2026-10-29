@@ -58,7 +58,7 @@ const isReconnect = computed(() => props.error?.code === 'reconnect_required')
 </script>
 
 <template>
-  <BottomSheet :model-value="open" :title="title" @update:model-value="(v: boolean) => !v && emit('close')">
+  <BottomSheet :model-value="open" :title="title" wide @update:model-value="(v: boolean) => !v && emit('close')">
     <div class="flex flex-col gap-5" :aria-busy="loading">
       <!-- Cabecera: miniatura, enlace y datos fijos del vídeo -->
       <div v-if="shown" class="flex gap-3">
@@ -106,7 +106,7 @@ const isReconnect = computed(() => props.error?.code === 'reconnect_required')
       <!-- Cargando -->
       <div v-else-if="!report" class="flex flex-col gap-3" aria-label="Cargando el detalle del vídeo">
         <SkeletonBlock width="60%" height="0.875rem" />
-        <div class="grid grid-cols-2 gap-3"><SkeletonBlock v-for="n in 4" :key="n" height="6.5rem" rounded="var(--radius-md)" /></div>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3"><SkeletonBlock v-for="n in 4" :key="n" height="6.5rem" rounded="var(--radius-md)" /></div>
         <SkeletonBlock height="12rem" rounded="var(--radius-md)" />
       </div>
 
@@ -118,7 +118,7 @@ const isReconnect = computed(() => props.error?.code === 'reconnect_required')
           <p v-if="report.partialPeriod" class="mt-2 rounded-[var(--radius-sm)] bg-[var(--color-ink-overlay)] px-3 py-2 text-[0.8125rem] text-[var(--color-text-muted)]" data-partial-note>
             Este vídeo se publicó dentro del periodo: las cifras cubren solo desde su publicación, así que no se compara con el periodo anterior.
           </p>
-          <div class="mt-3 grid grid-cols-2 gap-3">
+          <div class="mt-3 grid grid-cols-2 md:grid-cols-4 gap-3">
             <YoutubeKpiCard v-for="kpi in kpis" :key="kpi.key" :kpi="kpi" />
           </div>
         </section>
@@ -136,7 +136,7 @@ const isReconnect = computed(() => props.error?.code === 'reconnect_required')
         <!-- Frente a lo habitual del canal, con el criterio a la vista -->
         <section aria-label="Frente a lo habitual del canal">
           <h3 class="text-[0.6875rem] font-semibold uppercase tracking-wide text-[var(--color-text-faint)]">Frente a lo habitual del canal</h3>
-          <ul v-if="comparisons.length" class="mt-2 flex flex-col gap-3">
+          <ul v-if="comparisons.length" class="mt-2 grid gap-3 md:grid-cols-3">
             <li v-for="row in comparisons" :key="row.key" class="rounded-[var(--radius-sm)] border border-[var(--color-hairline)] p-3" data-comparison>
               <div class="flex items-center justify-between gap-3 text-[0.875rem]">
                 <span class="text-[var(--color-text)]">{{ row.label }}</span>
