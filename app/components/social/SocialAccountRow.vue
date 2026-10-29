@@ -28,7 +28,7 @@ const needsReconnect = computed(() => props.account.connected && !!props.account
         {{ account.status === 'missing_permissions' ? 'Falta un permiso' : 'Acceso caducado o revocado' }} · reconecta la cuenta
       </p>
       <p v-else-if="account.connected" class="text-[0.8125rem] text-[var(--color-text-muted)]">
-        {{ account.handle }} · {{ formatCompactNumber(account.followers) }} seguidores
+        {{ account.handle }} · {{ formatCompactNumber(account.followers) }} {{ account.followers === 1 ? 'seguidor' : 'seguidores' }}
       </p>
       <p v-else class="text-[0.8125rem] text-[var(--color-text-faint)]">No conectada</p>
     </div>

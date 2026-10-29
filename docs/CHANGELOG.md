@@ -4,6 +4,35 @@ Registro de qué se hizo, por qué, y qué queda pendiente de verificar — pens
 
 ---
 
+## 2026-10-29 (Alex-28) — [Alex] A-R17e (adelantada): el índice /creator/metrics a ancho completo y rediseñado
+
+### Por qué ahora
+
+En A-R17a solo se había cambiado la página de cada red (`/creator/metrics/youtube`); el índice `/creator/metrics` seguía estrecho (tope de 1100 px y bloques de 384 a 768 px). Se adelanta A-R17e a petición de Alex.
+
+### Qué se cambió
+
+- **Ancho completo** (`full-width` en esa página).
+- **Resumen grande arriba:** "Seguidores totales" con contador animado (A-R16f) y una **barra de reparto por red** con leyenda (red · cifra · %). Aclara que la suma es un cálculo de FEEDMA y que la cifra de cada red es dato de la red. Texto accesible del reparto escrito con palabras.
+- **Tarjeta grande por red conectada** (`PlatformStatCard`): handle, **estado** ("Conectada" / "Reconectar"), seguidores o suscriptores, parte del total, **"Actualizado hace…"** (o "Aún sin sincronizar") y acceso a sus estadísticas. Si la conexión ya no sirve, la tarjeta lo dice y presenta la cifra como **"último dato guardado"**; el resumen cuenta cuántas redes necesitan reconexión.
+- **Conexiones** (nuevo componente `MetricsConnections`, mismas acciones que antes): en pantallas muy anchas (≥ 1536 px) van **a la derecha** de "Tus redes"; en escritorio normal, tablet y móvil, debajo.
+- **Estado vacío** a ancho completo: mensaje, ejemplo claramente marcado "(ejemplo)" con números falsos y la lista de conexiones a su lado.
+- **Sin inventar datos:** no hay variaciones ni históricos de seguidores en el índice (no existen todavía; dependen de los snapshots de A-R8a). Singular correcto ("1 seguidor", "1 suscriptor").
+
+### Verificado de verdad
+
+- `npx vue-tsc --noEmit` limpio; suite unitaria 423/423 (sin lógica nueva).
+- **Navegador real (Chrome por CDP), 26 comprobaciones OK** con las cuentas de prueba (token falso): a 1920, 1280, 768 y 390 px sin desbordamiento; a 1920 px el resumen ocupa 1600 de 1664 px (antes 1100 como mucho); redes y conexiones lado a lado a 1920 px y apiladas en el resto; total real mostrado (2); el reparto enseña cada red con su cifra y %; **el estado "Reconectar" se provocó de verdad** sincronizando YouTube con un token falso: la tarjeta pasa a "Reconectar · último dato guardado" y el resumen avisa; estado vacío a 1920 y 390 px. Capturas revisadas. El único error de consola es el 401 esperado de esa sincronización.
+- **Regresión:** repetida tras el cambio la batería de la sección Conexiones (conectar, sincronizar, confirmar y cancelar desconexión, vuelta de OAuth, menú sin Redes, redirección): **11/11**.
+
+### Sin verificar
+
+- Con tu cuenta real: los números de las pruebas son de filas de prueba (1 seguidor cada una). No se ha visto el reparto con cifras reales y desiguales.
+- La barra de reparto no se ha probado con 3 o más redes (solo hay dos con OAuth hoy).
+- Las tarjetas de red de TikTok, X, Facebook y LinkedIn siguen siendo "Próximamente" en Conexiones (no tienen OAuth).
+
+---
+
 ## 2026-10-29 (Alex-27) — [Alex] A-R17a: el dashboard de YouTube usa todo el ancho
 
 ### Qué se cambió
