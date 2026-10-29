@@ -4,6 +4,41 @@ Registro de qué se hizo, por qué, y qué queda pendiente de verificar — pens
 
 ---
 
+## 2026-10-29 (Alex-22) — [Alex] A-R16d: lista de vídeos con búsqueda, orden, filtro y paginación
+
+### Qué se cambió
+
+- **Endpoint nuevo `GET /api/social/youtube-videos[?pageToken=…]`:** vídeos subidos del canal **de 24 en 24** (antes solo 8), con `nextPageToken` y el total. El `pageToken` que llega del navegador se valida (solo caracteres de un token real, máximo 200) antes de usarlo en la URL de Google. Mismo patrón de seguridad que el resto: solo datos del propio usuario, tokens solo en servidor, sin llamar a Google si la cuenta ya consta como caducada/revocada, errores clasificados y guardados.
+- **Corrige el fallo "ausente = 0":** hasta ahora `Number(likeCount ?? 0)` convertía en 0 un me gusta oculto o un comentario desactivado (la API omite el campo). Ahora son `null` y se muestran como "—" con su motivo ("El canal oculta los me gusta de este vídeo" / "Los comentarios están desactivados en este vídeo"). Los ceros reales siguen siendo 0. Una duración inexistente ya no sale como 0:00 (es `null` y no se pinta la insignia).
+- **Panel de vídeos** (`YoutubeVideosPanel`): miniatura, duración, fecha relativa, visualizaciones, me gusta, comentarios e **interacción** = (me gusta + comentarios) ÷ visualizaciones (cálculo de FEEDMA, rotulado como tal; no se calcula si falta cualquiera de los datos). **Búsqueda** por título sin distinguir tildes ni mayúsculas, **orden** (más recientes / más vistos / mayor interacción) y **filtro por fecha de publicación** (30 / 90 días / último año). Los vídeos sin el dato por el que se ordena van **al final**, no se tratan como 0. El contador es honesto ("Mostrando 6 de los 6 vídeos cargados (8 en total)") porque búsqueda y orden solo ven los vídeos cargados. Botón "Cargar más vídeos".
+- Estados: cargando (skeletons), sin vídeos, filtros sin resultado (con "Quitar filtros"), reconectar, fallo pasajero con Reintentar y **fallo al cargar más** (aviso en línea; los ya cargados se conservan y Reintentar pide solo esa página).
+- **Servidor:** `youtube-channel-stats` ya no pide los vídeos (**dos llamadas menos por visita**); se retiran `recentVideos`, `fetchRecentUploadIds` y la sección antigua de la página. `Actualizar` recarga también los vídeos. Sin dependencias nuevas.
+
+### Verificado de verdad
+
+- Unitarios nuevos: `youtube-videos.spec.ts` (49: recuentos ausentes = null, duraciones ISO 8601 incluido "P1DT2H", mapeo, orden, validación del token de página) y `youtube-videos-view.spec.ts` (33: búsqueda sin tildes, filtros de fecha, orden estable con nulos al final, interacción, textos). **Suite completa 382/382**, `npx vue-tsc --noEmit` limpio, `npm run build` completado (en copia temporal con git worktree; copia eliminada y `node_modules` intacto).
+- **Navegador real (Chrome por CDP), 31 comprobaciones OK** y capturas revisadas a ojo: 6 vídeos con enlaces a YouTube (pestaña nueva, `noopener`); me gusta ocultos y comentarios desactivados = "—"; ceros reales = 0; sin ninguna estadística = todo "—"; insignia de duración solo cuando se conoce; título larguísimo sin desbordar; búsqueda ("CAMARA" encuentra "cámara"), vacío con "Quitar filtros"; los tres órdenes; filtros de fecha; **paginación con un vídeo duplicado en la segunda página (no se duplica)**; fallo al cargar más conservando los vídeos y Reintentar; canal sin vídeos; error de reconectar y fallo pasajero con recuperación; skeletons; Actualizar recarga vídeos y analíticas; móvil (390 px) sin desbordes; estado real con token falso: **cero llamadas** a la API de vídeos.
+
+### Cómo se probó (importante)
+
+Las cuentas demo no tienen canal. **Todos los datos de vídeos son FICTICIOS** (títulos con "(ficticio)"), interceptados en mi script de navegador; no entran en el producto. **No se ha visto esta lista con los vídeos reales de Alex ni con miniaturas reales** (en las pruebas no hay miniatura: se ve el marcador).
+
+### Errores míos durante la verificación (ninguno en el producto)
+
+1. Mi patrón de interceptación `*youtube-videos*` coincidía también con el archivo `utils/youtube-videos-view.ts`: el script devolvía JSON de prueba en lugar del módulo y la página no cargaba ("Failed to fetch dynamically imported module"). Tardé varios intentos en verlo porque primero sospeché de la página y del servidor; la causa se encontró leyendo la consola completa del navegador (no solo `console.error`). Patrones restringidos a `/api/social/…`.
+2. Un nombre repetido (`page`) rompía el script antes de arrancar; una clave de búsqueda de 11 caracteres en lugar de 12; una expectativa de orden mal calculada (la app acertó: el "Vlog antiguo" tiene 5,83 % de interacción frente al 5,56 % de "Cómo montar"); mensajes ficticios distintos de los del servidor real; y un espacio no separable que `Intl` pone entre "3" y "mil".
+3. Un reintento por "página no pintada" en la primera carga tras iniciar sesión (sin errores en consola: compilación inicial del servidor de desarrollo); no se repitió en las otras 14 navegaciones.
+
+### Sin verificar
+
+- **Con el canal real de Alex:** que Google acepte la consulta paginada, las miniaturas reales, los recuentos y qué canales ocultan realmente me gusta o comentarios. Alex puede abrir `/api/social/youtube-videos` con la sesión iniciada para ver el JSON.
+- La **búsqueda es sobre los vídeos cargados**, no sobre todo el canal: con muchos vídeos hay que cargar más para encontrar uno antiguo (el panel lo dice).
+- Cuota de la API (lista + detalle de 24 vídeos = 2 llamadas por página, más 1 por token de acceso y 1 del canal): sin medir. Lectura de pantalla y táctil real: no probados.
+- **Rendimiento por vídeo en un periodo y vista de detalle** (requisito 5.3 y 5.4: diferenciar acumulado y rendimiento reciente de cada vídeo): **no hechos**; necesitan Analytics por vídeo y es la siguiente subfase si se aprueba. Tampoco el resumen/"observaciones" ni las animaciones (fase f).
+- Notificaciones de login en la cuenta demo por mis sesiones de prueba (unas 20 en total); sin limpiar.
+
+---
+
 ## 2026-10-29 (Alex-21) — [Alex] A-R16c.2: selector de periodo, métricas del periodo con variación y gráfica con comparación
 
 ### Qué se cambió

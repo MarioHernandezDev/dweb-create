@@ -8,8 +8,7 @@ import type { YoutubeConnectionState } from '~/components/youtube/YoutubeChannel
  * Dashboard de YouTube (A-R16c): cabecera, avisos, totales del canal,
  * selector de periodo, métricas del periodo con su variación y evolución.
  * Recibe las estadísticas del canal ya cargadas (la página las pide) y pide
- * por su cuenta el informe por periodos. El contenido que queda por debajo
- * (vídeos…) entra por el slot por defecto hasta que tenga componente propio.
+ * por su cuenta el informe por periodos y los vídeos.
  *
  * Estados diseñados: cargando (skeletons con la forma real), reconectar,
  * fallo pasajero, analíticas no disponibles, canal demasiado reciente y datos
@@ -46,9 +45,19 @@ const {
   select: selectPeriod, load: loadAnalytics, reload: reloadAnalytics
 } = useYoutubeAnalytics()
 
+// --- Vídeos ------------------------------------------------------------------------------------------------------
+const {
+  videos, nextPageToken, total: videosTotal, loading: videosLoading, loadingMore: videosLoadingMore, error: videosError,
+  load: loadVideos, loadMore: loadMoreVideos, reload: reloadVideos
+} = useYoutubeVideos()
+
 // Solo con el canal ya cargado y la conexión válida: así nunca se pide en el servidor ni se llama a Google a ciegas.
 const analyticsEnabled = computed(() => !!props.stats && !mustReconnect.value)
-watch(analyticsEnabled, (ok) => { if (ok) void loadAnalytics() }, { immediate: true })
+watch(analyticsEnabled, (ok) => {
+  if (!ok) return
+  void loadAnalytics()
+  void loadVideos()
+}, { immediate: true })
 
 const analyticsProblem = computed(() => (analyticsError.value && analyticsError.value.code !== 'period_unavailable' ? analyticsError.value : null))
 const channelTooNew = computed(() => analyticsError.value?.code === 'period_unavailable')
@@ -80,7 +89,15 @@ const firstLoad = computed(() => props.loading && !props.stats)
 
 function onReload() {
   emit('reload')
-  if (analyticsEnabled.value) void reloadAnalytics()
+  if (!analyticsEnabled.value) return
+  void reloadAnalytics()
+  void reloadVideos()
+}
+
+// Si falló la primera página se pide de nuevo todo; si falló "cargar más", solo esa página (sin borrar lo ya cargado).
+function onVideosRetry() {
+  if (videos.value.length) void loadMoreVideos()
+  else void reloadVideos()
 }
 
 // El aviso de fallo pasajero reintenta lo que falló: las estadísticas del canal o solo las analíticas.
@@ -174,7 +191,11 @@ function onRetry() {
         {{ analyticsError?.message }}
       </p>
 
-      <slot :stats="stats" />
+      <YoutubeVideosPanel
+        v-if="analyticsEnabled"
+        :videos="videos" :total="videosTotal" :has-more="!!nextPageToken" :loading="videosLoading" :loading-more="videosLoadingMore" :error="videosError"
+        @load-more="loadMoreVideos" @retry="onVideosRetry" @reconnect="$emit('reconnect')"
+      />
     </template>
   </div>
 </template>

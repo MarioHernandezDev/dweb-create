@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { platformMeta, formatCompactNumber, socialAccountState, isComingSoonPlatform } from '~/utils/mock-data'
-import { relativeTime } from '~/utils/status'
 import type { Platform } from '~/types'
 
 // Mismo motivo que profile/[role]/[id].vue para vivir fuera de un prefijo
@@ -27,16 +26,6 @@ const state = computed(() => socialAccountState(account.value))
 // server/api/social/youtube-channel-stats.get.ts) — el resto de redes
 // verificadas (Instagram) solo tienen seguidores por ahora, sin API de
 // insights todavía conectada (ver el aviso en /creator/metrics).
-interface YoutubeRecentVideo {
-  id: string
-  title: string
-  thumbnailUrl: string | null
-  publishedAt: string
-  viewCount: number
-  likeCount: number
-  commentCount: number
-  durationSeconds: number
-}
 interface YoutubeChannelStats {
   channelId: string | null
   title: string | null
@@ -46,7 +35,6 @@ interface YoutubeChannelStats {
   viewCount: number
   videoCount: number
   avgViewsPerVideo: number
-  recentVideos: YoutubeRecentVideo[]
 }
 
 const stats = ref<YoutubeChannelStats | null>(null)
@@ -106,15 +94,6 @@ function formatMonthYear(iso: string | null): string {
 function formatShortDate(iso: string): string {
   return new Date(iso).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })
 }
-
-function formatDuration(totalSeconds: number): string {
-  const h = Math.floor(totalSeconds / 3600)
-  const m = Math.floor((totalSeconds % 3600) / 60)
-  const s = Math.floor(totalSeconds % 60)
-  const mm = h > 0 ? String(m).padStart(2, '0') : String(m)
-  const ss = String(s).padStart(2, '0')
-  return h > 0 ? `${h}:${mm}:${ss}` : `${mm}:${ss}`
-}
 </script>
 
 <template>
@@ -136,43 +115,7 @@ function formatDuration(totalSeconds: number): string {
         :stats="stats" :loading="loadingStats" :error="statsError" :needs-reconnect="statsNeedsReconnect"
         :account-status="account.status" :last-synced-at="account.lastSyncedAt ?? null"
         @reload="reload" @reconnect="connect('youtube')"
-      >
-        <!-- Fases siguientes (A-R16c.2 / d): evolución y vídeos se sustituyen por componentes propios. Mientras tanto se conserva lo que ya funcionaba. -->
-        <template v-if="stats">
-          <section>
-            <h2 class="font-display text-[1.25rem] text-[var(--color-text)] mb-3.5">Vídeos recientes</h2>
-            <EmptyState
-              v-if="!stats.recentVideos.length"
-              icon="ph:video-camera" title="Sin vídeos todavía"
-              description="Cuando subas contenido a este canal, aparecerá aquí con sus estadísticas reales."
-            />
-            <div v-else class="flex flex-col gap-2.5 md:max-w-2xl">
-              <a
-                v-for="video in stats.recentVideos" :key="video.id"
-                :href="`https://www.youtube.com/watch?v=${video.id}`" target="_blank" rel="noopener noreferrer" class="block"
-              >
-                <BaseCard radius="lg" padding="none" interactive class="flex gap-3 overflow-hidden">
-                  <div class="relative w-32 sm:w-40 aspect-video shrink-0 bg-[var(--color-ink-overlay)]">
-                    <img v-if="video.thumbnailUrl" :src="video.thumbnailUrl" alt="" class="absolute inset-0 size-full object-cover">
-                    <span class="absolute bottom-1 right-1 px-1.5 py-0.5 rounded-[var(--radius-xs)] bg-black/70 text-white text-[0.6875rem] font-medium leading-none">
-                      {{ formatDuration(video.durationSeconds) }}
-                    </span>
-                  </div>
-                  <div class="flex-1 min-w-0 py-2.5 pr-3 flex flex-col justify-center gap-1">
-                    <p class="text-[0.875rem] font-medium text-[var(--color-text)] leading-snug line-clamp-2">{{ video.title }}</p>
-                    <p class="text-[0.75rem] text-[var(--color-text-faint)]">{{ relativeTime(video.publishedAt) }}</p>
-                    <div class="flex items-center gap-3 mt-0.5 text-[0.75rem] text-[var(--color-text-muted)]">
-                      <span class="inline-flex items-center gap-1"><Icon name="ph:eye-fill" class="size-3.5" /> {{ formatCompactNumber(video.viewCount) }}</span>
-                      <span class="inline-flex items-center gap-1"><Icon name="ph:thumbs-up-fill" class="size-3.5" /> {{ formatCompactNumber(video.likeCount) }}</span>
-                      <span class="inline-flex items-center gap-1"><Icon name="ph:chat-circle-fill" class="size-3.5" /> {{ formatCompactNumber(video.commentCount) }}</span>
-                    </div>
-                  </div>
-                </BaseCard>
-              </a>
-            </div>
-          </section>
-        </template>
-      </YoutubeDashboard>
+      />
     </template>
 
     <template v-else>

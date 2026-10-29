@@ -52,18 +52,33 @@ export async function fetchYoutubeChannel(accessToken: string) {
   })
 }
 
-interface PlaylistItemsResponse {
+interface PlaylistPageResponse {
   items?: { contentDetails?: { videoId?: string } }[]
+  nextPageToken?: string
+  pageInfo?: { totalResults?: number }
 }
 
-/** Ids de los vídeos más recientes de la playlist de subidas del canal (sin sus stats todavía, eso es fetchYoutubeVideos). */
-export async function fetchRecentUploadIds(accessToken: string, uploadsPlaylistId: string, maxResults = 8) {
-  const res = await $fetch<PlaylistItemsResponse>('https://www.googleapis.com/youtube/v3/playlistItems', {
-    params: { part: 'contentDetails', playlistId: uploadsPlaylistId, maxResults },
+/**
+ * Una página de la lista de subidas del canal: los ids de los vídeos (sin sus
+ * estadísticas todavía, eso es `fetchYoutubeVideos`), el token de la página
+ * siguiente y el total de vídeos si YouTube lo da.
+ */
+export async function fetchUploadsPage(accessToken: string, uploadsPlaylistId: string, opts: { maxResults?: number; pageToken?: string } = {}) {
+  const res = await $fetch<PlaylistPageResponse>('https://www.googleapis.com/youtube/v3/playlistItems', {
+    params: {
+      part: 'contentDetails',
+      playlistId: uploadsPlaylistId,
+      maxResults: opts.maxResults ?? 24,
+      ...(opts.pageToken ? { pageToken: opts.pageToken } : {})
+    },
     headers: { Authorization: `Bearer ${accessToken}` },
     timeout: GOOGLE_FETCH_TIMEOUT_MS
   })
-  return (res.items ?? []).map((i) => i.contentDetails?.videoId).filter((id): id is string => !!id)
+  return {
+    ids: (res.items ?? []).map((i) => i.contentDetails?.videoId).filter((id): id is string => !!id),
+    nextPageToken: res.nextPageToken ?? null,
+    total: typeof res.pageInfo?.totalResults === 'number' ? res.pageInfo.totalResults : null
+  }
 }
 
 export interface YoutubeVideosResponse {

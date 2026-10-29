@@ -5,17 +5,6 @@ interface SocialAccountRow {
   refresh_token_encrypted: string
 }
 
-export interface YoutubeRecentVideo {
-  id: string
-  title: string
-  thumbnailUrl: string | null
-  publishedAt: string
-  viewCount: number
-  likeCount: number
-  commentCount: number
-  durationSeconds: number
-}
-
 export interface YoutubeChannelStats {
   /** Id del canal en YouTube (para el enlace "Ver en YouTube"); no es un secreto. */
   channelId: string | null
@@ -26,26 +15,15 @@ export interface YoutubeChannelStats {
   viewCount: number
   videoCount: number
   avgViewsPerVideo: number
-  recentVideos: YoutubeRecentVideo[]
-}
-
-/** "PT4M13S" -> 253 (segundos). YouTube siempre devuelve la duración en este formato ISO 8601. */
-function parseIsoDuration(iso: string | undefined): number {
-  if (!iso) return 0
-  const match = iso.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/)
-  if (!match) return 0
-  const [, h, m, s] = match
-  return Number(h ?? 0) * 3600 + Number(m ?? 0) * 60 + Number(s ?? 0)
 }
 
 /**
- * GET /api/social/youtube-channel-stats — el detalle "chulo" por red en
- * /creator/metrics/youtube: no solo suscriptores, también vistas totales,
- * nº de vídeos, media de vistas por vídeo, los últimos vídeos subidos con
- * sus propias estadísticas reales, y el histórico día a día de los últimos
- * 28 días (para la gráfica de evolución). Todo en vivo, sin caché — mismo
+ * GET /api/social/youtube-channel-stats — la cabecera y los totales del canal
+ * en /creator/metrics/youtube: nombre, avatar, id, suscriptores, vistas
+ * totales, nº de vídeos y media de vistas por vídeo. En vivo, sin caché — mismo
  * criterio que el resto de la app con datos de redes sociales (ver
- * useMySocialAccounts.ts).
+ * useMySocialAccounts.ts). El informe por periodos y la evolución los da
+ * `youtube-analytics.get.ts`; la lista de vídeos, `youtube-videos.get.ts`.
  *
  * De paso, igual que youtube-sync.post.ts, aprovecha el token ya refrescado
  * para dejar `followers_count` al día en la base de datos.
@@ -87,24 +65,6 @@ export default defineEventHandler(async (event) => {
       : Number(channel.statistics?.subscriberCount ?? 'NaN')
     const hasValidSubscriberCount = typeof subscriberCount === 'number' && Number.isFinite(subscriberCount)
 
-    const uploadsPlaylistId = channel.contentDetails?.relatedPlaylists?.uploads
-    const recentIds = uploadsPlaylistId ? await fetchRecentUploadIds(refreshed.access_token, uploadsPlaylistId, 8) : []
-    const videosRes = recentIds.length ? await fetchYoutubeVideos(refreshed.access_token, recentIds) : { items: [] }
-
-    const recentVideos: YoutubeRecentVideo[] = (videosRes.items ?? []).map((v) => ({
-      id: v.id,
-      title: v.snippet?.title ?? 'Sin título',
-      thumbnailUrl: v.snippet?.thumbnails?.medium?.url ?? v.snippet?.thumbnails?.default?.url ?? null,
-      publishedAt: v.snippet?.publishedAt ?? new Date().toISOString(),
-      viewCount: Number(v.statistics?.viewCount ?? 0),
-      likeCount: Number(v.statistics?.likeCount ?? 0),
-      commentCount: Number(v.statistics?.commentCount ?? 0),
-      durationSeconds: parseIsoDuration(v.contentDetails?.duration)
-    }))
-    // playlistItems.list no garantiza el orden exacto en algunas cuentas —
-    // se ordena aquí a propósito, más reciente primero.
-    recentVideos.sort((a, b) => b.publishedAt.localeCompare(a.publishedAt))
-
     const stats: YoutubeChannelStats = {
       channelId: channel.id ?? null,
       title: channel.snippet?.title ?? null,
@@ -113,8 +73,7 @@ export default defineEventHandler(async (event) => {
       subscriberCount: hasValidSubscriberCount ? subscriberCount : null,
       viewCount,
       videoCount,
-      avgViewsPerVideo: videoCount > 0 ? Math.round(viewCount / videoCount) : 0,
-      recentVideos
+      avgViewsPerVideo: videoCount > 0 ? Math.round(viewCount / videoCount) : 0
     }
 
     // Aprovecha el token ya refrescado para dejar la fila al día — no hace
