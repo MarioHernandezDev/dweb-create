@@ -1,6 +1,8 @@
 # Propuesta A-R17: Métricas a ancho completo (rediseño y usabilidad)
 
-Fecha: 2026-10-29 · Autor: [Alex] · Estado: **propuesta, sin implementar** · Cambia esquema: **no** (las fases A-R17a–f)
+Fecha: 2026-10-29 · Autor: [Alex] · Estado: **fases A-R17a–f implementadas (2026-10-30)** · Cambia esquema: **no**
+
+Fases hechas: a (ancho completo), b (jerarquía y barra de periodo fija), c (gráfica alta y mini-tendencias), d (rejilla y filtros de vídeos), e (índice de Métricas, adelantada), f (táctil y pulido). Detalle y verificación en `docs/CHANGELOG.md` (Alex-27, 28 y 29). Siguen fuera, por depender de datos reales o de esquema: impresiones/CTR y otros informes, histórico propio (A-R16e) y métricas por publicación (A-R7/A-R8b).
 
 Pedido: aprovechar todo el ancho, rediseño visual integral, mejor usabilidad, más funcionalidades útiles y animaciones, sin inventar datos y sin interrumpir las tareas de seguridad y arquitectura del pipeline.
 

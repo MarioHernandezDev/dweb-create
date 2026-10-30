@@ -4,6 +4,46 @@ Registro de qué se hizo, por qué, y qué queda pendiente de verificar — pens
 
 ---
 
+## 2026-10-30 (Alex-29) — [Alex] A-R17b, c, d y f: cierre del rediseño de Métricas
+
+Con esto quedan hechas **todas las fases A-R17a–f** de `docs/PROPUESTA_A-R17_METRICAS_FULL_WIDTH.md` (la a, el índice y la propuesta ya estaban en Alex-26/27/28).
+
+### Qué se cambió
+
+- **A-R17b · Jerarquía y barra de periodo fija.**
+  - Fila principal en pantallas ≥ 1280 px: a la izquierda **el canal** (indicador protagonista de suscriptores + tres filas compactas con visualizaciones totales, vídeos publicados y media por vídeo, nuevo `YoutubeTotalsList`) y a la derecha **el periodo elegido en rejilla 4×2**. Por debajo de 1280 px van apilados; el periodo usa 2 columnas hasta 1024 px y 4 desde ahí.
+  - **La barra de periodo queda fija** bajo la barra superior (se mide su altura real) para cambiar de periodo o de comparación estando en la gráfica o en los vídeos.
+- **A-R17c · Gráfica y mini-tendencias.**
+  - En pantallas ≥ 1536 px la gráfica (500 px de alto) y la columna de observaciones **tienen la misma altura**, sin el hueco de antes.
+  - **Mini-tendencia diaria** en visualizaciones, tiempo de visualización y suscriptores netos. Solo se dibuja con **un dato por cada día del periodo y al menos 5 días**: con un hueco o un `null` no se dibuja nada (una línea que uniera los días con dato taparía el hueco). Lógica pura `sparkValues`, con tests.
+- **A-R17d · Vídeos.** La **barra de búsqueda, orden y filtro queda fija** debajo de la del periodo. En pantallas ≥ 1280 px la tarjeta es **vertical** (miniatura a todo el ancho de la tarjeta y los datos debajo), más densa y más fácil de recorrer; por debajo, la miniatura va a la izquierda como antes.
+- **A-R17f · Táctil y pulido.**
+  - Controles de vídeos de **44 px de alto** hasta escritorio (`lg`).
+  - **Un toque en la gráfica** enseña el valor de ese día (antes solo funcionaba con ratón/teclado).
+  - Con `prefers-reduced-motion` las animaciones duran ~0 ms (comprobado).
+  - **El título de la barra superior ya no se corta a 768 px:** el buscador pasa de 256 a 160 px entre 768 y 1023 px. Es un cambio en `ProfileSearchBar` (compartido), **acotado a ese rango de ancho**; el resto de anchos queda igual.
+- **Decisión de producto tomada y razonada:** **no se añade una hoja inferior para los filtros en móvil.** El buscador y los dos selectores ya se apilan a ancho completo con 44 px de alto; una hoja añadiría un paso para tres controles.
+
+### Verificado de verdad
+
+- `npx vue-tsc --noEmit` limpio; **suite unitaria 428/428** (5 tests nuevos de mini-tendencias); `npm run build` completado en copia temporal.
+- **Navegador real (Chrome por CDP), 44 comprobaciones nuevas** a 390, 768, 1280 y 1920 px, con medidas reales: sin desbordes; canal y periodo lado a lado solo desde 1280 px; 8 tarjetas del periodo en 2 o 4 columnas según el ancho; 3 filas de totales; 3 mini-tendencias (y **ninguna con un día sin dato**); **la barra de periodo y la de filtros de vídeos quedan fijas a la altura exacta** (también tras hacer scroll por los vídeos); tarjeta vertical solo ≥ 1280 px; controles de 44 px; gráfica y observaciones a la misma altura a 1920 px; toque en la gráfica; título completo a 768 px; animaciones desactivadas con "menos movimiento". Capturas revisadas en los cuatro anchos.
+- **Regresión sobre el código nuevo, todo OK:** rendimiento por vídeo 22/22, detalle y observaciones 22/22, animaciones 10/10, conexiones 11/11 e índice de Métricas 22/22.
+- **Defectos reales que encontré midiendo/mirando capturas y corregí en la misma fase:** (1) a 1280 px el valor "461,9 h" se partía y las mini-tendencias se cortaban: ahora la mini-tendencia va en su propia fila; (2) a 768 px cuatro columnas aplastaban las tarjetas: 2 columnas hasta 1024 px; (3) a 768 px los controles de vídeos medían 40 px: 44 px hasta `lg`; (4) hueco bajo la gráfica a 1920 px: se iguala la altura de las dos columnas.
+
+### Cómo se probó (importante)
+
+Datos **FICTICIOS** interceptados en mi script de navegador (cuentas demo sin canal); las filas de prueba con token falso se borran al terminar (0 restos). Los anchos se simulan con el emulador de Chrome. **No se ha visto con tu canal real, ni en un monitor o móvil físico.** Tuve que arrancar el servidor de desarrollo porque estaba parado (`ERR_CONNECTION_REFUSED`): sigue en marcha en segundo plano en esta sesión.
+
+### Sin hacer / sin verificar
+
+- **Impresiones, CTR y otros informes de YouTube Analytics:** no se han añadido. No están confirmados con tu canal real; se prueban primero y, si existen, se diseñan después.
+- **Histórico propio de acumulados (A-R16e) y métricas por publicación (A-R7/A-R8b):** siguen dependiendo de migraciones que requieren tu aprobación y coordinación con Mario.
+- Táctil real (dedos, lector de pantalla) y rendimiento en móviles lentos no se han probado; solo la simulación del navegador.
+- Con muchos vídeos (cientos) la barra fija y la rejilla de 4 columnas no se han probado más allá de 6 vídeos de prueba.
+
+---
+
 ## 2026-10-29 (Alex-28) — [Alex] A-R17e (adelantada): el índice /creator/metrics a ancho completo y rediseñado
 
 ### Por qué ahora

@@ -10,13 +10,13 @@ defineProps<{ observations: Observation[]; loading: boolean }>()
 </script>
 
 <template>
-  <section aria-labelledby="yt-insights">
+  <section aria-labelledby="yt-insights" class="flex flex-col">
     <h2 id="yt-insights" class="font-display text-[1.25rem] text-[var(--color-text)]">Observaciones</h2>
     <p class="mt-0.5 mb-3 text-[0.75rem] text-[var(--color-text-faint)]">
       Cálculos de FEEDMA con reglas fijas sobre tus datos de YouTube. Describen lo que pasó, no por qué.
     </p>
 
-    <BaseCard radius="lg" padding="lg" :aria-busy="loading">
+    <BaseCard radius="lg" padding="lg" class="flex-1" :aria-busy="loading">
       <ul v-if="observations.length" class="flex flex-col divide-y divide-[var(--color-hairline)]" :class="loading && 'opacity-60 transition-opacity'">
         <li v-for="o in observations" :key="o.id" class="py-3 first:pt-0 last:pb-0" data-observation>
           <p class="text-[0.9375rem] text-[var(--color-text)]">{{ o.text }}</p>

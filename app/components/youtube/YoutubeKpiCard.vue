@@ -11,7 +11,7 @@ import type { KpiDelta } from '~/utils/youtube-period-view'
  * El detalle ("qué es esto") va en un `title`: accesible por teclado con el
  * foco en el icono de información.
  */
-const props = defineProps<{ kpi: Kpi & { delta?: KpiDelta | null }; scope?: string }>()
+const props = defineProps<{ kpi: Kpi & { delta?: KpiDelta | null }; scope?: string; /** Valores diarios del periodo para la mini-tendencia (solo si hay un dato por día). */ spark?: number[] | null }>()
 const accent = 'var(--color-platform-youtube)'
 
 const shownValue = useCountUp(() => props.kpi.count, () => props.kpi.value)
@@ -68,6 +68,10 @@ const ariaValue = computed(() => {
         {{ kpi.delta.text }}
         <span class="font-normal text-[var(--color-text-faint)]">{{ kpi.delta.label }}</span>
       </p>
+      <!-- Mini-tendencia diaria: solo con un dato por cada día del periodo -->
+      <span v-if="kpi.value !== null && spark && spark.length > 1" class="mt-2 block pr-1 [&_svg]:overflow-visible" title="Tendencia diaria del periodo (dato de YouTube)" data-spark>
+        <MiniSparkline :values="spark" :width="96" :height="22" :color="accent" />
+      </span>
       <p class="mt-2 text-[0.6875rem] uppercase tracking-wide text-[var(--color-text-faint)]">{{ provenance }}</p>
     </div>
   </div>

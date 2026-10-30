@@ -247,6 +247,32 @@ export function chartSeries(report: Pick<AnalyticsReportDto, 'days' | 'range' | 
   return { current, previous, gaps: current.filter((p) => p.value === null).length }
 }
 
+// --- Mini-tendencias de las tarjetas ------------------------------------------------------------------
+
+export type SparkKey = 'views' | 'estimatedMinutesWatched' | 'netSubscribers'
+
+/** Menos de esto no es una tendencia, es un par de puntos. */
+export const MIN_SPARK_POINTS = 5
+
+/**
+ * Valores diarios para la mini-gráfica de una tarjeta, o `null` si no se puede
+ * dibujar con honestidad: solo si hay un dato por CADA día del periodo (una
+ * línea que une los días con dato taparía los huecos) y al menos
+ * `MIN_SPARK_POINTS` días. Nunca se rellena nada con ceros.
+ */
+export function sparkValues(series: DayPointDto[], key: SparkKey, expectedDays: number): number[] | null {
+  if (expectedDays < MIN_SPARK_POINTS || series.length !== expectedDays) return null
+  const values: number[] = []
+  for (const p of series) {
+    const v = key === 'netSubscribers'
+      ? (p.subscribersGained !== null && p.subscribersLost !== null ? p.subscribersGained - p.subscribersLost : null)
+      : p[key]
+    if (v === null) return null
+    values.push(v)
+  }
+  return values
+}
+
 /** Formatea el valor de un punto según la métrica de la gráfica. */
 export function formatChartValue(metric: ChartMetric, value: number): string {
   if (metric === 'watch') return formatHours(value)

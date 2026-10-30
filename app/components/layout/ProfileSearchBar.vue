@@ -46,7 +46,7 @@ onUnmounted(() => document.removeEventListener('click', onClickOutside))
 
 <template>
   <!-- Escritorio/tablet: input en línea, igual que antes -->
-  <div ref="root" class="relative shrink-0 w-44 md:w-64 hidden sm:block">
+  <div ref="root" class="relative shrink-0 w-44 md:w-40 lg:w-64 hidden sm:block">
     <div class="relative h-9">
       <Icon name="ph:magnifying-glass-bold" class="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-[var(--color-text-faint)]" />
       <input

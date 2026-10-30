@@ -130,7 +130,7 @@ const spoken = computed(() => {
     <svg
       :viewBox="`0 0 ${W} ${H}`" class="w-full touch-none" :height="H" role="img" tabindex="0"
       aria-label="Evolución diaria del canal. Usa las flechas del teclado para recorrer los días."
-      @pointermove="onMove" @pointerleave="activeIndex = null" @keydown="onKeydown" @blur="activeIndex = null"
+      @pointermove="onMove" @pointerdown="onMove" @pointerleave="activeIndex = null" @keydown="onKeydown" @blur="activeIndex = null"
     >
       <!-- Cuadrícula y eje Y -->
       <g v-for="t in domain.ticks" :key="t">

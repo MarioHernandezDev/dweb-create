@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { channelObservations } from '~/utils/youtube-insights'
 import { channelKpis } from '~/utils/youtube-kpi'
-import { formatRangeLabel, periodKpis, periodLabel } from '~/utils/youtube-period-view'
+import { useElementSize, useMediaQuery } from '@vueuse/core'
+import { formatRangeLabel, periodKpis, periodLabel, sparkValues } from '~/utils/youtube-period-view'
 import type { YoutubeBannerKind } from '~/components/youtube/YoutubeStateBanner.vue'
 import type { YoutubeConnectionState } from '~/components/youtube/YoutubeChannelHeader.vue'
 
@@ -82,8 +83,31 @@ watch([analyticsEnabled, days], ([ok]) => {
   if (ok) void loadPerformance()
 }, { immediate: true })
 
+// Barra de periodo fija: se coloca justo debajo de la barra superior (TopBar), cuya altura se mide, y los
+// vídeos usan esa misma medida para dejar fija su barra de filtros debajo de la del periodo.
+const barEl = ref<HTMLElement | null>(null)
+const topbarEl = shallowRef<HTMLElement | null>(null)
+onMounted(() => { topbarEl.value = document.querySelector<HTMLElement>('header.sticky') })
+const { height: topbarH } = useElementSize(topbarEl, undefined, { box: 'border-box' })
+const { height: barH } = useElementSize(barEl, undefined, { box: 'border-box' })
+const stickyVars = computed(() => ({ '--yt-sticky-top': `${Math.round(topbarH.value)}px`, '--yt-bar-h': `${Math.round(barH.value)}px` }))
+const wide = useMediaQuery('(min-width: 1536px)')
+
 const analyticsProblem = computed(() => (analyticsError.value && analyticsError.value.code !== 'period_unavailable' ? analyticsError.value : null))
 const channelTooNew = computed(() => analyticsError.value?.code === 'period_unavailable')
+
+const showPeriod = computed(() => analyticsEnabled.value && !analyticsProblem.value && !channelTooNew.value)
+
+// Mini-tendencias: solo con un dato por cada día del periodo (si hay huecos no se dibuja nada).
+const sparks = computed<Record<string, number[] | null>>(() => {
+  const r = report.value
+  if (!r) return {}
+  return {
+    views: sparkValues(r.series, 'views', r.days),
+    estimatedMinutesWatched: sparkValues(r.series, 'estimatedMinutesWatched', r.days),
+    netSubscribers: sparkValues(r.series, 'netSubscribers', r.days)
+  }
+})
 
 const showCompare = computed(() => compare.value && comparable.value && !!report.value?.comparison)
 const kpis = computed(() => (report.value ? periodKpis({ totals: report.value.totals, comparison: showCompare.value ? report.value.comparison : null }) : []))
@@ -132,7 +156,7 @@ function onRetry() {
 </script>
 
 <template>
-  <div class="flex flex-col gap-5">
+  <div ref="root" class="flex flex-col gap-5" :style="stickyVars">
     <!-- Cargando por primera vez: skeletons con la forma exacta de lo que llega -->
     <template v-if="firstLoad">
       <div class="flex items-center gap-4 rounded-[var(--radius-lg)] border border-[var(--color-hairline)] bg-[var(--color-paper)] p-6" aria-busy="true" aria-label="Cargando tu canal de YouTube">
@@ -174,55 +198,57 @@ function onRetry() {
         @reconnect="$emit('reconnect')" @retry="onRetry"
       />
 
-      <section aria-labelledby="yt-totals" class="yt-reveal" style="--i: 1">
-        <h2 id="yt-totals" class="text-[0.6875rem] font-semibold uppercase tracking-wide text-[var(--color-text-faint)] mb-3">Total del canal</h2>
-        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-          <YoutubeKpiCard v-if="hero" :kpi="hero" class="col-span-2 sm:col-span-3 lg:col-span-2" />
-          <YoutubeKpiCard
-            v-for="(kpi, i) in secondary" :key="kpi.key" :kpi="kpi"
-            :class="i === secondary.length - 1 ? 'col-span-2 sm:col-span-1' : ''"
-          />
-        </div>
-      </section>
-
-      <!-- Periodo: solo si las analíticas están disponibles; un fallo no esconde los totales de arriba -->
-      <template v-if="analyticsEnabled && !analyticsProblem && !channelTooNew">
+      <!-- Barra de periodo fija: se puede cambiar de periodo estando en la gráfica o en los vídeos -->
+      <div
+        v-if="showPeriod" ref="barEl"
+        class="sticky z-20 -mx-5 px-5 md:-mx-8 md:px-8 py-2.5 bg-[var(--color-ink)]/90 backdrop-blur-md border-b border-[var(--color-hairline)]"
+        :style="{ top: 'var(--yt-sticky-top, 0px)' }"
+      >
         <YoutubePeriodBar
           :model-value="days" v-model:compare="compare" :periods="availablePeriods" :comparable="comparable" :loading="analyticsLoading"
           @update:model-value="selectPeriod"
         />
+      </div>
 
-        <section aria-labelledby="yt-period" class="yt-reveal" style="--i: 2" :aria-busy="analyticsLoading">
+      <!-- Fila principal: el canal (protagonista + totales) y, al lado, el periodo elegido en rejilla 4×2 -->
+      <div class="grid gap-5 xl:grid-cols-12 items-stretch">
+        <section aria-labelledby="yt-totals" class="yt-reveal flex flex-col gap-3" :class="showPeriod ? 'xl:col-span-4' : 'xl:col-span-5'" style="--i: 1">
+          <h2 id="yt-totals" class="text-[0.6875rem] font-semibold uppercase tracking-wide text-[var(--color-text-faint)]">Total del canal</h2>
+          <YoutubeKpiCard v-if="hero" :kpi="hero" class="flex-1" />
+          <YoutubeTotalsList :kpis="secondary" />
+        </section>
+
+        <!-- Periodo: solo si las analíticas están disponibles; un fallo no esconde los totales -->
+        <section v-if="showPeriod" aria-labelledby="yt-period" class="yt-reveal xl:col-span-8" style="--i: 2" :aria-busy="analyticsLoading">
           <h2 id="yt-period" class="text-[0.6875rem] font-semibold uppercase tracking-wide text-[var(--color-text-faint)]">{{ periodLabel(days) }}</h2>
           <p v-if="report" class="mt-0.5 mb-3 text-[0.75rem] text-[var(--color-text-faint)]">
             {{ formatRangeLabel(report.range) }} · YouTube tarda 1-2 días en procesar los datos, por eso el periodo termina hace 2 días
           </p>
           <div v-else class="mb-3 mt-0.5"><SkeletonBlock width="14rem" height="0.75rem" /></div>
 
-          <div class="grid grid-cols-2 sm:grid-cols-4 2xl:grid-cols-8 gap-3" :class="analyticsLoading && report && 'opacity-60 transition-opacity'">
+          <div class="grid grid-cols-2 lg:grid-cols-4 gap-3" :class="analyticsLoading && report && 'opacity-60 transition-opacity'">
             <template v-if="report">
-              <YoutubeKpiCard v-for="kpi in kpis" :key="kpi.key" :kpi="kpi" />
+              <YoutubeKpiCard v-for="kpi in kpis" :key="kpi.key" :kpi="kpi" :spark="sparks[kpi.key] ?? null" />
             </template>
             <template v-else>
-              <SkeletonBlock v-for="n in 8" :key="n" height="6.5rem" rounded="var(--radius-md)" />
+              <SkeletonBlock v-for="n in 8" :key="n" height="8rem" rounded="var(--radius-md)" />
             </template>
           </div>
         </section>
+      </div>
 
-        <!-- Gráfica ancha con las observaciones al lado en escritorio; apiladas en tablet y móvil -->
-        <div class="grid gap-5 2xl:grid-cols-12 items-start">
-          <YoutubeEvolutionPanel class="yt-reveal 2xl:col-span-8" style="--i: 3" :report="report" :loading="analyticsLoading" :show-compare="showCompare" />
-          <YoutubeInsights v-if="report" class="yt-reveal 2xl:col-span-4" style="--i: 4" :observations="observations" :loading="analyticsLoading" />
-        </div>
-      </template>
+      <!-- Gráfica ancha con las observaciones al lado en pantallas muy anchas; apiladas en el resto -->
+      <div v-if="showPeriod" class="grid gap-5 2xl:grid-cols-12 items-stretch">
+        <YoutubeEvolutionPanel class="yt-reveal 2xl:col-span-8" style="--i: 3" :report="report" :loading="analyticsLoading" :show-compare="showCompare" :tall="wide" />
+        <YoutubeInsights v-if="report" class="yt-reveal 2xl:col-span-4" style="--i: 4" :observations="observations" :loading="analyticsLoading" />
+      </div>
 
       <p v-else-if="channelTooNew" class="text-[0.8125rem] text-[var(--color-text-muted)] rounded-[var(--radius-md)] border border-[var(--color-hairline)] bg-[var(--color-paper)] p-4">
         {{ analyticsError?.message }}
       </p>
 
       <YoutubeVideosPanel
-        class="yt-reveal" style="--i: 5"
-        v-if="analyticsEnabled"
+        v-if="analyticsEnabled" class="yt-reveal" style="--i: 5"
         :videos="videos" :total="videosTotal" :has-more="!!nextPageToken" :loading="videosLoading" :loading-more="videosLoadingMore" :error="videosError"
         :period-days="days" :period-range="perfReport?.range ?? null" :performance="perfById" :truncated="perfReport?.truncated ?? false"
         :performance-loading="perfLoading" :performance-error="perfError?.message ?? null" @retry-performance="loadPerformance(days, { force: true })"

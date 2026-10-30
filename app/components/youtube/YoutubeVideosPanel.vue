@@ -75,23 +75,27 @@ const compact = (n: number) => formatCompactNumber(n)
 
     <template v-else>
       <!-- Controles: solo si hay vídeos que buscar -->
-      <div v-if="videos.length" class="flex flex-wrap items-center gap-2.5 mb-4">
+      <div
+        v-if="videos.length" data-videos-toolbar
+        class="sticky z-10 -mx-5 px-5 md:-mx-8 md:px-8 py-2 mb-3 flex flex-wrap items-center gap-2.5 bg-[var(--color-ink)]/90 backdrop-blur-md"
+        :style="{ top: 'calc(var(--yt-sticky-top, 0px) + var(--yt-bar-h, 0px))' }"
+      >
         <div class="relative flex-1 min-w-[12rem]">
           <Icon name="ph:magnifying-glass" class="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-[var(--color-text-faint)] pointer-events-none" />
           <input
             v-model="query" type="search" placeholder="Buscar por título" aria-label="Buscar vídeos por título"
-            class="w-full h-10 pl-9 pr-3 rounded-full bg-[var(--color-ink-overlay)] border border-[var(--color-hairline)] text-[0.875rem] text-[var(--color-text)] placeholder:text-[var(--color-text-faint)] focus:outline-none focus:border-[var(--color-primary-500)]"
+            class="w-full h-11 lg:h-10 pl-9 pr-3 rounded-full bg-[var(--color-ink-overlay)] border border-[var(--color-hairline)] text-[0.875rem] text-[var(--color-text)] placeholder:text-[var(--color-text-faint)] focus:outline-none focus:border-[var(--color-primary-500)]"
           >
         </div>
         <select
           v-model="sort" aria-label="Ordenar vídeos"
-          class="h-10 px-3 rounded-full bg-[var(--color-ink-overlay)] border border-[var(--color-hairline)] text-[0.8125rem] text-[var(--color-text)]"
+          class="h-11 lg:h-10 px-3 rounded-full bg-[var(--color-ink-overlay)] border border-[var(--color-hairline)] text-[0.8125rem] text-[var(--color-text)]"
         >
           <option v-for="o in VIDEO_SORTS" :key="o.value" :value="o.value">{{ o.label }}</option>
         </select>
         <select
           v-model="range" aria-label="Filtrar por fecha de publicación"
-          class="h-10 px-3 rounded-full bg-[var(--color-ink-overlay)] border border-[var(--color-hairline)] text-[0.8125rem] text-[var(--color-text)]"
+          class="h-11 lg:h-10 px-3 rounded-full bg-[var(--color-ink-overlay)] border border-[var(--color-hairline)] text-[0.8125rem] text-[var(--color-text)]"
         >
           <option v-for="o in VIDEO_RANGES" :key="o.value" :value="o.value">{{ o.label }}</option>
         </select>
@@ -135,10 +139,10 @@ const compact = (n: number) => formatCompactNumber(n)
 
       <ul v-else class="grid gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
         <li v-for="video in visible" :key="video.id">
-          <article class="group flex h-full gap-3 overflow-hidden rounded-[var(--radius-md)] border border-[var(--color-hairline)] bg-[var(--color-paper)] transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-md">
+          <article class="group flex h-full gap-3 xl:flex-col xl:gap-0 overflow-hidden rounded-[var(--radius-md)] border border-[var(--color-hairline)] bg-[var(--color-paper)] transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-md">
             <a
               :href="videoUrl(video.id)" target="_blank" rel="noopener noreferrer" :aria-label="`Abrir «${video.title}» en YouTube`"
-              class="relative block w-36 shrink-0 bg-[var(--color-ink-overlay)]"
+              class="relative block w-36 shrink-0 xl:w-full xl:aspect-video bg-[var(--color-ink-overlay)]"
             >
               <img v-if="video.thumbnailUrl" :src="video.thumbnailUrl" alt="" loading="lazy" class="absolute inset-0 size-full object-cover">
               <span v-else class="absolute inset-0 flex items-center justify-center text-[var(--color-text-faint)]"><Icon name="ph:video-camera-fill" class="size-7" /></span>
@@ -147,7 +151,7 @@ const compact = (n: number) => formatCompactNumber(n)
               </span>
             </a>
 
-            <div class="min-w-0 flex-1 py-3 pr-3">
+            <div class="min-w-0 flex-1 py-3 pr-3 xl:p-3.5">
               <a :href="videoUrl(video.id)" target="_blank" rel="noopener noreferrer" class="block text-[0.9375rem] font-medium leading-snug text-[var(--color-text)] line-clamp-2 hover:underline">
                 {{ video.title }}
               </a>

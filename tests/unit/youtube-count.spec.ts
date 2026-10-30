@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { channelKpis } from '../../app/utils/youtube-kpi'
-import { periodKpis, type PeriodTotalsDto } from '../../app/utils/youtube-period-view'
+import { periodKpis, sparkValues, type DayPointDto, type PeriodTotalsDto } from '../../app/utils/youtube-period-view'
 
 /**
  * El contador animado (A-R16f) es solo el camino hacia el valor real: el texto
@@ -42,5 +42,33 @@ describe('contador animado: valor final = valor real', () => {
     const k = periodKpis({ totals: totals({ comments: 0 }), comparison: null }).find((x) => x.key === 'comments')!
     expect(k.count).toBeDefined()
     expect(k.count!.format(0)).toBe(k.value)
+  })
+})
+
+describe('sparkValues (mini-tendencias)', () => {
+  const day = (i: number, over: Partial<DayPointDto> = {}): DayPointDto => ({
+    date: `2026-10-${String(i + 1).padStart(2, '0')}`, views: 10 + i, estimatedMinutesWatched: 5 + i, subscribersGained: 3, subscribersLost: 1, ...over
+  })
+  const full = (n: number, over: Partial<DayPointDto> = {}) => Array.from({ length: n }, (_, i) => day(i, over))
+
+  it('serie completa: un valor por día', () => {
+    expect(sparkValues(full(7), 'views', 7)).toEqual([10, 11, 12, 13, 14, 15, 16])
+    expect(sparkValues(full(7), 'netSubscribers', 7)).toEqual([2, 2, 2, 2, 2, 2, 2])
+  })
+  it('un día sin fila (hueco) => no hay mini-gráfica: no se unen los días con dato', () => {
+    expect(sparkValues(full(6), 'views', 7)).toBeNull()
+  })
+  it('un día con la métrica null => no hay mini-gráfica (null no es 0)', () => {
+    const s = full(7); s[3] = day(3, { views: null })
+    expect(sparkValues(s, 'views', 7)).toBeNull()
+    const t = full(7); t[2] = day(2, { subscribersLost: null })
+    expect(sparkValues(t, 'netSubscribers', 7)).toBeNull()
+  })
+  it('un 0 real sí es dato', () => {
+    expect(sparkValues(full(7, { views: 0 }), 'views', 7)).toEqual([0, 0, 0, 0, 0, 0, 0])
+  })
+  it('periodos demasiado cortos o series vacías no dibujan nada', () => {
+    expect(sparkValues(full(4), 'views', 4)).toBeNull()
+    expect(sparkValues([], 'views', 28)).toBeNull()
   })
 })
