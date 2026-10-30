@@ -4,6 +4,25 @@ Registro de qué se hizo, por qué, y qué queda pendiente de verificar — pens
 
 ---
 
+## 2026-10-30 (Alex-38) — [Alex] A-R19: perfil público de creador y partner a ancho completo
+
+### Qué se cambió
+
+- `/profile/[role]/[id]` usa `AppShell full-width` y un componente nuevo, `PublicProfileView` (propuesta en `docs/PROPUESTA_A-R19_PERFIL_PUBLICO.md`): cabecera con portada, logo/avatar grande, nombre, rol y sector, categorías y redes verificadas; columna principal con presentación, 'qué busca' y necesidades/catálogo en cuadrícula; lateral con datos clave y reputación (pasa debajo en pantallas estrechas). `ProfileHeaderCard` no se toca (sigue siendo la vista previa del editor).
+- **Solo datos que ya se devolvían:** nombre, avatar, portada, categorías, bio, rango, qué busca, paquetes, valoraciones y redes del RPC `get_public_social_accounts` (las únicas con insignia de verificación). Se añade `industry` de `partners` (columna ya legible por cualquier usuario autenticado, la usa la búsqueda de perfiles). Sin ubicación ni web (no existen). Sin migraciones ni cambios de RLS.
+- Acciones sin cambios de flujo: Iniciar chat, Hacer oferta y Copiar enlace; en el perfil propio no hay chat ni ofertas y aparece un aviso con enlace a editar la ficha. 'Volver a Descubrir' según el rol de quien mira. Valoraciones: con 0 se dice que no hay; con pocas, el texto honesto de siempre (sin media hasta 3).
+
+### Verificado de verdad
+
+- `vue-tsc` limpio y 568 pruebas unitarias OK. **Navegador real (Chrome por CDP): 67 comprobaciones desde el creador y 67 desde el partner, todas OK,** sobre un partner ajeno, un creador ajeno y el perfil propio, a 1920/1280/768/390 px: nombre real, sin desbordes, full width, lateral a la derecha en escritorio y debajo en tablet/móvil, chat/aviso propio/sección de paquetes según corresponda, sin 'undefined/null/NaN', sin datos vacíos, y un perfil inexistente sigue dando 404. Capturas revisadas; corregido el plural ('1 necesidades') y un contador duplicado.
+- No se pulsó 'Iniciar chat' ni 'Hacer oferta' (crean datos): su lógica no ha cambiado, pero no se ha vuelto a ejecutar desde la nueva pantalla.
+
+### Sin verificar
+
+- Perfiles con redes verificadas reales (los demo no las tienen) y con valoraciones suficientes; tablet/móvil y lector de pantalla reales; esqueletos de carga no añadidos.
+
+---
+
 ## 2026-10-30 (Alex-37) — [Alex] A-R18: perfiles de creador y partner a ancho completo
 
 ### Qué se cambió

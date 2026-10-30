@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import { formatEuros } from '~/utils/mock-data'
-import { formatRatingSummary, hasEnoughRatingsToShowAverage } from '~/utils/ratings'
 import type { Role } from '~/types'
 import type { Package } from '~/composables/usePackages'
 
@@ -63,14 +61,6 @@ function openOffer(pkg: Package) {
   offerSheetOpen.value = true
 }
 
-const rangeLabel = computed(() => {
-  if (!profile!.minCents && !profile!.maxCents) return null
-  return `${profile!.minCents ? formatEuros(profile!.minCents) : '…'}–${profile!.maxCents ? formatEuros(profile!.maxCents) : '…'}`
-})
-
-const packagesSectionTitle = computed(() => (targetRole === 'creator' ? 'Catálogo' : 'Necesidades'))
-const catalogCountLabel = computed(() => (targetRole === 'creator' ? 'paquetes publicados' : 'necesidades publicadas'))
-
 // Copiar el enlace del perfil — no había ninguna forma de compartirlo hasta
 // ahora, ni siquiera el tuyo propio para mandárselo a alguien (ver también
 // el botón "Compartir" en la pestaña Cuenta de creator/profile.vue y
@@ -82,60 +72,12 @@ function copyProfileLink() {
 </script>
 
 <template>
-  <AppShell :role="myRole ?? 'creator'" title="Perfil">
-    <div class="md:max-w-xl">
-      <div class="relative">
-        <ProfileHeaderCard
-          :name="profile.name" :role-label="targetRole === 'creator' ? 'Creador de contenido' : 'Partner'"
-          :avatar-url="profile.avatarUrl" :cover-url="profile.coverUrl" :cover-seed="profile.profileId"
-          :categories="profile.categories" :bio="profile.bio" :range-label="rangeLabel"
-          :range-field-label="targetRole === 'creator' ? 'Tarifa orientativa' : 'Presupuesto'"
-          :looking-for="profile.lookingFor" :verified-socials="profile.verifiedSocials"
-          :member-since="profile.createdAt" :catalog-count="packages.length" :catalog-label="catalogCountLabel"
-        />
-        <button
-          type="button" :aria-label="linkCopied ? 'Enlace copiado' : 'Copiar enlace del perfil'"
-          class="absolute top-3 right-3 z-10 size-9 rounded-full bg-black/35 backdrop-blur-sm text-white flex items-center justify-center hover:bg-black/50 transition-colors duration-150"
-          @click="copyProfileLink"
-        >
-          <Icon :name="linkCopied ? 'ph:check-bold' : 'ph:link-simple-bold'" class="size-4" />
-        </button>
-      </div>
-      <p v-if="copyError" class="text-[0.75rem] text-[var(--color-status-alert)] -mt-4 mb-4">No se ha podido copiar el enlace.</p>
-
-      <div v-if="ratingSummary.ratingCount > 0" class="flex items-center gap-2.5 rounded-[var(--radius-sm)] bg-[var(--color-ink-overlay)] px-3.5 py-2.5 mb-5">
-        <RatingStars
-          v-if="hasEnoughRatingsToShowAverage(ratingSummary.ratingCount)"
-          :model-value="Math.round(ratingSummary.avgStars)" readonly size="sm"
-        />
-        <span class="text-[0.8125rem] text-[var(--color-text-muted)]">{{ formatRatingSummary(ratingSummary) }}</span>
-      </div>
-
-      <template v-if="!isOwnProfile">
-        <div class="flex flex-col gap-2 mb-7">
-          <BaseButton variant="primary" size="lg" icon="ph:chat-circle-fill" :icon-spin="startingChat" :disabled="startingChat" @click="startChat">
-            Iniciar chat
-          </BaseButton>
-          <p v-if="chatError" class="text-[0.8125rem] text-[var(--color-status-alert)]">{{ chatError }}</p>
-          <p v-else-if="profile.chatPrivacy === 'accepted_offers_only'" class="text-[0.75rem] text-[var(--color-text-faint)]">
-            Este perfil solo acepta mensajes de texto tras una oferta aceptada — puedes empezar haciéndole una oferta sobre uno de sus paquetes.
-          </p>
-        </div>
-
-        <section>
-          <h2 class="text-[0.6875rem] font-semibold uppercase tracking-wide text-[var(--color-text-faint)] mb-2.5">{{ packagesSectionTitle }}</h2>
-          <EmptyState
-            v-if="!packages.length"
-            icon="ph:package" title="Sin paquetes publicados"
-            :description="`Todavía no se le puede hacer una oferta — ${targetRole === 'creator' ? 'el creador' : 'el partner'} no ha publicado ningún paquete.`"
-          />
-          <div v-else class="flex flex-col gap-2.5">
-            <PackageCard v-for="pkg in packages" :key="pkg.id" :pkg="pkg" @offer="openOffer" />
-          </div>
-        </section>
-      </template>
-
-      <ChatOfferSheet v-model="offerSheetOpen" :packages="offerTarget ? [offerTarget] : []" />
-    </div>
+  <AppShell :role="myRole ?? 'creator'" title="Perfil" full-width>
+    <PublicProfileView
+      :profile="profile" :packages="packages" :rating-summary="ratingSummary" :is-own-profile="isOwnProfile" :my-role="myRole"
+      :starting-chat="startingChat" :chat-error="chatError" :link-copied="linkCopied" :copy-error="copyError"
+      @chat="startChat" @offer="openOffer" @copy="copyProfileLink"
+    />
+    <ChatOfferSheet v-model="offerSheetOpen" :packages="offerTarget ? [offerTarget] : []" />
   </AppShell>
 </template>

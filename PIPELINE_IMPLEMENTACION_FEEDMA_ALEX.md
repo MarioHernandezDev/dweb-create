@@ -318,3 +318,6 @@ Estado 2026-10-30 (M2 y M3 aplicadas por Alex): A-R8a (snapshots diarios de acum
 
 Requisito nuevo (2026-10-30): A-R18, Perfiles a ancho completo (/creator/profile y /partner/profile)
 - Propuesta en docs/PROPUESTA_A-R18_PERFILES.md (auditoría, 4 pestañas por rol, distribución full width, mejoras, fases A-R18a–f). Solo presentación, sin migraciones ni RLS; no interrumpe seguridad ni arquitectura. Va después de A-R4/A-R6 y de que Mario cierre sus cambios de perfil/cuenta (M-L2) para evitar conflictos en esos dos archivos. IMPLEMENTADA el 2026-10-30 (A-R18a–f, CHANGELOG Alex-37): cabecera, pestañas accesibles, ficha con barra de guardado y validación, full width; verificada en navegador con cuentas demo; sin esqueletos de carga.
+
+Requisito nuevo (2026-10-30): A-R19, perfil público a ancho completo (/profile/[role]/[id])
+- Propuesta en docs/PROPUESTA_A-R19_PERFIL_PUBLICO.md. Solo presentación con los datos públicos existentes; sin migraciones ni RLS. IMPLEMENTADA el 2026-10-30 (CHANGELOG Alex-38), verificada en navegador con cuentas demo.

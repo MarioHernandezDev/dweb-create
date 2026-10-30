@@ -15,6 +15,8 @@ export interface PublicProfile {
   createdAt: string
   bio: string | null
   categories: string[]
+  /** Solo partners: sector (columna `industry` de `partners`, ya legible por cualquier usuario autenticado). */
+  industry: string | null
   minCents: number | null
   maxCents: number | null
   lookingFor: string | null
@@ -52,6 +54,7 @@ interface PartnerRow {
   id: string
   profile_id: string
   company_name: string
+  industry: string | null
   bio: string | null
   categories: string[] | null
   min_budget_cents: number | null
@@ -104,6 +107,7 @@ export function usePublicProfile() {
           createdAt: data.created_at,
           bio: data.bio,
           categories: data.categories ?? [],
+          industry: null,
           minCents: data.min_rate_cents,
           maxCents: data.max_rate_cents,
           lookingFor: data.looking_for,
@@ -119,7 +123,7 @@ export function usePublicProfile() {
 
       const { data, error } = await client
         .from('partners')
-        .select('id, profile_id, company_name, bio, categories, min_budget_cents, max_budget_cents, looking_for, cover_url, created_at')
+        .select('id, profile_id, company_name, industry, bio, categories, min_budget_cents, max_budget_cents, looking_for, cover_url, created_at')
         .eq('id', id)
         .maybeSingle<PartnerRow>()
       if (error || !data) return null
@@ -135,6 +139,7 @@ export function usePublicProfile() {
         createdAt: data.created_at,
         bio: data.bio,
         categories: data.categories ?? [],
+        industry: data.industry,
         minCents: data.min_budget_cents,
         maxCents: data.max_budget_cents,
         lookingFor: data.looking_for,
