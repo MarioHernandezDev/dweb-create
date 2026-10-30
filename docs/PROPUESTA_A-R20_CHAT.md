@@ -1,6 +1,6 @@
 # Propuesta A-R20 — Auditoría y rediseño del chat
 
-Estado: **auditoría y propuesta. No se ha implementado nada, no hay migraciones ni cambios de RLS/funciones.** Fecha: 2026-10-30. Autor: [Alex].
+Estado: **R20a–d y parte de R20e implementadas (CHANGELOG Alex-42); R20f, R20g completo, R20h y R20i pendientes.** (Auditoría original abajo.) Fecha: 2026-10-30. Autor: [Alex].
 Alcance de la verificación: **lectura de código y SQL**. No se ha ejecutado ninguna prueba nueva de chat para este documento; lo que no está leído en el código se marca como hipótesis.
 
 ---

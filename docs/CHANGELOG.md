@@ -4,6 +4,30 @@ Registro de qué se hizo, por qué, y qué queda pendiente de verificar — pens
 
 ---
 
+## 2026-10-30 (Alex-42) — [Alex] A-R20 (R20a–e parcial): chat a dos paneles, bandeja útil, tarjetas de oferta, compositor y privacidad explicada
+
+### Qué se cambió
+
+- **R20a — Dos paneles con las mismas rutas.** `pages/chat.vue` es ahora el contenedor (rutas anidadas): `/chat` y `/chat/[id]` siguen siendo las mismas (los enlaces de las notificaciones no cambian). Bandeja persistente a la izquierda (no se vuelve a montar al abrir una conversación) y el hilo a la derecha desde 1024 px; por debajo, una pantalla u otra según haya conversación abierta, con botón atrás. Alto fijo del panel: se desplazan la lista y los mensajes, nunca la página. Columna de lectura de ~768 px dentro del hilo. Conversación inexistente: panel propio con enlace de vuelta (ya no se sustituye toda la página).
+- **R20b — Bandeja.** Búsqueda por nombre (sin distinguir mayúsculas ni acentos), filtros **Todas · No leídas · Ofertas** y por fila: avatar, nombre, etiqueta de rol, hora, vista previa **con perspectiva** ('Te ha enviado una oferta', 'Has enviado una oferta', 'Tú: …'), contador de no leídos y marca **Responder** cuando hay una oferta pendiente de MI respuesta (una consulta de solo lectura a `offers`, RLS ya existente). Esqueleto de carga y estados vacíos con explicación. Refresco de respaldo cada 60 s (antes 20 s) y al volver a la pestaña.
+- **R20c — Ofertas y sistema.** Tarjeta de oferta con el paquete, quién la envía, precio, estado con texto e icono y una línea de consecuencia por perspectiva ('Esperando a que X responda' / 'Te toca responder'); si se aceptó y existe la colaboración creada por `respond_offer`, enlaza con ella. Oferta cuyo paquete se borró (mensaje con `offer_id` nulo) o que no carga: tarjeta degradada, no una burbuja vacía. Mensaje de sistema como hito con icono (no burbuja). Reglas de negocio sin cambios.
+- **R20d — Compositor y privacidad.** `textarea` que crece, **Intro envía y Mayús+Intro salta de línea**, botón 'Oferta' con texto, etiqueta accesible. **Escenario B:** si el otro solo recibe texto tras una oferta aceptada y aún no la hay, el compositor se sustituye por la explicación y 'Hacer una oferta'; se calcula con datos ya legibles (`profiles.chat_privacy` del otro y mis ofertas aceptadas con él) y se reevalúa al llegar el mensaje de sistema. El servidor sigue siendo la barrera. Si el envío falla, el texto se conserva y nunca se muestra como enviado.
+- **R20e (parcial) — Tiempo real.** 'Visto' por suscripción a `UPDATE` de `conversations` (tabla ya publicada, sin migración) en lugar del sondeo de 15 s (queda un respaldo de 60 s); estado del canal expuesto (`realtimeStatus`) y banda 'Sin conexión' / 'Reconectando' en el hilo; la lista de pendientes se actualiza al llegar o responder una oferta.
+- **Sin migraciones ni cambios de RLS/funciones.** R20h (límites de longitud/frecuencia) y R20i (ofertas al borrar un paquete) **no se han tocado**: esperan tu aprobación y a Mario.
+
+### Verificado de verdad
+
+- `vue-tsc` limpio; **593 pruebas unitarias** OK (15 nuevas de `chat-view.ts`: vista previa con perspectiva, filtros y búsqueda con acentos, restricción de privacidad, textos de oferta); regresión de integración `offers.spec.ts` 4/4.
+- **Navegador real (Chrome por CDP; cuenta demo del creador + creador ajeno; conversación `[TEST r20]` creada y borrada, perfil ajeno restaurado a su privacidad original, notificaciones de prueba borradas): 45/45 comprobaciones OK.** Incluyen: bandeja con preview, 'Responder', contador y rol; filtros y búsqueda; la bandeja no se remonta al abrir un hilo; divisor de mensajes nuevos; tarjeta pendiente con Aceptar/Rechazar; Mayús+Intro no envía, Intro envía exactamente un mensaje; fallo del servidor (petición cortada) conserva el texto y avisa; mensaje del otro en vivo sin recargar; 'Visto' en vivo; privacidad restringida sin oferta aceptada (compositor sustituido) y liberada al aceptar (la aceptación escribe en la base de datos y crea el mensaje de sistema); oferta huérfana degradada; banda sin conexión; conversación inexistente; sin desbordes ni scroll de página a 1920/1280/768/390 px; compositor no tapado por la barra inferior en móvil; 'Atrás' vuelve a la bandeja. Defectos reales corregidos al medir: el panel sobraba 15 px de alto, a 768 px el hilo quedaba en 96 px (el doble panel solo empieza ahora a 1024 px), desbordamiento horizontal de la bandeja en móvil, y el divisor de 'mensajes nuevos' no salía si nunca habías abierto la conversación.
+
+### Sin verificar / pendiente
+
+- **Aviso de hidratación** ('Hydration node mismatch' en los enlaces de Bandeja de entrada de `SideRail`/`TopBar`/`BottomTabBar`): es el contador de la insignia que difiere entre servidor y cliente; **no se ha investigado** (aparece también de forma intermitente en otras páginas, no es de este cambio).
+- No se ha probado con una conversación entre creador y partner (aceptar crearía una colaboración real: el enlace 'Ver colaboración' solo se probó por lógica unitaria), ni 'Rechazar' desde la interfaz, ni dos pestañas, ni suspensión del equipo.
+- **No hecho aún:** R20f (cargar mensajes anteriores: sigue habiendo un tope de 300 por hilo), R20g completo (lector de pantalla real, foco al abrir ofertas), contador de no leídos por conversación en servidor (R20h), subir Chat a la barra inferior del móvil (decisión global sin responder), panel de contexto ≥1536 px.
+
+---
+
 ## 2026-10-30 (Alex-41) — [Alex] A-R21 (R21a–e): avisos, crear→detalle, lista de publicaciones y proyecto en el tablero; R21f preparada
 
 ### Qué se cambió

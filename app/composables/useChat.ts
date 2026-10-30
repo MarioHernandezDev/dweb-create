@@ -39,6 +39,9 @@ export interface ConversationSummary {
   otherName: string
   otherAvatarUrl: string | null
   lastMessagePreview: string | null
+  /** Tipo del último mensaje y si lo envié yo — la bandeja resume las ofertas con perspectiva (utils/chat-view.ts). */
+  lastMessageKind: ChatMessage['kind'] | null
+  lastMessageMine: boolean
   lastMessageAt: string | null
   unread: boolean
   unreadCount: number
@@ -126,6 +129,8 @@ export function useChat() {
   const sending = useState<boolean>('chat-sending', () => false)
   const typingByConversation = useState<Record<string, boolean>>('chat-typing-by-conversation', () => ({}))
   const typingListenerStarted = useState<boolean>('chat-typing-listener-started', () => false)
+  // Estado del canal de tiempo real (A-R20): la interfaz avisa si se cae en vez de quedarse muda.
+  const realtimeStatus = useState<'idle' | 'connected' | 'disconnected'>('chat-realtime-status', () => 'idle')
 
   async function refreshUnreadCount() {
     const { data, error } = await client.rpc('my_chat_unread_count' as never)
@@ -225,6 +230,8 @@ export function useChat() {
         otherName: names[otherId]?.name ?? 'Usuario',
         otherAvatarUrl: names[otherId]?.avatarUrl ?? null,
         lastMessagePreview: last ? (last.kind === 'offer' ? 'Oferta enviada' : last.body) : null,
+        lastMessageKind: last?.kind ?? null,
+        lastMessageMine: !!last && last.senderId === me,
         lastMessageAt: c.last_message_at,
         unread: unreadCount > 0,
         unreadCount,
@@ -272,6 +279,8 @@ export function useChat() {
       otherName: names[otherId]?.name ?? 'Usuario',
       otherAvatarUrl: names[otherId]?.avatarUrl ?? null,
       lastMessagePreview: existing?.lastMessagePreview ?? null,
+      lastMessageKind: existing?.lastMessageKind ?? null,
+      lastMessageMine: existing?.lastMessageMine ?? false,
       lastMessageAt: data.last_message_at,
       unread: existing?.unread ?? false,
       unreadCount: existing?.unreadCount ?? 0,
@@ -371,6 +380,8 @@ export function useChat() {
     const updated: ConversationSummary = {
       ...current,
       lastMessagePreview: message.kind === 'offer' ? 'Oferta enviada' : message.body,
+      lastMessageKind: message.kind,
+      lastMessageMine: isMine,
       lastMessageAt: message.createdAt,
       unread: forceRead ? false : isMine ? current.unread : true,
       unreadCount: forceRead ? 0 : isMine ? current.unreadCount : current.unreadCount + 1
@@ -418,6 +429,8 @@ export function useChat() {
         if (row.sender_id !== me) {
           if (viewingThisConversation) markRead(row.conversation_id)
           else refreshUnreadCount()
+          // Una oferta recibida cambia lo pendiente de mi respuesta en la bandeja.
+          if (row.kind === 'offer') useOffers().refreshPendingIncoming()
         }
       })
       .subscribe((status) => {
@@ -429,8 +442,12 @@ export function useChat() {
         // /chat se podía quedar con la preview vieja en silencio, sin
         // ningún aviso, hasta la siguiente recarga completa de la página.
         if (status === 'SUBSCRIBED') {
+          realtimeStatus.value = 'connected'
           refreshConversations()
           refreshUnreadCount()
+          useOffers().refreshPendingIncoming()
+        } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+          realtimeStatus.value = 'disconnected'
         }
       })
 
@@ -438,6 +455,23 @@ export function useChat() {
       .channel('chat-offers-global')
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'offers' }, (payload) => {
         useOffers().setOffer(useOffers().mapOfferRow(payload.new as never))
+        useOffers().refreshPendingIncoming()
+      })
+      .subscribe()
+
+    // "Visto": la otra persona marca la conversación como leída (UPDATE de `conversations`, tabla ya
+    // publicada en Realtime y filtrada por RLS). Sustituye al sondeo cada 15 s del hilo.
+    client
+      .channel('chat-conversations-global')
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'conversations' }, (payload) => {
+        const row = payload.new as ConversationRow
+        const idx = conversations.value.findIndex((c) => c.id === row.id)
+        if (idx === -1 || !me) return
+        const mine = row.participant_one_id === me ? row.participant_one_last_read_at : row.participant_two_last_read_at
+        const theirs = row.participant_one_id === me ? row.participant_two_last_read_at : row.participant_one_last_read_at
+        const next = [...conversations.value]
+        next[idx] = { ...next[idx], myLastReadAt: mine, otherLastReadAt: theirs }
+        conversations.value = next
       })
       .subscribe()
   }
@@ -530,6 +564,7 @@ export function useChat() {
     markRead,
     startRealtime,
     typingByConversation,
+    realtimeStatus,
     startTypingListener,
     sendTypingPing,
     reset

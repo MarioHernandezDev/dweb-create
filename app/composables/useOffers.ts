@@ -61,6 +61,9 @@ export function useOffers() {
   // si un paquete concreto tiene algo esperando respuesta exigía ir a /chat
   // y revisar manualmente uno por uno (ver PackageCard.vue, que lo pinta).
   const pendingCountByPackage = useState<Record<string, number>>('offers-pending-count-by-package', () => ({}))
+  // Ofertas pendientes de MI respuesta, por conversación (A-R20): la bandeja del chat las usa para
+  // marcar dónde hay algo que atender sin abrir cada hilo. Solo lectura: la RLS ya limita a las partes.
+  const pendingIncomingByConversation = useState<Record<string, number>>('offers-pending-incoming-by-conversation', () => ({}))
 
   async function ensureOffer(id: string) {
     if (offersById.value[id]) return offersById.value[id]
@@ -132,9 +135,24 @@ export function useOffers() {
     pendingCountByPackage.value = counts
   }
 
+  async function refreshPendingIncoming() {
+    const me = await useMyProfileId().resolveMyProfileId()
+    if (!me) return
+    const { data, error } = await client.from('offers').select('conversation_id').eq('to_profile_id', me).eq('status', 'pending')
+    if (error) {
+      console.error('[useOffers] fallo al contar ofertas pendientes por conversación:', error.message)
+      return
+    }
+    const counts: Record<string, number> = {}
+    for (const row of (data ?? []) as { conversation_id: string }[]) counts[row.conversation_id] = (counts[row.conversation_id] ?? 0) + 1
+    pendingIncomingByConversation.value = counts
+  }
+
   return {
     offersById,
     responding,
+    pendingIncomingByConversation,
+    refreshPendingIncoming,
     creating,
     pendingCountByPackage,
     ensureOffer,
