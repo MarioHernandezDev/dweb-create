@@ -4,6 +4,16 @@ Registro de qué se hizo, por qué, y qué queda pendiente de verificar — pens
 
 ---
 
+## 2026-10-30 (Alex-34) — [Alex] A-R18: propuesta de perfiles a ancho completo (solo documentación)
+
+### Qué se cambió
+
+- Nuevo `docs/PROPUESTA_A-R18_PERFILES.md`: auditoría de `/creator/profile` y `/partner/profile` (archivos, componentes, datos reales disponibles, causa de la anchura limitada), las cuatro pestañas de cada rol con sus problemas, distribución full width propuesta, mejoras visuales/de usabilidad/funcionales, lo que requeriría backend (ubicación, usuario, web: no existen hoy) y fases A-R18a–f.
+- Añadido al pipeline como requisito A-R18. **No se ha modificado código.**
+- Rama `feature/integracion-alex-mario` publicada en `main` (avance rápido, 65 commits, sin conflictos).
+
+---
+
 ## 2026-10-30 (Alex-33) — [Alex] A-R8b: métricas por publicación vinculada (visualizaciones, me gusta, comentarios…)
 
 ### Qué se cambió
