@@ -88,7 +88,7 @@ async function onUnlink() {
         </a>
         <p class="mt-1 text-[0.6875rem] text-[var(--color-text-faint)]">Comprobado con {{ meta.label }}: el contenido es de tu cuenta conectada.</p>
       </div>
-      <slot name="metrics" :link="link" />
+      <PostMetricsPanel :post-id="postId" :platform="platform" />
       <BaseButton variant="ghost" size="sm" icon="ph:link-break-bold" :disabled="busy" class="self-start" @click="onUnlink">Desvincular</BaseButton>
     </template>
 

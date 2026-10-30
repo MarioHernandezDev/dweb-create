@@ -87,6 +87,7 @@ export default defineEventHandler(async (event) => {
   const notFound = createError({ statusCode: 404, statusMessage: `No hemos encontrado ese contenido en tu cuenta de ${label} conectada. Comprueba que es tuyo y que el enlace es correcto.` })
 
   let external: { id: string; url: string }
+  let accessToken = ''
   try {
     if (platform === 'youtube') {
       if (!account.refresh_token_encrypted || !config.socialTokenEncryptionKey || !config.youtubeClientId || !config.youtubeClientSecret) {
@@ -100,6 +101,7 @@ export default defineEventHandler(async (event) => {
       // La Data API devuelve cualquier vídeo público: lo que prueba la propiedad es que el canal del vídeo sea el nuestro.
       if (!raw || !ownChannelId || raw.snippet?.channelId !== ownChannelId) throw notFound
       external = { id: raw.id, url: YOUTUBE_WATCH_URL(raw.id) }
+      accessToken = refreshed.access_token
       await recordSyncSuccess(client, account.id, {
         access_token_encrypted: encryptToken(refreshed.access_token, config.socialTokenEncryptionKey),
         token_expires_at: new Date(Date.now() + refreshed.expires_in * 1000).toISOString()
@@ -112,7 +114,8 @@ export default defineEventHandler(async (event) => {
         // Mismo error que devolvería Meta (190): se clasifica como acceso caducado y se guarda el estado.
         throw Object.assign(new Error('Token de Instagram caducado (fecha de caducidad superada).'), { response: { status: 400 }, data: { error: { code: 190, error_subcode: 463 } } })
       }
-      const found = await findInstagramMedia(decryptToken(account.access_token_encrypted, config.socialTokenEncryptionKey), shortcode!)
+      accessToken = decryptToken(account.access_token_encrypted, config.socialTokenEncryptionKey)
+      const found = await findInstagramMedia(accessToken, shortcode!)
       if (!found) throw notFound
       external = { id: found.id, url: found.permalink }
     }
@@ -129,5 +132,14 @@ export default defineEventHandler(async (event) => {
     if (saved.reason === 'duplicate') throw createError({ statusCode: 409, statusMessage: 'Ese contenido ya está vinculado a otra publicación tuya.' })
     throw createError({ statusCode: 500, statusMessage: 'No se ha podido guardar el vínculo. Inténtalo de nuevo.' })
   }
+  // Primera lectura de métricas (A-R8b): si falla, el vínculo ya está bien guardado y se podrá actualizar después.
+  try {
+    const ref = [{ postId: post.id, externalId: external.id }]
+    if (platform === 'youtube') await refreshYoutubePostMetrics(client, account.id, accessToken, ref)
+    else await refreshInstagramPostMetrics(client, account.id, accessToken, ref)
+  } catch (err) {
+    console.error('[social/link-post] no se pudieron leer las métricas al vincular (se puede actualizar después):', describeErrorForLog(err))
+  }
+
   return { link: saved.link }
 })

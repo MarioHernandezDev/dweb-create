@@ -2,6 +2,7 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { recordAccountSnapshot } from '../../server/utils/account-snapshot'
 import { removeExternalLink, saveExternalLink } from '../../server/utils/post-link-store'
+import { buildMetricsRow, mapYoutubeMetrics, recordPostMetrics } from '../../server/utils/post-metrics'
 import { creatorSession, hasSupabaseEnv, partnerSession, unrelatedCreatorSession } from './supabase-setup'
 
 /**
@@ -332,6 +333,17 @@ describe.skipIf(!enabled)('vínculos externos, snapshots y métricas (M2 + M3, S
       const neg = await admin.from('metrics').insert(metric({ post_id: postB, reach: -5, measured_on: '2026-10-02' }) as never)
       expect(bad.error).not.toBeNull()
       expect(neg.error).not.toBeNull()
+    })
+
+    it('el escritor real (recordPostMetrics) guarda una fila por día con null y lo no disponible; repetir actualiza la misma', async () => {
+      const day = new Date('2026-11-05T09:00:00Z')
+      // Vídeo con me gusta ocultos y comentarios desactivados (YouTube omite esos campos).
+      const values = mapYoutubeMetrics({ viewCount: '300' })
+      const first = await recordPostMetrics(admin, [buildMetricsRow({ postId: postB, accountId, source: 'youtube', values, now: day })])
+      const second = await recordPostMetrics(admin, [buildMetricsRow({ postId: postB, accountId, source: 'youtube', values: mapYoutubeMetrics({ viewCount: '320', likeCount: '7', commentCount: '0' }), now: new Date('2026-11-05T21:00:00Z') })])
+      expect([first, second]).toEqual([1, 1])
+      const { data } = await admin.from('metrics').select('views, likes, comments, shares, engagement_rate, unavailable_metrics').eq('post_id', postB).eq('measured_on', '2026-11-05')
+      expect(data).toEqual([{ views: 320, likes: 7, comments: 0, shares: null, engagement_rate: 2.188, unavailable_metrics: ['shares', 'saves', 'reach'] }])
     })
 
     it('el creador dueño lee sus métricas; un ajeno no', async () => {

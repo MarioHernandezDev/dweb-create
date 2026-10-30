@@ -4,6 +4,33 @@ Registro de qué se hizo, por qué, y qué queda pendiente de verificar — pens
 
 ---
 
+## 2026-10-30 (Alex-33) — [Alex] A-R8b: métricas por publicación vinculada (visualizaciones, me gusta, comentarios…)
+
+### Qué se cambió
+
+- **Lectura de métricas** de cada publicación vinculada (A-R7), guardadas en `metrics` (M3) con **una fila por publicación y día UTC** (repetir el mismo día actualiza la misma fila; los días anteriores se conservan como histórico).
+  - **YouTube** (Data API `videos.statistics`): visualizaciones, me gusta y comentarios. YouTube **omite** `likeCount` si el canal oculta los me gusta y `commentCount` si desactiva los comentarios: eso se guarda como **`null` y anotado en `unavailable_metrics`, nunca como 0**. Compartidos, guardados y alcance no existen en esa API y quedan anotados.
+  - **Instagram** (Instagram Login): me gusta y comentarios de los campos básicos y visualizaciones, alcance, guardados y compartidos de los insights, **cada insight pedido por separado**: si uno no existe para ese tipo de publicación (carruseles, stories…) solo esa métrica queda `null`. **Sin verificar con una cuenta real** (nombres según la documentación de Meta).
+  - La **interacción** (me gusta + comentarios) ÷ visualizaciones se guarda solo si están los tres datos y hay visualizaciones; se etiqueta como cálculo de FEEDMA.
+- **Cuándo se leen:** (1) **al vincular** la publicación (primera lectura; si falla, el vínculo queda guardado y se puede actualizar después); (2) **en cada sincronización de la cuenta**, para todas sus publicaciones vinculadas (YouTube en lotes de 50 vídeos por llamada, Instagram hasta 25 publicaciones por lectura), como efecto secundario que **nunca hace fallar la sincronización**; (3) con el botón **"Actualizar"** de la publicación (`POST /api/social/post-metrics-refresh`: solo el dueño, 10 por minuto, sin llamar al proveedor si la cuenta consta como caducada/revocada). Un contenido que el proveedor ya no devuelve (borrado o privado) se avisa y **no genera ninguna fila**; lo guardado se conserva.
+- **Panel de métricas** en la tarjeta de la publicación (`PostMetricsPanel`): solo las métricas que existen en esa plataforma (YouTube: 3; Instagram: 6); cada una con su valor o "—" **con el motivo** ("El canal oculta los me gusta de este vídeo", "Los comentarios están desactivados"…); variación frente a la medición anterior de otro día ("+200 desde el 29 oct", rotulada como cálculo de FEEDMA); "Medido el 30 oct · dato de YouTube"; estados sin métricas guardadas, error con Reconectar y contenido que falta.
+
+### Verificado de verdad
+
+- **Unitarios nuevos (45):** `post-metrics.spec.ts` (17: mapeo de YouTube e Instagram, ausente = null y 0 real = 0, interacción con datos incompletos, clave de upsert, no lanza si la base falla), `post-metrics-sync.spec.ts` (8: respuestas simuladas con la forma real de Google y Meta; lotes de 50; vídeo que falta no escribe fila; un insight que falla solo anula esa métrica; tope de 25; la sincronización no se rompe si el proveedor cae) y `post-metrics-view.spec.ts` (13: última medición sin fiarse del orden, variación solo entre días distintos y con dos datos, motivos). **Suite completa 542 tests (29 archivos)**; `npx vue-tsc --noEmit` limpio.
+- **Contra la base real (85 pruebas de integración OK, 40 de ellas del bloque M2/M3/A-R7/A-R8):** el escritor real guarda la fila del día con `null` y `unavailable_metrics`, y repetirlo la actualiza (una sola fila); regresión de las 45 de `social_accounts` OK.
+- **Navegador real (Chrome por CDP), 16 comprobaciones nuevas OK:** la API rechaza id no válido (400), publicación ajena (404), publicación sin vínculo (404) y sin sesión (401), y con el acceso inválido devuelve `reconnect_required` sin inventar nada; el panel sin mediciones explica y ofrece Actualizar (sin ceros); con dos mediciones enseña la más reciente, la variación **+200 desde el 29 oct**, los me gusta ocultos como "—" con su motivo, los comentarios a 0 real como 0 con **-5**, sin interacción cuando falta un dato, y "Medido el 30 oct · dato de YouTube"; Actualizar con acceso inválido pide reconectar y conserva lo guardado; móvil sin desbordes. Capturas revisadas. **Regresión completa** de las baterías anteriores (rendimiento por vídeo 22, detalle 22, animaciones 10, rediseño 44, conexiones 11, índice 22, vínculo 24, histórico 13): todo OK. Publicaciones, métricas, snapshots y cuentas de prueba borrados al terminar.
+
+### Sin verificar (importante)
+
+- **Con un canal o una cuenta de Instagram reales no se ha leído ninguna métrica:** lo probado es el mapeo con respuestas simuladas con la forma de la documentación, la base real, los errores y la interfaz. Con tu canal: vincula un vídeo tuyo y pulsa "Actualizar"; deben salir sus visualizaciones, me gusta y comentarios.
+- **Instagram:** insights y paginación de `/me/media` según la documentación; requieren el permiso `instagram_business_manage_insights` aprobado por Meta.
+- Los datos de YouTube/Instagram pueden tardar hasta 48 h en estar completos; una publicación recién vinculada puede salir con datos parciales.
+- **Sin sincronización programada** (decisión Q3 pendiente), las métricas solo avanzan al vincular, al sincronizar a mano la cuenta o al pulsar "Actualizar".
+- No hay todavía gráfica de evolución de las métricas de una publicación (solo la última medición y su variación): el histórico diario ya se guarda para añadirla.
+
+---
+
 ## 2026-10-30 (Alex-32) — [Alex] A-R7: vincular una publicación con su vídeo o publicación real, verificando que es tuya
 
 ### Qué se cambió

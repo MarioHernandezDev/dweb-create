@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { recordAccountSnapshot, snapshotFromInstagram, snapshotFromYoutube } from './account-snapshot'
+import { refreshAccountPostMetricsBestEffort } from './post-metrics-sync'
 import { successPatch } from './social-account-state'
 import { decryptToken, encryptToken } from './token-crypto'
 import { fetchYoutubeChannel, refreshYoutubeAccessToken } from './youtube'
@@ -60,6 +61,9 @@ export async function syncYoutubeAccount(
     } as never)
     .eq('id', account.id)
   if (error) throw createError({ statusCode: 500, statusMessage: error.message })
+
+  // Métricas de las publicaciones vinculadas (A-R8b): efecto secundario que no hace fallar la sincronización.
+  await refreshAccountPostMetricsBestEffort(client, 'youtube', account.id, refreshed.access_token)
 
   return { followersCount: subscriberCount }
 }
@@ -131,6 +135,8 @@ export async function syncInstagramAccount(
   if (error) throw createError({ statusCode: 500, statusMessage: error.message })
 
   await recordAccountSnapshot(client, account.id, snapshotFromInstagram(profile.followers_count))
+
+  await refreshAccountPostMetricsBestEffort(client, 'instagram', account.id, accessToken)
 
   return { followersCount: profile.followers_count, tokenRefreshed }
 }
