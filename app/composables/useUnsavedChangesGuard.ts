@@ -7,14 +7,14 @@
  * app) y cerrar/recargar la pestaña (el aviso nativo del navegador, que no
  * se puede personalizar ni esperar a una promesa — `beforeunload` es síncrono).
  */
-export function useUnsavedChangesGuard(isDirty: Ref<boolean> | ComputedRef<boolean>) {
+export function useUnsavedChangesGuard(isDirty: Ref<boolean> | ComputedRef<boolean>, what = 'de la ficha') {
   const { confirm } = useConfirm()
 
   onBeforeRouteLeave(async () => {
     if (!isDirty.value) return true
     return await confirm({
       title: 'Tienes cambios sin guardar',
-      message: 'Si sales ahora se perderán los cambios de la ficha que no hayas guardado todavía.',
+      message: `Si sales ahora se perderán los cambios ${what} que no hayas guardado todavía.`,
       confirmLabel: 'Salir sin guardar',
       cancelLabel: 'Seguir editando',
       tone: 'danger'

@@ -43,8 +43,23 @@ onMounted(async () => {
 
 const todayIso = new Date().toISOString().slice(0, 10)
 
+// A dónde vuelve «Volver» (y tras borrar): de dónde se vino, para no perder el contexto.
+const backTarget = computed(() => {
+  switch (route.query.desde) {
+    case 'lista': return { to: '/creator/timeline?vista=lista', label: 'Volver a la lista' }
+    case 'colaboracion': return { to: '/creator/requests', label: 'Volver a colaboraciones' }
+    default: return { to: '/creator/timeline', label: 'Volver al tablero' }
+  }
+})
+// Proyecto = la colaboración a la que pertenece (o contenido propio).
+const project = computed(() => {
+  const id = post.value?.collaborationId
+  if (!id) return null
+  return { id, partnerName: collabRequests.value.find((c) => c.id === id)?.partnerName ?? 'Colaboración' }
+})
+
 async function onRemove() {
-  if (await remove()) router.push('/creator/timeline')
+  if (await remove()) router.push(backTarget.value.to)
 }
 
 const statusFlow: PostStatus[] = ['idea', 'in_production', 'ready_for_review', 'scheduled', 'published']
@@ -55,6 +70,8 @@ const nextStatus = computed(() => {
 })
 const { updatePost } = useMyPosts()
 const { confirm } = useConfirm()
+const toast = useToast()
+useUnsavedChangesGuard(dirty, 'de la publicación')
 async function advanceStatus() {
   if (!post.value || !nextStatus.value) return
   const p = post.value
@@ -74,13 +91,38 @@ async function advanceStatus() {
     if (!ok) return
   }
 
-  await updatePost(p.id, { status: next })
+  try {
+    await updatePost(p.id, { status: next })
+    toast.success(`Movida a ${statusMeta[next].label}`)
+  } catch (err) {
+    console.error('[post/[id]] fallo al cambiar de fase:', err)
+    toast.error('No se ha podido cambiar de fase. Inténtalo de nuevo.')
+  }
 }
 </script>
 
 <template>
-  <AppShell v-if="post" role="creator" title="Editar publicación">
-    <div class="lg:grid lg:grid-cols-[1fr_320px] lg:gap-8 lg:items-start">
+  <AppShell v-if="post" role="creator" title="Publicación" full-width>
+    <div class="mb-6" data-post-header>
+      <NuxtLink :to="backTarget.to" class="inline-flex items-center gap-1.5 min-h-11 text-[0.8125rem] font-medium text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors" data-back-link>
+        <Icon name="ph:arrow-left-bold" class="size-3.5" /> {{ backTarget.label }}
+      </NuxtLink>
+      <div class="flex flex-wrap items-center gap-x-3 gap-y-2">
+        <h1 class="font-display text-[1.5rem] md:text-[1.875rem] leading-tight text-[var(--color-text)] break-words min-w-0" data-post-title>{{ post.title }}</h1>
+        <NuxtLink
+          v-if="project" to="/creator/requests"
+          class="inline-flex items-center gap-1.5 h-8 px-3 rounded-full bg-[var(--color-primary-500)]/10 text-[0.75rem] font-medium text-[var(--color-primary-500)] hover:bg-[var(--color-primary-500)]/15 transition-colors"
+          data-project-chip
+        >
+          <Icon name="ph:handshake-fill" class="size-3.5" /> {{ project.partnerName }}
+        </NuxtLink>
+        <span v-else class="inline-flex items-center gap-1.5 h-8 px-3 rounded-full bg-[var(--color-ink-overlay)] text-[0.75rem] font-medium text-[var(--color-text-muted)]" data-project-chip>
+          <Icon name="ph:user-fill" class="size-3.5" /> Contenido propio
+        </span>
+      </div>
+    </div>
+
+    <div class="lg:grid lg:grid-cols-[minmax(0,1fr)_22rem] xl:grid-cols-[minmax(0,1fr)_26rem] lg:gap-8 lg:items-start">
       <div>
         <CoverUploader
           :post-id="post.id" :media-url="post.mediaUrl" :cover="post.cover" :icon="contentTypeMeta[post.contentType].icon"

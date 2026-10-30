@@ -4,6 +4,29 @@ Registro de qué se hizo, por qué, y qué queda pendiente de verificar — pens
 
 ---
 
+## 2026-10-30 (Alex-41) — [Alex] A-R21 (R21a–e): avisos, crear→detalle, lista de publicaciones y proyecto en el tablero; R21f preparada
+
+### Qué se cambió
+
+- **R21a — Avisos:** `useToast` + `ToastHost` (montado en `AppShell`, sin dependencias, `aria-live`, errores con `role=alert`, solo opacidad/posición). Se usan al guardar, borrar (también en lote), cambiar de fase y crear. Reglas: solo tras la respuesta del servidor y un aviso por acción; guardar y borrar ahora capturan sus errores (antes se perdían).
+- **R21b — Crear → detalle:** 'Guardar sin predecir' crea y **redirige a `/creator/post/[id]`** con aviso; si el servidor falla no hay redirección y se explica. Tras predecir, el botón 'Programar' (que solo cerraba) pasa a 'Abrir publicación' y, si se cierra la hoja, un aviso con enlace 'Abrir'. Aviso de cambios sin guardar al salir de la página de detalle y al cerrar el panel del tablero (`useUnsavedChangesGuard` ahora acepta el texto).
+- **R21c — Detalle como centro:** cabecera con 'Volver' según de dónde se viene (`?desde=tablero|lista|colaboracion`), título y chip de proyecto (partner de la colaboración o 'Contenido propio'), página a ancho completo con dos columnas; el panel del tablero enlaza a 'Abrir página completa'.
+- **R21d — Lista:** `/creator/timeline` pasa a llamarse **Publicaciones** (menú, título; la ruta no cambia) con selector **Tablero · Lista** (`?vista=lista`). Mismas publicaciones y mismos filtros en las dos vistas (`PostFilterBar`, `utils/post-library.ts`): búsqueda, estado (solo lista), red, proyecto y orden por entrega/creación/modificación (el tipo `Post` expone `createdAt`/`updatedAt`). Cada fila abre el detalle, cambia de fase (con el aviso de saltarse al partner) y borra con confirmación. `usePostActions` comparte la lógica de fase/borrado con el tablero.
+- **R21e — Proyecto en el tablero:** proyecto = colaboración (sin tabla nueva); chip de proyecto en las cards de colaboración, filtro 'Contenido propio', indicadores del proyecto activo (entregas, atrasadas, en revisión, publicadas) y 'Ir al tablero' que conserva el proyecto (`?colaboracion=`). Aviso honesto cuando se alcanza el tope de 300 publicaciones (sin paginar todavía).
+- **R21f — Migración PREPARADA, NO APLICADA:** `20261030120000_posts_collaboration_check.sql` exige que `collaboration_id` sea NULL o una colaboración propia en `posts_insert_self`/`posts_update_self`. Comprobación previa de solo lectura: **0 publicaciones con colaboración ajena** en los datos actuales. Con rollback documentado.
+
+### Verificado de verdad
+
+- `vue-tsc` limpio; **578 pruebas unitarias** OK (10 nuevas de filtros/orden).
+- **Navegador real (Chrome por CDP, cuenta demo, filas `[TEST r21]` borradas al terminar; 0 restos): 45 comprobaciones OK,** incluidas: panel→página→volver al tablero; guardar con fallo simulado (aviso de error y cambios conservados), guardar bien (aviso único y fila actualizada en la base de datos); salir con cambios pide confirmación; la lista enseña las mismas 3 publicaciones que el tablero con la misma búsqueda; filtros por estado, propio y proyecto; indicadores; 'Ir al tablero' conserva el proyecto; orden; cambiar de fase y borrar desde la lista (fallo simulado sin escritura; confirmación previa); crear con el servidor caído (sin redirección) y luego crear bien (redirige a la página correcta, una sola fila, estado idea, aviso visible); sin desbordes a 1920/1280/768/390 px en tablero, lista y detalle.
+- **Hueco de RLS reproducido** con `posts-collaboration-rls.spec.ts` contra la base real: antes de la migración, los 2 tests 'RECHAZO' **fallan** (se puede crear y mover una publicación a una colaboración ajena) y los 4 restantes pasan.
+
+### Sin verificar
+
+- La migración R21f **no se ha aplicado**: tras aplicarla deben pasar los 6 tests. El arrastre del tablero tras el refactor de `moveTo` se probó aparte (6/6: arrastre real a otra columna, servidor caído con vuelta a la columna de origen y aviso, selector de fase de la card); el borrado en lote (selección múltiple) cambió a avisos con `Promise.allSettled` pero no se ha ejecutado desde la interfaz. Sin paginación (tope de 300). No se escribe `published_at` (queda como opcional). No se ha probado con una colaboración con partner que haya bloqueado el salto de revisión.
+
+---
+
 ## 2026-10-30 (Alex-40) — [Alex] A-R21: auditoría y propuesta del flujo de publicaciones (solo documentación)
 
 ### Qué se cambió

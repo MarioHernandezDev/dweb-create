@@ -3,7 +3,7 @@ import type { Post, PostStatus } from '~/types'
 import { contentTypeMeta, statusMeta, overdueLabel } from '~/utils/status'
 import { platformMeta } from '~/utils/mock-data'
 
-const props = defineProps<{ post: Post; phases: PostStatus[]; overdue?: boolean }>()
+const props = defineProps<{ post: Post; phases: PostStatus[]; overdue?: boolean; /** Proyecto = nombre del partner de la colaboración; null/undefined = contenido propio (sin chip). */ project?: string | null }>()
 defineEmits<{ open: [post: Post]; move: [status: PostStatus] }>()
 
 // Cargadas una sola vez desde PhaseBoard.vue (onMounted) — este componente
@@ -68,6 +68,10 @@ const coverStyle = computed(() => {
 
           <p class="text-[0.875rem] font-medium text-[var(--color-text)] leading-snug line-clamp-2 min-h-[2.5em] mb-2">
             {{ post.title }}
+          </p>
+
+          <p v-if="project" class="inline-flex max-w-full items-center gap-1 mb-2 px-2 h-5 rounded-full bg-[var(--color-primary-500)]/10 text-[0.6875rem] font-medium text-[var(--color-primary-500)]" data-card-project>
+            <Icon name="ph:handshake-fill" class="size-3 shrink-0" /> <span class="truncate">{{ project }}</span>
           </p>
 
           <p v-if="overdue" class="flex items-center gap-1 mb-2.5 text-[0.75rem] font-medium text-[var(--color-status-alert)]">

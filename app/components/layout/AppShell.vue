@@ -17,6 +17,7 @@ defineProps<{ role: Role; title: string; subtitle?: string; fullWidth?: boolean 
 
     <BottomTabBar :role="role" />
     <ConfirmDialogHost />
+    <ToastHost />
     <OnboardingTour />
   </div>
 </template>

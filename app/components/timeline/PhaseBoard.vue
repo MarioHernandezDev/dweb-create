@@ -2,14 +2,16 @@
 import draggable from 'vuedraggable'
 import type { ComponentPublicInstance } from 'vue'
 import type { Post, PostStatus, Platform } from '~/types'
-import { statusMeta, collaborationStatusMeta, isPostOverdue, movingSkipsPartnerReview, phaseDescription } from '~/utils/status'
-import { platformMeta, formatEuros } from '~/utils/mock-data'
+import { statusMeta, isPostOverdue, phaseDescription } from '~/utils/status'
+import { emptyFilters, filterPosts, hasActiveFilters, type PostFilters } from '~/utils/post-library'
 
-const { posts, updatePost, deletePost, refresh } = useMyPosts()
+const { posts, deletePost, refresh } = useMyPosts()
+const { changeStatus } = usePostActions()
 const { requests: collabRequests, ensureLoaded: ensureCollabRequestsLoaded } = useCollabRequests()
 const { ensureLabels } = useLabels()
 const { creator, ensureCreator, setWipLimit } = useMyCreator()
 const { confirm } = useConfirm()
+const toast = useToast()
 onMounted(() => {
   ensureCollabRequestsLoaded()
   ensureLabels()
@@ -21,28 +23,17 @@ onMounted(() => {
 // cada card), así que se queda fuera de las columnas.
 const phases: PostStatus[] = ['idea', 'in_production', 'ready_for_review', 'scheduled', 'published']
 
-// Filtros — antes no había ninguna forma de ver solo, por ejemplo, los
-// posts de una colaboración concreta con volumen real de publicaciones.
-const search = ref('')
-const platformFilter = ref<Platform | ''>('')
-const collaborationFilter = ref<string | ''>('')
-const platformOptions = Object.entries(platformMeta).map(([value, meta]) => ({ value: value as Platform, label: meta.label }))
-const hasFilters = computed(() => !!(search.value || platformFilter.value || collaborationFilter.value))
+// Filtros compartidos con la Lista (los posee la página, ver timeline.vue y
+// utils/post-library.ts): cambiar de vista no pierde lo filtrado.
+const filters = defineModel<PostFilters>('filters', { required: true })
+const hasFilters = computed(() => hasActiveFilters(filters.value, { ignoreStatus: true }))
 
 function clearFilters() {
-  search.value = ''
-  platformFilter.value = ''
-  collaborationFilter.value = ''
+  filters.value = emptyFilters()
 }
 
-const filteredPosts = computed(() =>
-  posts.value.filter((p) => {
-    if (search.value && !p.title.toLowerCase().includes(search.value.toLowerCase())) return false
-    if (platformFilter.value && p.platform !== platformFilter.value) return false
-    if (collaborationFilter.value && p.collaborationId !== collaborationFilter.value) return false
-    return true
-  })
-)
+// El Tablero no filtra por estado: las columnas ya son los estados.
+const filteredPosts = computed(() => filterPosts(posts.value, filters.value, { ignoreStatus: true }))
 
 // Las columnas viven en su propio estado local, mutado directamente por
 // vuedraggable al arrastrar — si se derivaran de `posts` con un `computed`,
@@ -70,6 +61,12 @@ watch(filteredPosts, sync, { immediate: true })
 
 const isOverdue = isPostOverdue
 
+// Proyecto de una card = el partner de su colaboración (null si es contenido propio).
+function projectNameOf(post: Post): string | null {
+  if (!post.collaborationId) return null
+  return collabRequests.value.find((c) => c.id === post.collaborationId)?.partnerName ?? 'Colaboración'
+}
+
 // Compartida por el arrastre y el selector rápido de fase (#actions) — en
 // móvil, arrastrar una card de la primera a la última columna obliga a
 // hacer scroll lateral con la otra mano mientras la sostienes, así que el
@@ -78,29 +75,11 @@ async function moveTo(post: Post, phase: PostStatus, fromDrag = false) {
   if (post.status === phase) return
   const fromPhase = post.status
 
-  // Aviso (no bloqueo) si esto evita la aprobación real del partner — ver
-  // `movingSkipsPartnerReview` en utils/status.ts.
-  if (post.collaborationId && movingSkipsPartnerReview(phase, collabRequests.value.find((c) => c.id === post.collaborationId)?.status)) {
-    const partnerName = collabRequests.value.find((c) => c.id === post.collaborationId)?.partnerName ?? 'el partner'
-    const ok = await confirm({
-      title: 'Vas a saltarte la revisión del partner',
-      message: `Esta publicación pertenece a una colaboración activa con ${partnerName}. Normalmente es ${partnerName} quien la aprueba antes de pasar a "${statusMeta[phase].label}" (desde "Para revisar"). ¿Moverla igualmente sin su aprobación?`,
-      confirmLabel: 'Mover igualmente'
-    })
-    if (!ok) {
-      if (fromDrag) {
-        // vuedraggable ya la había movido de columna de verdad al soltarla —
-        // si se cancela aquí, hay que devolverla a mano a su columna real.
-        const idx = board[phase].findIndex((p) => p.id === post.id)
-        if (idx !== -1) board[phase].splice(idx, 1)
-        board[fromPhase].push(post)
-      }
-      return
-    }
-  }
+  // La confirmación de saltarse al partner, la escritura y los avisos viven en
+  // usePostActions (los comparte la Lista); aquí solo se refleja en las columnas.
+  const result = await changeStatus(post, phase)
 
-  try {
-    await updatePost(post.id, { status: phase })
+  if (result === 'ok') {
     if (!fromDrag) {
       // El selector de fase, a diferencia del drag, no reubica nada por su
       // cuenta — y `sync()` tampoco: solo añade ids que no reconoce, nunca
@@ -109,22 +88,19 @@ async function moveTo(post: Post, phase: PostStatus, fromDrag = false) {
       if (idx !== -1) board[fromPhase].splice(idx, 1)
       board[phase].push(post)
     }
-  } catch (err) {
-    console.error('[PhaseBoard] fallo al mover de fase, recargando el tablero:', err)
-    if (fromDrag) {
-      // vuedraggable ya la había movido de columna de verdad: se saca de ahí
-      // (no basta con corregir el status, `sync()` solo añade ids que no
-      // reconoce, no reubica uno que ya está en la columna equivocada) y
-      // que `sync()` la vuelva a colocar donde diga el servidor.
-      const idx = board[phase].findIndex((p) => p.id === post.id)
-      if (idx !== -1) board[phase].splice(idx, 1)
-      // Devolverla ya a su columna de origen: si el `refresh()` de abajo
-      // también falla (p. ej. sin red), no hay nada que la recoloque y la
-      // card desaparecía del tablero hasta recargar la página.
-      if (!board[fromPhase].some((p) => p.id === post.id)) board[fromPhase].push(post)
-    }
-    await refresh()
+    return
   }
+
+  if (fromDrag) {
+    // vuedraggable ya la había movido de columna de verdad al soltarla: si se
+    // cancela o falla, hay que devolverla a mano a su columna real (no basta
+    // con corregir el status, `sync()` solo añade ids que no reconoce).
+    const idx = board[phase].findIndex((p) => p.id === post.id)
+    if (idx !== -1) board[phase].splice(idx, 1)
+    if (!board[fromPhase].some((p) => p.id === post.id)) board[fromPhase].push(post)
+  }
+  // Si falló la escritura, se vuelve a pedir lo que dice el servidor.
+  if (result === 'failed') await refresh()
 }
 
 function onChange(phase: PostStatus, event: { added?: { element: Post } }) {
@@ -220,7 +196,11 @@ async function bulkDelete() {
   if (!ok) return
   bulkDeleting.value = true
   try {
-    await Promise.all([...selectedIds.value].map((id) => deletePost(id)))
+    const results = await Promise.allSettled([...selectedIds.value].map((id) => deletePost(id)))
+    const failed = results.filter((r) => r.status === 'rejected').length
+    const done = results.length - failed
+    if (done) toast.success(done === 1 ? 'Publicación borrada' : `${done} publicaciones borradas`)
+    if (failed) toast.error(failed === 1 ? 'No se ha podido borrar 1 publicación.' : `No se han podido borrar ${failed} publicaciones.`)
     cancelSelection()
   } finally {
     bulkDeleting.value = false
@@ -230,33 +210,17 @@ async function bulkDelete() {
 
 <template>
   <div>
-    <div v-if="posts.length" class="flex flex-wrap items-center gap-2.5 mb-5">
-      <div class="relative flex-1 min-w-[11rem] max-w-xs">
-        <Icon name="ph:magnifying-glass-bold" class="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-[var(--color-text-faint)]" />
-        <input
-          v-model="search" type="text" placeholder="Buscar por título…"
-          class="w-full h-9 pl-8 pr-3 rounded-full bg-[var(--color-ink-overlay)] border border-[var(--color-hairline)] text-[0.8125rem] text-[var(--color-text)] placeholder:text-[var(--color-text-faint)] focus:outline-none focus:border-[var(--color-primary-500)]/60"
+    <PostFilterBar v-if="posts.length" v-model:filters="filters" :collabs="collabRequests" class="mb-5">
+      <template #end>
+        <button
+          type="button" class="text-[0.8125rem] font-medium transition-colors"
+          :class="selectionMode ? 'text-[var(--color-text)]' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text)]'"
+          @click="selectionMode ? cancelSelection() : (selectionMode = true)"
         >
-      </div>
-      <select v-model="platformFilter" class="h-9 px-3 rounded-full bg-[var(--color-ink-overlay)] border border-[var(--color-hairline)] text-[0.8125rem] text-[var(--color-text)]">
-        <option value="">Todas las redes</option>
-        <option v-for="p in platformOptions" :key="p.value" :value="p.value">{{ p.label }}</option>
-      </select>
-      <select v-if="collabRequests.length" v-model="collaborationFilter" class="h-9 px-3 rounded-full bg-[var(--color-ink-overlay)] border border-[var(--color-hairline)] text-[0.8125rem] text-[var(--color-text)]">
-        <option value="">Todas las colaboraciones</option>
-        <option v-for="c in collabRequests" :key="c.id" :value="c.id">
-          {{ c.partnerName }} · {{ c.budgetCents ? formatEuros(c.budgetCents) : 'Sin presupuesto' }} · {{ collaborationStatusMeta[c.status].label }}
-        </option>
-      </select>
-
-      <button
-        type="button" class="ml-auto text-[0.8125rem] font-medium transition-colors"
-        :class="selectionMode ? 'text-[var(--color-text)]' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text)]'"
-        @click="selectionMode ? cancelSelection() : (selectionMode = true)"
-      >
-        {{ selectionMode ? 'Cancelar' : 'Seleccionar' }}
-      </button>
-    </div>
+          {{ selectionMode ? 'Cancelar' : 'Seleccionar' }}
+        </button>
+      </template>
+    </PostFilterBar>
 
     <EmptyState
       v-if="!posts.length"
@@ -349,7 +313,7 @@ async function bulkDelete() {
         >
           <template #item="{ element }: { element: Post }">
             <div class="relative" :class="isOverdue(element) && 'rounded-[var(--radius-md)] ring-2 ring-[var(--color-status-alert)]'">
-              <BoardCard :post="element" :phases="phases" :overdue="isOverdue(element)" @open="openEdit(element)" @move="moveTo(element, $event)" />
+              <BoardCard :post="element" :phases="phases" :overdue="isOverdue(element)" :project="projectNameOf(element)" @open="openEdit(element)" @move="moveTo(element, $event)" />
               <template v-if="selectionMode">
                 <button
                   type="button" class="absolute inset-0 z-10 rounded-[var(--radius-md)]"

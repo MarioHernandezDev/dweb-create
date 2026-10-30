@@ -22,6 +22,7 @@ export function usePostEditorPanel(post: Ref<Post | null | undefined>) {
   const { itemsByPost, ensureItems, addItem: addChecklistItem, toggleItem: toggleChecklistItem, deleteItem: deleteChecklistItem } = useChecklist()
   const { notesByPost, ensureLoaded: ensureRevisionsLoaded, latestPendingChangeRequest } = usePostRevisions()
   const { confirm } = useConfirm()
+  const toast = useToast()
 
   const title = ref('')
   const caption = ref('')
@@ -36,6 +37,10 @@ export function usePostEditorPanel(post: Ref<Post | null | undefined>) {
     saving.value = true
     try {
       await updatePost(post.value.id, { title: title.value, caption: caption.value, dueDate: dueDate.value })
+      toast.success('Cambios guardados')
+    } catch (err) {
+      console.error('[usePostEditorPanel] fallo al guardar:', err)
+      toast.error('No se han podido guardar los cambios. Inténtalo de nuevo.')
     } finally {
       saving.value = false
     }
@@ -54,7 +59,12 @@ export function usePostEditorPanel(post: Ref<Post | null | undefined>) {
     deleting.value = true
     try {
       await deletePost(post.value.id)
+      toast.success('Publicación borrada')
       return true
+    } catch (err) {
+      console.error('[usePostEditorPanel] fallo al borrar:', err)
+      toast.error('No se ha podido borrar la publicación. Inténtalo de nuevo.')
+      return false
     } finally {
       deleting.value = false
     }

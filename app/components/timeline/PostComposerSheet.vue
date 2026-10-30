@@ -10,6 +10,8 @@ const props = defineProps<{
 
 const open = defineModel<boolean>({ default: false })
 const { createPost, updatePost } = useMyPosts()
+const router = useRouter()
+const toast = useToast()
 const { balance: creditBalance, ensureLoaded: ensureCreditsLoaded, setBalance: setCreditBalance } = useMyCredits()
 const { requests: collabRequests, ensureLoaded: ensureCollabRequestsLoaded } = useCollabRequests()
 
@@ -45,6 +47,19 @@ const error = ref('')
 // "Editar" y se guarda/predice otra vez, se actualiza ese mismo post en vez
 // de crear uno duplicado.
 const createdPostId = ref<string | null>(null)
+// Ya se llevó al usuario a la página de la publicación (o va de camino): no hace falta el aviso con enlace al cerrar.
+const navigated = ref(false)
+
+function detailPath(id: string) {
+  return `/creator/post/${id}`
+}
+
+/** Cierra la hoja y abre la publicación — SOLO se llama tras confirmar el servidor que existe. */
+async function openCreated(id: string) {
+  navigated.value = true
+  open.value = false
+  await router.push(detailPath(id))
+}
 
 function parsedHashtags(): string[] {
   return hashtagsInput.value
@@ -54,7 +69,11 @@ function parsedHashtags(): string[] {
     .map((h) => (h.startsWith('#') ? h : `#${h}`))
 }
 
+// `true` solo en la llamada que acaba de crear la fila (no al actualizar el mismo borrador).
+const justCreated = ref(false)
+
 async function saveDraft(): Promise<string> {
+  justCreated.value = false
   if (!createdPostId.value) {
     const created = await createPost({
       title: title.value,
@@ -66,6 +85,7 @@ async function saveDraft(): Promise<string> {
       dueDate: dueDate.value
     })
     createdPostId.value = created.id
+    justCreated.value = true
   } else {
     await updatePost(createdPostId.value, { title: title.value, caption: caption.value, hashtags: parsedHashtags(), dueDate: dueDate.value })
   }
@@ -77,6 +97,7 @@ async function predict() {
   error.value = ''
   try {
     const postId = await saveDraft()
+    if (justCreated.value) toast.success('Publicación creada. Tienes su predicción abajo.', { action: { label: 'Abrir', to: detailPath(postId) } })
     const prediction = await $fetch('/api/ml/predict', { method: 'POST', body: { postId } })
     result.value = { score: prediction.successScore, aiEvaluated: prediction.aiEvaluated, suggestions: prediction.suggestions }
     setCreditBalance(prediction.creditsRemaining)
@@ -99,22 +120,29 @@ async function saveOnly() {
   stage.value = 'saving'
   error.value = ''
   try {
-    await saveDraft()
-    open.value = false
+    const id = await saveDraft()
+    toast.success('Publicación creada. Ya puedes seguir editándola.')
+    await openCreated(id)
   } catch (err) {
     console.error('[PostComposerSheet] fallo al guardar:', err)
     error.value = 'No se ha podido guardar. Inténtalo de nuevo.'
+    toast.error('No se ha podido crear la publicación. Inténtalo de nuevo.')
     stage.value = 'draft'
   }
 }
 
-function schedule() {
-  // El post ya quedó guardado de verdad al predecir — aquí solo se cierra.
-  open.value = false
+function openPublication() {
+  // El post ya quedó guardado de verdad al predecir (estado "idea"): esto solo lo abre.
+  if (createdPostId.value) openCreated(createdPostId.value)
 }
 
 watch(open, (value) => {
+  if (!value && createdPostId.value && !navigated.value) {
+    // Cerró la hoja tras predecir sin abrir la publicación: se dice dónde quedó.
+    toast.info('Publicación guardada como idea.', { action: { label: 'Abrir', to: detailPath(createdPostId.value) } })
+  }
   if (value) {
+    navigated.value = false
     ensureCreditsLoaded()
     ensureCollabRequestsLoaded()
     if (props.prefill) {
@@ -243,7 +271,7 @@ watch(open, (value) => {
         />
         <div class="flex gap-2.5 mt-5">
           <BaseButton variant="secondary" class="flex-1" @click="stage = 'draft'">Editar</BaseButton>
-          <BaseButton variant="primary" class="flex-1" icon="ph:calendar-plus-fill" @click="schedule">Programar</BaseButton>
+          <BaseButton variant="primary" class="flex-1" icon="ph:arrow-square-out-bold" data-open-publication @click="openPublication">Abrir publicación</BaseButton>
         </div>
       </div>
     </Transition>

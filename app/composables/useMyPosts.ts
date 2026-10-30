@@ -11,6 +11,8 @@ interface PostRow {
   platform: Platform
   status: PostStatus
   due_date: string
+  created_at: string | null
+  updated_at: string | null
   media_url: string | null
   metadata: { hashtags?: string[] } | null
   ml_predictions: { success_score: number; model_version: string | null; suggestions: Suggestion[] | null; created_at: string }[] | null
@@ -39,6 +41,8 @@ function mapRow(row: PostRow): Post {
     status: row.status,
     dueInDays,
     dueDate: row.due_date.slice(0, 10),
+    createdAt: row.created_at ?? undefined,
+    updatedAt: row.updated_at ?? undefined,
     hashtags: row.metadata?.hashtags ?? [],
     cover: coverArtFromString(row.id),
     mediaUrl: row.media_url,

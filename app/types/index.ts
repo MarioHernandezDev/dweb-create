@@ -70,6 +70,9 @@ export interface Post {
   labelIds: string[]
   /** Recuento agregado del checklist, para pintar la barra de progreso en la card sin cargar los items. */
   checklist: { total: number; done: number }
+  /** ISO de `posts.created_at` / `updated_at` (solo publicaciones del creador; para ordenar la lista). */
+  createdAt?: string
+  updatedAt?: string
 }
 
 export interface SparklinePoint {

@@ -327,3 +327,4 @@ Requisito nuevo (2026-10-30): A-R20, auditoría y rediseño del chat (/chat y /c
 
 Requisito nuevo (2026-10-30): A-R21, flujo de publicaciones, biblioteca y tableros (creador)
 - Auditoría y propuesta en docs/PROPUESTA_A-R21_FLUJO_PUBLICACIONES.md (R21a avisos → R21b crear→detalle → R21c detalle como centro → R21d lista → R21e proyecto en el tablero → R21f RLS de collaboration_id, con aprobación y Mario → R21g diferido). SOLO PROPUESTA: sin código ni migraciones. Decisión de diseño: el 'proyecto' es la colaboración (ya existe), sin tabla nueva; lista y tablero son dos vistas de /creator/timeline. No bloquea ni es bloqueado por otras tareas; no se solapa con A-R20.
+- Estado A-R21 (2026-10-30): R21a–e IMPLEMENTADAS y verificadas en navegador (CHANGELOG Alex-41); R21f (RLS de posts.collaboration_id) PREPARADA y NO APLICADA, pendiente de que Alex la aplique y avise a Mario; R21g diferida. El menú pasa a llamarse 'Publicaciones'.

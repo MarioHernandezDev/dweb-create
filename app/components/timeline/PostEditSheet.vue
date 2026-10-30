@@ -23,11 +23,34 @@ function onStatusChange(event: Event) {
 async function onRemove() {
   if (await remove()) emit('update:modelValue', false)
 }
+
+useUnsavedChangesGuard(dirty, 'de la publicación')
+
+// Cerrar el panel con cambios sin guardar pide confirmación (antes se
+// descartaban en silencio).
+const { confirm } = useConfirm()
+async function onVisibility(open: boolean) {
+  if (!open && dirty.value) {
+    const ok = await confirm({
+      title: 'Tienes cambios sin guardar',
+      message: 'Si cierras ahora se perderán los cambios que no hayas guardado todavía.',
+      confirmLabel: 'Cerrar sin guardar', cancelLabel: 'Seguir editando', tone: 'danger'
+    })
+    if (!ok) return
+  }
+  emit('update:modelValue', open)
+}
 </script>
 
 <template>
-  <BottomSheet :model-value="modelValue" :title="post?.title ?? 'Publicación'" @update:model-value="$emit('update:modelValue', $event)">
+  <BottomSheet :model-value="modelValue" :title="post?.title ?? 'Publicación'" @update:model-value="onVisibility">
     <template v-if="post">
+      <NuxtLink
+        :to="`/creator/post/${post.id}?desde=tablero`" class="inline-flex items-center gap-1.5 min-h-11 mb-2 text-[0.8125rem] font-medium text-[var(--color-primary-500)] hover:text-[var(--color-primary-600)]"
+        data-open-full-page
+      >
+        <Icon name="ph:arrow-square-out-bold" class="size-3.5" /> Abrir página completa
+      </NuxtLink>
       <CoverUploader
         :post-id="post.id" :media-url="post.mediaUrl" :cover="post.cover" :icon="contentTypeMeta[post.contentType].icon"
         class="mb-5" @update:media-url="(url) => { if (post) post.mediaUrl = url }"
