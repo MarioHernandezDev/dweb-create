@@ -324,3 +324,6 @@ Requisito nuevo (2026-10-30): A-R19, perfil público a ancho completo (/profile/
 
 Requisito nuevo (2026-10-30): A-R20, auditoría y rediseño del chat (/chat y /chat/[id])
 - Auditoría y propuesta en docs/PROPUESTA_A-R20_CHAT.md (diagnóstico, alternativa recomendada C con rutas anidadas, bloques R20a–i priorizados). SOLO PROPUESTA: sin código, sin migraciones, sin verificación nueva. No bloquea ni es bloqueado por A-R4/A-R5/A-R6/A-R12/A-P2. Orden recomendado: R20a–d (interfaz, sin backend) → R20e–g (tiempo real, accesibilidad) → R20h/R20i (backend, solo con aprobación y coordinando con Mario, que lleva notificaciones, chat y límites de uso). Esperar a que Mario cierre cambios en useChat.ts/chat/* antes de empezar.
+
+Requisito nuevo (2026-10-30): A-R21, flujo de publicaciones, biblioteca y tableros (creador)
+- Auditoría y propuesta en docs/PROPUESTA_A-R21_FLUJO_PUBLICACIONES.md (R21a avisos → R21b crear→detalle → R21c detalle como centro → R21d lista → R21e proyecto en el tablero → R21f RLS de collaboration_id, con aprobación y Mario → R21g diferido). SOLO PROPUESTA: sin código ni migraciones. Decisión de diseño: el 'proyecto' es la colaboración (ya existe), sin tabla nueva; lista y tablero son dos vistas de /creator/timeline. No bloquea ni es bloqueado por otras tareas; no se solapa con A-R20.

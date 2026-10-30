@@ -4,6 +4,27 @@ Registro de qué se hizo, por qué, y qué queda pendiente de verificar — pens
 
 ---
 
+## 2026-10-30 (Alex-40) — [Alex] A-R21: auditoría y propuesta del flujo de publicaciones (solo documentación)
+
+### Qué se cambió
+
+- Nuevo `docs/PROPUESTA_A-R21_FLUJO_PUBLICACIONES.md`: mapa del flujo real (crear, editar, borrar, tablero, detalle), problemas por tipo, respuesta a las 10 preguntas, arquitectura, plan R21a–g y criterios de aceptación. Añadido al pipeline como A-R21. **No se ha modificado código, migraciones ni RLS.**
+
+### Hallazgos principales (leídos en el código; ninguno reproducido en navegador)
+
+- Al crear no hay redirección ni aviso: 'Guardar sin predecir' y 'Programar' solo cierran la hoja; 'Programar' no cambia el estado. La creación es síncrona (`createPost` espera la fila), así que redirigir a `/creator/post/[id]` es seguro.
+- Desde el tablero no se puede llegar a `/creator/post/[id]` (la card abre un panel lateral); la página solo se alcanza desde Hoy, el detalle de colaboración y las notificaciones.
+- No existe sistema de toasts; guardar, borrar y mover no confirman y `save()`/`remove()` no capturan errores; no hay aviso de cambios sin guardar en panel ni página.
+- La card no indica su colaboración; `published_at` nunca se escribe; con más de 300 publicaciones la carga deja fuera las de fecha más lejana; el tipo `Post` no expone `created_at`/`updated_at`.
+- No hay tablas de tableros ni proyectos: la colaboración ya cumple el papel de proyecto (recomendación: sin entidad nueva; etiquetas para agrupaciones propias).
+- Integridad (documentado, no corregido): `posts_insert_self`/`posts_update_self` no comprueban en servidor que `collaboration_id` sea una colaboración del propio creador (solo lo limita la interfaz); requiere migración de RLS con aprobación y coordinación con Mario.
+
+### Sin verificar
+
+- No se ejecutó ninguna prueba nueva; la reproducción en navegador de los puntos anteriores queda para cada fase de implementación.
+
+---
+
 ## 2026-10-30 (Alex-39) — [Alex] A-R20: auditoría y propuesta de rediseño del chat (solo documentación)
 
 ### Qué se cambió
