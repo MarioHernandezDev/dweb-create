@@ -55,10 +55,11 @@ const actionError = ref('')
 
 // Fase 2: Nivel 1 (quién/estado/brief corto/acción del momento) fijo;
 // Brief, Calendario y Registro pasan a pestañas.
-const detailTab = ref<'brief' | 'calendar' | 'log'>('brief')
+const detailTab = ref<'brief' | 'calendar' | 'report' | 'log'>('brief')
 const detailTabs = [
   { value: 'brief', label: 'Brief' },
   { value: 'calendar', label: 'Calendario' },
+  { value: 'report', label: 'Rendimiento' },
   { value: 'log', label: 'Registro' }
 ]
 const expandedPostId = ref<string | null>(null)
@@ -288,6 +289,9 @@ async function handleMarkCompleted() {
             />
           </BaseCard>
         </div>
+
+        <!-- A-R15: se monta al abrir la pestaña (y se vuelve a leer cada vez), con la RLS como única autorización. -->
+        <CollaborationReport v-if="detailTab === 'report'" :key="detailCollab.id" :collaboration-id="detailCollab.id" />
 
         <div v-show="detailTab === 'log'">
           <CollaborationLogCard :collaboration-id="detailCollab.id" :counterpart-name="detailCollab.creatorName ?? 'el creador'" />

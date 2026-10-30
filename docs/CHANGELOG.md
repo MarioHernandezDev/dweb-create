@@ -4,6 +4,27 @@ Registro de qué se hizo, por qué, y qué queda pendiente de verificar — pens
 
 ---
 
+## 2026-10-30 (Alex-36) — [Alex] A-R15: informe de rendimiento de una colaboración (partner)
+
+### Qué se cambió
+
+- Nueva pestaña **Rendimiento** en el detalle de cada colaboración del partner (`/partner/requests`), con `CollaborationReport`, `useCollaborationReport` y `app/utils/collaboration-report.ts` (lógica pura).
+- Por cada entrega de la colaboración: plataforma, fecha, estado y enlace al contenido (solo http/https), y uno de tres estados explícitos: **sin vincular**, **vinculada sin métricas** o **medida** (visualizaciones, me gusta, comentarios… de la última medición; ausente = '—' con su motivo, nunca 0).
+- Cabecera con 'N entregas · N vinculadas · N con métricas' y **totales** (visualizaciones, me gusta, comentarios) que suman solo las entregas con ese dato e indican cuántas lo aportan; sin ninguna, '—'. Rotulados como cálculo de FEEDMA; las cifras de cada entrega, como dato de la red.
+- **Sin migración ni cambios de permisos.** La autorización es la RLS ya existente de `posts`, `post_external_links` y `metrics` (el partner solo ve las entregas de sus colaboraciones); no hay filtro de cliente que la sustituya.
+
+### Verificado de verdad
+
+- 7 pruebas unitarias nuevas (`collaboration-report.spec.ts`: vacío, tres estados, sin ceros inventados, null vs 0 en totales, última medición, aislamiento entre entregas, URL segura). Suite completa **555** OK; `vue-tsc` limpio.
+- Integración contra la base real (40 pruebas del bloque M2/M3) OK, incluidas 'el partner solo lee los vínculos y las métricas de publicaciones de su colaboración' (acceso autorizado y denegado entre colaboraciones).
+
+### Sin verificar
+
+- **No probado en navegador** (la pantalla no se ha visto renderizada ni a 390/768/1280/1920 px) y sin lectura real de YouTube/Instagram: solo hay datos de prueba.
+- Solo para el partner; el creador ve las métricas de cada publicación en su propia página. No hay prueba de integración específica de la lectura de `posts` por colaboración ajena (se apoya en la RLS de `posts` ya existente).
+
+---
+
 ## 2026-10-30 (Alex-35) — [Alex] A-R9: auditoría de la predicción y contexto real de publicaciones medidas
 
 ### Auditoría (sin cambios en el cálculo)
