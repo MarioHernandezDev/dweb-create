@@ -4,6 +4,31 @@ Registro de qué se hizo, por qué, y qué queda pendiente de verificar — pens
 
 ---
 
+## 2026-10-30 (Alex-37) — [Alex] A-R18: perfiles de creador y partner a ancho completo
+
+### Qué se cambió
+
+- **Full width:** `/creator/profile` y `/partner/profile` usan `AppShell full-width` y se quitan los `max-w-5xl`/`max-w-lg` de página y pestañas. La limitación no venía de un contenedor compartido, así que no se toca el shell ni ninguna otra página.
+- **Cabecera** (`ProfileHero`, nueva; `ProfileHeaderCard`, la tarjeta pública, no se toca): portada, avatar editable, nombre, correo, acciones (Ver perfil público, Copiar enlace, Editar ficha) y datos REALES guardados. Creador: nicho, categorías (máx. 4 + N), tarifa y estado de cada red. Partner: sector, categorías y presupuesto. El porcentaje de ficha vive solo aquí y cada elemento pendiente enlaza con la pestaña donde se corrige. Un chip de nicho/sector igual a una categoría no se duplica. Sin ubicación ni usuario: no existen en el modelo.
+- **Estado real de redes** (`profile-socials.ts`): solo `connected` lleva el check verde; caducada, revocada, sin permiso o con token sin estado guardado se rotulan con su causa y no cuentan como verificadas; sin conexión = 'Sin conectar'.
+- **Pestañas** (las mismas cuatro; 'Cuenta' pasa a llamarse 'Resumen' y es la que abre por defecto): barra horizontal con `role=tablist/tab/tabpanel`, `aria-selected`, `aria-controls`, flechas, Inicio y Fin; `?tab=` sigue funcionando. Transición de 180 ms al cambiar.
+- **Resumen:** creador = Redes (con seguidores solo si la red está conectada y con su procedencia), Actividad (objetivo semanal, créditos, paquetes activos y ofertas) y Pendientes; partner = Pendientes y Actividad (necesidades activas, ofertas pendientes). Recorrido de bienvenida y cerrar sesión pasan a enlaces discretos.
+- **Ficha pública** (`ProfileFichaForm` + `ProfileSaveBar`): dos secciones (Presentación / Colaboración) con vista previa fija a la derecha desde 1280 px; barra de guardado fija ('Cambios sin guardar · Descartar · Guardar'), 'Cambios guardados' 3 s, error visible si falla (antes la excepción se perdía) y Descartar. Validación (`profile-ficha.ts`): biografía ≤ 500, 'qué buscas' ≤ 300, importes ≥ 0 y mínimo ≤ máximo, con mensaje y Guardar desactivado. Se extrae solo el formulario, que era idéntico; textos y etiquetas llegan por props.
+- **Paquetes/Necesidades:** cuadrícula de 1–3 columnas (arrastrar para reordenar se mantiene), botón principal arriba y estado vacío con acción. **Privacidad y pagos:** tarjetas lado a lado, opciones como `radiogroup`, estado de plan y de cuenta de pagos con insignia; partner con tarjeta 'Ahora mismo'.
+- **Sin migraciones, sin RLS, sin datos reales tocados.**
+
+### Verificado de verdad
+
+- 13 pruebas unitarias nuevas (`profile-ficha`, `profile-socials`). Suite completa **568** OK; `vue-tsc` limpio.
+- **Navegador real (Chrome por CDP) con las cuentas demo, 44 comprobaciones del creador y 42 del partner, todas OK** a 1920/1280/768/390 px: ancho completo (cabecera de 1600 px a 1920), sin desbordes, tablist con teclado, paneles y `aria-controls`, `?tab=`, validaciones, barra de guardado, fallo de guardado (petición cortada) con cambios conservados, guardado simulado que envía solo los campos de la ficha, Descartar, cuadrícula de paquetes, radiogroup, objetivos táctiles ≥ 36 px, `prefers-reduced-motion`. Capturas revisadas; defectos reales corregidos: el nombre quedaba tapado por la portada, el nicho/sector aparecía duplicado y el partner repetía el estado en un chip y en la barra.
+- El guardado exitoso se probó **simulando** la respuesta de la API (no se modificó ninguna ficha real).
+
+### Sin verificar
+
+- Estado de redes con una cuenta **realmente conectada** (las demo no tienen conexión): probado con la lógica unitaria, no con un canal real. Tablet/móvil y lector de pantalla reales no probados (solo el emulador). No se añadieron esqueletos de carga: la página sigue esperando sus datos antes de pintar (cambiarlo exigiría reestructurar la carga). Ubicación, usuario, web y logotipo propio siguen sin existir (requieren migración).
+
+---
+
 ## 2026-10-30 (Alex-36) — [Alex] A-R15: informe de rendimiento de una colaboración (partner)
 
 ### Qué se cambió

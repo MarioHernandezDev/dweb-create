@@ -1,6 +1,6 @@
 # Propuesta A-R18 — Perfiles a ancho completo (`/creator/profile` y `/partner/profile`)
 
-Estado: **propuesta (auditoría y diseño). No se ha implementado nada.** Fecha: 2026-10-30. Autor: [Alex].
+Estado: **implementada (A-R18a–f, ver CHANGELOG Alex-37).** Desviaciones respecto a lo propuesto: sin esqueletos de carga (la página espera sus datos antes de pintar), pestañas horizontales en lugar de lateral y el resumen del creador no usa el snapshot de suscriptores sino `followers_count` de la cuenta conectada. Fecha: 2026-10-30. Autor: [Alex].
 Alcance: presentación y usabilidad. Sin migraciones, sin cambios de RLS, sin tocar datos reales.
 
 ## 1. Auditoría técnica

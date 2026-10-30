@@ -337,3 +337,10 @@ body {
   from { opacity: 0; }
 }
 .yt-fade { animation: yt-fade 0.9s ease-out backwards; }
+
+/* Perfiles (A-R18f): cambio de pestaña y barra de guardado. Solo opacidad/posición;
+   `prefers-reduced-motion` ya los reduce a ~0 ms con la regla global. */
+.profile-tab-enter-active { transition: opacity 0.18s ease-out, transform 0.18s ease-out; }
+.profile-tab-enter-from { opacity: 0; transform: translateY(6px); }
+.profile-savebar-enter-active, .profile-savebar-leave-active { transition: opacity 0.2s ease, transform 0.2s ease; }
+.profile-savebar-enter-from, .profile-savebar-leave-to { opacity: 0; transform: translateY(10px); }
