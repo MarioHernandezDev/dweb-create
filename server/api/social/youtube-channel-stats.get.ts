@@ -90,6 +90,10 @@ export default defineEventHandler(async (event) => {
       .eq('id', account.id)
     if (error) console.error('[social/youtube-channel-stats] fallo al refrescar la fila (se devuelven los datos igual):', error.message)
 
+    // Histórico propio (A-R8a): cada visita con datos correctos deja el snapshot del día (idempotente).
+    // Así el histórico avanza aunque todavía no haya sincronización programada.
+    await recordAccountSnapshot(client, account.id, snapshotFromYoutube(channel.statistics))
+
     return stats
   } catch (err) {
     if (isError(err)) throw err

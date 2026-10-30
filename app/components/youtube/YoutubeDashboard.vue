@@ -34,6 +34,8 @@ const props = defineProps<{
   needsReconnect: boolean
   /** Estado guardado de la cuenta en `social_accounts` (distinto de `connected` = hay que reconectar). */
   accountStatus?: string
+  /** Id de la fila de `social_accounts` (para leer su histórico propio). */
+  accountId?: string
   lastSyncedAt?: string | null
 }>()
 const emit = defineEmits<{ reload: []; reconnect: [] }>()
@@ -59,6 +61,9 @@ const {
   load: loadPerformance, reload: reloadPerformance
 } = useYoutubeVideoPerformance(days)
 
+// Histórico propio de acumulados (snapshots diarios de FEEDMA).
+const { rows: historyRows, loading: historyLoading, loaded: historyLoaded, error: historyError, load: loadHistory } = useAccountSnapshots()
+
 // Detalle de un vídeo (hoja modal); se pide solo al abrirlo.
 const {
   videoId: detailId, report: detailReport, loading: detailLoading, error: detailError,
@@ -77,6 +82,7 @@ watch(analyticsEnabled, (ok) => {
   if (!ok) return
   void loadAnalytics()
   void loadVideos()
+  if (props.accountId) void loadHistory(props.accountId)
 }, { immediate: true })
 // Al cambiar de periodo se piden las cifras por vídeo de ese periodo (la caché evita repetir).
 watch([analyticsEnabled, days], ([ok]) => {
@@ -140,6 +146,7 @@ function onReload() {
   void reloadAnalytics()
   void reloadVideos()
   void reloadPerformance()
+  if (props.accountId) void loadHistory(props.accountId)
 }
 
 // Si falló la primera página se pide de nuevo todo; si falló "cargar más", solo esa página (sin borrar lo ya cargado).
@@ -246,6 +253,11 @@ function onRetry() {
       <p v-else-if="channelTooNew" class="text-[0.8125rem] text-[var(--color-text-muted)] rounded-[var(--radius-md)] border border-[var(--color-hairline)] bg-[var(--color-paper)] p-4">
         {{ analyticsError?.message }}
       </p>
+
+      <YoutubeHistoryPanel
+        v-if="analyticsEnabled && accountId" class="yt-reveal" style="--i: 5"
+        :rows="historyRows" :loading="historyLoading" :loaded="historyLoaded" :error="historyError" @retry="loadHistory(accountId)"
+      />
 
       <YoutubeVideosPanel
         v-if="analyticsEnabled" class="yt-reveal" style="--i: 5"

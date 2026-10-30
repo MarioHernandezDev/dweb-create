@@ -113,7 +113,7 @@ function formatShortDate(iso: string): string {
     <template v-else-if="platform === 'youtube'">
       <YoutubeDashboard
         :stats="stats" :loading="loadingStats" :error="statsError" :needs-reconnect="statsNeedsReconnect"
-        :account-status="account.status" :last-synced-at="account.lastSyncedAt ?? null"
+        :account-id="account.id" :account-status="account.status" :last-synced-at="account.lastSyncedAt ?? null"
         @reload="reload" @reconnect="connect('youtube')"
       />
     </template>

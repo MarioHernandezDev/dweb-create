@@ -4,6 +4,32 @@ Registro de qué se hizo, por qué, y qué queda pendiente de verificar — pens
 
 ---
 
+## 2026-10-30 (Alex-31) — [Alex] A-R8a / A-R16e: histórico propio de acumulados (snapshots diarios)
+
+### Qué se cambió
+
+- **Escritor de snapshots** (`server/utils/account-snapshot.ts`): cada vez que una cuenta se lee con éxito se guarda **una fila por cuenta y día UTC** en `social_account_snapshots` (M3) con seguidores/suscriptores, visualizaciones totales y vídeos. Se llama desde la sincronización de YouTube, la de Instagram y **la visita al panel de YouTube** (así el histórico avanza aunque todavía no haya sincronización programada).
+  - **Idempotente:** `upsert` por (cuenta, día): repetirlo el mismo día actualiza la misma fila.
+  - **Nunca 0 inventado:** un dato que el proveedor no da (suscriptores ocultos, visualizaciones en Instagram) se guarda `null`; un snapshot sin ningún dato no se escribe. Si el canal oculta los suscriptores, se guardan igualmente las visualizaciones y los vídeos antes de devolver el aviso de siempre.
+  - **Efecto secundario seguro:** si guardar el snapshot falla, la sincronización **no falla** (se anota en el log y continúa).
+- **Panel "Histórico propio"** en el dashboard de YouTube (`YoutubeHistoryPanel`, lectura directa de la tabla con la sesión del usuario: la RLS solo deja ver las cuentas propias y el navegador no puede escribir). Suscriptores y visualizaciones totales a lo largo del tiempo, con la variación entre el primer y el último registro (cálculo de FEEDMA; % solo si el primer valor es > 0). Estados diseñados: cargando, error con Reintentar, **sin registros** ("empezamos a guardar tu histórico…"), **un solo registro** ("el histórico acaba de empezar", sin gráfica) y solo las métricas que tienen datos.
+- **Gráfica** (`YoutubeEvolutionChart`): dos opciones nuevas, solo para este panel — `zeroBased=false` (el eje se ajusta al rango y **no hay área rellena**, porque un eje recortado con relleno exageraría el cambio; el panel lo dice) y `connectPoints` (cada día con registro es un punto y la línea solo los une; los días intermedios siguen sin dato y el tooltip lo dice). El resto de gráficas no cambia.
+- **Defecto de diseño que encontré al mirar la captura y corregí en la misma fase:** con el eje en 0, una subida de 12.100 a 12.408 se veía como una línea plana, y los huecos rompían la línea en trozos sueltos.
+
+### Verificado de verdad
+
+- Unitarios nuevos: `account-snapshot.spec.ts` (25: día UTC, null frente a 0, suscriptores ocultos, upsert con la clave correcta, no escribe vacíos, **no lanza si la base falla**) y `account-history-view.spec.ts` (9: huecos sin rellenar, variación, tope de días). **Suite completa 462/462**; `npx vue-tsc --noEmit` limpio.
+- **Contra la base real:** 34 pruebas de integración OK, incluida una del **escritor real**: dos escrituras el mismo día dejan **una** fila con el último valor y los `null` se guardan como `null`.
+- **Navegador real (Chrome por CDP), 11 comprobaciones OK** con snapshots ficticios en la cuenta de prueba: sin registros, un registro, 12 registros con huecos (resumen "De 12.100 (12 oct) a 12.408 (30 oct): +308 (+2,5 %) en 18 días", "12 días con registro · 7 días sin registro"), pestaña de visualizaciones que empieza en el primer registro con dato (los 3 días sin dato **no** se dibujan como 0), canal que solo tiene visualizaciones (solo se ofrece esa métrica) y móvil sin desbordes. Capturas revisadas. Los snapshots y las cuentas de prueba se borran al terminar.
+
+### Sin verificar
+
+- **Con tu canal real:** hoy no hay ningún snapshot real; empezarán a guardarse la próxima vez que cargues el panel de YouTube o se sincronice la cuenta. Hasta que haya registros de más de un día, el panel dirá que el histórico acaba de empezar.
+- La sincronización de Instagram guarda solo seguidores y no se ha probado con una cuenta real.
+- Sin sincronización programada, el histórico solo avanza los días en que visitas el panel o pulsas actualizar (los demás días quedan como hueco).
+
+---
+
 ## 2026-10-30 (Alex-30) — [Alex] M2 y M3 aplicadas: vínculo publicación↔contenido externo, snapshots de cuenta y métricas nulables
 
 ### Qué se cambió (esquema; aplicado por Alex en el SQL Editor)

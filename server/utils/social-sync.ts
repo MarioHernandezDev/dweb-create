@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { recordAccountSnapshot, snapshotFromInstagram, snapshotFromYoutube } from './account-snapshot'
 import { successPatch } from './social-account-state'
 import { decryptToken, encryptToken } from './token-crypto'
 import { fetchYoutubeChannel, refreshYoutubeAccessToken } from './youtube'
@@ -34,6 +35,9 @@ export async function syncYoutubeAccount(
   const refreshed = await refreshYoutubeAccessToken(refreshToken, config.youtubeClientId, config.youtubeClientSecret)
   const channels = await fetchYoutubeChannel(refreshed.access_token)
   const stats = channels.items?.[0]?.statistics
+  // Histórico propio (A-R8a): se guarda lo que el canal SÍ da (visualizaciones, vídeos) aunque oculte
+  // los suscriptores; ese campo queda null, nunca 0. Nunca hace fallar la sincronización.
+  await recordAccountSnapshot(client, account.id, snapshotFromYoutube(stats))
   if (!stats || stats.hiddenSubscriberCount) {
     throw createError({
       statusCode: 422,
@@ -125,6 +129,8 @@ export async function syncInstagramAccount(
     .update({ followers_count: profile.followers_count, ...successPatch() } as never)
     .eq('id', account.id)
   if (error) throw createError({ statusCode: 500, statusMessage: error.message })
+
+  await recordAccountSnapshot(client, account.id, snapshotFromInstagram(profile.followers_count))
 
   return { followersCount: profile.followers_count, tokenRefreshed }
 }

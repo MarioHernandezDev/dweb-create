@@ -17,7 +17,16 @@ import { formatChartValue, formatHours, formatSigned, type ChartMetric, type Cha
  *    un lienzo fijo), así los números de los ejes mantienen su tamaño en
  *    móvil. En servidor (ancho 0) usa un ancho por defecto hasta medir.
  */
-const props = withDefaults(defineProps<{ series: ChartSeries; metric: ChartMetric; showCompare: boolean; height?: number }>(), { height: 260 })
+/**
+ * `zeroBased` (por defecto sí): el eje empieza en 0, lo honesto para cantidades del periodo. Para ACUMULADOS (histórico
+ * propio) se pasa `false`: el eje se ajusta al rango de los datos para que se vea la variación, sin área rellena (con el eje
+ * recortado exageraría el cambio); el panel lo dice. `connectPoints`: une los registros consecutivos con una línea y marca cada
+ * uno con un punto; los días intermedios siguen SIN dato (el tooltip dice "sin dato"), solo se enlaza lo que se midió.
+ */
+const props = withDefaults(
+  defineProps<{ series: ChartSeries; metric: ChartMetric; showCompare: boolean; height?: number; zeroBased?: boolean; connectPoints?: boolean }>(),
+  { height: 260, zeroBased: true, connectPoints: false }
+)
 
 const root = ref<HTMLElement | null>(null)
 const { width: measured } = useElementSize(root)
@@ -41,8 +50,15 @@ function niceStep(range: number): number {
 
 const domain = computed(() => {
   const values = [...props.series.current, ...(previous.value ?? [])].map((p) => p.value).filter((v): v is number => v !== null)
-  let min = Math.min(0, ...values)
-  let max = Math.max(0, ...values)
+  let min = props.zeroBased ? Math.min(0, ...values) : Math.min(...values)
+  let max = props.zeroBased ? Math.max(0, ...values) : Math.max(...values)
+  if (!props.zeroBased && values.length) {
+    // Margen para que la línea no pegue con los bordes del eje.
+    const pad = (max - min) * 0.15 || Math.max(1, Math.abs(max) * 0.01)
+    min -= pad
+    max += pad
+  }
+  if (!values.length) { min = 0; max = 1 }
   if (max === min) max = min + 1
   const step = niceStep((max - min) / 4)
   min = Math.floor(min / step) * step
@@ -57,7 +73,11 @@ const yFor = (v: number) => M.value.top + ((domain.value.max - v) / (domain.valu
 const baseY = computed(() => yFor(Math.min(Math.max(0, domain.value.min), domain.value.max)))
 
 /** Divide la serie en tramos continuos: los huecos cortan la línea. */
-function runs(points: ChartPoint[]) {
+function runs(points: ChartPoint[], connect = false) {
+  if (connect) {
+    const all = points.flatMap((p, i) => (p.value === null ? [] : [{ x: xFor(i), y: yFor(p.value) }]))
+    return all.length ? [all] : []
+  }
   const out: { x: number; y: number }[][] = []
   let run: { x: number; y: number }[] = []
   points.forEach((p, i) => {
@@ -72,7 +92,7 @@ function runs(points: ChartPoint[]) {
   return out
 }
 
-const currentRuns = computed(() => runs(props.series.current))
+const currentRuns = computed(() => runs(props.series.current, props.connectPoints))
 const previousRuns = computed(() => (previous.value ? runs(previous.value) : []))
 const toLine = (r: { x: number; y: number }[]) => `M${r.map((p) => `${p.x},${p.y}`).join(' L')}`
 const toArea = (r: { x: number; y: number }[]) => `${toLine(r)} L${r[r.length - 1]!.x},${baseY.value} L${r[0]!.x},${baseY.value} Z`
@@ -148,9 +168,12 @@ const spoken = computed(() => {
       <!-- Periodo actual: área suave + línea; cada tramo continuo por separado -->
       <g :key="drawKey">
         <template v-for="(r, i) in currentRuns" :key="`c${i}`">
-          <path v-if="r.length > 1" class="yt-fade" :d="toArea(r)" fill="var(--color-chart-primary)" fill-opacity="0.1" stroke="none" />
+          <path v-if="r.length > 1 && zeroBased" class="yt-fade" :d="toArea(r)" fill="var(--color-chart-primary)" fill-opacity="0.1" stroke="none" />
           <path v-if="r.length > 1" class="yt-draw" pathLength="1" :d="toLine(r)" fill="none" stroke="var(--color-chart-primary)" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" />
           <circle v-else :cx="r[0]!.x" :cy="r[0]!.y" r="3" fill="var(--color-chart-primary)" />
+          <template v-if="connectPoints && r.length > 1 && r.length <= 120">
+            <circle v-for="(pt, k) in r" :key="`pt${k}`" class="yt-fade" :cx="pt.x" :cy="pt.y" r="2.75" fill="var(--color-ink-raised)" stroke="var(--color-chart-primary)" stroke-width="1.75" />
+          </template>
         </template>
       </g>
 

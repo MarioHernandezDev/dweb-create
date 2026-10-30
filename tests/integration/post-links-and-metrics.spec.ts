@@ -1,5 +1,6 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { recordAccountSnapshot } from '../../server/utils/account-snapshot'
 import { creatorSession, hasSupabaseEnv, partnerSession, unrelatedCreatorSession } from './supabase-setup'
 
 /**
@@ -226,6 +227,15 @@ describe.skipIf(!enabled)('vínculos externos, snapshots y métricas (M2 + M3, S
       await session.client.from('social_account_snapshots').delete().eq('social_account_id', accountId)
       const { data } = await admin.from('social_account_snapshots').select('followers_count').eq('social_account_id', accountId).eq('observed_on', DAY).single()
       expect((data as { followers_count: number }).followers_count).toBe(101)
+    })
+
+    it('el escritor real (recordAccountSnapshot) guarda el día y repetirlo no duplica; null se guarda como null', async () => {
+      const day1 = new Date('2026-11-02T08:00:00Z')
+      const ok1 = await recordAccountSnapshot(admin, accountId, { followersCount: 500, viewsTotal: null, videosCount: 7 }, day1)
+      const ok2 = await recordAccountSnapshot(admin, accountId, { followersCount: 510, viewsTotal: null, videosCount: 7 }, new Date('2026-11-02T20:00:00Z'))
+      expect([ok1, ok2]).toEqual([true, true])
+      const { data } = await admin.from('social_account_snapshots').select('followers_count, views_total, videos_count').eq('social_account_id', accountId).eq('observed_on', '2026-11-02')
+      expect(data).toEqual([{ followers_count: 510, views_total: null, videos_count: 7 }])
     })
 
     it('borrar la cuenta borra su histórico (en cascada)', async () => {
