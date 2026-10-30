@@ -281,6 +281,9 @@ async function advanceStatus() {
             {{ predicting ? 'Analizando…' : 'Predecir' }}
           </BaseButton>
         </BaseCard>
+
+        <!-- A-R7: vínculo con el contenido real (solo YouTube e Instagram tienen conexión real) -->
+        <PostExternalLinkCard v-if="post.platform === 'youtube' || post.platform === 'instagram'" :post-id="post.id" :platform="post.platform" class="mt-4" />
       </section>
     </div>
   </AppShell>

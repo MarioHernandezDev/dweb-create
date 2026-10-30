@@ -4,6 +4,35 @@ Registro de qué se hizo, por qué, y qué queda pendiente de verificar — pens
 
 ---
 
+## 2026-10-30 (Alex-32) — [Alex] A-R7: vincular una publicación con su vídeo o publicación real, verificando que es tuya
+
+### Qué se cambió
+
+- **Endpoint `POST /api/social/link-post { postId, url }`** y **`DELETE /api/social/link-post?postId=`**. El navegador no puede escribir el vínculo (M2): lo escribe el servidor y **solo después de comprobar con el proveedor que el contenido pertenece a la cuenta conectada**.
+  1. Comprueba que la publicación es del usuario y que su plataforma es YouTube o Instagram.
+  2. Lee el enlace con una **lista cerrada de dominios** y un id con la forma exacta (`youtube.com`, `youtu.be`, `instagram.com`…; `youtube.com.evil.com`, otros dominios, esquemas raros y textos enormes se rechazan; hay 40 tests de ello).
+  3. **YouTube:** pide el vídeo con el token de la cuenta y exige que su canal sea el canal conectado (la Data API devuelve cualquier vídeo público, así que la propiedad se prueba con el id del canal). **Instagram:** busca la publicación entre las 200 más recientes de la propia cuenta (`/me/media`).
+  4. Un contenido ajeno, inexistente o fuera de esas 200 da **el mismo mensaje**: no se confirma qué contenidos existen.
+  5. Solo entonces guarda el vínculo con `service_role`.
+- **Reglas de datos:** una publicación ↔ un contenido; el mismo contenido no se vincula a dos publicaciones (409 con mensaje claro); si se vincula a **otro** contenido, las métricas del anterior se borran **después** de guardar el vínculo nuevo (describían otro contenido y mezclarlas sería inventar); desvincular borra también las métricas de esa publicación (con confirmación que lo explica). Idempotente.
+- **Seguridad añadida:** límite de 15 intentos por minuto y usuario; un fallo del proveedor se clasifica con las mismas reglas que el resto (acceso caducado → `reconnect_required` y el estado de la cuenta se guarda); con la cuenta ya marcada como revocada no se llama a Google.
+- **Tarjeta "Contenido en YouTube/Instagram"** en la página de la publicación (columna derecha, solo para YouTube e Instagram): sin cuenta conectada, cuenta que hay que reconectar, sin vincular (campo de enlace de 44 px), comprobando, **vinculada y verificada** (con el enlace y "comprobado con YouTube: el contenido es de tu cuenta conectada") y desvincular con confirmación. Los errores de petición (enlace no válido, no encontrado, duplicado) muestran el mensaje del servidor; los 5xx, un texto genérico (`readClientErrorMessage`, solo para 4xx).
+- La lógica de escritura vive aparte (`server/utils/post-link-store.ts`) para probarla contra la base real sin necesitar un canal.
+
+### Verificado de verdad
+
+- **Unitarios:** `external-link.spec.ts` (40) y `readClientErrorMessage` (2); `vue-tsc` limpio.
+- **Contra la base real (39 pruebas de integración OK):** guarda con `verified_at`; vincular a otro contenido sustituye el vínculo y borra las métricas del anterior; **un duplicado se rechaza sin tocar el vínculo existente**; plataforma incoherente con la cuenta se rechaza; desvincular borra vínculo y métricas y repetirlo no falla.
+- **Navegador real (Chrome por CDP), 24 comprobaciones OK** con una publicación de prueba y cuentas de token falso: la API rechaza body sin enlace, id no válido, publicación ajena o inexistente (404), plataforma sin conexión real (422), **enlace de otro dominio (400, sin llamar a Google)** y sin sesión (401); un enlace válido con acceso inválido devuelve `reconnect_required` y la cuenta pasa a revocada (la segunda vez ni se llama a Google); desvincular lo ajeno da 404 y sin vínculo es idempotente; en la interfaz, todos los estados de la tarjeta, la confirmación de desvincular (cancelar no desvincula, confirmar sí) y el móvil sin desbordes. Capturas revisadas. Publicaciones y cuentas de prueba borradas al terminar.
+
+### Sin verificar (importante)
+
+- **La verificación contra Google y Meta de verdad (el camino feliz) NO se ha probado:** las cuentas demo no tienen canal ni cuenta de Instagram. Lo probado es todo lo que rodea a esa llamada (validación, errores, base de datos, interfaz). **Prueba con tu canal:** abre una publicación de YouTube, pega el enlace de uno de tus vídeos y vincúlalo; pega el de un vídeo ajeno y debe rechazarlo.
+- **Instagram:** la búsqueda en `/me/media` está escrita según la documentación y sin probar con una cuenta real; solo ve las 200 publicaciones más recientes.
+- Los carruseles de Instagram no ofrecen métricas; el vínculo se permite pero no tendrán datos (se avisará cuando haya métricas, fase siguiente).
+
+---
+
 ## 2026-10-30 (Alex-31) — [Alex] A-R8a / A-R16e: histórico propio de acumulados (snapshots diarios)
 
 ### Qué se cambió

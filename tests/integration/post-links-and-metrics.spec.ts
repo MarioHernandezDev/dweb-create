@@ -1,6 +1,7 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { recordAccountSnapshot } from '../../server/utils/account-snapshot'
+import { removeExternalLink, saveExternalLink } from '../../server/utils/post-link-store'
 import { creatorSession, hasSupabaseEnv, partnerSession, unrelatedCreatorSession } from './supabase-setup'
 
 /**
@@ -176,6 +177,54 @@ describe.skipIf(!enabled)('vínculos externos, snapshots y métricas (M2 + M3, S
       await admin.from('posts').delete().eq('id', tmp)
       const { data } = await admin.from('post_external_links').select('id').eq('post_id', tmp)
       expect(data ?? []).toHaveLength(0)
+    })
+  })
+
+  // ------------------------------------------------------------------------------------------------
+  describe('A-R7 · saveExternalLink / removeExternalLink (escritor real)', () => {
+    // La cuenta de prueba es de linkedin: el escritor solo tipa youtube|instagram, pero la base acepta cualquier plataforma de la cuenta.
+    const input = (over: Record<string, unknown> = {}) => ({ postId: postB, accountId, platform: 'linkedin' as never, externalId: 'w-1', externalUrl: 'https://example.test/w/1', ...over })
+
+    it('guarda el vínculo con verified_at y repetirlo con el mismo contenido no cambia nada más', async () => {
+      const first = await saveExternalLink(admin, input(), new Date('2026-11-03T10:00:00Z'))
+      expect(first).toMatchObject({ ok: true, replaced: false, link: { external_id: 'w-1', platform: 'linkedin' } })
+      const again = await saveExternalLink(admin, input())
+      expect(again).toMatchObject({ ok: true, replaced: false })
+      const { data } = await admin.from('post_external_links').select('id').eq('post_id', postB)
+      expect(data).toHaveLength(1)
+    })
+
+    it('vincular la publicación a OTRO contenido sustituye el vínculo y borra las métricas del anterior', async () => {
+      await admin.from('metrics').insert({ post_id: postB, social_account_id: accountId, source: 'youtube', measured_on: DAY, views: 5 } as never)
+      const res = await saveExternalLink(admin, input({ externalId: 'w-2', externalUrl: 'https://example.test/w/2' }))
+      expect(res).toMatchObject({ ok: true, replaced: true, link: { external_id: 'w-2' } })
+      const { data: links } = await admin.from('post_external_links').select('external_id').eq('post_id', postB)
+      expect(links).toEqual([{ external_id: 'w-2' }])
+      const { data: metrics } = await admin.from('metrics').select('id').eq('post_id', postB)
+      expect(metrics ?? []).toHaveLength(0)
+    })
+
+    it('el mismo contenido en otra publicación se rechaza como duplicado y NO toca el vínculo existente', async () => {
+      const res = await saveExternalLink(admin, input({ postId: postA, externalId: 'w-2' }))
+      expect(res).toEqual({ ok: false, reason: 'duplicate' })
+      const { data } = await admin.from('post_external_links').select('post_id').eq('external_id', 'w-2')
+      expect(data).toEqual([{ post_id: postB }])
+    })
+
+    it('una cuenta y plataforma incoherentes se rechazan (no se guarda nada)', async () => {
+      const res = await saveExternalLink(admin, input({ postId: postA, platform: 'youtube', externalId: 'w-3' }))
+      expect(res.ok).toBe(false)
+      const { data } = await admin.from('post_external_links').select('external_id').eq('post_id', postA)
+      expect(data).toEqual([{ external_id: 'ext-video-1' }]) // el vínculo que ya tenía no se ha tocado
+    })
+
+    it('desvincular borra el vínculo y las métricas de la publicación; repetirlo no falla', async () => {
+      await admin.from('metrics').insert({ post_id: postB, social_account_id: accountId, source: 'youtube', measured_on: DAY, views: 9 } as never)
+      expect(await removeExternalLink(admin, postB)).toBe(true)
+      const { data: links } = await admin.from('post_external_links').select('id').eq('post_id', postB)
+      const { data: metrics } = await admin.from('metrics').select('id').eq('post_id', postB)
+      expect([(links ?? []).length, (metrics ?? []).length]).toEqual([0, 0])
+      expect(await removeExternalLink(admin, postB)).toBe(true)
     })
   })
 
