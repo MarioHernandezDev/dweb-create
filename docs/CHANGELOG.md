@@ -4,6 +4,30 @@ Registro de qué se hizo, por qué, y qué queda pendiente de verificar — pens
 
 ---
 
+## 2026-10-30 (Alex-30) — [Alex] M2 y M3 aplicadas: vínculo publicación↔contenido externo, snapshots de cuenta y métricas nulables
+
+### Qué se cambió (esquema; aplicado por Alex en el SQL Editor)
+
+- **M2 — `20261030100000_post_external_links.sql`:** tabla nueva `post_external_links` (una publicación ↔ un vídeo/post real del proveedor). Un vínculo por publicación; el mismo contenido no puede estar en dos publicaciones; la plataforma debe coincidir con la de la cuenta (clave foránea compuesta, apoyada en `unique (id, platform)` en `social_accounts`). **El navegador solo lee** (creador dueño o partner de la colaboración); solo escribe el servidor tras comprobar con el proveedor que el contenido es de la cuenta conectada.
+- **M3 — `20261030110000_metrics_and_account_snapshots.sql`:**
+  - Tabla nueva `social_account_snapshots`: acumulados por cuenta y día (seguidores, visualizaciones totales, vídeos), **nullable** (un canal puede ocultar sus suscriptores: no se guarda un 0 falso) y con clave `(cuenta, día)` para que repetir el mismo día no cree filas. Solo lee el creador dueño.
+  - `metrics`: `views/likes/comments/shares/saves` pasan a **nullable y sin valor por defecto 0** (un 0 no distingue "cero" de "el proveedor no lo da"); nuevas `source`, `measured_on`, `measured_at`, `reach` y `unavailable_metrics`; una fila por publicación, origen y día (reintentar el sync no duplica). Nadie leía ni escribía `metrics` antes: sin impacto en el código existente. Desviación de la propuesta, documentada en la migración: el día es una columna `date`, porque un `upsert` desde la API no puede apuntar a un índice de expresión.
+- Registradas en `docs/TRABAJO_ALEX.md`; propuesta de esquema marcada como aplicada.
+
+### Verificado de verdad (contra la base real)
+
+- **33 pruebas de integración nuevas OK** (`tests/integration/post-links-and-metrics.spec.ts`): el navegador no puede insertar, modificar ni borrar vínculos, snapshots ni métricas (creador, partner y ajeno); cada rol ve solo lo suyo (el partner, solo lo de su colaboración); un vínculo por publicación, contenido único por cuenta y plataforma coherente; `verified_at` y el id externo son obligatorios; repetir snapshot o sync no crea filas (idempotente) y otro día añade histórico; lo ausente se guarda como `null` y `unavailable_metrics`, no como 0; cifras negativas rechazadas; borrado en cascada de publicación y de cuenta.
+- **Regresión de lo anterior en la base real:** 45 pruebas de integración de `social_accounts` (RLS, columnas de estado y cerrojo de sincronización) siguen OK; suite unitaria 428/428.
+- **Sin restos de prueba:** 0 publicaciones y 0 cuentas de prueba tras las ejecuciones; `social_accounts` conserva sus 17 filas.
+
+### Sin hacer / sin verificar
+
+- **Todavía no hay código que use estas tablas.** Siguen pendientes, en este orden: el escritor de snapshots en la sincronización (A-R8a), el endpoint que vincula una publicación con su vídeo verificando la propiedad (A-R7) y la escritura de métricas por publicación (A-R8b). Hasta entonces las tablas están vacías.
+- No se ha probado con un canal ni una cuenta reales (las pruebas usan filas de prueba y cuentas demo).
+- Avisar a Mario: no toca sus tablas, pero las reglas del equipo piden comunicarle cada migración aplicada.
+
+---
+
 ## 2026-10-30 (Alex-29) — [Alex] A-R17b, c, d y f: cierre del rediseño de Métricas
 
 Con esto quedan hechas **todas las fases A-R17a–f** de `docs/PROPUESTA_A-R17_METRICAS_FULL_WIDTH.md` (la a, el índice y la propuesta ya estaban en Alex-26/27/28).
