@@ -321,3 +321,6 @@ Requisito nuevo (2026-10-30): A-R18, Perfiles a ancho completo (/creator/profile
 
 Requisito nuevo (2026-10-30): A-R19, perfil público a ancho completo (/profile/[role]/[id])
 - Propuesta en docs/PROPUESTA_A-R19_PERFIL_PUBLICO.md. Solo presentación con los datos públicos existentes; sin migraciones ni RLS. IMPLEMENTADA el 2026-10-30 (CHANGELOG Alex-38), verificada en navegador con cuentas demo.
+
+Requisito nuevo (2026-10-30): A-R20, auditoría y rediseño del chat (/chat y /chat/[id])
+- Auditoría y propuesta en docs/PROPUESTA_A-R20_CHAT.md (diagnóstico, alternativa recomendada C con rutas anidadas, bloques R20a–i priorizados). SOLO PROPUESTA: sin código, sin migraciones, sin verificación nueva. No bloquea ni es bloqueado por A-R4/A-R5/A-R6/A-R12/A-P2. Orden recomendado: R20a–d (interfaz, sin backend) → R20e–g (tiempo real, accesibilidad) → R20h/R20i (backend, solo con aprobación y coordinando con Mario, que lleva notificaciones, chat y límites de uso). Esperar a que Mario cierre cambios en useChat.ts/chat/* antes de empezar.

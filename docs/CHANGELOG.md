@@ -4,6 +4,27 @@ Registro de qué se hizo, por qué, y qué queda pendiente de verificar — pens
 
 ---
 
+## 2026-10-30 (Alex-39) — [Alex] A-R20: auditoría y propuesta de rediseño del chat (solo documentación)
+
+### Qué se cambió
+
+- Nuevo `docs/PROPUESTA_A-R20_CHAT.md`: diagnóstico del chat leído en el código y el SQL real, propuesta de interfaz, comparativa de alternativas (recomendada: adaptable con rutas anidadas, mismas URLs), inventario P0–P3, plan incremental, plan de pruebas e integración en el pipeline. Añadido al pipeline como A-R20. **No se ha modificado código, ni migraciones, ni RLS, ni funciones.**
+
+### Hallazgos principales (leídos en el código; ninguno reproducido en navegador)
+
+- Aceptar una oferta entre creador y partner también crea una colaboración (no estaba en la descripción funcional).
+- Un paquete borrado deja el mensaje de oferta huérfano (`offer_id` a null) y se pinta una burbuja vacía; una oferta que no carga deja una fila vacía.
+- La bandeja resume cualquier oferta como 'Oferta enviada' y no avisa de ofertas pendientes; el contador por conversación se calcula sobre los últimos 500 mensajes compartidos.
+- 'Visto' se actualiza con un sondeo de 15 s aunque `conversations` ya está publicada en Realtime; no hay aviso de pérdida de conexión; la privacidad restringida no se explica antes de escribir.
+- `send_text_message`/`create_offer` no limitan longitud ni frecuencia (documentado, no corregido; requiere aprobación y coordinación con Mario). No se encontró ningún P0.
+- Solo existe una prueba de integración del chat (`offers.spec.ts`); no hay de privacidad de texto, lectura ni RLS de conversaciones/mensajes.
+
+### Sin verificar
+
+- No se ejecutó ninguna prueba nueva para esta auditoría; las hipótesis (fiabilidad de Realtime tras suspensión, dos pestañas, rendimiento con cientos de conversaciones, oferta huérfana en navegador) están marcadas como tales en el documento.
+
+---
+
 ## 2026-10-30 (Alex-38) — [Alex] A-R19: perfil público de creador y partner a ancho completo
 
 ### Qué se cambió
