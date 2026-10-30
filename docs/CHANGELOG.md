@@ -4,6 +4,28 @@ Registro de qué se hizo, por qué, y qué queda pendiente de verificar — pens
 
 ---
 
+## 2026-10-30 (Alex-35) — [Alex] A-R9: auditoría de la predicción y contexto real de publicaciones medidas
+
+### Auditoría (sin cambios en el cálculo)
+
+- `POST /api/ml/predict` mezcla `structuralScore` (reglas de longitud de título/caption y nº de hashtags, v1-heuristic) y, si hay clave de OpenRouter, una nota de calidad del LLM (60 % LLM / 40 % estructural). **No usa ningún histórico de rendimiento**; `confidence` es `null` a propósito y `model_version` dice si intervino el LLM. La tarjeta ya lo explica con honestidad. Comprueba propiedad del post, límite de 10/min y créditos antes de llamar al LLM.
+- Riesgo conocido sin resolver: título y caption del usuario van dentro del prompt del LLM (inyección de prompt); el impacto es solo sobre su propia nota, pero conviene acotarlo.
+
+### Qué se cambió
+
+- Nuevo `GET /api/ml/history-context?postId=`: mediana, mínimo y máximo de visualizaciones de las **demás publicaciones medidas del mismo creador en la misma plataforma** (última medición de cada una; `null` y 0 real se distinguen). **Solo si hay 3 o más**; con menos devuelve `history: null`. Solo el dueño (404 si no); solo YouTube e Instagram. No modifica el score.
+- `SuccessScoreCard` enseña, solo con muestra suficiente, 'Tus N publicaciones medidas… mediana de X visualizaciones (entre A y B). Cálculo de FEEDMA; el potencial de arriba no se basa en ellos.'
+
+### Verificado de verdad
+
+- 6 pruebas unitarias nuevas (`history-context.spec.ts`: sin muestra, muestra mínima, null vs 0, última medición sin fiarse del orden, mediana par, valores inválidos). Suite completa **548** OK; `vue-tsc` limpio.
+
+### Sin verificar
+
+- **No probado en navegador ni contra la base real** (no hay publicaciones medidas reales; el endpoint no tiene prueba de integración). La predicción sigue sin usar el histórico para puntuar: con pocas publicaciones medidas cualquier modelo sería inventado.
+
+---
+
 ## 2026-10-30 (Alex-34) — [Alex] A-R18: propuesta de perfiles a ancho completo (solo documentación)
 
 ### Qué se cambió

@@ -28,6 +28,19 @@ const {
   revisionNotes, pendingChangeRequest
 } = usePostEditorPanel(post)
 
+// A-R9: contexto real de las publicaciones ya medidas. Carga aparte y sin bloquear
+// la página; si falla o no hay muestra suficiente simplemente no se muestra.
+const historyContext = ref<{ sampleSize: number; medianViews: number; minViews: number; maxViews: number } | null>(null)
+onMounted(async () => {
+  if (!post.value) return
+  try {
+    const res = await $fetch<{ history: typeof historyContext.value }>('/api/ml/history-context', { query: { postId: post.value.id } })
+    historyContext.value = res.history
+  } catch {
+    historyContext.value = null
+  }
+})
+
 const todayIso = new Date().toISOString().slice(0, 10)
 
 async function onRemove() {
@@ -260,6 +273,7 @@ async function advanceStatus() {
         <SuccessScoreCard
           v-if="post.successScore" :score="post.successScore" :ai-evaluated="post.aiEvaluated"
           :suggestions="post.suggestions ?? suggestionsForDraft" :generic-suggestions="!post.suggestions"
+          :history="historyContext"
         />
         <BaseCard v-else radius="lg" padding="lg" class="flex items-center justify-between gap-4 lg:flex-col lg:items-start">
           <div>

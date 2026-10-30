@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { Suggestion } from '~/types'
 
-const props = defineProps<{ score: number; aiEvaluated?: boolean; suggestions: Suggestion[]; genericSuggestions?: boolean }>()
+const props = defineProps<{ score: number; aiEvaluated?: boolean; suggestions: Suggestion[]; genericSuggestions?: boolean; history?: { sampleSize: number; medianViews: number; minViews: number; maxViews: number } | null }>()
 
 const kindMeta: Record<Suggestion['kind'], { icon: string; label: string }> = {
   caption: { icon: 'ph:pencil-simple-fill', label: 'Mejora de texto' },
@@ -34,6 +34,15 @@ const scoreWord = computed(() => (props.score < 45 ? 'bajo' : props.score < 72 ?
         </p>
       </div>
     </div>
+
+    <!-- Contexto real (A-R9): solo si hay muestra suficiente de publicaciones ya
+         medidas; no modifica el score, que sigue siendo heurístico/IA. -->
+    <p v-if="history" data-history-context class="relative mt-4 text-[0.8125rem] text-[var(--color-text-muted)]">
+      Tus {{ history.sampleSize }} publicaciones medidas en esta plataforma tienen una mediana de
+      {{ history.medianViews.toLocaleString('es-ES', { useGrouping: 'always' }) }} visualizaciones
+      (entre {{ history.minViews.toLocaleString('es-ES', { useGrouping: 'always' }) }} y {{ history.maxViews.toLocaleString('es-ES', { useGrouping: 'always' }) }}).
+      Cálculo de FEEDMA con tus datos; el potencial de arriba no se basa en ellos.
+    </p>
 
     <p v-if="genericSuggestions" class="relative mt-6 inline-flex items-center gap-1.5 text-[0.75rem] font-medium text-[var(--color-text-faint)]">
       <Icon name="ph:info-fill" class="size-3.5" />
