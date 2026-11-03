@@ -16,7 +16,7 @@ const { resolveMyProfileId } = useMyProfileId()
 const myProfileId = await resolveMyProfileId()
 const client = useSupabaseClient()
 
-const { conversations, messagesByConversation, typingByConversation, loadConversationSummary, refreshMessages, sendMessage, markRead, sendTypingPing, activeConversationId, sending, realtimeStatus } = useChat()
+const { conversations, messagesByConversation, typingByConversation, loadConversationSummary, refreshMessages, sendMessage, markRead, sendTypingPing, activeConversationId, sending, realtimeStatus, loadOlderMessages, hasOlderByConversation } = useChat()
 const { listPackagesOf } = usePackages()
 
 const conversation = computed(() => conversations.value.find((c) => c.id === conversationId))
@@ -136,6 +136,21 @@ function jumpToBottom() {
   newMessagesBanner.value = false
 }
 const isOtherTyping = computed(() => !!typingByConversation.value[conversationId])
+
+// Mensajes anteriores (A-R20f): se añaden arriba SIN mover lo que estás leyendo.
+const loadingOlder = ref(false)
+const olderError = ref('')
+async function loadOlder() {
+  const el = scrollEl.value
+  const before = el ? el.scrollHeight - el.scrollTop : 0
+  loadingOlder.value = true
+  olderError.value = ''
+  const added = await loadOlderMessages(conversationId)
+  loadingOlder.value = false
+  if (added < 0) { olderError.value = 'No se han podido cargar los mensajes anteriores.'; return }
+  await nextTick()
+  if (el) el.scrollTop = el.scrollHeight - before
+}
 watch(() => messagesByConversation.value[conversationId]?.length, () => {
   const list = messagesByConversation.value[conversationId]
   const last = list?.[list.length - 1]
@@ -249,6 +264,12 @@ const roleLabel = computed(() => (conversation.value?.otherRole === 'partner' ? 
             icon="ph:chat-circle-dots" title="Empieza la conversación"
             :description="restricted ? 'Esta persona solo recibe texto tras una oferta aceptada: empieza con una oferta.' : 'Escribe un mensaje o, con el botón Oferta, manda una oferta sobre uno de sus paquetes.'"
           />
+          <div v-if="hasOlderByConversation[conversationId] && !loading" class="my-3 flex flex-col items-center gap-1" data-load-older>
+            <BaseButton variant="secondary" size="sm" icon="ph:arrow-up-bold" :icon-spin="loadingOlder" :disabled="loadingOlder" @click="loadOlder">
+              {{ loadingOlder ? 'Cargando…' : 'Cargar mensajes anteriores' }}
+            </BaseButton>
+            <p v-if="olderError" class="text-[0.75rem] text-[var(--color-status-alert)]" role="alert">{{ olderError }}</p>
+          </div>
           <template v-for="item in chatItems" :key="item.key">
             <div v-if="item.type === 'divider'" class="my-3 flex justify-center">
               <span class="rounded-full bg-[var(--color-ink-overlay)] px-3 py-1 text-[0.6875rem] font-medium text-[var(--color-text-faint)]">{{ item.label }}</span>

@@ -2,7 +2,9 @@ export type OfferStatus = 'pending' | 'accepted' | 'declined'
 
 export interface Offer {
   id: string
-  packageId: string
+  /** `null` si el paquete se borró (A-R20i): la oferta se conserva con el título guardado. */
+  packageId: string | null
+  packageTitle: string | null
   conversationId: string
   fromProfileId: string
   toProfileId: string
@@ -15,7 +17,8 @@ export interface Offer {
 
 interface OfferRow {
   id: string
-  package_id: string
+  package_id: string | null
+  package_title?: string | null
   conversation_id: string
   from_profile_id: string
   to_profile_id: string
@@ -30,6 +33,7 @@ function mapRow(row: OfferRow): Offer {
   return {
     id: row.id,
     packageId: row.package_id,
+    packageTitle: row.package_title ?? null,
     conversationId: row.conversation_id,
     fromProfileId: row.from_profile_id,
     toProfileId: row.to_profile_id,
@@ -131,7 +135,9 @@ export function useOffers() {
       return
     }
     const counts: Record<string, number> = {}
-    for (const row of (data ?? []) as { package_id: string }[]) counts[row.package_id] = (counts[row.package_id] ?? 0) + 1
+    for (const row of (data ?? []) as { package_id: string | null }[]) {
+      if (row.package_id) counts[row.package_id] = (counts[row.package_id] ?? 0) + 1
+    }
     pendingCountByPackage.value = counts
   }
 

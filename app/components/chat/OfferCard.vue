@@ -41,6 +41,11 @@ watch(() => offer.value?.status, () => checkCollaboration())
 
 watchEffect(async () => {
   if (!offer.value) return
+  // Paquete borrado (A-R20i): la oferta se conserva y se enseña el título guardado en ella.
+  if (!offer.value.packageId) {
+    packageTitle.value = offer.value.packageTitle
+    return
+  }
   const local = myPackages.value?.find((p) => p.id === offer.value!.packageId)
   packageTitle.value = local ? local.title : await resolvePackageTitle(offer.value.packageId)
 })
@@ -92,6 +97,7 @@ async function declineWithConfirm() {
       </span>
     </div>
 
+    <p v-if="!offer.packageId" class="mt-1 text-[0.75rem] text-[var(--color-text-faint)]" data-package-gone>Este paquete ya no está disponible.</p>
     <p class="mt-2 font-display text-[1.375rem] leading-none text-[var(--color-text)]">{{ formatEuros(offer.proposedPriceCents) }}</p>
     <p v-if="offer.message" class="mt-2 whitespace-pre-wrap break-words text-[0.8125rem] text-[var(--color-text-muted)]">{{ offer.message }}</p>
 

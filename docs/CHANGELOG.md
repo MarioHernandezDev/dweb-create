@@ -4,6 +4,31 @@ Registro de qué se hizo, por qué, y qué queda pendiente de verificar — pens
 
 ---
 
+## 2026-11-03 (Alex-43) — [Alex] R21f aplicada y verificada; límites del chat, ofertas conservadas, `published_at` (migraciones preparadas); mensajes anteriores y Chat en la barra móvil
+
+### Qué se cambió
+
+- **R21f (RLS de `posts.collaboration_id`) — APLICADA por Alex y verificada:** `posts-collaboration-rls.spec.ts` **6/6** contra la base real (antes: 2 de 'RECHAZO' fallaban). Con la migración aplicada se repitieron además los 45 de navegador del flujo de publicaciones (todo OK, sin restos).
+- **Tres migraciones PREPARADAS, NO APLICADAS** (aprobadas por Alex, Mario conforme; las aplica Alex en el SQL Editor):
+  - `20261103100000_chat_limits.sql` (A-R20h): mensajes de texto de 1–2000 caracteres y máx. 30 por minuto y usuario; mensaje de oferta de hasta 500 y máx. 20 ofertas por hora; `CHECK ... NOT VALID` (solo filas nuevas) y dos índices. Reescribe `send_text_message` y `create_offer` sin tocar privacidad ni mensajes de sistema.
+  - `20261103110000_offers_keep_on_package_delete.sql` (A-R20i): `offers.package_id` nullable con `on delete set null`, `package_title` guardado en la oferta, trigger que elimina solo las ofertas **pendientes** del paquete borrado (aceptadas y rechazadas se conservan); `create_offer` guarda el título. `respond_offer` no se toca.
+  - `20261103120000_posts_published_at.sql`: `published_at` se rellena la primera vez que una publicación pasa a `published` (no inventa fechas para las ya publicadas).
+- **Reproducido ANTES de aplicar** (`chat-limits.spec.ts`, `posts-published-at.spec.ts`, `offers-package-delete.spec.ts`): se aceptan mensajes de 2001 caracteres, ráfagas de 30+ mensajes, ofertas con 501 caracteres y 20+ ofertas por hora (4 de 6 fallan); `published_at` no se rellena (1 de 3 falla); el de ofertas falla al preparar los datos porque falta la columna `package_title`. Quedan sin restos. **Después de aplicar deben pasar todos.**
+- **Interfaz preparada para ambos casos** (funciona antes y después): campo de mensaje con `maxlength` 2000 y contador a partir de 1800; mensaje de oferta con `maxlength` 500; la tarjeta de oferta usa el título guardado y dice 'Este paquete ya no está disponible' si `package_id` es nulo.
+- **R20f — Mensajes anteriores:** si el hilo trae los 300 más recientes se ofrece 'Cargar mensajes anteriores' (páginas de 100 por cursor de fecha, sin backend), sin duplicados y sin mover lo que se está leyendo.
+- **Chat en la barra inferior móvil (aprobado):** Hoy · Publicaciones · Descubrir · Chat · Más (Colaboraciones, Métricas, Bandeja, Guardados y Perfil pasan a 'Más'); el contador de no leídos va en Chat. Textos del recorrido de bienvenida actualizados a 'Publicaciones'.
+
+### Verificado de verdad
+
+- `vue-tsc` limpio; 593 pruebas unitarias OK. Navegador (Chrome por CDP): **chat 45/45, flujo de publicaciones 45/45** (regresión) y **mensajes anteriores + barra móvil + límites de interfaz 11/11** (en la primera ejecución en frío una comprobación falló por temporización y al repetir pasó; no se reprodujo), con conversación de 320 mensajes `[TEST r20f]` borrada al terminar.
+
+### Sin verificar / pendiente
+
+- Las **tres migraciones no están aplicadas**: hasta entonces el servidor no impone los límites, las ofertas siguen borrándose en cascada y `published_at` no se rellena. Falta ejecutar sus pruebas de integración después de aplicarlas. Una oferta pendiente de un paquete ya borrado no puede existir tras R20i (se elimina), pero `respond_offer` no se ha modificado.
+- Sigue pendiente: tope de 300 publicaciones sin paginar, accesibilidad con lector de pantalla real, tablet/móvil reales, conversación creador–partner y 'Rechazar' en el chat, y el aviso de hidratación de la insignia de la bandeja.
+
+---
+
 ## 2026-10-30 (Alex-42) — [Alex] A-R20 (R20a–e parcial): chat a dos paneles, bandeja útil, tarjetas de oferta, compositor y privacidad explicada
 
 ### Qué se cambió

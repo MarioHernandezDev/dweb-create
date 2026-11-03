@@ -63,7 +63,7 @@ function onKeydown(e: KeyboardEvent) {
       </button>
       <label class="sr-only" for="chat-draft">Escribe un mensaje</label>
       <textarea
-        id="chat-draft" ref="el" v-model="draft" rows="1" placeholder="Escribe un mensaje…" data-draft
+        id="chat-draft" ref="el" v-model="draft" rows="1" maxlength="2000" placeholder="Escribe un mensaje…" data-draft
         class="max-h-36 min-h-11 flex-1 resize-none rounded-[1.375rem] border border-[var(--color-hairline)] bg-[var(--color-ink-overlay)] px-4 py-2.5 text-[0.9375rem] leading-snug text-[var(--color-text)] placeholder:text-[var(--color-text-faint)] focus:outline-none focus:border-[var(--color-primary-500)]/60"
         @keydown="onKeydown" @input="resize"
       />
@@ -72,6 +72,7 @@ function onKeydown(e: KeyboardEvent) {
         :disabled="!draft.trim() || sending" aria-label="Enviar mensaje" data-send
       />
     </form>
-    <p v-if="!restricted" class="mt-1.5 hidden px-1 text-[0.6875rem] text-[var(--color-text-faint)] md:block">Intro envía · Mayús+Intro salta de línea</p>
+    <p v-if="!restricted && draft.length > 1800" class="mt-1.5 px-1 text-right text-[0.6875rem]" :class="draft.length >= 2000 ? 'text-[var(--color-status-alert)]' : 'text-[var(--color-text-faint)]'" data-char-counter>{{ draft.length }}/2000</p>
+    <p v-else-if="!restricted" class="mt-1.5 hidden px-1 text-[0.6875rem] text-[var(--color-text-faint)] md:block">Intro envía · Mayús+Intro salta de línea</p>
   </div>
 </template>

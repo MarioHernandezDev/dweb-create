@@ -1,6 +1,6 @@
 # Propuesta A-R21 — Flujo de publicaciones, biblioteca y tableros (lado creador)
 
-Estado: **R21a–e implementadas (CHANGELOG Alex-41); R21f preparada y NO aplicada; R21g diferida.** (Auditoría original abajo.) Fecha: 2026-10-30. Autor: [Alex].
+Estado: **R21a–e implementadas (CHANGELOG Alex-41); R21f aplicada y verificada (2026-11-03); R21g diferida.** (Auditoría original abajo.) Fecha: 2026-10-30. Autor: [Alex].
 Verificación: **lectura de código y SQL** (no se ha ejecutado ninguna prueba nueva para este documento).
 
 ---

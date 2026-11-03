@@ -6,21 +6,21 @@ const props = defineProps<{ role: Role }>()
 const route = useRoute()
 const items = computed(() => roleNav[props.role])
 
-// Como mucho 4 pestañas a la vista + "Más" cuando sobra alguna — 6 pestañas
-// compitiendo por el mismo ancho (caso del creador: Hoy/Tablero/Descubrir/
-// Colaboraciones/Redes/Métricas) es justo lo que las convenciones de
-// plataforma desaconsejan. El sidebar de escritorio (SideRail.vue) sigue
-// mostrando las 6 — esto es solo el recorte para la barra inferior en móvil.
-const MAX_VISIBLE = 4
-const visibleItems = computed(() => items.value.slice(0, MAX_VISIBLE))
-const overflowItems = computed(() => items.value.slice(MAX_VISIBLE))
+// Barra inferior en móvil: 3 destinos del rol + Chat + "Más". Chat sube a la barra
+// (A-R20, aprobado) porque es donde llegan ofertas y mensajes que esperan respuesta;
+// 6 pestañas compitiendo por el mismo ancho es lo que las convenciones desaconsejan.
+// El sidebar de escritorio (SideRail.vue) sigue mostrando todo.
+const ROLE_VISIBLE = 3
+const chatItem = computed(() => secondaryNav(props.role).find((i) => i.to === '/chat')!)
+const visibleItems = computed(() => [...items.value.slice(0, ROLE_VISIBLE), chatItem.value])
+const overflowItems = computed(() => items.value.slice(ROLE_VISIBLE))
 const moreOpen = ref(false)
 
 // "Más" reúne lo que sobra del rol (si lo hay) + los accesos secundarios
 // (Chat/Bandeja/Guardados/Ajustes) — antes el partner, con solo 3 destinos
 // de rol, no tenía "Más" en absoluto y esos 4 accesos no existían en ningún
 // menú (auditoría de usabilidad, sección 2.2).
-const moreItems = computed(() => [...overflowItems.value, ...secondaryNav(props.role)])
+const moreItems = computed(() => [...overflowItems.value, ...secondaryNav(props.role).filter((i) => i.to !== '/chat')])
 
 function isActive(to: string) {
   return to === items.value[0]?.to ? route.path === to : route.path.startsWith(to)
@@ -30,7 +30,7 @@ const moreActive = computed(() => moreItems.value.some((item) => isActive(item.t
 const { unreadCount: inboxUnread } = useNotifications()
 const { unreadCount: chatUnread } = useChat()
 const badgeFor: Record<string, import('vue').ComputedRef<number>> = { '/chat': chatUnread, '/inbox': inboxUnread }
-const moreBadgeTotal = computed(() => chatUnread.value + inboxUnread.value)
+const moreBadgeTotal = computed(() => inboxUnread.value)
 
 // Hallazgo #5 de la auditoría de usabilidad: "cerrar sesión" estaba
 // enterrado (Más → Ajustes → pestaña Cuenta → bajar al final). Ahora está
@@ -57,10 +57,17 @@ async function confirmLogout() {
           :class="isActive(item.to) ? 'text-[var(--color-primary-500)]' : 'text-[var(--color-text-faint)]'"
         >
           <span
-            class="flex items-center justify-center size-8 rounded-full transition-[background-color,transform] duration-300 ease-[var(--ease-spring-out)]"
+            class="relative flex items-center justify-center size-8 rounded-full transition-[background-color,transform] duration-300 ease-[var(--ease-spring-out)]"
             :class="isActive(item.to) ? 'bg-[var(--color-primary-500)]/12 scale-100' : 'scale-90'"
           >
             <Icon :name="item.icon" class="size-[1.35rem] transition-transform duration-300 ease-[var(--ease-spring-out)]" :class="isActive(item.to) && 'scale-110'" />
+            <span
+              v-if="badgeFor[item.to]?.value"
+              class="absolute top-0 right-0 min-w-[0.9375rem] h-[0.9375rem] px-1 rounded-full bg-[var(--color-status-alert)] text-white text-[0.625rem] font-semibold leading-[0.9375rem] text-center"
+              data-tab-badge
+            >
+              {{ badgeFor[item.to].value > 9 ? '9+' : badgeFor[item.to].value }}
+            </span>
           </span>
           <span class="text-[0.6875rem] font-medium">{{ item.label }}</span>
         </NuxtLink>

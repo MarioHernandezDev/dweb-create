@@ -88,6 +88,7 @@ const CONVERSATIONS_LIMIT = 200
 // hacia arriba queda fuera de esta pasada (no había paginación previa
 // tampoco), pero al menos ya no crece sin límite con los años.
 const THREAD_MESSAGE_LIMIT = 300
+const OLDER_PAGE = 100
 
 // Indicador de "está escribiendo": Supabase Realtime Broadcast, no
 // Postgres Changes — es un aviso efímero, no tiene sentido guardarlo en una
@@ -129,6 +130,9 @@ export function useChat() {
   const sending = useState<boolean>('chat-sending', () => false)
   const typingByConversation = useState<Record<string, boolean>>('chat-typing-by-conversation', () => ({}))
   const typingListenerStarted = useState<boolean>('chat-typing-listener-started', () => false)
+  // Conversaciones con mensajes anteriores sin cargar (A-R20f): el hilo trae los 300 más recientes y,
+  // si había tantos, ofrece cargar los anteriores por cursor de fecha (sin cambios de backend).
+  const hasOlderByConversation = useState<Record<string, boolean>>('chat-has-older', () => ({}))
   // Estado del canal de tiempo real (A-R20): la interfaz avisa si se cae en vez de quedarse muda.
   const realtimeStatus = useState<'idle' | 'connected' | 'disconnected'>('chat-realtime-status', () => 'idle')
 
@@ -314,7 +318,33 @@ export function useChat() {
     }
     const mapped = (data as MessageRow[]).map(mapMessageRow).reverse()
     messagesByConversation.value = { ...messagesByConversation.value, [conversationId]: mapped }
+    hasOlderByConversation.value = { ...hasOlderByConversation.value, [conversationId]: (data as MessageRow[]).length >= THREAD_MESSAGE_LIMIT }
     return mapped
+  }
+
+  /** Carga hasta 100 mensajes anteriores al más antiguo ya cargado. Devuelve cuántos añadió (-1 si falló). */
+  async function loadOlderMessages(conversationId: string) {
+    const current = messagesByConversation.value[conversationId] ?? []
+    const oldest = current[0]
+    if (!oldest) return 0
+    const { data, error } = await client
+      .from('messages')
+      .select(MESSAGE_SELECT)
+      .eq('conversation_id', conversationId)
+      .lt('created_at', oldest.createdAt)
+      .order('created_at', { ascending: false })
+      .limit(OLDER_PAGE)
+    if (error) {
+      console.error('[useChat] fallo al cargar mensajes anteriores:', error.message)
+      return -1
+    }
+    const rows = (data as MessageRow[]).map(mapMessageRow).reverse()
+    // Sin duplicados (dos mensajes pueden compartir marca de tiempo exacta con el cursor).
+    const known = new Set(current.map((m) => m.id))
+    const fresh = rows.filter((m) => !known.has(m.id))
+    messagesByConversation.value = { ...messagesByConversation.value, [conversationId]: [...fresh, ...current] }
+    hasOlderByConversation.value = { ...hasOlderByConversation.value, [conversationId]: (data as MessageRow[]).length >= OLDER_PAGE }
+    return fresh.length
   }
 
   function pushMessage(message: ChatMessage) {
@@ -559,6 +589,8 @@ export function useChat() {
     loadConversationSummary,
     ensureMessages,
     refreshMessages,
+    loadOlderMessages,
+    hasOlderByConversation,
     openConversationWith,
     sendMessage,
     markRead,

@@ -23,8 +23,8 @@ export const tourSteps: Record<Role, TourStep[]> = {
     },
     {
       icon: 'ph:kanban-fill',
-      title: 'Hoy y Tablero',
-      body: 'En Hoy ves lo que toca esta semana. En Tablero organizas cada publicación desde la idea hasta que se publica.'
+      title: 'Hoy y Publicaciones',
+      body: 'En Hoy ves lo que toca esta semana. En Publicaciones las organizas en un tablero o en una lista, desde la idea hasta que se publica.'
     },
     {
       icon: 'ph:compass-fill',
