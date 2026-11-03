@@ -75,6 +75,7 @@ describe.skipIf(!hasSupabaseEnv || !hasServiceRole)('offers: create_offer / resp
     let systemMessageId: string | undefined
     let offerMessageId: string | undefined
     let collaborationId: string | undefined
+    let offerId: string | undefined
 
     // 1. El creador publica un paquete de prueba (desechable, con un título
     //    que lo identifica como generado por tests).
@@ -101,7 +102,7 @@ describe.skipIf(!hasSupabaseEnv || !hasServiceRole)('offers: create_offer / resp
         p_message: 'oferta de test de integración'
       })
       expect(offerErr).toBeNull()
-      const offerId = (offer as { id: string } | null)?.id
+      offerId = (offer as { id: string } | null)?.id
       expect(offerId).toBeTruthy()
 
       // Captura el mensaje que `create_offer` acaba de insertar con el texto
@@ -171,6 +172,9 @@ describe.skipIf(!hasSupabaseEnv || !hasServiceRole)('offers: create_offer / resp
       await creator.client.from('packages').delete().eq('id', packageId)
       if (systemMessageId) await admin.from('messages').delete().eq('id', systemMessageId)
       if (offerMessageId) await admin.from('messages').delete().eq('id', offerMessageId)
+      // Desde 20261103110000 (R20i) borrar el paquete ya NO arrastra las ofertas
+      // aceptadas (se conservan con `package_id` nulo): hay que borrarla a mano.
+      if (offerId) await admin.from('offers').delete().eq('id', offerId)
     }
   })
 

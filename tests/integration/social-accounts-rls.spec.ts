@@ -161,12 +161,14 @@ describe.skipIf(!enabled)('social_accounts: RLS y permisos por columna (Supabase
     })
   })
 
-  describe('borrado propio (se mantiene hasta A-R3)', () => {
-    it('el dueño puede borrar su fila de prueba', async () => {
-      const { error } = await creator!.client.from('social_accounts').delete().eq('id', unverifiedRowId)
-      expect(error).toBeNull()
+  // H0-08 (supabase/migrations/20261103130000_social_accounts_server_only_delete.sql):
+  // desde A-R3 la desconexión la hace el servidor (revoca en Google y luego borra).
+  // ANTES de aplicar la migración el primer test FALLA (el navegador aún puede borrar).
+  describe('borrado solo desde el servidor (A-R3, H0-08)', () => {
+    it('el dueño NO puede borrar su fila con una petición directa', async () => {
+      await creator!.client.from('social_accounts').delete().eq('id', unverifiedRowId)
       const { data } = await admin.from('social_accounts').select('id').eq('id', unverifiedRowId)
-      expect(data ?? []).toHaveLength(0)
+      expect(data ?? []).toHaveLength(1)
     })
 
     it('otro creador no puede borrar la fila ajena', async () => {
