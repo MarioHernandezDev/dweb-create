@@ -6,7 +6,7 @@ useHead({ title: 'Publicaciones' })
 
 const route = useRoute()
 const router = useRouter()
-const { posts, ensureLoaded } = useMyPosts()
+const { posts, ensureLoaded, hasMore, loadingMore, loadMoreError, loadMore } = useMyPosts()
 const { requests: collabRequests, ensureLoaded: ensureCollabRequestsLoaded } = useCollabRequests()
 const { changeStatus, remove } = usePostActions()
 const composerOpen = ref(false)
@@ -47,8 +47,6 @@ async function onRemove(post: Post) {
   await remove(post)
 }
 
-// El servidor trae como máximo 300 (ver useMyPosts): se dice, no se oculta.
-const truncated = computed(() => posts.value.length >= 300)
 </script>
 
 <template>
@@ -68,10 +66,6 @@ const truncated = computed(() => posts.value.length >= 300)
       </p>
     </div>
 
-    <p v-if="truncated" class="mb-3 text-[0.8125rem] text-[var(--color-text-muted)]" data-limit-notice>
-      Se muestran las 300 publicaciones con fecha de entrega más próxima.
-    </p>
-
     <PhaseBoard v-if="view === 'tablero'" v-model:filters="filters" />
 
     <template v-else>
@@ -87,6 +81,15 @@ const truncated = computed(() => posts.value.length >= 300)
         @move="onMove" @remove="onRemove" @clear="filters = emptyFilters()" @create="composerOpen = true"
       />
     </template>
+
+    <!-- Paginación: se traen de 300 en 300 por fecha de entrega; los filtros y el tablero trabajan sobre lo ya cargado. -->
+    <div v-if="hasMore" class="mt-6 flex flex-col items-center gap-2" data-load-more>
+      <p class="text-[0.8125rem] text-[var(--color-text-muted)]">Hay más publicaciones sin cargar: los filtros y el tablero solo ven las {{ posts.length }} cargadas.</p>
+      <BaseButton variant="secondary" size="sm" icon="ph:arrow-down-bold" :icon-spin="loadingMore" :disabled="loadingMore" @click="loadMore">
+        {{ loadingMore ? 'Cargando…' : 'Cargar más publicaciones' }}
+      </BaseButton>
+      <p v-if="loadMoreError" class="text-[0.75rem] text-[var(--color-status-alert)]" role="alert">{{ loadMoreError }}</p>
+    </div>
 
     <Fab :active="composerOpen" @click="composerOpen = true" />
     <PostComposerSheet v-model="composerOpen" />

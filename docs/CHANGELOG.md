@@ -4,6 +4,15 @@ Registro de qué se hizo, por qué, y qué queda pendiente de verificar — pens
 
 ---
 
+## 2026-11-03 (Alex-45) — [Alex] Paginación de publicaciones
+
+- `useMyPosts` trae las publicaciones de 300 en 300 (por fecha de entrega, con `id` como desempate para que las páginas no repitan ni salten filas) y expone `hasMore`, `loadingMore`, `loadMoreError` y `loadMore()`. El contador de filas traídas es propio (`fetched`), no `posts.length`, para que crear o borrar en local no desplace la página siguiente; se añade sin duplicados.
+- `/creator/timeline`: el aviso fijo «Se muestran las 300…» se sustituye por «Cargar más publicaciones» con aviso de cuántas hay cargadas; si falla, lo dice y deja lo cargado como estaba. El tablero y los filtros trabajan sobre lo ya cargado (se dice en el aviso).
+- **Verificado:** `vue-tsc` limpio; navegador (Chrome por CDP) con 320 publicaciones `[TEST paging]` creadas y borradas al terminar: **6/6** (se ofrece el botón, aviso de 300 cargadas, la segunda página trae las últimas, el botón desaparece al no quedar más, sin duplicados, sin restos).
+- **Sin verificar:** fallo de red al cargar la segunda página (el código lo gestiona pero no se simuló); el panel «Hoy» y otras pantallas que usan `useMyPosts` solo ven la primera página.
+
+---
+
 ## 2026-11-03 (Alex-44) — [Alex] Migraciones del chat, ofertas y `published_at` aplicadas y verificadas
 
 - Alex aplicó en el SQL Editor `20261103100000_chat_limits.sql`, `20261103110000_offers_keep_on_package_delete.sql` y `20261103120000_posts_published_at.sql`.

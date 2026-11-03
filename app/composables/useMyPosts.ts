@@ -20,6 +20,9 @@ interface PostRow {
   checklist_items: { done: boolean }[] | null
 }
 
+// Página de publicaciones (A-R21 paginación): se piden de 300 en 300 por fecha de entrega.
+const PAGE_SIZE = 300
+
 const POST_SELECT = '*, ml_predictions(success_score, model_version, suggestions, created_at), post_labels(label_id), checklist_items(done)'
 
 function latestPrediction(predictions: PostRow['ml_predictions']) {
@@ -93,6 +96,11 @@ export function useMyPosts() {
   const posts = useState<Post[]>('my-posts', () => [])
   const loading = useState<boolean>('my-posts-loading', () => false)
   const loaded = useState<boolean>('my-posts-loaded', () => false)
+  // Paginación: `fetched` = filas traídas del servidor (no `posts.length`: crear/borrar en local lo movería).
+  const fetched = useState<number>('my-posts-fetched', () => 0)
+  const hasMore = useState<boolean>('my-posts-has-more', () => false)
+  const loadingMore = useState<boolean>('my-posts-loading-more', () => false)
+  const loadMoreError = useState<string>('my-posts-load-more-error', () => '')
 
   async function refresh() {
     const me = creator.value ?? (await ensureCreator())
@@ -103,11 +111,10 @@ export function useMyPosts() {
       .from('posts')
       .select(POST_SELECT)
       .eq('creator_id', me.id)
+      // `id` desempata fechas iguales: sin orden total las páginas podrían repetir o saltarse filas.
       .order('due_date', { ascending: true })
-      // Tope de cordura — sin esto la consulta crece sin límite con el
-      // historial acumulado de años; un creador real no gestiona 500
-      // publicaciones a la vez en este tablero.
-      .limit(300)
+      .order('id', { ascending: true })
+      .range(0, PAGE_SIZE - 1)
     loading.value = false
 
     if (error) {
@@ -115,7 +122,37 @@ export function useMyPosts() {
       return
     }
     posts.value = (data as PostRow[]).map(mapRow)
+    fetched.value = (data as PostRow[]).length
+    hasMore.value = (data as PostRow[]).length === PAGE_SIZE
+    loadMoreError.value = ''
     loaded.value = true
+  }
+
+  /** Trae la página siguiente y la añade sin duplicar. Si falla, lo dice y deja lo ya cargado como estaba. */
+  async function loadMore() {
+    if (!hasMore.value || loadingMore.value) return
+    const me = creator.value ?? (await ensureCreator())
+    if (!me) return
+    loadingMore.value = true
+    loadMoreError.value = ''
+    const { data, error } = await client
+      .from('posts')
+      .select(POST_SELECT)
+      .eq('creator_id', me.id)
+      .order('due_date', { ascending: true })
+      .order('id', { ascending: true })
+      .range(fetched.value, fetched.value + PAGE_SIZE - 1)
+    loadingMore.value = false
+    if (error) {
+      console.error('[useMyPosts] fallo al cargar más posts:', error.message)
+      loadMoreError.value = 'No se han podido cargar más publicaciones.'
+      return
+    }
+    const rows = data as PostRow[]
+    const known = new Set(posts.value.map((p) => p.id))
+    posts.value = [...posts.value, ...rows.filter((r) => !known.has(r.id)).map(mapRow)]
+    fetched.value += rows.length
+    hasMore.value = rows.length === PAGE_SIZE
   }
 
   async function ensureLoaded() {
@@ -180,6 +217,8 @@ export function useMyPosts() {
   async function deletePost(id: string) {
     const { error } = await client.from('posts').delete().eq('id', id)
     if (error) throw error
+    // Borrar una fila ya traída desplaza las siguientes páginas una posición hacia atrás.
+    if (posts.value.some((p) => p.id === id)) fetched.value = Math.max(0, fetched.value - 1)
     posts.value = posts.value.filter((p) => p.id !== id)
   }
 
@@ -209,5 +248,5 @@ export function useMyPosts() {
     return mapped
   }
 
-  return { posts, loading, loaded, refresh, ensureLoaded, updatePost, deletePost, createPost, uploadCover }
+  return { posts, loading, loaded, hasMore, loadingMore, loadMoreError, loadMore, refresh, ensureLoaded, updatePost, deletePost, createPost, uploadCover }
 }
