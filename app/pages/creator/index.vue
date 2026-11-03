@@ -2,7 +2,7 @@
 import { formatCompactNumber, formatEuros } from '~/utils/mock-data'
 import { isFichaIncomplete } from '~/utils/ficha'
 import { relativeTime, isPostOverdue } from '~/utils/status'
-import { publishedInLastDays } from '~/utils/post-library'
+import { publishedThisWeek as countPublishedThisWeek } from '~/utils/post-library'
 
 useHead({ title: 'Hoy' })
 
@@ -67,7 +67,7 @@ const hasConnectedSocials = computed(() => socialAccounts.value.some((a) => a.co
 
 // Objetivo semanal real del creador (editable en Perfil → Ficha pública).
 const weeklyTarget = computed(() => creator.value?.weeklyPostTarget ?? 5)
-const publishedThisWeek = computed(() => publishedInLastDays(posts.value, new Date()))
+const publishedThisWeek = computed(() => countPublishedThisWeek(posts.value, new Date()))
 const goalPct = computed(() => (posts.value.length ? Math.min(100, Math.round((publishedThisWeek.value / weeklyTarget.value) * 100)) : 0))
 
 const nextDeliveries = computed(() => [...today.value, ...upcoming.value].sort((a, b) => a.dueInDays - b.dueInDays))
