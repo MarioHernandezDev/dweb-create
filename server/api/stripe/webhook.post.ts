@@ -9,6 +9,10 @@ import type Stripe from 'stripe'
  * que pasó (ver README Fase 3, "Webhooks de Stripe"). Firma verificada con
  * `stripe.webhooks.constructEvent` — sin eso, cualquiera podría mandar un
  * POST fingiendo que alguien pagó.
+ *
+ * Si una escritura en la base falla se responde 500 (no 200): Stripe reintenta
+ * el evento durante días. Cada handler es idempotente para que el reintento no
+ * duplique nada (ver H0-02 en docs/audit/07_CRITICAL_FINDINGS_VALIDATION.md).
  */
 export default defineEventHandler(async (event) => {
   const { stripeWebhookSecret } = useRuntimeConfig()
@@ -73,11 +77,17 @@ async function handleCheckoutCompleted(client: SupabaseClient, session: Stripe.C
     stripe_subscription_id: subscription.id,
     plan_id: planId,
     status: subscription.status,
-    current_period_end: new Date(subscription.items.data[0]!.current_period_end * 1000).toISOString()
+    current_period_end: currentPeriodEndIso(subscription)
   }
 
   const { error } = await client.from('subscriptions').upsert(payload as never, { onConflict: ownerColumn })
-  if (error) console.error('[stripe webhook] fallo al guardar la suscripción:', error.message)
+  if (error) failAndRetry('fallo al guardar la suscripción', error.message)
+}
+
+/** Corta con 500 para que Stripe reintente el evento (los handlers son idempotentes). */
+function failAndRetry(what: string, detail: string): never {
+  console.error(`[stripe webhook] ${what}:`, detail)
+  throw createError({ statusCode: 500, statusMessage: `Webhook no procesado: ${what}.` })
 }
 
 async function handleCollaborationPaid(client: SupabaseClient, session: Stripe.Checkout.Session) {
@@ -99,10 +109,7 @@ async function handleCollaborationPaid(client: SupabaseClient, session: Stripe.C
     .is('paid_at', null)
     .select('id, creator_id, budget_cents')
     .maybeSingle<{ id: string; creator_id: string; budget_cents: number | null }>()
-  if (error) {
-    console.error('[stripe webhook] fallo al marcar la colaboración como pagada:', error.message)
-    return
-  }
+  if (error) failAndRetry('fallo al marcar la colaboración como pagada', error.message)
   if (!data) {
     console.error('[stripe webhook] checkout.session.completed repetido o colaboración ya pagada — ignorado:', collaborationId, 'payment_intent:', session.payment_intent)
     return
@@ -132,38 +139,40 @@ async function handleCollaborationPaid(client: SupabaseClient, session: Stripe.C
  * créditos por su lado y se descoordine con las renovaciones futuras.
  */
 async function handleInvoicePaid(client: SupabaseClient, invoice: Stripe.Invoice) {
-  const subscriptionId = invoice.subscription as string | null
+  // Desde la API 2025-03-31 el id está en `parent.subscription_details`; antes se
+  // leía `invoice.subscription`, siempre undefined, y nunca se concedían créditos.
+  const subscriptionId = subscriptionIdFromInvoice(invoice)
   if (!subscriptionId) return // facturas sin suscripción (p. ej. de otro tipo) no nos interesan aquí
 
-  const { data: sub } = await client
+  const { data: sub, error: subError } = await client
     .from('subscriptions')
     .select('plan_id, creator_id')
     .eq('stripe_subscription_id', subscriptionId)
     .maybeSingle<{ plan_id: string; creator_id: string }>()
-  if (!sub) {
-    // Puede pasar si invoice.paid llega antes de que checkout.session.completed
-    // termine de guardar la suscripción — raro, pero posible. Se pierde esa
-    // recarga en vez de reintentarla; aceptable para esta primera versión.
-    console.error('[stripe webhook] invoice.paid de una suscripción que todavía no tenemos guardada:', subscriptionId)
-    return
-  }
+  if (subError) failAndRetry('fallo al leer la suscripción', subError.message)
+  // Puede llegar antes de que checkout.session.completed guarde la suscripción:
+  // se pide a Stripe que reintente en vez de perder la recarga.
+  if (!sub) failAndRetry('invoice.paid de una suscripción que todavía no está guardada', subscriptionId)
 
   const plan = plans[sub.plan_id]
   if (!plan) return // 'free' no tiene fila en `plans` (no es un plan de pago, no recarga por aquí)
 
+  // `stripe_invoice_id` es único: si Stripe entrega dos veces la misma factura,
+  // la segunda inserción choca y se trata como ya registrada.
   const { error } = await client
     .from('credit_ledger')
-    .insert({ creator_id: sub.creator_id, amount: plan.monthlyCredits, reason: 'subscription_grant' } as never)
-  if (error) console.error('[stripe webhook] fallo al conceder créditos:', error.message)
+    .insert({ creator_id: sub.creator_id, amount: plan.monthlyCredits, reason: 'subscription_grant', stripe_invoice_id: invoice.id } as never)
+  if (isAlreadyRecorded(error)) return
+  if (error) failAndRetry('fallo al conceder créditos', error.message)
 }
 
 async function handleSubscriptionChange(client: SupabaseClient, subscription: Stripe.Subscription) {
   const payload = {
     status: subscription.status,
-    current_period_end: new Date(subscription.items.data[0]!.current_period_end * 1000).toISOString()
+    current_period_end: currentPeriodEndIso(subscription)
   }
   const { error } = await client.from('subscriptions').update(payload as never).eq('stripe_subscription_id', subscription.id)
-  if (error) console.error('[stripe webhook] fallo al actualizar la suscripción:', error.message)
+  if (error) failAndRetry('fallo al actualizar la suscripción', error.message)
 }
 
 async function handleAccountUpdated(client: SupabaseClient, account: Stripe.Account) {
@@ -171,5 +180,5 @@ async function handleAccountUpdated(client: SupabaseClient, account: Stripe.Acco
   const payload = { stripe_connect_onboarded: onboarded } as never
 
   const { error } = await client.from('creators').update(payload).eq('stripe_connect_account_id', account.id)
-  if (error) console.error('[stripe webhook] fallo al actualizar creator.stripe_connect_onboarded:', error.message)
+  if (error) failAndRetry('fallo al actualizar creator.stripe_connect_onboarded', error.message)
 }
