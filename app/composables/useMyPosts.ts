@@ -13,6 +13,7 @@ interface PostRow {
   due_date: string
   created_at: string | null
   updated_at: string | null
+  published_at: string | null
   media_url: string | null
   metadata: { hashtags?: string[] } | null
   ml_predictions: { success_score: number; model_version: string | null; suggestions: Suggestion[] | null; created_at: string }[] | null
@@ -46,6 +47,7 @@ function mapRow(row: PostRow): Post {
     dueDate: row.due_date.slice(0, 10),
     createdAt: row.created_at ?? undefined,
     updatedAt: row.updated_at ?? undefined,
+    publishedAt: row.published_at ?? null,
     hashtags: row.metadata?.hashtags ?? [],
     cover: coverArtFromString(row.id),
     mediaUrl: row.media_url,
@@ -129,6 +131,20 @@ export function useMyPosts() {
   }
 
   /** Trae la página siguiente y la añade sin duplicar. Si falla, lo dice y deja lo ya cargado como estaba. */
+  /**
+   * Carga páginas hasta cubrir las entregas hasta `untilDate` ("YYYY-MM-DD"). Las páginas van por fecha
+   * de entrega ascendente: con muchas publicaciones antiguas, lo de hoy queda en páginas posteriores.
+   */
+  async function loadUntilDue(untilDate: string, maxPages = 10) {
+    for (let i = 0; i < maxPages && hasMore.value; i++) {
+      const last = posts.value[posts.value.length - 1]
+      if (last && last.dueDate > untilDate) return
+      const before = fetched.value
+      await loadMore()
+      if (loadMoreError.value || fetched.value === before) return
+    }
+  }
+
   async function loadMore() {
     if (!hasMore.value || loadingMore.value) return
     const me = creator.value ?? (await ensureCreator())
@@ -248,5 +264,5 @@ export function useMyPosts() {
     return mapped
   }
 
-  return { posts, loading, loaded, hasMore, loadingMore, loadMoreError, loadMore, refresh, ensureLoaded, updatePost, deletePost, createPost, uploadCover }
+  return { posts, loading, loaded, hasMore, loadingMore, loadMoreError, loadMore, loadUntilDue, refresh, ensureLoaded, updatePost, deletePost, createPost, uploadCover }
 }

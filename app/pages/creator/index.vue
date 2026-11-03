@@ -2,10 +2,11 @@
 import { formatCompactNumber, formatEuros } from '~/utils/mock-data'
 import { isFichaIncomplete } from '~/utils/ficha'
 import { relativeTime, isPostOverdue } from '~/utils/status'
+import { publishedInLastDays } from '~/utils/post-library'
 
 useHead({ title: 'Hoy' })
 
-const { posts, ensureLoaded } = useMyPosts()
+const { posts, ensureLoaded, loadUntilDue } = useMyPosts()
 const { requests, pendingCount: pendingRequests, activeCount: activeCollaborations, ensureLoaded: ensureRequestsLoaded } = useCollabRequests()
 // Seguidores reales de tus redes conectadas — mismo dato (y mismo motivo
 // honesto) que ya usa metrics.vue: nada de "interacciones"/"racha" fijas,
@@ -30,6 +31,8 @@ await Promise.all([
   myProfileId ? ensureMyPackages(myProfileId) : Promise.resolve([]),
   ensureConversations()
 ])
+// Hoy necesita lo de hoy, lo próximo y lo atrasado aunque haya mucho historial: se cargan páginas hasta pasar de la próxima semana.
+await loadUntilDue(new Date(Date.now() + 7 * 86_400_000).toISOString().slice(0, 10))
 
 // Panel de descubrimiento: SIN await en el Promise.all de arriba a
 // propósito — no debe bloquear el primer pintado del home. Mismo patrón de
@@ -64,7 +67,7 @@ const hasConnectedSocials = computed(() => socialAccounts.value.some((a) => a.co
 
 // Objetivo semanal real del creador (editable en Perfil → Ficha pública).
 const weeklyTarget = computed(() => creator.value?.weeklyPostTarget ?? 5)
-const publishedThisWeek = computed(() => posts.value.filter((p) => p.status === 'published').length)
+const publishedThisWeek = computed(() => publishedInLastDays(posts.value, new Date()))
 const goalPct = computed(() => (posts.value.length ? Math.min(100, Math.round((publishedThisWeek.value / weeklyTarget.value) * 100)) : 0))
 
 const nextDeliveries = computed(() => [...today.value, ...upcoming.value].sort((a, b) => a.dueInDays - b.dueInDays))

@@ -59,6 +59,22 @@ export function sortPosts(posts: Post[], sort: PostSort): Post[] {
   }
 }
 
+/**
+ * Publicadas en los últimos 7 días (objetivo semanal de «Hoy»). Usa `publishedAt`;
+ * en las publicadas antes de existir ese campo (`null`) se aproxima con la fecha de
+ * entrega, para que el historial antiguo no infle el objetivo de esta semana.
+ */
+export function publishedInLastDays(posts: Post[], now: Date, days = 7): number {
+  const since = now.getTime() - days * 86_400_000
+  return posts.filter((p) => {
+    if (p.status !== 'published') return false
+    const when = p.publishedAt ?? (p.dueDate ? `${p.dueDate}T12:00:00` : null)
+    if (!when) return false
+    const t = new Date(when).getTime()
+    return Number.isFinite(t) && t >= since && t <= now.getTime() + 86_400_000
+  }).length
+}
+
 /** Resumen por proyecto para los indicadores (cálculo local sobre lo ya cargado). */
 export function projectStats(posts: Post[]): { total: number; overdue: number; inReview: number; published: number } {
   return {

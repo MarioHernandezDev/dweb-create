@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { emptyFilters, filterPosts, hasActiveFilters, projectStats, sortPosts, OWN_PROJECT } from '../../app/utils/post-library'
+import { emptyFilters, filterPosts, hasActiveFilters, projectStats, publishedInLastDays, sortPosts, OWN_PROJECT } from '../../app/utils/post-library'
 import type { Post } from '../../app/types'
 
 let n = 0
@@ -64,5 +64,25 @@ describe('projectStats', () => {
   it('cuenta atrasadas, en revisión y publicadas; una publicada atrasada no cuenta como atrasada', () => {
     const s = projectStats([post({ dueInDays: -2 }), post({ dueInDays: -2, status: 'published' }), post({ status: 'ready_for_review' }), post()])
     expect(s).toEqual({ total: 4, overdue: 1, inReview: 1, published: 1 })
+  })
+})
+
+describe('publishedInLastDays (objetivo semanal)', () => {
+  const now = new Date('2026-11-03T12:00:00Z')
+  it('cuenta solo las publicadas en los últimos 7 días, no todo el historial', () => {
+    const recent = post({ status: 'published', publishedAt: '2026-11-01T10:00:00Z', dueDate: '2026-11-01' })
+    const old = post({ status: 'published', publishedAt: '2026-09-01T10:00:00Z', dueDate: '2026-09-01' })
+    expect(publishedInLastDays([recent, old], now)).toBe(1)
+  })
+  it('no cuenta las que no están publicadas', () => {
+    expect(publishedInLastDays([post({ status: 'in_production', publishedAt: '2026-11-02T10:00:00Z' })], now)).toBe(0)
+  })
+  it('sin fecha de publicación (publicadas antes de existir el campo) usa la fecha de entrega: las antiguas no cuentan', () => {
+    const legacyOld = post({ status: 'published', publishedAt: null, dueDate: '2026-08-10' })
+    const legacyRecent = post({ status: 'published', publishedAt: null, dueDate: '2026-11-02' })
+    expect(publishedInLastDays([legacyOld, legacyRecent], now)).toBe(1)
+  })
+  it('sin ninguna publicada devuelve 0', () => {
+    expect(publishedInLastDays([], now)).toBe(0)
   })
 })

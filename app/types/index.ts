@@ -73,6 +73,8 @@ export interface Post {
   /** ISO de `posts.created_at` / `updated_at` (solo publicaciones del creador; para ordenar la lista). */
   createdAt?: string
   updatedAt?: string
+  /** Cuándo pasó a `published` (`posts.published_at`); `null` en las publicadas antes de existir ese campo. */
+  publishedAt?: string | null
 }
 
 export interface SparklinePoint {
