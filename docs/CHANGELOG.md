@@ -4,6 +4,37 @@ Registro de qué se hizo, por qué, y qué queda pendiente de verificar — pens
 
 ---
 
+## 2026-11-03 (Alex-55) — [Alex] Dependencias: de 21 avisos de `npm audit` a 7 bajos, sin código vulnerable en el servidor
+
+- **`npm audit fix`** (sin saltos mayores): Nuxt 4.6.2 → 4.6.4 (rutas con `..` que se saltaban `server/middleware`, `appSecret` y lectura de ficheros del servidor de desarrollo) y la cadena de Nitro; `node-forge` (alta) sale del árbol.
+- **vitest 2.1.9 → 5.1.0** (solo desarrollo): elimina las 2 críticas (`tinypool`, `vitest`), la alta de su `vite` 5 y `esbuild`, `vite-node` y `@vitest/mocker`. Usa el `vite` 8 de Nuxt. CI ya va con Node 24.
+- **`overrides` acotados** en `package.json`: `glob` ^14.0.2 dentro de `@vercel/nft` (moderada) y `minimatch` ^11.0.2 dentro de `readdir-glob` (moderada). Comprobado que las APIs que usan (`glob.glob`, la clase `Minimatch`) existen en las versiones nuevas. Quitarlos cuando Nitro publique una versión que ya las traiga.
+- **Queda 1 aviso (7 entradas, todas bajas): `deepmerge` ≤4.3.1** (GHSA-gcqx-w48m-w2h4), vía `@rollup/plugin-node-resolve` de Nitro. No hay versión corregida publicada. Su única llamada es `deepMerge({}, defaults)` sobre una constante del propio plugin, en tiempo de build. No entra ningún dato externo y no se copia al servidor generado (`.output/server`). Revisar cuando salga 4.3.2+.
+- **Verificado:** 609/609 tests unitarios con vitest 5 (igual que con vitest 2), typecheck limpio, `nuxt build` correcto con los mismos 11 avisos de antes (imports duplicados y tiempos de plugins), los 20 ficheros de integración se cargan (`vitest list`, sin ejecutarlos), `npm ls` válido y `npm ci --dry-run` correcto. Ni `node-forge` ni `deepmerge` están en `.output/server`.
+- **Regresión de `nuxt dev` causada por la subida de Nuxt, corregida:** con Nuxt 4.6.4, `devServer.host` sin configurar se resuelve como `{}` (el resolvedor de esquema de `@nuxt/kit` rellena con `{}` un `$resolve` que devuelve `undefined`). `@nuxt/cli` 4.0.1 lo trataba como texto y fallaba al arrancar con `options.hostname.toLowerCase is not a function`, y además guardaba `"hostname":{}` en `node_modules/.cache/nuxt/dev-server.json`. **`@nuxt/cli` 4.0.2** (la que salió con Nuxt 4.6.4) solo acepta un `hostname` de texto, tanto en el arranque como al leer la caché. Fijada en el lockfile; `package.json` no cambia, porque la instala Nuxt (`^4.0.1`). Reproducido antes y después: 4.0.1 falla con la caché rota; 4.0.2 arranca con esa misma caché (HTTP 200 en `/`).
+- **Sin verificar:** el recorrido de la app en navegador con estas versiones (va en la Fase 3, en el entorno de demo).
+
+---
+
+## 2026-11-03 (Alex-54) — [Alex] Permisos por columna aplicados en la base compartida (`20261103170000`)
+
+- Alex aplicó `20261103170000_column_privileges_hardening.sql`.
+- **Verificado en el catálogo (solo lectura):** el navegador solo escribe las columnas que la app usa:
+  - `collaborations`: alta con 12 de 19 columnas, sin estado, pago ni oferta; sin UPDATE.
+  - `profiles`: nombre, avatar y privacidad del chat (ya no `role`).
+  - `creators`: los campos de la ficha (no Stripe), y el id de Stripe Connect ya no se puede leer.
+  - `partners`: los campos de la ficha.
+  - `notifications`: `read_at`.
+  - Sin políticas de alta en `creators`/`partners`, y `anon` sin escritura.
+- **Comprobado que la app no se rompe:**
+  - Todas las escrituras desde el navegador usan solo columnas concedidas.
+  - El código que lee o guarda `stripe_connect_account_id` usa `service_role`.
+  - Las 6 funciones que escriben en estas tablas son SECURITY DEFINER.
+  - No hay `select('*')` sobre `creators` ni Realtime en estas tablas, y ninguna página pública lee creadores.
+- **Sin verificar:** la regresión en navegador (Fase 3, entorno de demo).
+
+---
+
 ## 2026-11-03 (Alex-53) — [Alex] Pruebas de aceptación de las migraciones contra la base real; arreglo de la limpieza de `offers.spec.ts`
 
 - **Ejecutado con autorización de Alex (`RUN_SOCIAL_ACCOUNTS_RLS=1`, base compartida):**
