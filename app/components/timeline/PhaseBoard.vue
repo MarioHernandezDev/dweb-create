@@ -40,7 +40,7 @@ const filteredPosts = computed(() => filterPosts(posts.value, filters.value, { i
 // cada arrastre se deshacía solo en el siguiente tick (el computed no sabe
 // que ese movimiento ya es "la verdad", lo trataría como algo que revertir).
 const board = reactive<Record<PostStatus, Post[]>>(
-  Object.fromEntries(phases.map((phase) => [phase, []])) as Record<PostStatus, Post[]>
+  Object.fromEntries(phases.map((phase) => [phase, [] as Post[]])) as Record<PostStatus, Post[]>
 )
 
 // Reparte `filteredPosts` en las columnas sin tocar el orden de arrastre ya

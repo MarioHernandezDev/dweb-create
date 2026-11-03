@@ -19,7 +19,8 @@ function isActive(to: string) {
 // monta en cada página y lo mantiene al día).
 const { unreadCount: inboxUnread } = useNotifications()
 const { unreadCount: chatUnread } = useChat()
-const badgeFor: Record<string, import('vue').ComputedRef<number>> = { '/chat': chatUnread, '/inbox': inboxUnread }
+const badgeFor: Record<string, Readonly<Ref<number>>> = { '/chat': chatUnread, '/inbox': inboxUnread }
+const badgeCount = (to: string) => badgeFor[to]?.value ?? 0
 
 // Ya en caché desde role-guard.global.ts — sin parpadeo.
 const { avatarUrl, initials: myInitials, hue: myHue } = useMyAvatar()
@@ -78,8 +79,8 @@ async function confirmLogout() {
         >
           <Icon :name="item.icon" class="size-4" />
           {{ item.label }}
-          <span v-if="badgeFor[item.to]?.value" class="ml-auto min-w-[1.125rem] h-[1.125rem] px-1 rounded-full bg-[var(--color-status-alert)] text-white text-[0.625rem] font-semibold leading-[1.125rem] text-center">
-            {{ badgeFor[item.to].value > 9 ? '9+' : badgeFor[item.to].value }}
+          <span v-if="badgeCount(item.to)" class="ml-auto min-w-[1.125rem] h-[1.125rem] px-1 rounded-full bg-[var(--color-status-alert)] text-white text-[0.625rem] font-semibold leading-[1.125rem] text-center">
+            {{ badgeCount(item.to) > 9 ? '9+' : badgeCount(item.to) }}
           </span>
         </NuxtLink>
         <button

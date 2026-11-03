@@ -220,7 +220,8 @@ export default defineEventHandler(async (event) => {
   const user = await serverSupabaseUser(event)
   if (!user) throw createError({ statusCode: 401, statusMessage: 'No autenticado.' })
   // El modo `ai` llama al LLM y cada búsqueda escribe en `discovery_searches`.
-  enforceRateLimit(event, `discover-search:${user.id}`, 20, 60_000)
+  // El id del usuario es el claim `sub` (`user.id` no existe en los claims).
+  enforceRateLimit(event, `discover-search:${user.sub}`, 20, 60_000)
 
   const body = await readBody<DiscoverBody>(event)
   const mode = body.mode === 'ai' ? 'ai' : 'filters'

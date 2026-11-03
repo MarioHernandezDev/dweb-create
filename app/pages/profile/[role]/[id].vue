@@ -74,7 +74,7 @@ function copyProfileLink() {
 <template>
   <AppShell :role="myRole ?? 'creator'" title="Perfil" full-width>
     <PublicProfileView
-      :profile="profile" :packages="packages" :rating-summary="ratingSummary" :is-own-profile="isOwnProfile" :my-role="myRole"
+      :profile="profile" :packages="packages" :rating-summary="ratingSummary" :is-own-profile="isOwnProfile" :my-role="myRole ?? null"
       :starting-chat="startingChat" :chat-error="chatError" :link-copied="linkCopied" :copy-error="copyError"
       @chat="startChat" @offer="openOffer" @copy="copyProfileLink"
     />

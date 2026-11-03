@@ -198,8 +198,8 @@ export function usePackages() {
       return pkg ? { ...pkg, sortOrder: i + 1 } : pkg
     }).filter((p): p is Package => !!p)
 
-    for (let i = 0; i < orderedIds.length; i++) {
-      const { error } = await client.from('packages').update({ sort_order: i + 1 } as never).eq('id', orderedIds[i])
+    for (const [i, id] of orderedIds.entries()) {
+      const { error } = await client.from('packages').update({ sort_order: i + 1 } as never).eq('id', id)
       if (error) console.error('[usePackages] fallo al guardar el nuevo orden:', error.message)
     }
   }

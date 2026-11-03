@@ -12,7 +12,7 @@ function bucketize(dates: Date[], bucketDays: number, bucketCount: number, weigh
   dates.forEach((date, i) => {
     const ageDays = (now - date.getTime()) / 86_400_000
     const idx = bucketCount - 1 - Math.floor(ageDays / bucketDays)
-    if (idx >= 0 && idx < bucketCount) buckets[idx] += weights ? weights[i]! : 1
+    if (idx >= 0 && idx < bucketCount) buckets[idx]! += weights ? weights[i]! : 1
   })
   return buckets
 }

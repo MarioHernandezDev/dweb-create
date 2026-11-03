@@ -162,18 +162,20 @@ export function useChat() {
     if (creatorIds.length) {
       const { data } = await client.from('creators').select('id, profile_id, display_name').in('profile_id', creatorIds)
       for (const row of (data ?? []) as { id: string; profile_id: string; display_name: string }[]) {
-        if (names[row.profile_id]) {
-          names[row.profile_id].name = row.display_name
-          names[row.profile_id].fichaId = row.id
+        const entry = names[row.profile_id]
+        if (entry) {
+          entry.name = row.display_name
+          entry.fichaId = row.id
         }
       }
     }
     if (partnerIds.length) {
       const { data } = await client.from('partners').select('id, profile_id, company_name').in('profile_id', partnerIds)
       for (const row of (data ?? []) as { id: string; profile_id: string; company_name: string }[]) {
-        if (names[row.profile_id]) {
-          names[row.profile_id].name = row.company_name
-          names[row.profile_id].fichaId = row.id
+        const entry = names[row.profile_id]
+        if (entry) {
+          entry.name = row.company_name
+          entry.fichaId = row.id
         }
       }
     }
@@ -404,9 +406,9 @@ export function useChat() {
    */
   function updateConversationPreview(conversationId: string, message: ChatMessage, isMine: boolean, forceRead = false) {
     const idx = conversations.value.findIndex((c) => c.id === conversationId)
-    if (idx === -1) return false
-
     const current = conversations.value[idx]
+    if (!current) return false
+
     const updated: ConversationSummary = {
       ...current,
       lastMessagePreview: message.kind === 'offer' ? 'Oferta enviada' : message.body,
@@ -496,11 +498,12 @@ export function useChat() {
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'conversations' }, (payload) => {
         const row = payload.new as ConversationRow
         const idx = conversations.value.findIndex((c) => c.id === row.id)
-        if (idx === -1 || !me) return
+        const current = conversations.value[idx]
+        if (!current || !me) return
         const mine = row.participant_one_id === me ? row.participant_one_last_read_at : row.participant_two_last_read_at
         const theirs = row.participant_one_id === me ? row.participant_two_last_read_at : row.participant_one_last_read_at
         const next = [...conversations.value]
-        next[idx] = { ...next[idx], myLastReadAt: mine, otherLastReadAt: theirs }
+        next[idx] = { ...current, myLastReadAt: mine, otherLastReadAt: theirs }
         conversations.value = next
       })
       .subscribe()

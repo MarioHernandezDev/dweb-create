@@ -105,7 +105,7 @@ const channelTooNew = computed(() => analyticsError.value?.code === 'period_unav
 const showPeriod = computed(() => analyticsEnabled.value && !analyticsProblem.value && !channelTooNew.value)
 
 // Mini-tendencias: solo con un dato por cada día del periodo (si hay huecos no se dibuja nada).
-const sparks = computed<Record<string, number[] | null>>(() => {
+const sparks = computed((): Record<string, number[] | null> => {
   const r = report.value
   if (!r) return {}
   return {

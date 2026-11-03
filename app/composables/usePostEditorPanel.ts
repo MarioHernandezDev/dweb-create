@@ -100,7 +100,7 @@ export function usePostEditorPanel(post: Ref<Post | null | undefined>) {
   // Etiquetas
   const labelsPickerOpen = ref(false)
   const newLabelName = ref('')
-  const newLabelColor = ref(LABEL_COLORS[0].hex)
+  const newLabelColor = ref<(typeof LABEL_COLORS)[number]['hex']>(LABEL_COLORS[0].hex)
   const attachedLabels = computed(() => {
     if (!post.value) return []
     const ids = post.value.labelIds

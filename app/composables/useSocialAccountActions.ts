@@ -18,7 +18,7 @@ export function useSocialAccountActions() {
 
   // Vuelta del OAuth real de Instagram/YouTube (el callback de cada red redirige
   // aquí con su propio nombre de query). `accounts` ya se recargó con el resultado real.
-  const oauthPlatformParam = route.query.instagram ? 'instagram' : route.query.youtube ? 'youtube' : null
+  const oauthPlatformParam: SocialAccount['platform'] | null = route.query.instagram ? 'instagram' : route.query.youtube ? 'youtube' : null
   const oauthQueryValue = oauthPlatformParam ? route.query[oauthPlatformParam] : null
   const connectResult = oauthQueryValue === 'connected'
     ? { ok: true as const, platform: oauthPlatformParam! }

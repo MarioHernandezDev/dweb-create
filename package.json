@@ -11,6 +11,7 @@
     "db:seed-users": "node --env-file=.env scripts/seed-demo-users.mjs",
     "db:seed-discover": "node --env-file=.env scripts/seed-discover-demo.mjs",
     "db:cleanup-discover-demo": "node --env-file=.env scripts/cleanup-discover-demo.mjs",
+    "typecheck": "vue-tsc -b --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:integration": "vitest run --config vitest.integration.config.ts"

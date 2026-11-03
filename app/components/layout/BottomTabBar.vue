@@ -29,7 +29,8 @@ const moreActive = computed(() => moreItems.value.some((item) => isActive(item.t
 
 const { unreadCount: inboxUnread } = useNotifications()
 const { unreadCount: chatUnread } = useChat()
-const badgeFor: Record<string, import('vue').ComputedRef<number>> = { '/chat': chatUnread, '/inbox': inboxUnread }
+const badgeFor: Record<string, Readonly<Ref<number>>> = { '/chat': chatUnread, '/inbox': inboxUnread }
+const badgeCount = (to: string) => badgeFor[to]?.value ?? 0
 const moreBadgeTotal = computed(() => inboxUnread.value)
 
 // Hallazgo #5 de la auditoría de usabilidad: "cerrar sesión" estaba
@@ -62,11 +63,11 @@ async function confirmLogout() {
           >
             <Icon :name="item.icon" class="size-[1.35rem] transition-transform duration-300 ease-[var(--ease-spring-out)]" :class="isActive(item.to) && 'scale-110'" />
             <span
-              v-if="badgeFor[item.to]?.value"
+              v-if="badgeCount(item.to)"
               class="absolute top-0 right-0 min-w-[0.9375rem] h-[0.9375rem] px-1 rounded-full bg-[var(--color-status-alert)] text-white text-[0.625rem] font-semibold leading-[0.9375rem] text-center"
               data-tab-badge
             >
-              {{ badgeFor[item.to].value > 9 ? '9+' : badgeFor[item.to].value }}
+              {{ badgeCount(item.to) > 9 ? '9+' : badgeCount(item.to) }}
             </span>
           </span>
           <span class="text-[0.6875rem] font-medium">{{ item.label }}</span>
@@ -105,8 +106,8 @@ async function confirmLogout() {
         >
           <Icon :name="item.icon" class="size-5 shrink-0" />
           <span class="text-[0.9375rem] font-medium flex-1">{{ item.label }}</span>
-          <span v-if="badgeFor[item.to]?.value" class="min-w-[1.125rem] h-[1.125rem] px-1 rounded-full bg-[var(--color-status-alert)] text-white text-[0.6875rem] font-semibold leading-[1.125rem] text-center">
-            {{ badgeFor[item.to].value > 9 ? '9+' : badgeFor[item.to].value }}
+          <span v-if="badgeCount(item.to)" class="min-w-[1.125rem] h-[1.125rem] px-1 rounded-full bg-[var(--color-status-alert)] text-white text-[0.6875rem] font-semibold leading-[1.125rem] text-center">
+            {{ badgeCount(item.to) > 9 ? '9+' : badgeCount(item.to) }}
           </span>
         </NuxtLink>
         <button

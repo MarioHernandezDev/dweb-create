@@ -129,7 +129,9 @@ export default defineEventHandler(async (event) => {
   const user = await serverSupabaseUser(event)
   if (!user) throw createError({ statusCode: 401, statusMessage: 'No autenticado.' })
   // Cada predicción puede llamar al LLM: 10 por minuto y usuario frena el abuso.
-  enforceRateLimit(event, `ml-predict:${user.id}`, 10, 60_000)
+  // `serverSupabaseUser` devuelve los claims del JWT: el id es `sub` (`user.id` no
+  // existe y dejaba un único cupo compartido por todos los usuarios).
+  enforceRateLimit(event, `ml-predict:${user.sub}`, 10, 60_000)
 
   const body = await readBody<PredictBody>(event)
   if (!body?.postId) throw createError({ statusCode: 400, statusMessage: 'Falta postId.' })
@@ -157,7 +159,7 @@ export default defineEventHandler(async (event) => {
   // saldo. `credit_ledger` es un libro de movimientos (positivos = concedidos,
   // negativos = gastados) — el saldo es su suma, no hay columna cacheada.
   const { data: ledgerRows } = await client.from('credit_ledger').select('amount').eq('creator_id', post.creator_id)
-  const creditBalance = (ledgerRows ?? []).reduce((sum, row) => sum + row.amount, 0)
+  const creditBalance = ((ledgerRows ?? []) as { amount: number }[]).reduce((sum, row) => sum + row.amount, 0)
   if (creditBalance <= 0) {
     throw createError({ statusCode: 402, statusMessage: 'Sin créditos disponibles. Mejora tu plan para seguir prediciendo.' })
   }

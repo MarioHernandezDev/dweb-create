@@ -22,8 +22,11 @@ jobs:
 
       - run: npm ci
 
+      # `-b` es imprescindible: el tsconfig.json raíz solo tiene `references` a los
+      # proyectos de .nuxt, y `vue-tsc --noEmit` sin `-b` no revisaba ningún archivo
+      # (pasaba siempre en verde). Ver H0-01 en docs/audit/07_CRITICAL_FINDINGS_VALIDATION.md.
       - name: Typecheck
-        run: npx vue-tsc --noEmit
+        run: npm run typecheck
 
       - name: Unit tests
         run: npm test -- --run

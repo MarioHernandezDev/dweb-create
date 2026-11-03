@@ -54,9 +54,12 @@ export default defineEventHandler(async (event) => {
     )
   if (subError) throw createError({ statusCode: 500, statusMessage: subError.message })
 
+  const proPlan = plans.pro
+  if (!proPlan) throw createError({ statusCode: 500, statusMessage: 'El plan Pro no está definido en stripe-plans.ts.' })
+
   const { error: creditError } = await client.from('credit_ledger').insert({
     creator_id: creator.id,
-    amount: plans.pro.monthlyCredits * months,
+    amount: proPlan.monthlyCredits * months,
     reason: 'adjustment'
   } as never)
   if (creditError) throw createError({ statusCode: 500, statusMessage: creditError.message })

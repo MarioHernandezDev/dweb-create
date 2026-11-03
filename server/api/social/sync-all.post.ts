@@ -49,7 +49,7 @@ export default defineEventHandler(async (event) => {
   if (!verifyCronSecret(getHeader(event, 'authorization'), config.syncCronSecret)) {
     const failures = checkRateLimit(`sync-all-fail:${clientIp(event)}`, 5, 10 * 60_000)
     if (!failures.allowed) {
-      setResponseHeader(event, 'Retry-After', String(failures.retryAfterSeconds))
+      setResponseHeader(event, 'Retry-After', failures.retryAfterSeconds)
       throw createError({ statusCode: 429, statusMessage: 'Demasiados intentos.' })
     }
     throw createError({ statusCode: 401, statusMessage: 'No autorizado.' })
@@ -57,7 +57,7 @@ export default defineEventHandler(async (event) => {
 
   const run = checkRateLimit('sync-all-run', 1, 60_000)
   if (!run.allowed) {
-    setResponseHeader(event, 'Retry-After', String(run.retryAfterSeconds))
+    setResponseHeader(event, 'Retry-After', run.retryAfterSeconds)
     throw createError({ statusCode: 429, statusMessage: 'Ya se ha lanzado una sincronización hace menos de un minuto.' })
   }
 
