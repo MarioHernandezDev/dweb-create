@@ -81,7 +81,7 @@ Recordatorio: el proyecto de Supabase es **único y compartido**; una migración
 
 ## 8. Pruebas y criterios de aceptación
 
-Comandos reales: `npx vue-tsc --noEmit` · `npm test -- --run` · `npm run build` · `npm run test:integration` (solo si tocas datos/RLS/RPC; mesura el límite de autenticación compartido).
+Comandos reales: `npm run typecheck` (`vue-tsc -b --noEmit`; el antiguo `npx vue-tsc --noEmit` no revisaba nada, ver docs/audit/07) · `npm test -- --run` · `npm run build` · `npm run test:integration` (solo si tocas datos/RLS/RPC; mesura el límite de autenticación compartido).
 
 Criterios de cada tarea: ver la tabla de la sección 2. Criterios transversales (sección 12): typecheck/tests/build limpios; interfaz vista en navegador real a 390px y escritorio; entrada en `docs/CHANGELOG.md` con "Qué se cambió / Verificado de verdad / Sin verificar"; no declarar nada verificado sin haberlo probado.
 
@@ -116,7 +116,7 @@ Reglas propuestas (acordarlas en la Fase 0):
 
 ## 12. Criterios de finalización (valen para toda tarea)
 
-1. `npx vue-tsc --noEmit`, `npm test -- --run` y `npm run build` limpios.
+1. `npm run typecheck`, `npm test -- --run` y `npm run build` limpios.
 2. `npm run test:integration` si se tocaron datos/RLS/RPC (respetando el límite de autenticación).
 3. Cambios de interfaz **vistos en un navegador real** (390px y escritorio) con cuenta demo o cuenta nueva según el caso. Que compile no basta.
 4. Entrada en `docs/CHANGELOG.md` con "Qué se cambió / Verificado de verdad / Sin verificar".
@@ -173,3 +173,7 @@ Mario lleva Stripe y pagos, legal/RGPD, seguridad transversal (límites de uso, 
 | 2026-11-03 | `20261103100000_chat_limits.sql` | Chat: límites de longitud (2000 / 500) y frecuencia (30 mensajes/min, 20 ofertas/h) en `send_text_message` y `create_offer`; `CHECK NOT VALID` e índices | Alex; **Aplicada por Alex; verificada con su prueba de integración (2026-11-03)**; Mario conforme. Pruebas: `tests/integration/chat-limits.spec.ts` |
 | 2026-11-03 | `20261103110000_offers_keep_on_package_delete.sql` | `offers.package_id` nullable con `on delete set null`, `package_title`, trigger que borra solo ofertas pendientes del paquete; `create_offer` guarda el título | Alex; **Aplicada por Alex; verificada con su prueba de integración (2026-11-03)**; Mario conforme. Pruebas: `tests/integration/offers-package-delete.spec.ts` |
 | 2026-11-03 | `20261103120000_posts_published_at.sql` | Trigger que escribe `posts.published_at` al pasar a `published` | Alex; **Aplicada por Alex; verificada con su prueba de integración (2026-11-03)**. Pruebas: `tests/integration/posts-published-at.spec.ts` |
+| 2026-11-03 | `20261103130000_social_accounts_server_only_delete.sql` | H0-08: el navegador ya no puede borrar `social_accounts` (se quita `grant delete` y `social_accounts_delete_self`); solo borra el servidor | Alex; **Aplicada por Alex; verificada con la auditoría de catálogo (2026-11-03): `authenticated` sin DELETE/INSERT/UPDATE, solo SELECT de 10 columnas, única política `social_accounts_select_self`; `social-accounts-rls.spec.ts` 16/16**. Ver `docs/audit/07_CRITICAL_FINDINGS_VALIDATION.md` |
+| 2026-11-03 | `20261103140000_function_execute_privileges.sql` | H0-03: `notify`, `_get_or_create_conversation` y `has_accepted_offer_between` sin EXECUTE para `anon`/`authenticated`; RPC de la app sin EXECUTE para `anon` | Alex; **Aplicada por Alex; verificada contra la base real para `anon`: 18/18 dan 42501 y `current_*_id` siguen accesibles**. Parte `authenticated` verificada con la auditoría de catálogo: las 3 internas solo para `service_role`; `function-privileges.spec.ts` 23/23 y `offers.spec.ts` 4/4 (regresión) |
+| 2026-11-03 | `20261103150000_billing_webhook_idempotency.sql` | H0-02: `credit_ledger.stripe_invoice_id` único y CHECK de `subscriptions.status` con los 8 estados de Stripe | Alex; **Aplicada por Alex; columna `stripe_invoice_id` comprobada en la base real** (va en la misma transacción que el CHECK). CHECK con los 8 estados verificado en el catálogo. Circuito completo con Stripe CLI: pendiente |
+| 2026-11-03 | `20261103160000_restore_handle_new_user.sql` | H0-17: restaura `handle_new_user()` (estaba la versión de `20261020180000`, que no creaba la ficha en las altas nuevas) | Alex; **Aplicada por Alex; verificada en el catálogo: cuerpo vivo idéntico a la migración, trigger activo, columnas presentes; 32/32 funciones ya coinciden con su última migración**. `signup-trigger.spec.ts` 2/2 contra la base real. Pendiente: un alta real desde `/onboarding` en navegador |

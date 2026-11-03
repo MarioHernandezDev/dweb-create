@@ -4,6 +4,80 @@ Registro de qué se hizo, por qué, y qué queda pendiente de verificar — pens
 
 ---
 
+## 2026-11-03 (Alex-53) — [Alex] Pruebas de aceptación de las migraciones contra la base real; arreglo de la limpieza de `offers.spec.ts`
+
+- **Ejecutado con autorización de Alex (`RUN_SOCIAL_ACCOUNTS_RLS=1`, base compartida):**
+  - `signup-trigger.spec.ts` **2/2**: un creador nuevo tiene ficha, 3 créditos y aviso de bienvenida; un partner, ficha y aviso.
+  - `function-privileges.spec.ts` **23/23**.
+  - `social-accounts-rls.spec.ts` **16/16**: el dueño ya no puede borrar su fila por petición directa.
+  - `offers.spec.ts` **4/4**: el ciclo completo oferta → aceptar → colaboración sigue funcionando con las funciones internas revocadas.
+- **Defecto de test encontrado y corregido:** desde R20i (`20261103110000`), borrar el paquete conserva las ofertas **aceptadas**, y la limpieza de `offers.spec.ts` contaba con la cascada, así que dejaba una oferta aceptada huérfana por ejecución. Se borró la de esta ejecución, con un criterio explícito (título `[test-integración]`, aceptada, sin paquete, creada entre las 17:37 y las 17:38 UTC, sin mensajes ni colaboraciones; exactamente 1 fila). El test ahora borra la oferta. Al repetirlo: 4/4 y **0 restos**.
+- **Restos comprobados en solo lectura tras todas las ejecuciones:** 0 cuentas de prueba, 21 perfiles (como antes), 0 perfiles sin ficha, 0 filas `a-r11-test`, 0 paquetes, ofertas ni colaboraciones de test. Quedan los avisos de "Has iniciado sesión" de las cuentas demo, como en cualquier ejecución de integración.
+- **Sin verificar:** el alta real desde `/onboarding` en navegador y el circuito de Stripe con Stripe CLI.
+
+---
+
+## 2026-11-03 (Alex-52) — [Alex] H0-17 aplicada: el esquema vivo coincide entero con las migraciones
+
+- Alex aplicó `20261103160000_restore_handle_new_user.sql`.
+- **Verificado en el catálogo (solo lectura):** el `handle_new_user()` vivo es idéntico a la migración, el trigger `on_auth_user_created` está activo y existen las 9 columnas que usa. Al repetir la auditoría completa: 32/32 funciones idénticas a su última migración, 57/57 políticas, 28/28 tablas con RLS y 13 triggers.
+- **Sin verificar:** un alta real. Faltan `tests/integration/signup-trigger.spec.ts` (crea y borra 2 cuentas de prueba) y el alta desde `/onboarding` en navegador.
+
+---
+
+## 2026-11-03 (Alex-51) — [Alex] Auditoría de catálogo de la base real; el trigger de alta estaba regresado (H0-17)
+
+- **Conexión:** cadena del *Session pooler* en `.env` (la directa solo funciona por IPv6). Sobraba un espacio antes de la `@` y se quitó. Auditoría en transacción `READ ONLY`, sin imprimir la cadena.
+- **Verificado en la base real:**
+  - H0-03: las internas solo para `service_role`; las RPC de la app sin `anon`.
+  - H0-08: `authenticated` sin DELETE/INSERT/UPDATE en `social_accounts`.
+  - H0-02: CHECK con los 8 estados y el índice único de `stripe_invoice_id`. Ninguna concesión de 20 créditos en `credit_ledger`: nunca se procesó una factura de Pro.
+  - Las 57 políticas coinciden exactamente con las migraciones; las 28 tablas tienen RLS; los 13 triggers son los esperados.
+  - 31 de 32 funciones son idénticas a su última migración. No hay registro de migraciones en la base.
+- **Hallazgo nuevo H0-17 (crítico para el lanzamiento):** `handle_new_user()` vivo es el de `20261020180000_real_signup.sql`, dos versiones por detrás (roles `influencer`/`manager`/`client`). Una alta real desde `/onboarding` crea el perfil **sin ficha**, sin créditos ni aviso de bienvenida, y un alta sin rol falla. Hoy no hay cuentas afectadas (21/21 con ficha; última alta, 23/10; 0 avisos `welcome` en toda la base). Lo más probable es que alguien volviera a ejecutar esa migración antigua.
+- **Preparada, NO aplicada:** `20261103160000_restore_handle_new_user.sql`, la definición literal de `20261021120000`. Reproducido y corregido en el entorno aislado (PGlite), también con `notify()` ya revocado. Prueba contra la base real: `tests/integration/signup-trigger.spec.ts` (crea y borra 2 cuentas de prueba).
+- **Sin verificar:** la migración aplicada en la base real, y un alta real desde `/onboarding` en navegador.
+
+---
+
+## 2026-11-03 (Alex-50) — [Alex] Migraciones H0-02, H0-03 y H0-08 aplicadas; suscripciones huérfanas de Stripe test canceladas
+
+- Alex aplicó `20261103130000_social_accounts_server_only_delete.sql`, `20261103140000_function_execute_privileges.sql` y `20261103150000_billing_webhook_idempotency.sql` (registro en `docs/TRABAJO_ALEX.md`).
+- **Verificado contra la base real (sin sesión ni escritura):** con la clave anon, las 18 funciones revocadas responden `42501`, y `current_creator_id`/`current_partner_id` siguen accesibles. La columna `credit_ledger.stripe_invoice_id` existe.
+- **Stripe (modo test, autorizado por Alex):** canceladas las 3 suscripciones del 20/10, que no tenían fila en FEEDMA. Ya solo quedan `canceled: 3`. No había webhook registrado, así que la app no recibió eventos.
+- **Sin verificar:** la parte `authenticated` de H0-03 y que el navegador ya no pueda borrar `social_accounts` (H0-08) contra la base real. Falta la auditoría de catálogo (necesita la cadena del Session pooler) o los tests de integración `function-privileges` y `social-accounts-rls`.
+
+---
+
+## 2026-11-03 (Alex-49) — [Alex] Validación de hallazgos críticos: typecheck real, webhook de Stripe, permisos de funciones y borrado de `social_accounts`
+
+Detalle completo, con evidencia y estado de cada punto: `docs/audit/07_CRITICAL_FINDINGS_VALIDATION.md`.
+
+### Qué se cambió
+
+- **Typecheck (H0-01):** `npx vue-tsc --noEmit` no revisaba ningún archivo (el `tsconfig.json` raíz solo tiene `references`). Nuevo `npm run typecheck` = `vue-tsc -b --noEmit`, también en la CI. El typecheck real dio 30 errores; se corrigieron los 29 que eran solo de tipos sin cambiar el comportamiento, y el que era un fallo real es H0-02.
+- **Límite de uso compartido (hallazgo nuevo):** `discover/search` y `ml/predict` usaban `user.id`, que no existe en los claims del JWT (es `sub`). La clave quedaba `…:undefined`, un único cupo para todos los usuarios. Ahora usan `user.sub`.
+- **Webhook de Stripe (H0-02):** leía `invoice.subscription`, que no existe en la API de la cuenta (2026-09-30.endive), así que nunca concedía los créditos de Pro. Nuevo `server/utils/stripe-webhook.ts` (lee `parent.subscription_details`, acepta también la forma antigua). El webhook responde 500 cuando falla una escritura (antes 200: Stripe no reintentaba) y si `invoice.paid` llega antes que la suscripción. Los créditos llevan `stripe_invoice_id` para no duplicarse.
+- **Migraciones PREPARADAS, NO APLICADAS:** `20261103130000_social_accounts_server_only_delete.sql` (H0-08: el navegador ya no borra `social_accounts`), `20261103140000_function_execute_privileges.sql` (H0-03: `notify`, `_get_or_create_conversation` y `has_accepted_offer_between` dejan de poder llamarse desde fuera; las RPC de la app, solo con sesión) y `20261103150000_billing_webhook_idempotency.sql` (`credit_ledger.stripe_invoice_id` único y los 8 estados de suscripción de Stripe).
+- **Contraseña de demo (H0-09):** fuera de `tests/integration/supabase-setup.ts`, de los seeds (ahora exigen `DEMO_PASSWORD`), de `.env.example` y de la documentación. Queda en `app/pages/login.vue` (archivo de Mario, solo en desarrollo) y en el historial de git.
+- `.env.example` documenta `SUPABASE_DB_URL` (el host directo solo tiene IPv6).
+
+### Verificado de verdad
+
+- `npm run typecheck` limpio. Con un error puesto a propósito en `app/` y en `server/`, **falla**; el comando antiguo, con el mismo error, **pasaba**. 609 pruebas unitarias OK (11 nuevas de `stripe-webhook`); `npm run build` OK; la contraseña de demo no está en `.output`.
+- Stripe en **modo test, solo lectura**: la cuenta genera sus eventos con la API 2026-09-30.endive y en sus `invoice.paid` reales no existe `subscription` en la raíz. No hay ningún webhook registrado. Las 3 suscripciones de prueba del 20/10 siguen activas y no tienen ninguna fila en `subscriptions`.
+- **Permisos efectivos** con la clave anon y entradas que no escriben nada: `anon` ejecuta las 20 funciones `SECURITY DEFINER` revisadas (ninguna da 42501), incluida `notify()`. No se ha creado ningún aviso real.
+- **Entorno aislado (PGlite, en memoria):** las 39 migraciones y las 3 nuevas se aplican desde cero. Con las nuevas, `anon` y `authenticated` reciben "permission denied" en las internas, `service_role` sigue pudiendo usar `notify`, **`create_offer` sigue funcionando** (crea conversación y aviso por dentro), el navegador no puede borrar `social_accounts`, una factura repetida choca y `unpaid` se acepta.
+
+### Sin verificar / pendiente
+
+- **Ninguna migración nueva está aplicada** en el Supabase compartido; tras aplicarlas hay que ejecutar `function-privileges.spec.ts` y `social-accounts-rls.spec.ts` (con `RUN_SOCIAL_ACCOUNTS_RLS=1`). Mientras no se aplique la de facturación, `invoice.paid` responderá 500 (Stripe reintenta; no se pierde nada).
+- El circuito completo de Stripe (Checkout → webhook → créditos) no se ha ejecutado: falta Stripe CLI. El plan de pruebas está en el documento 07.
+- La conexión directa a Postgres es imposible desde este equipo (sin IPv6): la comparación de cuerpos de funciones y políticas con el catálogo real sigue pendiente.
+- Rotar la contraseña de las cuentas demo y retirarla de `login.vue` (Mario).
+
+---
+
 ## 2026-11-03 (Alex-48) — [Alex] «Hoy»: objetivo semanal real y entregas visibles con mucho historial; aviso de hidratación no reproducible
 
 - **Defecto 1 (dato engañoso):** el «Objetivo semanal» de `/creator` contaba **todas** las publicaciones publicadas de siempre, no las de la semana (con 320 antiguas marcaba 300/5). Ahora cuenta las publicadas en la **semana natural en curso (lunes a domingo, hora local)** (`publishedThisWeek` en `utils/post-library.ts`; Alex eligió semana natural en lugar de «últimos 7 días»): usa `posts.published_at` y, en las publicadas antes de existir ese campo (`null`), aproxima con la fecha de entrega, para que el historial antiguo no infle el objetivo. `Post.publishedAt` nuevo.
@@ -1869,7 +1943,7 @@ Siguiente pieza del plan de `CONTEXT.md`, la única de la Fase 1 que no dependí
 
 ### Lo encontrado
 
-`login.vue` ya ocultaba el botón de acceso demo en producción con `v-if="isDev"` (protección ya existente). Pero `demoAccounts`/`demoPassword` se definían sin ninguna condición en el `<script setup>` — confirmado leyendo el bundle real tras `npm run build`: el email (`feedma.test`) y la contraseña (`feedma-demo-2026`) estaban en texto plano en el JS de cliente que se sirve a cualquiera, aunque el botón nunca se renderizara.
+`login.vue` ya ocultaba el botón de acceso demo en producción con `v-if="isDev"` (protección ya existente). Pero `demoAccounts`/`demoPassword` se definían sin ninguna condición en el `<script setup>` — confirmado leyendo el bundle real tras `npm run build`: el email (`feedma.test`) y la contraseña de demo estaban en texto plano en el JS de cliente que se sirve a cualquiera, aunque el botón nunca se renderizara.
 
 ### Arreglado
 
@@ -1878,7 +1952,7 @@ Las asignaciones se movieron dentro de `if (import.meta.dev) { ... }`. Vite sust
 ### Verificado de verdad
 
 - `npx vue-tsc --noEmit` y `npm test -- --run` (30/30): limpios.
-- Build de producción limpio desde cero (`rm -rf .output && npm run build`) y confirmado por `grep` que ni `feedma-demo-2026` ni `feedma.test` aparecen en ningún archivo de `.output/public` ni `.output/server`.
+- Build de producción limpio desde cero (`rm -rf .output && npm run build`) y confirmado por `grep` que ni la contraseña de demo ni `feedma.test` aparecen en ningún archivo de `.output/public` ni `.output/server`.
 - Sin verificar en vivo en modo desarrollo (el servidor de `npm run dev` no estaba corriendo en este momento) — el comportamiento en dev no cambia de todas formas, ya que `import.meta.dev` sigue siendo `true` ahí.
 
 ## 2026-10-23 (35) — Fase 0 del traspaso CONTEXT.md: commit del backlog, rama nueva, dos bugs verificados y corregidos
@@ -2856,7 +2930,7 @@ Tras el último `git pull` (commit `a80e6db "Subida datos reales."`), `npm run d
 - El error al arrancar (`Cannot read properties of undefined (reading 'state')`) venía de que `@nuxtjs/supabase` se inicializaba con `SUPABASE_URL`/`SUPABASE_ANON_KEY` vacíos. Causa: no había `.env`, y la copia inicial de `.env.example` tampoco tenía valores reales.
 - Se encontró que **ya existe un proyecto real en Supabase** (`qymqzddqrnsxjnwbqlgq.supabase.co`) con sus claves — probablemente añadidas por el compañero de equipo. Se corrigió un espacio de más en `SUPABASE_SERVICE_ROLE_KEY=` dentro de `.env` que podía romper el parseo.
 - Se probó también levantar Supabase en local vía Docker (`npx supabase start`, ver `docs/6-SUPABASE-SETUP.md` §6) como alternativa por si el proyecto real no estaba listo. Como sí lo estaba, se paró (`npx supabase stop`) para no generar confusión entre dos backends distintos — **el proyecto real en la nube es el que usa la app**, no hace falta Docker para el día a día.
-- `npm run db:seed-users` confirmado contra el proyecto real: las 3 cuentas de prueba ya existían (`manager@feedma.test`, `influencer@feedma.test`, `client@feedma.test`, contraseña `feedma-demo-2026`).
+- `npm run db:seed-users` confirmado contra el proyecto real: las 3 cuentas de prueba ya existían (`manager@feedma.test`, `influencer@feedma.test`, `client@feedma.test`, contraseña retirada del documento, ver `DEMO_PASSWORD` en .env).
 
 **Nota para el compañero:** el script `seed-demo-users.mjs` hace `insert` (no `upsert`) del post y la colaboración de demo cada vez que se ejecuta. Si se corrió más de una vez contra el proyecto real, habrá posts/colaboraciones de demo duplicados — se vio al consultar la tabla `posts` del roster del manager (2 copias del mismo "Reel: rutina skincare nocturna"). No es nada que se haya roto en esta sesión, pero conviene revisarlo (lo más simple: borrar el duplicado a mano desde el Table Editor, o cambiar el script a `upsert` con alguna clave estable).
 

@@ -241,7 +241,7 @@ Cierre general
 No fuerces un orden lineal cuando haya tareas independientes; sí respeta las dependencias técnicas y las puertas de seguridad.
 12. Comprobaciones mínimas para cada entrega
 Comandos indicados por el proyecto:
-- npx vue-tsc --noEmit
+- npm run typecheck (= vue-tsc -b --noEmit; sin -b no revisaba ningún archivo, ver docs/audit/07_CRITICAL_FINDINGS_VALIDATION.md)
 - npm test -- --run
 - npm run build
 - npm run test:integration cuando se cambien datos, RLS o RPC, coordinando antes por el uso de la base compartida.
