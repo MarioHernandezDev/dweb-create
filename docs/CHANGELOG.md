@@ -4,6 +4,14 @@ Registro de qué se hizo, por qué, y qué queda pendiente de verificar — pens
 
 ---
 
+## 2026-11-03 (Alex-44) — [Alex] Migraciones del chat, ofertas y `published_at` aplicadas y verificadas
+
+- Alex aplicó en el SQL Editor `20261103100000_chat_limits.sql`, `20261103110000_offers_keep_on_package_delete.sql` y `20261103120000_posts_published_at.sql`.
+- **Verificado contra la base real:** `chat-limits.spec.ts` 6/6, `offers-package-delete.spec.ts` 5/5 y `posts-published-at.spec.ts` 3/3 (14/14; antes de aplicar fallaban 4 de 6, la suite de ofertas y 1 de 3).
+- Registro de migraciones actualizado en `docs/TRABAJO_ALEX.md`.
+
+---
+
 ## 2026-11-03 (Alex-43) — [Alex] R21f aplicada y verificada; límites del chat, ofertas conservadas, `published_at` (migraciones preparadas); mensajes anteriores y Chat en la barra móvil
 
 ### Qué se cambió
