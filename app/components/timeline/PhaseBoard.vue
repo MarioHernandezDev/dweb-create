@@ -189,7 +189,7 @@ const bulkDeleting = ref(false)
 async function bulkDelete() {
   const n = selectedIds.value.size
   const ok = await confirm({
-    title: `¿Borrar ${n} publicación${n > 1 ? 'es' : ''}?`,
+    title: `¿Borrar ${n === 1 ? '1 publicación' : `${n} publicaciones`}?`,
     message: 'Se borrarán permanentemente, junto con sus predicciones de éxito si las tenían.',
     confirmLabel: 'Borrar', tone: 'danger', icon: 'ph:trash-fill'
   })

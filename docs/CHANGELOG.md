@@ -4,6 +4,15 @@ Registro de qué se hizo, por qué, y qué queda pendiente de verificar — pens
 
 ---
 
+## 2026-11-03 (Alex-46) — [Alex] Verificación en navegador: chat creador–partner, «Rechazar» y borrado en bloque; plural corregido
+
+- **Defecto real corregido:** el diálogo del borrado en bloque decía «¿Borrar 3 publicaci**ónes**?» (`PhaseBoard.vue`); ahora «¿Borrar 3 publicaciones?» / «¿Borrar 1 publicación?».
+- **Verificado (Chrome por CDP, base real, 19/19):** conversación creador demo ↔ partner (`ecohogar`) con una oferta recibida pendiente: tarjeta con paquete y precio, Aceptar/Rechazar solo para el destinatario, mensaje de texto del creador llega al servidor; «Rechazar» pide confirmación y no cambia nada hasta confirmar, después la oferta queda `declined` en el servidor, la tarjeta pasa a Rechazada sin botones, no se crea colaboración y el partner recibe un aviso. Tablero: seleccionar 3 de 4 cards, confirmación con el número, no se borra nada antes de confirmar, se borran exactamente las 3, un único aviso «3 publicaciones borradas» y la cuarta sigue. Datos `[TEST rest]` borrados al terminar (0 restos).
+- **Observación (no es un defecto):** `respond_offer` solo escribe mensaje de sistema al **aceptar**; al rechazar el hilo no recibe ninguno (el estado se ve en la tarjeta y el partner recibe notificación).
+- **Sin verificar:** «Aceptar» desde la interfaz con partner real (crea colaboración), el rechazo visto desde la cuenta del partner, y fallo de red durante el rechazo o el borrado.
+
+---
+
 ## 2026-11-03 (Alex-45) — [Alex] Paginación de publicaciones
 
 - `useMyPosts` trae las publicaciones de 300 en 300 (por fecha de entrega, con `id` como desempate para que las páginas no repitan ni salten filas) y expone `hasMore`, `loadingMore`, `loadMoreError` y `loadMore()`. El contador de filas traídas es propio (`fetched`), no `posts.length`, para que crear o borrar en local no desplace la página siguiente; se añade sin duplicados.
