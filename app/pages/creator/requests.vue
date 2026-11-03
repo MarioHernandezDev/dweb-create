@@ -13,17 +13,30 @@ const { confirm } = useConfirm()
 const { posts: myPosts, ensureLoaded: ensurePostsLoaded } = useMyPosts()
 await Promise.all([ensureLoaded(), ensurePostsLoaded()])
 
-const tab = ref<'pending' | 'history'>('pending')
+// Tres grupos: lo que espera respuesta, lo que está en marcha (aceptadas y en curso) y lo ya cerrado.
+// Antes las aceptadas caían en «Historial» y «Ver colaboración» desde el chat dejaba en una lista vacía.
+type RequestsTab = 'pending' | 'active' | 'history'
+const ACTIVE_STATUSES = ['accepted', 'in_progress']
+const tab = ref<RequestsTab>('pending')
 const tabs = computed(() => [
   { value: 'pending', label: pendingCount.value ? `Pendientes (${pendingCount.value})` : 'Pendientes' },
+  { value: 'active', label: 'En curso' },
   { value: 'history', label: 'Historial' }
 ])
 
 const newestFirst = (list: typeof requests.value) => [...list].sort((a, b) => b.createdAt.localeCompare(a.createdAt))
 
 const pending = computed(() => newestFirst(requests.value.filter((r) => r.status === 'requested')))
-const history = computed(() => newestFirst(requests.value.filter((r) => r.status !== 'requested')))
-const visible = computed(() => (tab.value === 'pending' ? pending.value : history.value))
+const active = computed(() => newestFirst(requests.value.filter((r) => ACTIVE_STATUSES.includes(r.status))))
+const history = computed(() => newestFirst(requests.value.filter((r) => r.status !== 'requested' && !ACTIVE_STATUSES.includes(r.status))))
+const visible = computed(() => (tab.value === 'pending' ? pending.value : tab.value === 'active' ? active.value : history.value))
+
+// Pestaña inicial: la de la URL (`?tab=`, p. ej. «Ver colaboración» desde el chat); si no, la que tenga contenido.
+const route = useRoute()
+const queryTab = route.query.tab
+tab.value = queryTab === 'active' || queryTab === 'history' || queryTab === 'pending'
+  ? queryTab
+  : (pending.value.length || !active.value.length ? 'pending' : 'active')
 
 const detailOpen = ref(false)
 const detailReq = ref<CollabRequest | null>(null)
@@ -117,9 +130,14 @@ async function handleMarkCompleted() {
       description="Cuando contactes a un partner (o te contacten a ti) desde 'Descubrir', aparecerá aquí."
     />
     <EmptyState
+      v-else-if="!visible.length && tab === 'active'"
+      icon="ph:handshake" title="Sin colaboraciones en curso"
+      description="Las solicitudes y ofertas que aceptes aparecerán aquí hasta que se completen."
+    />
+    <EmptyState
       v-else-if="!visible.length"
       icon="ph:clock-counter-clockwise" title="Todavía no hay historial"
-      description="Las solicitudes que aceptes o rechaces se guardan aquí."
+      description="Las colaboraciones completadas y las solicitudes rechazadas se guardan aquí."
     />
 
     <div v-else class="flex flex-col gap-2.5 md:max-w-xl">

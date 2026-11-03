@@ -4,6 +4,15 @@ Registro de qué se hizo, por qué, y qué queda pendiente de verificar — pens
 
 ---
 
+## 2026-11-03 (Alex-47) — [Alex] Flujo de aceptar una oferta verificado de punta a punta; «En curso» en Colaboraciones
+
+- **Defecto de producto encontrado al probar:** una colaboración aceptada (por chat o por solicitud) aparecía bajo «Historial» y «Ver colaboración» desde la tarjeta de oferta llevaba a «Pendientes», vacío («Sin solicitudes pendientes»): el enlace parecía roto aunque la colaboración existía.
+- **Corrección:** `creator/requests.vue` y `partner/requests.vue` pasan a tres pestañas: **Pendientes** (solicitadas) · **En curso** (`accepted` e `in_progress`) · **Historial** (completadas, rechazadas, canceladas). La pestaña inicial es la de `?tab=` y, si no la hay, la que tenga contenido (Pendientes si hay pendientes; si no, En curso). «Ver colaboración» de `OfferCard.vue` enlaza a `?tab=active`. Textos de estado vacío por pestaña. Sin cambios de backend ni de la lógica de pago/completar (solo agrupación y pestañas; en `partner/requests.vue` son unas 20 líneas junto a la lógica de Stripe de Mario: posible conflicto trivial al fusionar).
+- **Verificado (Chrome por CDP, base real, 15/15):** el partner ofrece sobre un paquete del creador y el creador acepta desde la interfaz: la oferta pasa a `accepted`, tarjeta Aceptada sin botones, mensaje de sistema «Oferta aceptada. Precio acordado: 275,00 €», **una** colaboración con los datos correctos (estado `accepted`, 27 500 céntimos, iniciada por el partner, creador y partner correctos), el partner recibe aviso `offer_accepted`, repetir la aceptación no duplica; «Ver colaboración» abre `/creator/requests?tab=active` y la muestra en «En curso» (no en «Historial»); desde la cuenta del partner la oferta sale Aceptada con el mensaje de sistema y el enlace, y al entrar en Colaboraciones ve la suya sin tocar nada. Datos `[TEST acc]` y colaboración borrados al terminar (0 restos). `vue-tsc` limpio.
+- **Sin verificar:** pago con Stripe tras aceptar, marcar como completada desde cada cuenta, y el detalle de la colaboración recién creada (brief «Oferta aceptada por chat: …»).
+
+---
+
 ## 2026-11-03 (Alex-46) — [Alex] Verificación en navegador: chat creador–partner, «Rechazar» y borrado en bloque; plural corregido
 
 - **Defecto real corregido:** el diálogo del borrado en bloque decía «¿Borrar 3 publicaci**ónes**?» (`PhaseBoard.vue`); ahora «¿Borrar 3 publicaciones?» / «¿Borrar 1 publicación?».
