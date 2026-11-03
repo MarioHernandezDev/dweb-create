@@ -38,12 +38,12 @@ import path from 'node:path'
 
 const SUPABASE_URL = process.env.SUPABASE_URL
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
-const DEMO_PASSWORD = process.env.DEMO_PASSWORD ?? 'feedma-demo-2026'
+const DEMO_PASSWORD = process.env.DEMO_PASSWORD
 
-if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
+if (!SUPABASE_URL || !SERVICE_ROLE_KEY || !DEMO_PASSWORD) {
   console.error(
     '\nFaltan variables de entorno.\n' +
-      'Ejecuta con: SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=... npm run db:seed-discover\n' +
+      'Ejecuta con: SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=... DEMO_PASSWORD=... npm run db:seed-discover\n' +
       '(o copia .env.example a .env y rellénalo)\n'
   )
   process.exit(1)

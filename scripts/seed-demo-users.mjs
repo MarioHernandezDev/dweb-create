@@ -18,13 +18,13 @@ import { createClient } from '@supabase/supabase-js'
 
 const SUPABASE_URL = process.env.SUPABASE_URL
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
-const DEMO_PASSWORD = process.env.DEMO_PASSWORD ?? 'feedma-demo-2026'
+const DEMO_PASSWORD = process.env.DEMO_PASSWORD
 
-if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
+if (!SUPABASE_URL || !SERVICE_ROLE_KEY || !DEMO_PASSWORD) {
   console.error(
     '\nFaltan variables de entorno.\n' +
       'Ejecuta con:\n' +
-      '  SUPABASE_URL=https://tu-proyecto.supabase.co SUPABASE_SERVICE_ROLE_KEY=tu-clave npm run db:seed-users\n' +
+      '  SUPABASE_URL=https://tu-proyecto.supabase.co SUPABASE_SERVICE_ROLE_KEY=tu-clave DEMO_PASSWORD=... npm run db:seed-users\n' +
       '(o copia .env.example a .env y rellénalo — ver supabase/README.md)\n'
   )
   process.exit(1)

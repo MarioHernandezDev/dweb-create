@@ -14,7 +14,8 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 
 const SUPABASE_URL = process.env.SUPABASE_URL
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY
-const DEMO_PASSWORD = 'feedma-demo-2026'
+// La contraseña de las cuentas demo viene del .env (DEMO_PASSWORD), nunca del código.
+const DEMO_PASSWORD = process.env.DEMO_PASSWORD
 
 export const hasSupabaseEnv = !!(SUPABASE_URL && SUPABASE_ANON_KEY)
 
@@ -26,6 +27,10 @@ export function anonClient(): SupabaseClient | null {
 async function signIn(email: string): Promise<{ client: SupabaseClient; userId: string } | null> {
   const client = anonClient()
   if (!client) return null
+  if (!DEMO_PASSWORD) {
+    console.error('[integration setup] falta DEMO_PASSWORD en el .env: no se puede iniciar sesión con las cuentas demo.')
+    return null
+  }
   const { data, error } = await client.auth.signInWithPassword({ email, password: DEMO_PASSWORD })
   if (error || !data.user) {
     console.error(`[integration setup] no se pudo autenticar ${email}:`, error?.message)

@@ -60,8 +60,8 @@ Esto crea, usando la API oficial de administración de Supabase (nunca escribien
 
 | Cuenta | Email | Contraseña |
 |---|---|---|
-| Creador de contenido (Nora Blake) | `creator@feedma.test` | `feedma-demo-2026` |
-| Partner (Alma Beauty Co.) | `partner@feedma.test` | `feedma-demo-2026` |
+| Creador de contenido (Nora Blake) | `creator@feedma.test` | `DEMO_PASSWORD` del .env |
+| Partner (Alma Beauty Co.) | `partner@feedma.test` | `DEMO_PASSWORD` del .env |
 
 Las dos quedan relacionadas entre sí desde el minuto uno: hay una colaboración en curso entre Alma Beauty Co. y Nora Blake, con un post esperando aprobación — así hay algo real que probar en cada vista, no una cuenta vacía.
 
