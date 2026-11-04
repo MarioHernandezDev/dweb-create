@@ -27,7 +27,7 @@ watch(() => props.post?.id, (postId) => { if (postId) ensureItems(postId) }, { i
         class="relative h-32 rounded-[var(--radius-md)] overflow-hidden flex items-center justify-center mb-5"
         :style="!post.mediaUrl ? { background: `linear-gradient(${post.cover.angle}deg, ${post.cover.from}, ${post.cover.to})` } : undefined"
       >
-        <img v-if="post.mediaUrl" :src="post.mediaUrl" alt="" class="absolute inset-0 size-full object-cover">
+        <SmartImage v-if="post.mediaUrl" :src="post.mediaUrl" :width="640" :height="360" class="absolute inset-0 size-full object-cover" />
         <Icon v-else :name="contentTypeMeta[post.contentType].icon" class="size-8 text-white/90" />
       </div>
 

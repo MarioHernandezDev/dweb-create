@@ -58,40 +58,28 @@ async function open(n: NotificationGroup<AppNotification>) {
 
 <template>
   <AppShell :role="myRole" title="Bandeja de entrada" subtitle="Avisos de tu cuenta">
-    <div v-if="hasUnread" class="flex justify-end mb-4">
-      <button type="button" class="text-sm font-medium text-[var(--color-text-muted)] hover:text-[var(--color-text)]" @click="markAllRead">
-        Marcar todo como leído
-      </button>
+    <div class="list-toolbar">
+      <SegmentedTabs v-model="tab" :options="tabs" />
+      <BaseButton v-if="hasUnread" variant="ghost" size="sm" icon="ph:checks-bold" @click="markAllRead">Marcar todo como leído</BaseButton>
     </div>
-
-    <SegmentedTabs v-model="tab" :options="tabs" class="mb-4" />
 
     <EmptyState
       v-if="!visible.length"
       icon="ph:tray" :title="tab === 'important' ? 'Sin avisos importantes' : 'Sin actividad todavía'"
       :description="tab === 'important' ? 'Aquí verás solicitudes, ofertas, cambios pedidos, aprobaciones y valoraciones.' : 'Aquí verás tus inicios de sesión y la bienvenida de alta de cuenta.'"
     />
-    <div v-else class="flex flex-col gap-2 md:max-w-xl">
-      <button v-for="n in visible" :key="n.id" type="button" class="text-left" @click="open(n)">
-        <BaseCard
-          radius="lg" padding="md" interactive class="flex items-start gap-3"
-          :class="n.unread && 'border-[var(--color-primary-500)]/30 bg-[var(--color-primary-500)]/[0.06]'"
-        >
-          <span class="flex items-center justify-center size-9 rounded-full bg-[var(--color-ink-overlay)] text-[var(--color-primary-500)] shrink-0">
-            <Icon :name="iconFor(n)" class="size-4" />
+    <div v-else class="notice-list">
+      <button v-for="n in visible" :key="n.id" type="button" class="notice" :class="n.unread && 'is-unread'" @click="open(n)">
+        <span class="notice__icon"><Icon :name="iconFor(n)" class="size-5" /></span>
+        <span class="notice__head">
+          <span class="notice__title">
+            {{ n.title }}
+            <span v-if="n.count > 1" class="notice__count" :aria-label="`${n.count} avisos iguales`">×{{ n.count }}</span>
           </span>
-          <div class="min-w-0 flex-1">
-            <div class="flex items-center justify-between gap-2">
-              <p class="text-base font-medium text-[var(--color-text)] truncate">
-                {{ n.title }}
-                <span v-if="n.count > 1" class="ml-1 text-micro font-normal text-[var(--color-text-faint)]" :aria-label="`${n.count} avisos iguales`">×{{ n.count }}</span>
-              </p>
-              <span v-if="n.unread" class="shrink-0 size-2 rounded-full bg-[var(--color-primary-500)]" />
-            </div>
-            <p v-if="n.body" class="text-sm text-[var(--color-text-muted)] leading-relaxed mt-0.5">{{ n.body }}</p>
-            <p class="text-micro text-[var(--color-text-faint)] mt-1">{{ relativeTime(n.createdAt) }}</p>
-          </div>
-        </BaseCard>
+          <span v-if="n.unread" class="notice__flag">Nuevo</span>
+        </span>
+        <span v-if="n.body" class="notice__body">{{ n.body }}</span>
+        <span class="notice__time">{{ relativeTime(n.createdAt) }}</span>
       </button>
     </div>
   </AppShell>

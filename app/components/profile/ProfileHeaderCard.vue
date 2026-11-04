@@ -50,7 +50,7 @@ function memberSinceLabel(iso: string) {
 <template>
   <div>
     <div class="relative rounded-[var(--radius-lg)] overflow-hidden" :class="compact ? 'h-28 mb-4' : 'h-44 sm:h-52 mb-5'">
-      <img v-if="coverUrl" :src="coverUrl" alt="" class="absolute inset-0 size-full object-cover">
+      <SmartImage v-if="coverUrl" :src="coverUrl" :width="960" :height="320" priority class="absolute inset-0 size-full object-cover" />
       <div
         v-else class="absolute inset-0"
         :style="{ background: `linear-gradient(${coverArt(coverSeed).angle}deg, ${coverArt(coverSeed).from}, ${coverArt(coverSeed).to})` }"

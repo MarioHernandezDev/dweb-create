@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { coverArtFromString } from '~/utils/avatar'
 import { formatEuros } from '~/utils/mock-data'
 import { formatRatingSummary, hasEnoughRatingsToShowAverage, type RatingSummary } from '~/utils/ratings'
 import type { SavedProfileEntry } from '~/composables/useSavedProfiles'
@@ -24,15 +23,6 @@ async function unsave(entry: SavedProfileEntry) {
   await toggleSave(entry.kind, entry.id)
   entries.value = entries.value.filter((e) => e.savedId !== entry.savedId)
   selectedIds.value = selectedIds.value.filter((id) => id !== entry.savedId)
-}
-
-function coverStyle(id: string) {
-  const art = coverArtFromString(id)
-  const hue = art.from.match(/hsl\((\d+)/)?.[1] ?? '0'
-  return {
-    backgroundColor: `hsl(${hue} 24% 93%)`,
-    backgroundImage: 'repeating-linear-gradient(45deg, rgb(26 22 37 / 5%) 0 8px, transparent 8px 16px)'
-  }
 }
 
 // Comparar 2-3 guardados a la vez (roadmap, sección 6: "comparación de
@@ -90,6 +80,8 @@ async function runCompare() {
   }
 }
 
+const kindIcon = (kind: 'creator' | 'partner') => (kind === 'creator' ? 'ph:user-focus' : 'ph:storefront-fill')
+
 function rangeLabel(profile: PublicProfile) {
   if (!profile.minCents && !profile.maxCents) return null
   return `${profile.minCents ? formatEuros(profile.minCents) : '…'}–${profile.maxCents ? formatEuros(profile.maxCents) : '…'}`
@@ -97,81 +89,64 @@ function rangeLabel(profile: PublicProfile) {
 </script>
 
 <template>
-  <AppShell :role="myRole" title="Guardados" subtitle="Candidatos que has marcado desde Descubrir">
+  <AppShell :role="myRole" title="Guardados" subtitle="Candidatos que has marcado desde Descubrir" full-width>
     <EmptyState
       v-if="!entries.length"
       icon="ph:bookmark-simple" title="Todavía no has guardado a nadie"
       description="Desde Descubrir, pulsa el icono del marcador en cualquier perfil para añadirlo aquí."
-    />
+    >
+      <BaseButton :to="`/${myRole}/discover`" variant="primary" size="sm">Ir a Descubrir</BaseButton>
+    </EmptyState>
     <template v-else>
-      <div class="flex items-center justify-between gap-3 mb-4 md:max-w-xl">
-        <p v-if="compareMode" class="text-sm text-[var(--color-text-muted)]">
-          Elige entre 2 y {{ MAX_COMPARE }} para comparar ({{ selectedIds.length }} seleccionados)
+      <div class="list-toolbar">
+        <p class="list-toolbar__note">
+          <template v-if="compareMode">Elige entre 2 y {{ MAX_COMPARE }} para comparar ({{ selectedIds.length }} seleccionados)</template>
+          <template v-else>{{ entries.length }} {{ entries.length === 1 ? 'perfil guardado' : 'perfiles guardados' }}</template>
         </p>
-        <span v-else />
-        <button
-          v-if="entries.length > 1"
-          type="button" class="shrink-0 inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-sm font-medium border border-[var(--color-hairline)] text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:border-[var(--color-hairline-strong)]"
-          @click="toggleCompareMode"
-        >
-          <Icon name="ph:columns-fill" class="size-4" />
+        <BaseButton v-if="entries.length > 1" variant="outline" size="sm" icon="ph:columns-fill" @click="toggleCompareMode">
           {{ compareMode ? 'Cancelar' : 'Comparar' }}
-        </button>
+        </BaseButton>
       </div>
 
-      <div class="flex flex-col gap-3 md:max-w-xl mb-6">
-        <div
-          v-for="entry in entries" :key="entry.savedId"
-          class="flex items-center gap-4 rounded-[var(--radius-sm)] border border-[var(--color-hairline)] bg-[var(--color-paper)] p-3"
-        >
-          <button
-            v-if="compareMode" type="button" role="checkbox" :aria-checked="selectedIds.includes(entry.savedId)"
-            :aria-label="`Seleccionar a ${entry.name} para comparar`"
-            :disabled="!selectedIds.includes(entry.savedId) && selectedIds.length >= MAX_COMPARE"
-            class="shrink-0 size-6 rounded-full border-2 flex items-center justify-center disabled:opacity-30"
-            :class="selectedIds.includes(entry.savedId) ? 'bg-[var(--color-primary-500)] border-[var(--color-primary-500)]' : 'border-[var(--color-hairline-strong)]'"
-            @click="toggleSelected(entry)"
-          >
-            <Icon v-if="selectedIds.includes(entry.savedId)" name="ph:check-bold" class="size-3.5 text-white" />
-          </button>
+      <div class="saved-grid">
+        <article v-for="entry in entries" :key="entry.savedId" class="scard" :class="selectedIds.includes(entry.savedId) && 'is-selected'">
+          <div class="scard__media">
+            <CoverArt :seed="entry.id" :icon="kindIcon(entry.kind)" />
+            <SmartImage v-if="entry.coverUrl" :src="entry.coverUrl" :width="440" :height="248" class="scard__photo" />
 
-          <button type="button" class="flex min-w-0 flex-1 items-center gap-4 text-left" :aria-label="`Ver el perfil de ${entry.name}`" @click="openProfile(entry)">
-            <span class="relative size-14 shrink-0 rounded-[var(--radius-xs)] overflow-hidden" :style="!entry.coverUrl ? coverStyle(entry.id) : undefined">
-              <img v-if="entry.coverUrl" :src="entry.coverUrl" alt="" class="absolute inset-0 size-full object-cover">
-              <Icon v-else :name="entry.kind === 'creator' ? 'ph:user-focus' : 'ph:storefront-fill'" class="absolute inset-0 m-auto size-5 text-[var(--color-text)] opacity-30" />
-            </span>
-            <span class="min-w-0 flex-1 flex flex-col gap-1">
-              <span class="text-base font-semibold text-[var(--color-text)] truncate">{{ entry.name }}</span>
-              <span v-if="entry.categories.length" class="flex flex-wrap gap-x-2 text-micro text-[var(--color-text-muted)]">
-                <span v-for="cat in entry.categories.slice(0, 3)" :key="cat">{{ cat }}</span>
-              </span>
-              <span v-if="entry.bio" class="text-sm text-[var(--color-text-muted)] leading-snug line-clamp-1">{{ entry.bio }}</span>
-            </span>
-          </button>
+            <button
+              v-if="compareMode" type="button" role="checkbox" class="scard__check"
+              :aria-checked="selectedIds.includes(entry.savedId)" :aria-label="`Seleccionar a ${entry.name} para comparar`"
+              :disabled="!selectedIds.includes(entry.savedId) && selectedIds.length >= MAX_COMPARE"
+              @click="toggleSelected(entry)"
+            >
+              <Icon v-if="selectedIds.includes(entry.savedId)" name="ph:check-bold" class="size-4" />
+            </button>
+            <button v-else type="button" class="scard__action" :aria-label="`Quitar a ${entry.name} de guardados`" @click="unsave(entry)">
+              <Icon name="ph:bookmark-simple-fill" class="size-4" />
+            </button>
+          </div>
 
-          <button
-            v-if="!compareMode"
-            type="button" aria-label="Quitar de guardados"
-            class="shrink-0 size-9 flex items-center justify-center rounded-full text-[var(--color-primary-500)] hover:bg-[var(--color-ink-overlay)]"
-            @click="unsave(entry)"
-          >
-            <Icon name="ph:bookmark-simple-fill" class="size-[1.1rem]" />
-          </button>
-        </div>
+          <div class="scard__body">
+            <div v-if="entry.categories.length" class="scard__cats">
+              <Chip v-for="cat in entry.categories.slice(0, 3)" :key="cat" size="sm">{{ cat }}</Chip>
+            </div>
+            <h2 class="scard__name">
+              <NuxtLink :to="`/profile/${entry.kind}/${entry.id}`" class="scard__link">{{ entry.name }}</NuxtLink>
+            </h2>
+            <p v-if="entry.bio" class="scard__bio">{{ entry.bio }}</p>
+          </div>
+        </article>
       </div>
 
-      <BaseButton
-        v-if="compareMode && selectedIds.length >= 2"
-        variant="primary" size="md" icon="ph:columns-fill" :icon-spin="comparing" :disabled="comparing" class="mb-6"
-        @click="runCompare"
-      >
+      <BaseButton v-if="compareMode && selectedIds.length >= 2" variant="primary" icon="ph:columns-fill" :loading="comparing" @click="runCompare">
         {{ comparing ? 'Cargando…' : `Comparar (${selectedIds.length})` }}
       </BaseButton>
 
-      <section v-if="compared.length" aria-label="Comparación de candidatos">
-        <h2 class="text-sm font-semibold text-[var(--text-muted)] mb-3">Comparación</h2>
-        <div class="flex items-stretch gap-4 overflow-x-auto nx-scroll pb-2">
-          <div v-for="c in compared" :key="c.entry.savedId" class="shrink-0 w-72 rounded-[var(--radius-md)] border border-[var(--color-hairline)] bg-[var(--color-paper)] p-3.5">
+      <section v-if="compared.length" class="compare" aria-labelledby="compare-title">
+        <SectionTitle title="Comparación" class="mb-4" />
+        <div class="compare__row nx-scroll">
+          <BaseCard v-for="c in compared" :key="c.entry.savedId" padding="sm" class="compare__col">
             <ProfileHeaderCard
               compact
               :name="c.profile.name" :role-label="c.entry.kind === 'creator' ? 'Creador de contenido' : 'Partner'"
@@ -181,22 +156,22 @@ function rangeLabel(profile: PublicProfile) {
               :looking-for="null" :verified-socials="c.profile.verifiedSocials"
             />
 
-            <div v-if="rangeLabel(c.profile)" class="flex items-center justify-between text-sm mb-2.5">
-              <span class="text-[var(--color-text-faint)]">{{ c.entry.kind === 'creator' ? 'Tarifa' : 'Presupuesto' }}</span>
-              <span class="font-medium text-[var(--color-text)]">{{ rangeLabel(c.profile) }}</span>
+            <div v-if="rangeLabel(c.profile)" class="compare__fact">
+              <span class="compare__fact-label">{{ c.entry.kind === 'creator' ? 'Tarifa' : 'Presupuesto' }}</span>
+              <span class="compare__fact-value">{{ rangeLabel(c.profile) }}</span>
             </div>
 
-            <div class="flex items-center justify-between text-sm mb-3.5">
-              <span class="text-[var(--color-text-faint)]">Reputación</span>
-              <span v-if="c.rating.ratingCount === 0" class="text-[var(--color-text-muted)]">Sin valoraciones</span>
+            <div class="compare__fact">
+              <span class="compare__fact-label">Reputación</span>
+              <span v-if="c.rating.ratingCount === 0">Sin valoraciones</span>
               <span v-else class="inline-flex items-center gap-1.5">
                 <RatingStars v-if="hasEnoughRatingsToShowAverage(c.rating.ratingCount)" :model-value="Math.round(c.rating.avgStars)" readonly size="sm" />
-                <span class="text-[var(--color-text-muted)]">{{ formatRatingSummary(c.rating) }}</span>
+                <span>{{ formatRatingSummary(c.rating) }}</span>
               </span>
             </div>
 
-            <BaseButton variant="secondary" size="sm" class="w-full" @click="openProfile(c.entry)">Ver perfil completo</BaseButton>
-          </div>
+            <BaseButton variant="secondary" size="sm" block @click="openProfile(c.entry)">Ver perfil completo</BaseButton>
+          </BaseCard>
         </div>
       </section>
     </template>

@@ -4,6 +4,22 @@ Registro de qué se hizo, por qué, y qué queda pendiente de verificar — pens
 
 ---
 
+## 2026-11-04 (Alex-62) — [Alex] Rediseño: Colaboraciones, Guardados, Bandeja y perfil público; y por qué la app iba lenta
+
+Mismo lenguaje «Señal» que el resto, sin tocar datos, rutas ni lógica. Sin migraciones.
+
+- **Rediseño:** `CollabCard`, `CollabParty` y `CollabPostPreview` (compartidos por creador y partner; la lista dice a quién le toca responder); Bandeja como una sola superficie con filas y «Nuevo» en lugar de un punto; Guardados como rejilla con comparación en columnas; perfil público con la cabecera de «Tu perfil», `PanelCard` y `DataList`; `PackageCard` sin degradados ni estilos en línea y con precio como cifra (+ interruptor `.switch`). CSS nuevo: `patterns/{lists,collab,public-profile}.css` y `components/package.css`. Quitados los estilos en línea de esas pantallas (`coverStyle`, degradados de `PackageCard`, color de red por `:style`).
+- **Arreglo de cabecera de perfil:** el avatar quedaba medio tapado por el banner (`.profile-hero__avatar` sin posición). Afecta también a «Tu perfil».
+- **Texto:** «Esperando respuesta de el creador» → «del creador».
+- **Rendimiento (medido contra la app compilada y el Supabase local):**
+  - **Imágenes:** solo Descubrir usaba el optimizador `SmartImage`; el resto descargaba las fotos originales (1–1,6 MB por pantalla). Ahora lo usan el tablero, la lista, las colaboraciones, Inicio, perfiles, paquetes, guardados y entregas.
+  - **Consultas repetidas:** la barra superior se monta en cada pantalla y repetía en cada clic las consultas de avisos (2) y no leídos del chat. Ahora solo se repiten si los datos tienen más de 20 s (avisos) o 30 s (chat; Realtime ya lo mantiene).
+  - **Resultado local:** peticiones a Supabase por navegación: Inicio 14 → 8, Métricas 3 → 0, Guardados 3 → 0, Chat 4 → 1, Bandeja 4 → 1.
+- **Verificado:** typecheck limpio; unitarios 636/636; `nuxt build` correcto; capturas a 390, 768, 1 024 y 1 440 px de Colaboraciones (lista y detalle), Bandeja, Guardados y perfil público, sin desbordes ni errores de página.
+- **Sin verificar:** el efecto de las imágenes en el entorno real. En local las fotos de Storage son `http://127.0.0.1…` y `SmartImage` solo optimiza las de `https://*.supabase.co`, así que **no pude medir la mejora de peso**; sí está medida la de Inicio (960 → 402 KB, fotos de `/img/`). Tampoco medí contra el Supabase compartido, donde cada consulta cuesta ~300–450 ms. Si la lentitud es en `nuxt dev` y no en producción, parte es de Vite. Comparación con tarjeta de resultados/comparar en Guardados no probada con datos (solo 1 guardado en la demo); bandeja con avisos «importantes» tampoco (la demo solo tiene actividad).
+
+---
+
 ## 2026-11-04 (3) — [Mario] Descubrir rediseñado (los dos roles) y carga de imágenes corregida
 
 Sin cambios en datos, RLS, RPC ni endpoints existentes; se añade el endpoint de solo lectura `/api/img`. La lógica de enviar propuesta/solicitud no se ha tocado.

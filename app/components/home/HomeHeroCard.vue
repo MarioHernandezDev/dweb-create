@@ -21,7 +21,7 @@ defineEmits<{ 'cta-click': [] }>()
 
 <template>
   <BaseCard variant="featured" padding="none" class="home-hero" :class="coverUrl && 'home-hero--photo'">
-    <img v-if="coverUrl" :src="coverUrl" alt="" class="home-hero__photo">
+    <SmartImage v-if="coverUrl" :src="coverUrl" :width="720" :height="400" priority class="home-hero__photo" />
     <WaveMotif v-else class="home-hero__waves" />
 
     <div class="home-hero__body">

@@ -50,7 +50,7 @@ const day = (iso: string) => new Date(`${iso}T12:00:00`).toLocaleDateString('es-
         >
           <NuxtLink :to="`/creator/post/${p.id}?desde=lista`" class="flex min-w-0 flex-1 items-center gap-3 md:gap-4 rounded-[var(--radius-xs)] focus-visible:outline-2 focus-visible:outline-[var(--color-primary-500)]" :aria-label="`Abrir «${p.title}»`">
             <span class="relative size-14 shrink-0 overflow-hidden rounded-[var(--radius-xs)] bg-[var(--color-ink-overlay)] flex items-center justify-center">
-              <img v-if="p.mediaUrl" :src="p.mediaUrl" alt="" class="absolute inset-0 size-full object-cover">
+              <SmartImage v-if="p.mediaUrl" :src="p.mediaUrl" :width="160" :height="160" class="absolute inset-0 size-full object-cover" />
               <Icon v-else :name="contentTypeMeta[p.contentType].icon" class="size-5 text-[var(--color-text)] opacity-25" />
             </span>
             <span class="min-w-0 flex-1">

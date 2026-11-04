@@ -136,7 +136,16 @@ export function useChat() {
   // Estado del canal de tiempo real (A-R20): la interfaz avisa si se cae en vez de quedarse muda.
   const realtimeStatus = useState<'idle' | 'connected' | 'disconnected'>('chat-realtime-status', () => 'idle')
 
+  const unreadRefreshedAt = useState<number>('chat-unread-refreshed-at', () => 0)
+
+  /** Realtime mantiene el contador al día; solo se vuelve a pedir si han pasado más de `maxAgeMs`. */
+  async function refreshUnreadCountIfStale(maxAgeMs = 30_000) {
+    if (Date.now() - unreadRefreshedAt.value < maxAgeMs) return
+    await refreshUnreadCount()
+  }
+
   async function refreshUnreadCount() {
+    unreadRefreshedAt.value = Date.now()
     const { data, error } = await client.rpc('my_chat_unread_count' as never)
     if (error) {
       console.error('[useChat] fallo al contar no leídos:', error.message)
@@ -587,6 +596,7 @@ export function useChat() {
     activeConversationId,
     sending,
     refreshUnreadCount,
+    refreshUnreadCountIfStale,
     ensureConversations,
     refreshConversations,
     loadConversationSummary,

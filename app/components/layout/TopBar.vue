@@ -5,16 +5,16 @@ const route = useRoute()
 
 const showBack = computed(() => route.path.split('/').filter(Boolean).length > 1)
 
-// Se recarga en cada visita (no solo la primera) — es una bandeja de
-// entrada, el número tiene que notarse fresco al navegar, no quedarse
-// pegado al valor de la primera vez que se montó esta barra.
-const { unreadCount, refresh: refreshNotifications } = useNotifications()
+// Se recarga al navegar solo si los datos tienen más de 20 s (esta barra se
+// monta en cada pantalla): el número se nota fresco sin repetir las consultas
+// en cada clic.
+const { unreadCount, refreshIfStale: refreshNotifications } = useNotifications()
 refreshNotifications()
 
 // Mismo criterio para el chat, y es también el único punto de montaje fijo
 // en toda la app desde el que arrancar la suscripción Realtime una sola vez
 // por sesión de pestaña (ver startRealtime() en useChat.ts).
-const { unreadCount: chatUnreadCount, refreshUnreadCount: refreshChatUnread, startRealtime, startTypingListener } = useChat()
+const { unreadCount: chatUnreadCount, refreshUnreadCountIfStale: refreshChatUnread, startRealtime, startTypingListener } = useChat()
 refreshChatUnread()
 startRealtime()
 startTypingListener()

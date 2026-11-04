@@ -53,8 +53,10 @@ export function useNotifications() {
   const important = useState<AppNotification[]>('my-notifications-important', () => [])
   const activity = useState<AppNotification[]>('my-notifications-activity', () => [])
   const loaded = useState<boolean>('my-notifications-loaded', () => false)
+  const refreshedAt = useState<number>('my-notifications-refreshed-at', () => 0)
 
   async function refresh() {
+    refreshedAt.value = Date.now()
     const [{ data: importantRows, error: e1 }, { data: activityRows, error: e2 }] = await Promise.all([
       client.from('notifications').select(COLUMNS).not('type', 'in', `(${ACTIVITY_NOTIFICATION_TYPES.join(',')})`).order('created_at', { ascending: false }).limit(50),
       client.from('notifications').select(COLUMNS).in('type', ACTIVITY_NOTIFICATION_TYPES as unknown as string[]).order('created_at', { ascending: false }).limit(20)
@@ -66,6 +68,16 @@ export function useNotifications() {
     important.value = (importantRows as NotificationRow[]).map(mapRow)
     activity.value = (activityRows as NotificationRow[]).map(mapRow)
     loaded.value = true
+  }
+
+  /**
+   * Vuelve a cargar solo si los datos tienen más de `maxAgeMs`. La barra
+   * superior se monta en cada pantalla, y antes cada navegación repetía las dos
+   * consultas aunque se hubieran pedido un segundo antes.
+   */
+  async function refreshIfStale(maxAgeMs = 20_000) {
+    if (loaded.value && Date.now() - refreshedAt.value < maxAgeMs) return
+    await refresh()
   }
 
   async function ensureLoaded() {
@@ -114,5 +126,5 @@ export function useNotifications() {
     loaded.value = false
   }
 
-  return { important, activity, loaded, unreadCount, refresh, ensureLoaded, markRead, markAllRead, reset }
+  return { important, activity, loaded, unreadCount, refresh, refreshIfStale, ensureLoaded, markRead, markAllRead, reset }
 }

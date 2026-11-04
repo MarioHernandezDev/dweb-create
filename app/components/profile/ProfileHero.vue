@@ -35,7 +35,7 @@ const pending = computed(() => props.items.filter((i) => !i.done))
        (compensa el relleno de la página con márgenes negativos). -->
   <section class="profile-hero yt-reveal" data-profile-hero>
     <div class="profile-hero__cover" aria-hidden="true">
-      <img v-if="coverUrl" :src="coverUrl" alt="" class="profile-hero__img">
+      <SmartImage v-if="coverUrl" :src="coverUrl" :width="1200" :height="360" priority class="profile-hero__img" />
       <CoverArt v-else :seed="coverSeed" />
     </div>
 

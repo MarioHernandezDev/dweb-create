@@ -22,7 +22,7 @@ const { labels } = useLabels()
     @click="$emit('open', post)" @keydown.enter="$emit('open', post)" @keydown.space.prevent="$emit('open', post)"
   >
     <div class="post-card__cover">
-      <img v-if="post.mediaUrl" :src="post.mediaUrl" alt="" class="post-card__photo">
+      <SmartImage v-if="post.mediaUrl" :src="post.mediaUrl" :width="320" :height="160" class="post-card__photo" />
       <CoverArt v-else :seed="post.id" :icon="contentTypeMeta[post.contentType].icon" />
       <span class="post-card__platform" :title="platformMeta[post.platform].label">
         <Icon :name="platformMeta[post.platform].icon" class="size-3.5" />

@@ -28,6 +28,8 @@
   .profile-hero__avatar {
     --uploader-size: var(--avatar-d);
 
+    position: relative;   /* por encima del banner, que también está posicionado */
+    z-index: 1;
     flex-shrink: 0;
     width: var(--avatar-d);
     height: var(--avatar-d);

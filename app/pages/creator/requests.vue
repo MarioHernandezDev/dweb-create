@@ -1,7 +1,5 @@
 <script setup lang="ts">
-import { formatEuros } from '~/utils/mock-data'
 import { relativeTime } from '~/utils/status'
-import { initialsFromName, hueFromString } from '~/utils/avatar'
 import type { CollabRequest } from '~/composables/useCollabRequests'
 
 useHead({ title: 'Colaboraciones' })
@@ -41,6 +39,10 @@ tab.value = queryTab === 'active' || queryTab === 'history' || queryTab === 'pen
 const detailOpen = ref(false)
 const detailReq = ref<CollabRequest | null>(null)
 const actionError = ref('')
+const briefFacts = computed(() => [
+  { label: 'Pedida', value: detailReq.value ? relativeTime(detailReq.value.createdAt) : null },
+  ...(detailReq.value && detailReq.value.status !== 'requested' ? [{ label: 'Resuelta', value: relativeTime(detailReq.value.updatedAt) }] : [])
+])
 
 // Fase 2 de la reorganización de navegación: Nivel 1 (quién/estado/brief
 // corto/acción del momento) queda fijo y siempre visible; Brief, Calendario
@@ -141,7 +143,7 @@ async function handleMarkCompleted() {
 
 <template>
   <AppShell role="creator" title="Colaboraciones" subtitle="Tus colaboraciones con partners">
-    <SegmentedTabs v-model="tab" :options="tabs" class="mb-5" />
+    <div class="collab-toolbar"><SegmentedTabs v-model="tab" :options="tabs" /></div>
 
     <EmptyState
       v-if="!visible.length && tab === 'pending'"
@@ -159,46 +161,25 @@ async function handleMarkCompleted() {
       description="Las colaboraciones completadas y las solicitudes rechazadas se guardan aquí."
     />
 
-    <div v-else class="grid gap-3 lg:grid-cols-2 2xl:grid-cols-3">
-      <button v-for="req in visible" :key="req.id" type="button" class="flex text-left" @click="openDetail(req)">
-        <BaseCard radius="lg" padding="md" interactive class="w-full">
-          <div class="flex items-start gap-3 mb-3">
-            <BaseAvatar :initials="initialsFromName(req.partnerName)" :hue="hueFromString(req.partnerName)" size="sm" />
-            <div class="min-w-0 flex-1">
-              <div class="flex items-start justify-between gap-2">
-                <p class="text-base font-medium text-[var(--color-text)] truncate">{{ req.partnerName }}</p>
-                <span class="text-base font-medium text-[var(--color-text)] shrink-0">
-                  {{ req.budgetCents ? formatEuros(req.budgetCents) : 'Sin presupuesto' }}
-                </span>
-              </div>
-              <p class="text-micro text-[var(--color-text-faint)] mt-0.5">{{ relativeTime(req.createdAt) }}</p>
-            </div>
-          </div>
-
-          <p class="text-sm text-[var(--color-text-muted)] leading-relaxed mb-3 line-clamp-2">{{ req.brief }}</p>
-
-          <CollabStatus :status="req.status" />
-        </BaseCard>
-      </button>
+    <div v-else class="collab-grid">
+      <CollabCard
+        v-for="req in visible" :key="req.id"
+        :name="req.partnerName" :status="req.status" :brief="req.brief" :budget-cents="req.budgetCents" :created-at="req.createdAt"
+        :hint="req.status === 'requested' ? (req.initiatedBy === 'partner' ? 'Te toca responder' : 'Esperando al partner') : undefined"
+        @open="openDetail(req)"
+      />
     </div>
 
     <BottomSheet v-model="detailOpen" :title="detailReq?.partnerName ?? 'Solicitud'">
       <template v-if="detailReq">
-        <div class="flex items-center gap-3 mb-5">
-          <BaseAvatar :initials="initialsFromName(detailReq.partnerName)" :hue="hueFromString(detailReq.partnerName)" size="lg" />
-          <div class="min-w-0 flex-1">
-            <p class="text-base font-medium text-[var(--color-text)] truncate">{{ detailReq.partnerName }}</p>
-            <CollabStatus :status="detailReq.status" class="mt-1" />
-          </div>
+        <CollabParty :name="detailReq.partnerName" :status="detailReq.status" :brief="detailReq.brief">
           <CollaborationChatButton :counterpart-profile-id="detailReq.partnerProfileId" :counterpart-name="detailReq.partnerName" />
-        </div>
-
-        <p class="text-sm text-[var(--color-text-muted)] line-clamp-1 mb-4">{{ detailReq.brief }}</p>
+        </CollabParty>
 
         <!-- Nivel 1: la acción del momento, siempre visible, nunca dentro de una pestaña.
              El panel se muestra en todos los estados (antes solo en "requested"): tras
              aceptar es el único sitio del detalle con el precio acordado. -->
-        <div class="mb-5">
+        <div class="collab-actions">
           <NegotiationPanel
             :collaboration-id="detailReq.id" :initial-budget-cents="detailReq.budgetCents" :status="detailReq.status"
             my-role="creator" :initiated-by="detailReq.initiatedBy"
@@ -206,7 +187,7 @@ async function handleMarkCompleted() {
           />
           <BaseButton
             v-if="detailReq.status === 'accepted' || detailReq.status === 'in_progress'"
-            variant="secondary" size="md" class="w-full mt-3" :disabled="acting === detailReq.id" :icon-spin="acting === detailReq.id"
+            variant="secondary" block :loading="acting === detailReq.id"
             @click="handleMarkCompleted"
           >
             Marcar como completada
@@ -215,53 +196,28 @@ async function handleMarkCompleted() {
             v-else-if="detailReq.status === 'completed'"
             :collaboration-id="detailReq.id" :counterpart-name="detailReq.partnerName"
           />
-          <p v-if="actionError" class="text-sm text-[var(--color-status-alert)] mt-3">{{ actionError }}</p>
+          <p v-if="actionError" class="collab-error" role="alert">{{ actionError }}</p>
         </div>
 
         <!-- Nivel 2: consulta ocasional, bajo pestañas — ninguna tarea habitual exige cruzarlas. -->
         <SegmentedTabs v-model="detailTab" :options="detailTabs" class="mb-4" />
 
         <div v-show="detailTab === 'brief'">
-          <p class="text-base text-[var(--color-text)] leading-relaxed mb-5">{{ detailReq.brief }}</p>
+          <p class="collab-brief">{{ detailReq.brief }}</p>
           <CollaborationTermsCard :terms="detailReq" :collaboration-id="detailReq.id" :status="detailReq.status" :package-info="{ title: detailReq.packageTitle, description: detailReq.packageDescription, deliverables: detailReq.packageDeliverables }" />
-          <dl class="flex flex-col gap-3 mb-5 text-sm">
-            <div class="flex items-center justify-between">
-              <dt class="text-[var(--color-text-muted)]">Pedida</dt>
-              <dd class="text-[var(--color-text)]">{{ relativeTime(detailReq.createdAt) }}</dd>
-            </div>
-            <div v-if="detailReq.status !== 'requested'" class="flex items-center justify-between">
-              <dt class="text-[var(--color-text-muted)]">Resuelta</dt>
-              <dd class="text-[var(--color-text)]">{{ relativeTime(detailReq.updatedAt) }}</dd>
-            </div>
-          </dl>
-          <p v-if="detailReq.paidAt" class="inline-flex items-center gap-1.5 text-sm text-[var(--color-status-published)]">
+          <DataList :items="briefFacts" />
+          <p v-if="detailReq.paidAt" class="collab-paid mt-3">
             <Icon name="ph:check-circle-fill" class="size-4" /> Cobrado el {{ relativeTime(detailReq.paidAt) }}
           </p>
         </div>
 
         <div v-show="detailTab === 'calendar'">
           <WeekBoard :posts="collaborationPosts" :has-any-posts="false" :two-column="false" @open="toggleExpandedPost" />
-          <BaseCard v-if="expandedPost" radius="md" padding="md" class="mt-3">
-            <div class="flex items-center gap-3 mb-3">
-              <div class="relative size-12 shrink-0 rounded-[var(--radius-xs)] overflow-hidden flex items-center justify-center" :style="!expandedPost.mediaUrl ? { background: `linear-gradient(135deg, ${expandedPost.cover.from}, ${expandedPost.cover.to})` } : undefined">
-                <img v-if="expandedPost.mediaUrl" :src="expandedPost.mediaUrl" alt="" class="absolute inset-0 size-full object-cover">
-              </div>
-              <div class="min-w-0 flex-1">
-                <p class="text-sm font-medium text-[var(--color-text)] truncate">{{ expandedPost.title }}</p>
-                <StatusPill :status="expandedPost.status" compact />
-              </div>
-            </div>
-            <p v-if="expandedPost.caption" class="text-sm text-[var(--color-text-muted)] leading-relaxed mb-3">{{ expandedPost.caption }}</p>
-            <ul v-if="expandedPostChecklist.length" class="flex flex-col gap-1.5">
-              <li v-for="item in expandedPostChecklist" :key="item.id" class="flex items-center gap-2 text-sm">
-                <Icon :name="item.done ? 'ph:check-square-fill' : 'ph:square-bold'" class="size-4 shrink-0" :class="item.done ? 'text-[var(--color-status-published)]' : 'text-[var(--color-text-faint)]'" />
-                <span :class="item.done ? 'text-[var(--color-text-faint)] line-through' : 'text-[var(--color-text)]'">{{ item.text }}</span>
-              </li>
-            </ul>
-            <NuxtLink :to="`/creator/post/${expandedPost.id}`" class="inline-flex items-center gap-1 text-sm font-medium text-[var(--color-primary-500)] hover:text-[var(--color-primary-600)] mt-3">
+          <CollabPostPreview v-if="expandedPost" :post="expandedPost" :checklist="expandedPostChecklist">
+            <NuxtLink :to="`/creator/post/${expandedPost.id}`" class="inline-flex items-center gap-1 mt-3 text-sm font-semibold underline">
               Editar esta publicación <Icon name="ph:arrow-right-bold" class="size-3.5" />
             </NuxtLink>
-          </BaseCard>
+          </CollabPostPreview>
         </div>
 
         <div v-show="detailTab === 'log'">

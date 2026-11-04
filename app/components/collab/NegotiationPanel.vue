@@ -32,7 +32,7 @@ const currentAmount = computed(() => {
 })
 const currentProposer = computed<Role>(() => offers.value.at(-1)?.proposedBy ?? props.initiatedBy)
 const myTurn = computed(() => props.status === 'requested' && currentProposer.value !== props.myRole)
-const otherRoleLabel = computed(() => (props.myRole === 'creator' ? 'el partner' : 'el creador'))
+const otherRoleLabel = computed(() => (props.myRole === 'creator' ? 'del partner' : 'del creador'))
 const initiatorLabel = computed(() => (props.initiatedBy === 'partner' ? 'partner' : 'creador'))
 
 // Tras aceptar, la cifra de `collaborations.budget_cents` ya es el precio ACORDADO,
@@ -112,7 +112,7 @@ async function sendReport() {
 
     <template v-if="status === 'requested'">
       <p v-if="!myTurn" class="text-sm text-[var(--color-text-faint)] mb-4">
-        Esperando respuesta de {{ otherRoleLabel }}.
+        Esperando respuesta {{ otherRoleLabel }}.
       </p>
 
       <template v-else>

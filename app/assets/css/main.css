@@ -51,9 +51,13 @@
 @import "./components/cover-art.css";
 @import "./components/post-card.css";
 @import "./components/profile-hero.css";
+@import "./components/package.css";
 
 /* Patrones de pantalla */
 @import "./patterns/shell.css";
 @import "./patterns/landing.css";
 @import "./patterns/home.css";
 @import "./patterns/discover.css";
+@import "./patterns/lists.css";
+@import "./patterns/collab.css";
+@import "./patterns/public-profile.css";

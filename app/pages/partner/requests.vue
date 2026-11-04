@@ -1,7 +1,5 @@
 <script setup lang="ts">
-import { formatEuros } from '~/utils/mock-data'
 import { relativeTime } from '~/utils/status'
-import { initialsFromName, hueFromString } from '~/utils/avatar'
 import type { MyCollaboration } from '~/composables/useMyCollaborations'
 
 useHead({ title: 'Colaboraciones' })
@@ -164,17 +162,17 @@ async function handleMarkCompleted() {
 
 <template>
   <AppShell role="partner" title="Colaboraciones" subtitle="Tus colaboraciones con creadores de contenido">
-    <BaseCard v-if="route.query.payment" radius="md" padding="md" class="flex items-center gap-3 mb-5">
+    <BaseCard v-if="route.query.payment" padding="md" class="pay-notice">
       <Icon
         :name="route.query.payment === 'success' ? 'ph:check-circle-fill' : 'ph:info-fill'" class="size-5 shrink-0"
-        :class="route.query.payment === 'success' ? 'text-[var(--color-status-published)]' : 'text-[var(--color-text-muted)]'"
+        :class="route.query.payment === 'success' ? 'text-[var(--color-phase-published)]' : 'text-[var(--text-muted)]'"
       />
       <p class="text-sm text-[var(--color-text)]">
         {{ route.query.payment === 'success' ? 'Pago enviado.' : 'Pago cancelado, no se ha cobrado nada.' }}
       </p>
     </BaseCard>
 
-    <SegmentedTabs v-model="tab" :options="tabs" class="mb-5" />
+    <div class="collab-toolbar"><SegmentedTabs v-model="tab" :options="tabs" /></div>
 
     <EmptyState
       v-if="!visible.length && tab === 'pending'"
@@ -192,68 +190,44 @@ async function handleMarkCompleted() {
       description="Las colaboraciones completadas y las solicitudes rechazadas se guardan aquí."
     />
 
-    <div v-else class="grid gap-3 lg:grid-cols-2 2xl:grid-cols-3">
-      <button v-for="collab in visible" :key="collab.id" type="button" class="flex text-left" @click="openDetail(collab)">
-        <BaseCard radius="lg" padding="md" interactive class="w-full">
-          <div class="flex items-start gap-3 mb-3">
-            <BaseAvatar :initials="initialsFromName(collab.creatorName ?? '?')" :hue="hueFromString(collab.creatorName ?? '')" size="sm" />
-            <div class="min-w-0 flex-1">
-              <div class="flex items-start justify-between gap-2">
-                <p class="text-base font-medium text-[var(--color-text)] truncate">{{ collab.creatorName ?? 'Sin asignar' }}</p>
-                <span class="text-base font-medium text-[var(--color-text)] shrink-0">
-                  {{ collab.budgetCents ? formatEuros(collab.budgetCents) : 'Sin presupuesto' }}
-                </span>
-              </div>
-              <p class="text-micro text-[var(--color-text-faint)] mt-0.5">{{ relativeTime(collab.createdAt) }}</p>
-            </div>
-          </div>
-
-          <p class="text-sm text-[var(--color-text-muted)] leading-relaxed mb-3 line-clamp-2">{{ collab.brief }}</p>
-
-          <CollabStatus :status="collab.status" />
-        </BaseCard>
-      </button>
+    <div v-else class="collab-grid">
+      <CollabCard
+        v-for="collab in visible" :key="collab.id"
+        :name="collab.creatorName ?? 'Sin asignar'" :status="collab.status" :brief="collab.brief" :budget-cents="collab.budgetCents" :created-at="collab.createdAt"
+        :hint="collab.status === 'requested' ? (collab.initiatedBy === 'creator' ? 'Te toca responder' : 'Esperando al creador') : undefined"
+        @open="openDetail(collab)"
+      />
     </div>
 
     <BottomSheet v-model="detailOpen" :title="detailCollab?.creatorName ?? 'Solicitud'">
       <template v-if="detailCollab">
-        <div class="flex items-center gap-3 mb-5">
-          <BaseAvatar
-            :initials="initialsFromName(detailCollab.creatorName ?? '?')" :hue="hueFromString(detailCollab.creatorName ?? '')"
-            size="lg"
-          />
-          <div class="min-w-0 flex-1">
-            <p class="text-base font-medium text-[var(--color-text)] truncate">{{ detailCollab.creatorName ?? 'Sin asignar' }}</p>
-            <CollabStatus :status="detailCollab.status" class="mt-1" />
-          </div>
+        <CollabParty :name="detailCollab.creatorName ?? 'Sin asignar'" :status="detailCollab.status" :brief="detailCollab.brief">
           <CollaborationChatButton :counterpart-profile-id="detailCollab.creatorProfileId" :counterpart-name="detailCollab.creatorName ?? 'el creador'" />
-        </div>
-
-        <p class="text-sm text-[var(--color-text-muted)] line-clamp-1 mb-4">{{ detailCollab.brief }}</p>
+        </CollabParty>
 
         <!-- Nivel 1: la acción del momento, siempre visible, nunca dentro de una pestaña. -->
-        <div class="mb-5">
+        <div class="collab-actions">
           <NegotiationPanel
             :collaboration-id="detailCollab.id" :initial-budget-cents="detailCollab.budgetCents" :status="detailCollab.status"
             my-role="partner" :initiated-by="detailCollab.initiatedBy"
             @accept="handleAccept" @decline="handleDecline"
           />
 
-          <p v-if="detailCollab.paidAt" class="inline-flex items-center gap-1.5 text-sm text-[var(--color-status-published)] mt-3">
+          <p v-if="detailCollab.paidAt" class="collab-paid">
             <Icon name="ph:check-circle-fill" class="size-4" /> Cobrado el {{ relativeTime(detailCollab.paidAt) }}
           </p>
           <BaseButton
             v-else-if="payableStatuses.includes(detailCollab.status)"
-            variant="primary" size="md" class="w-full mt-3" :disabled="!detailCollab.budgetCents || paying === detailCollab.id" :icon-spin="paying === detailCollab.id"
+            variant="brand" block :disabled="!detailCollab.budgetCents" :loading="paying === detailCollab.id"
             @click="confirmPay(detailCollab.id)"
           >
             {{ paying === detailCollab.id ? 'Abriendo pago…' : 'Pagar' }}
           </BaseButton>
-          <p v-if="payError && lastPayAttemptId === detailCollab.id" class="text-micro text-[var(--color-status-alert)] mt-2">{{ payError }}</p>
+          <p v-if="payError && lastPayAttemptId === detailCollab.id" class="collab-error" role="alert">{{ payError }}</p>
 
           <BaseButton
             v-if="detailCollab.status === 'accepted' || detailCollab.status === 'in_progress'"
-            variant="secondary" size="md" class="w-full mt-3" :disabled="acting === detailCollab.id" :icon-spin="acting === detailCollab.id"
+            variant="secondary" block :loading="acting === detailCollab.id"
             @click="handleMarkCompleted"
           >
             Marcar como completada
@@ -262,55 +236,31 @@ async function handleMarkCompleted() {
             v-else-if="detailCollab.status === 'completed'"
             :collaboration-id="detailCollab.id" :counterpart-name="detailCollab.creatorName ?? 'el creador'"
           />
-          <p v-if="actionError" class="text-sm text-[var(--color-status-alert)] mt-3">{{ actionError }}</p>
+          <p v-if="actionError" class="collab-error" role="alert">{{ actionError }}</p>
         </div>
 
         <!-- Nivel 2: consulta ocasional, bajo pestañas — ninguna tarea habitual exige cruzarlas. -->
         <SegmentedTabs v-model="detailTab" :options="detailTabs" class="mb-4" />
 
         <div v-show="detailTab === 'brief'">
-          <p class="text-base text-[var(--color-text)] leading-relaxed mb-5">{{ detailCollab.brief }}</p>
+          <p class="collab-brief">{{ detailCollab.brief }}</p>
           <CollaborationTermsCard :terms="detailCollab" :collaboration-id="detailCollab.id" :status="detailCollab.status"
             :package-info="{ title: detailCollab.packageTitle, description: detailCollab.packageDescription, deliverables: detailCollab.packageDeliverables }"
             :can-complete-brief="detailCollab.status === 'accepted' || detailCollab.status === 'in_progress'"
           />
-          <dl class="flex flex-col gap-3 text-sm">
-            <div class="flex items-center justify-between">
-              <dt class="text-[var(--color-text-muted)]">Pedida</dt>
-              <dd class="text-[var(--color-text)]">{{ relativeTime(detailCollab.createdAt) }}</dd>
-            </div>
-          </dl>
+          <DataList :items="[{ label: 'Pedida', value: relativeTime(detailCollab.createdAt) }]" />
         </div>
 
         <div v-show="detailTab === 'calendar'">
           <WeekBoard :posts="collaborationPosts" :has-any-posts="false" :two-column="false" @open="toggleExpandedPost" />
-          <BaseCard v-if="expandedPost" radius="md" padding="md" class="mt-3">
-            <div class="flex items-center gap-3 mb-3">
-              <div class="relative size-12 shrink-0 rounded-[var(--radius-xs)] overflow-hidden flex items-center justify-center" :style="!expandedPost.mediaUrl ? { background: `linear-gradient(135deg, ${expandedPost.cover.from}, ${expandedPost.cover.to})` } : undefined">
-                <img v-if="expandedPost.mediaUrl" :src="expandedPost.mediaUrl" alt="" class="absolute inset-0 size-full object-cover">
-              </div>
-              <div class="min-w-0 flex-1">
-                <p class="text-sm font-medium text-[var(--color-text)] truncate">{{ expandedPost.title }}</p>
-                <StatusPill :status="expandedPost.status" compact />
-              </div>
-            </div>
-            <p v-if="expandedPost.caption" class="text-sm text-[var(--color-text-muted)] leading-relaxed mb-3">{{ expandedPost.caption }}</p>
-            <ul v-if="expandedPostChecklist.length" class="flex flex-col gap-1.5">
-              <li v-for="item in expandedPostChecklist" :key="item.id" class="flex items-center gap-2 text-sm">
-                <Icon :name="item.done ? 'ph:check-square-fill' : 'ph:square-bold'" class="size-4 shrink-0" :class="item.done ? 'text-[var(--color-status-published)]' : 'text-[var(--color-text-faint)]'" />
-                <span :class="item.done ? 'text-[var(--color-text-faint)] line-through' : 'text-[var(--color-text)]'">{{ item.text }}</span>
-              </li>
-            </ul>
-
-            <!-- Antes esta pestaña era de solo lectura: ver la entrega "Para
-                 revisar" aquí no daba ninguna forma de actuar, había que
-                 encontrarla de nuevo en Inicio → Tu calendario para aprobarla
-                 o pedir cambios. Mismo componente que usa Inicio. -->
+          <CollabPostPreview v-if="expandedPost" :post="expandedPost" :checklist="expandedPostChecklist">
+            <!-- Antes esta pestaña era de solo lectura: ver la entrega "Para revisar" aquí no daba
+                 ninguna forma de actuar. Mismo componente que usa Inicio. -->
             <PostReviewActions
-              v-if="expandedPost.status === 'ready_for_review'" class="mt-4 pt-4 border-t border-[var(--color-hairline)]"
+              v-if="expandedPost.status === 'ready_for_review'" class="post-preview__actions"
               :post-id="expandedPost.id" @done="expandedPostId = null"
             />
-          </BaseCard>
+          </CollabPostPreview>
         </div>
 
         <!-- A-R15: se monta al abrir la pestaña (y se vuelve a leer cada vez), con la RLS como única autorización. -->

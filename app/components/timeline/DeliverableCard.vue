@@ -44,7 +44,7 @@ const coverStyle = computed(() => {
           class="relative size-16 shrink-0 rounded-[var(--radius-xs)] overflow-hidden flex items-center justify-center"
           :style="!post.mediaUrl ? coverStyle : undefined"
         >
-          <img v-if="post.mediaUrl" :src="post.mediaUrl" alt="" class="absolute inset-0 size-full object-cover">
+          <SmartImage v-if="post.mediaUrl" :src="post.mediaUrl" :width="320" :height="180" class="absolute inset-0 size-full object-cover" />
           <Icon v-else :name="contentTypeMeta[post.contentType].icon" class="size-6 text-[var(--color-text)] opacity-30" />
         </div>
 
