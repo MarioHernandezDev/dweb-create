@@ -32,6 +32,10 @@ export function useMyWork() {
   const offers = useState<WorkTask[]>('my-work-offers', () => [])
   const loaded = useState<boolean>('my-work-loaded', () => false)
   const loading = useState<boolean>('my-work-loading', () => false)
+  const loadedAt = useState<number>('my-work-loaded-at', () => 0)
+  // Número de tareas para el contador de la barra lateral: vive en un estado
+  // aparte para que SideRail/BottomTabBar lo lean sin montar todo este cálculo.
+  const taskCount = useState<number>('my-work-task-count', () => 0)
 
   const myRole = computed<WorkRole>(() => (role.value === 'partner' ? 'partner' : 'creator'))
 
@@ -56,6 +60,16 @@ export function useMyWork() {
 
   const tasks = computed(() => [...offers.value, ...computedWork.value.tasks].sort((a, b) => a.priority - b.priority))
   const waiting = computed(() => computedWork.value.waiting)
+  watch(tasks, (list) => { if (loaded.value) taskCount.value = list.length }, { immediate: true })
+
+  /** Lo que le toca a esta colaboración (tarea principal) o a lo que espera, para las tarjetas de las listas. */
+  function hintFor(collaborationId: string): { text: string; tone: 'action' | 'waiting' } | null {
+    if (!loaded.value) return null
+    const task = tasks.value.find((t) => t.collaborationId === collaborationId)
+    if (task) return { text: task.title, tone: 'action' }
+    const wait = waiting.value.find((w) => w.collaborationId === collaborationId)
+    return wait ? { text: wait.text, tone: 'waiting' } : null
+  }
 
   async function loadOffers(me: string) {
     const { data, error } = await client
@@ -101,10 +115,18 @@ export function useMyWork() {
       else await Promise.all([ensureRequests(), ensureMyPosts()])
       await Promise.all([loadMany(collabs.value.map((c) => c.id)), me ? loadOffers(me) : Promise.resolve()])
       loaded.value = true
+      loadedAt.value = Date.now()
+      taskCount.value = tasks.value.length
     } finally {
       loading.value = false
     }
   }
 
-  return { tasks, waiting, loaded, loading, load, myRole, myProfileId, hasRated }
+  /** Vuelve a calcular solo si lo último tiene más de `maxAgeMs` (se llama desde la barra superior en cada pantalla). */
+  async function refreshIfStale(maxAgeMs = 30_000) {
+    if (loaded.value && Date.now() - loadedAt.value < maxAgeMs) return
+    await load(true)
+  }
+
+  return { tasks, waiting, loaded, loading, load, refreshIfStale, hintFor, taskCount, myRole, myProfileId, hasRated }
 }

@@ -26,7 +26,11 @@ const router = useRouter()
 // delante de los avisos. Se calcula con el estado real de tus colaboraciones y se
 // carga en el cliente para no retrasar la página.
 const work = useMyWork()
-onMounted(() => work.load(true))
+// Si no hay nada que hacer pero sí avisos sin leer, se abre en los avisos (salvo que la URL pida otra pestaña).
+onMounted(async () => {
+  await work.load(true)
+  if (tab.value === 'tasks' && !route.query.tab && !work.tasks.value.length && important.value.some((n) => !n.readAt)) tab.value = 'important'
+})
 const taskCount = computed(() => work.tasks.value.length)
 
 const route = useRoute()

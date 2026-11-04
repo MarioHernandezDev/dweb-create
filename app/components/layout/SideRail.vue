@@ -18,7 +18,7 @@ function isActive(to: string) {
 // Mismas cachés que ya usa TopBar.vue para los contadores — se lee el
 // estado ya cargado, sin disparar un segundo `refresh()` (TopBar ya se
 // monta en cada página y lo mantiene al día).
-const { unreadCount: inboxUnread } = useNotifications()
+const inboxUnread = useInboxBadge()
 const { unreadCount: chatUnread } = useChat()
 const badgeFor: Record<string, Readonly<Ref<number>>> = { '/chat': chatUnread, '/inbox': inboxUnread }
 const badgeCount = (to: string) => badgeFor[to]?.value ?? 0

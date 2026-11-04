@@ -27,7 +27,7 @@ function isActive(to: string) {
 }
 const moreActive = computed(() => moreItems.value.some((item) => isActive(item.to)))
 
-const { unreadCount: inboxUnread } = useNotifications()
+const inboxUnread = useInboxBadge()
 const { unreadCount: chatUnread } = useChat()
 const badgeFor: Record<string, Readonly<Ref<number>>> = { '/chat': chatUnread, '/inbox': inboxUnread }
 const badgeCount = (to: string) => badgeFor[to]?.value ?? 0

@@ -17,6 +17,8 @@ defineProps<{
   budgetCents: number | null
   createdAt: string
   hint?: string
+  /** «action»: me toca a mí (se marca con la firma); «waiting»: espera a la otra parte. */
+  hintTone?: 'action' | 'waiting'
 }>()
 defineEmits<{ open: [] }>()
 </script>
@@ -34,7 +36,7 @@ defineEmits<{ open: [] }>()
     <span class="collab-card__brief">{{ brief }}</span>
     <span class="collab-card__foot">
       <CollabStatus :status="status" />
-      <span v-if="hint" class="collab-card__hint">{{ hint }}</span>
+      <span v-if="hint" class="collab-card__hint" :data-tone="hintTone">{{ hint }}</span>
     </span>
   </button>
 </template>

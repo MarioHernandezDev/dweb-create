@@ -8,16 +8,28 @@ const showBack = computed(() => route.path.split('/').filter(Boolean).length > 1
 // Se recarga al navegar solo si los datos tienen más de 20 s (esta barra se
 // monta en cada pantalla): el número se nota fresco sin repetir las consultas
 // en cada clic.
+//
+// Todo esto arranca al montar (solo en el navegador). Antes se lanzaba durante el
+// renderizado en el servidor: la respuesta de la base llegaba a media renderización
+// y unas barras salían sin contador y otras con él, lo que provocaba el aviso de
+// hidratación de Vue («Hydration node mismatch») en todas las pantallas.
 const { unreadCount, refreshIfStale: refreshNotifications } = useNotifications()
-refreshNotifications()
 
 // Mismo criterio para el chat, y es también el único punto de montaje fijo
 // en toda la app desde el que arrancar la suscripción Realtime una sola vez
 // por sesión de pestaña (ver startRealtime() en useChat.ts).
 const { unreadCount: chatUnreadCount, refreshUnreadCountIfStale: refreshChatUnread, startRealtime, startTypingListener } = useChat()
-refreshChatUnread()
-startRealtime()
-startTypingListener()
+
+// «Qué me toca» alimenta el contador de la Bandeja: se calcula un poco después de
+// montar (no compite con la carga de la pantalla) y se refresca si tiene > 30 s.
+const work = useMyWork()
+onMounted(() => {
+  refreshNotifications()
+  refreshChatUnread()
+  startRealtime()
+  startTypingListener()
+  setTimeout(() => work.refreshIfStale(30_000), 1200)
+})
 
 // Ya en caché desde role-guard.global.ts — sin parpadeo.
 const { avatarUrl, initials: myInitials, hue: myHue } = useMyAvatar()

@@ -13,7 +13,9 @@ Parte de `CIBERAN_COMPETITIVE_AUDIT.md` (F1, F3, F4). Sin tocar pagos ni redes s
 - **F4 · «Qué me toca»:** primera pestaña de la Bandeja de entrada. Se calcula en cliente con `collaborationWork` (`utils/collaboration-work.ts`, la misma lógica del «Siguiente paso»): responder solicitud u oferta del chat, revisar entrega, corregir cambios, enviar entrega, crear la primera publicación, completar brief (marca), cerrar y valorar. «Esperando a otros» recoge lo que depende de la otra parte.
 - **Migración (PREPARADA, NO APLICADA en el proyecto compartido):** `20261104130000_collaboration_events.sql` (aplicada y probada solo en el Supabase local). Requiere `20261104110000` ya aplicada.
 - **Pruebas:** `tests/unit/collaboration-work.spec.ts` (12), `tests/integration/collaboration-events.spec.ts` (3; contra el Supabase local), recorrido en navegador. `supabase-setup.ts` admite `TEST_CREATOR_EMAIL`/`TEST_PARTNER_EMAIL` para probar con otras cuentas.
-- **Pendiente de la Fase 1:** contador de «Qué me toca» en la barra lateral, pista de «siguiente paso» en las tarjetas de las listas, validación en Safari/Firefox y con datos de la base compartida.
+- **Cierre de la Fase 1 (Alex-67):** contador de «Qué me toca» en el icono de la Bandeja de la barra lateral y la inferior (`useInboxBadge`: tareas si hay, avisos sin leer si no; el icono de la barra superior sigue contando avisos); pista del siguiente paso en las tarjetas de las listas (`hintFor`, con punto de la firma si me toca a mí); **aviso de hidratación resuelto**: `TopBar` lanzaba la carga de avisos y chat durante el renderizado en el servidor y la respuesta llegaba a media renderización (unas barras salían con contador y otras sin él, en todas las pantallas). Ahora arranca al montar, solo en el navegador.
+- **Esquema compartido verificado (solo lectura):** huella estructural del esquema `public` (columnas, funciones, triggers, políticas, índices, RLS y permisos de `collaboration_events`: 484 líneas) idéntica entre el Supabase local y el compartido.
+- **Pendiente:** validación en Safari/Firefox.
 
 ---
 

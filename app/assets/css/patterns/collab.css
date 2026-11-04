@@ -33,7 +33,12 @@
   .collab-card__price { flex-shrink: 0; font-family: var(--font-display); font-size: var(--text-title); font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
   .collab-card__brief { color: var(--text-muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
   .collab-card__foot { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.75rem; margin-top: auto; }
-  .collab-card__hint { color: var(--text-muted); font-size: var(--text-sm); font-weight: 600; }
+  .collab-card__hint { color: var(--text-muted); font-size: var(--text-sm); font-weight: 600; overflow-wrap: anywhere;
+    /* Lo que me toca a mí lleva el punto de la firma; lo que espera a la otra parte, sin él. */
+    &[data-tone="action"] { display: inline-flex; align-items: center; gap: 0.5rem; color: var(--text-strong);
+      &::before { content: ""; flex-shrink: 0; width: 0.5rem; height: 0.5rem; border-radius: var(--radius-pill); background: var(--color-voltio-400); box-shadow: 0 0 0 1px var(--color-tinta-950); }
+    }
+  }
 
   .pay-notice { display: flex; align-items: center; gap: 0.75rem; margin-bottom: var(--gap-loose); }
 

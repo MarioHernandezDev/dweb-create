@@ -15,6 +15,15 @@ if (typeof target === 'string') {
 const { collaborations, pendingCount, ensureLoaded } = useMyCollaborations()
 await ensureLoaded()
 
+// Qué toca en cada colaboración (la misma lógica que «Qué me toca»): se calcula en el cliente.
+const work = useMyWork()
+onMounted(() => work.refreshIfStale(15_000))
+
+// Hasta que se calcula lo de arriba, solo lo evidente: quién debe responder a una solicitud.
+const fallbackHint = (c: { status: string; initiatedBy: string }) =>
+  c.status !== 'requested' ? null : c.initiatedBy === 'creator' ? { text: 'Te toca responder', tone: 'action' as const } : { text: 'Esperando al creador', tone: 'waiting' as const }
+const hintOf = (c: { id: string; status: string; initiatedBy: string }) => work.hintFor(c.id) ?? fallbackHint(c)
+
 // Tres grupos: lo que espera respuesta, lo que está en marcha (aceptadas y en curso) y lo ya cerrado.
 type RequestsTab = 'pending' | 'active' | 'history'
 const ACTIVE_STATUSES = ['accepted', 'in_progress']
@@ -63,7 +72,7 @@ tab.value = queryTab === 'active' || queryTab === 'history' || queryTab === 'pen
       <CollabCard
         v-for="collab in visible" :key="collab.id"
         :name="collab.creatorName ?? 'Sin asignar'" :status="collab.status" :brief="collab.brief" :budget-cents="collab.budgetCents" :created-at="collab.createdAt"
-        :hint="collab.status === 'requested' ? (collab.initiatedBy === 'creator' ? 'Te toca responder' : 'Esperando al creador') : undefined"
+        :hint="hintOf(collab)?.text" :hint-tone="hintOf(collab)?.tone"
         @open="navigateTo(`/partner/collaborations/${collab.id}`)"
       />
     </div>
