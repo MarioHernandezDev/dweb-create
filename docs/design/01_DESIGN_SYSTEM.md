@@ -145,7 +145,16 @@ Todos mantienen las props que ya usaban las pantallas, salvo que se indique.
 | `AnimatedMark` | Símbolo animado (pantalla de carga y portada): barrido circular que lo revela, entrada con escala, destello que recorre solo la silueta, flotación y, con `rings`, ondas. Todo CSS (máscara cónica con `@property --reveal`); con movimiento reducido se ve quieto |
 | `WeekColumns`, `PhaseStack` | Gráficas de resumen sin librerías. Columnas con las entregas de los próximos 7 días (pendientes y publicadas; «hoy» en voltio) y barra apilada del reparto por fase. Las alturas llegan como variables CSS (`--pending`, `--done`, `--max`, `--pct`); son imágenes accesibles con el detalle en su `aria-label`. Datos en `utils/home-charts.ts` (puro, con tests) |
 | `CoverArt` | Portada sin foto: tinte de la paleta + anillos, estable a partir de `seed` |
+| `SmartImage` | **Toda foto de contenido (portadas, avatares) va por aquí.** Las de la app (Storage público y `/img/`) se piden a `/api/img` en webp, al tamaño exacto y con `srcset` 1x/2x; `loading="lazy"` salvo `priority`; `width`/`height` reservan la caja; debajo va `CoverArt` o las iniciales, así que nunca hay un hueco en blanco. Lo que no es de la app (blob:/data:) se pinta tal cual |
 | `EmptyState`, `SkeletonBlock` | El esqueleto recibe sus medidas como variables (`--sk-w`, `--sk-h`, `--sk-r`) |
+
+## 4b-bis. Imágenes: cómo se mantienen rápidas
+
+- **Nunca un `<img>` con la URL original** de una foto subida: pesa de cientos de KB a varios MB. Usar `SmartImage` (o `NuxtImg` para las fotos estáticas de la landing).
+- **`/api/img`** (`server/api/img.get.ts`, lógica pura y testeada en `server/utils/image-proxy.ts`): redimensiona con `sharp`, sirve webp y guarda el resultado en memoria (300 entradas) y en disco (`.data/img-cache`); las peticiones simultáneas de la misma imagen comparten una descarga. **Lista cerrada de orígenes** (Storage público de la app y `/img/`): cualquier otra URL da 400. Cabeceras `immutable` de un año (la URL lleva `?v=` y cambia al subir otra foto).
+- **Fotos locales:** `node scripts/design/optimize-photos.mjs` reduce `public/img/pexels-*.jpg` (1,1–2,9 MB → 59–165 KB).
+- **Medido** (Descubrir del creador, 10 tarjetas): originales 19 MB → ~95 KB; primera visita de la historia ~4,9 s (descarga las originales), cualquier visitante posterior ~1 s.
+- `/_ipx/**` (landing) lleva cabeceras de caché largas; **no** se le puede poner `cache` de Nitro (deja las respuestas colgadas).
 
 ## 4c. Patrones de pantalla
 
@@ -156,6 +165,7 @@ Todos mantienen las props que ya usaban las pantallas, salvo que se indique.
 - **Públicas** (`patterns/landing.css`): portada de tinta con titular grande, símbolo y motivo de ondas; las cinco fases visibles; mosaico («bento») con tamaños distintos; perfiles de uso; llamada final; pie. **Todo el contenido es visible sin JavaScript ni animación**: la entrada de cada bloque (`.reveal`) es un efecto de `animation-timeline: view()` con `fill-mode: forwards`, que si el navegador no lo admite simplemente no ocurre (arregla V-01).
 - **Acceso y alta:** `AuthShell` (panel de marca a la izquierda en escritorio; el logotipo aparece una sola vez en cada tamaño; arregla V-04).
 - **Inicio** (`patterns/home.css`): cabecera editorial con una frase de estado calculada de datos reales, cifras con tinte, un único bloque destacado y listas de actividad sin una caja por fila.
+- **Descubrir** (`patterns/discover.css`, `DiscoverBrowser`): una sola vista para los dos roles (`kind` = lo que se lista). Barra con `Explorar | Con IA`, buscador por nombre (cliente, instantáneo) y `Guardados`; filtros en columna fija a la izquierda (hoja inferior en móvil) que **se aplican solos** a los 0,4 s; «Con IA» sí lleva botón (cuesta una llamada al modelo). Recomendados arriba solo con criterio (categorías o IA); rejilla de 12 en 12 con carga automática (`IntersectionObserver`) y botón de respaldo. Tarjeta (`DiscoveryCard`): un solo enlace extendido sobre el nombre (sin botones dentro de botones), guardar y contactar por encima.
 - **Tablero** (`components/post-card.css`): columnas sobre fondo hundido con la cabecera de fase en su color fuerte como barra superior (el título va en tinta: tres de los cinco colores fuertes no llegan a 4,5:1 como texto); la tarjeta dice la fase una vez, con el chip de fase, que además es el selector.
 
 ## 5. Convenciones CSS

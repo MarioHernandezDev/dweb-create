@@ -4,6 +4,32 @@ Registro de qué se hizo, por qué, y qué queda pendiente de verificar — pens
 
 ---
 
+## 2026-11-04 (3) — [Mario] Descubrir rediseñado (los dos roles) y carga de imágenes corregida
+
+Sin cambios en datos, RLS, RPC ni endpoints existentes; se añade el endpoint de solo lectura `/api/img`. La lógica de enviar propuesta/solicitud no se ha tocado.
+
+### Qué se cambió
+
+- **Causa de la lentitud:** las tarjetas pintaban `result.coverUrl` con un `<img>` crudo (sin redimensionar ni diferir) y las portadas de demo en Storage pesan **1,9 MB cada una** (10 tarjetas = 19 MB); además la foto de perfil (300 KB) se pintaba cruda en la barra superior y el menú.
+- **`SmartImage` + `/api/img`:** toda foto de contenido se sirve en webp al tamaño exacto (`srcset` 1x/2x), diferida salvo las primeras tarjetas, con caja reservada y tinte debajo (`CoverArt`); el servidor guarda el resultado en memoria y disco y comparte las descargas simultáneas. Lista cerrada de orígenes (7 tests, incluidos SSRF/escapes de ruta). `BaseAvatar` también pasa por aquí. Fotos de `public/img` reducidas con `scripts/design/optimize-photos.mjs` (11,6 MB → ~0,55 MB; beneficia también a la landing).
+- **Descubrir (un único `DiscoverBrowser` para creador y partner):** barra `Explorar | Con IA` con **buscador por nombre instantáneo**; **filtros laterales que se aplican solos** (sin botón «Buscar»; en móvil, hoja inferior con «Ver N resultados»); filtros activos como chips quitables; **recomendados** solo cuando hay criterio; rejilla a todo el ancho con **carga automática** y botón de respaldo; esqueletos de carga, estado vacío con «Quitar filtros» y estado de la IA con «Cancelar». Tarjetas nuevas con un único enlace extendido (se elimina el botón-dentro-de-botón) y accesibles por teclado. Se borra `FeaturedDeck` y su CSS. Las dos páginas pierden ~200 líneas duplicadas cada una y conservan su hoja de propuesta/solicitud.
+
+### Verificado de verdad
+
+- `vue-tsc` limpio; tests unitarios OK (incluye 7 de `/api/img`); `nuxt build` de producción completo.
+- **Medido en producción (build real, `node .output/server/index.mjs`):** 10 portadas 19 MB → ~95 KB. Primera visita de la historia (caché del servidor vacía) ~4,9 s; cualquier visitante posterior ~1,1 s; misma sesión ~0,9 s. `/api/img`: 79 ms la primera petición de una imagen, 0,9 ms la siguiente, 400 para un origen ajeno.
+- **Navegador real:** al pulsar «Fitness» pasa de 10 a 2 marcas sin botón; buscar «eco» deja EcoHogar; «zzzz» da el estado vacío; en móvil los filtros laterales se ocultan, el botón «Filtros» abre la hoja y «Moda» filtra. Sin desbordes (0 px) ni errores de consola en ambos roles a 1440 y 390 px.
+- **Defectos corregidos al medir:** `NuxtImg` con `sizes` generaba un `srcset` de `1w, 2w` (imágenes de 2×2 px, 56 bytes: parecía rápido y estaba roto); la regla de caché de Nitro sobre `/_ipx/**` dejaba las respuestas colgadas; el CSS de la tarjeta habría descolocado todos los avatares.
+
+### Sin verificar o pendiente
+
+- La **primera visita de la historia sigue costando ~5 s** (en esta máquina; en un servidor en el mismo centro de datos que Supabase será menos): hay que descargar las originales de 1,9 MB una vez. Se eliminaría subiendo versiones ligeras de las portadas de demo (reescribe ficheros del Storage compartido: no se ha hecho sin confirmarlo).
+- La caché en disco (`.data/img-cache`) y en memoria es por instancia; con varias instancias o un hosting sin disco persistente cada una calienta la suya. No hay limpieza de la caché en disco (se borra a mano).
+- Descubrir no probado: modo «Con IA» (llama al modelo), 768 y 1024 px, lector de pantalla, la hoja de propuesta/solicitud tras el cambio, ni el partner en móvil con interacción. El enlace extendido de la tarjeta se comprobó por su `href`, no abriendo el perfil con teclado.
+- Pendiente de recomponer del rediseño: Chat, Bandeja, detalle de colaboración, perfil público, Guardados y Admin.
+
+---
+
 ## 2026-11-04 (2) — [Mario] Rediseño «Señal»: ancho completo, perfil a sangre, hover de botones, logo animado, menú plegable y gráficas de «Hoy»
 
 Sin cambios en datos, rutas, permisos, Supabase, RPC, endpoints ni Stripe.

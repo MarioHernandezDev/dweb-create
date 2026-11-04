@@ -16,6 +16,10 @@ const props = withDefaults(
 const imgFailed = ref(false)
 watch(() => props.src, () => { imgFailed.value = false })
 const hasPhoto = computed(() => !!props.src && !imgFailed.value)
+
+// La foto se pide al tamaño real con que se pinta (ver SmartImage.vue).
+const PX: Record<string, number> = { sm: 32, md: 44, lg: 64, xl: 96, fluid: 160 }
+const px = computed(() => PX[props.size] ?? 44)
 </script>
 
 <template>
@@ -23,7 +27,7 @@ const hasPhoto = computed(() => !!props.src && !imgFailed.value)
     class="avatar" :class="[size !== 'md' && `avatar--${size}`, hasPhoto && 'avatar--has-photo']"
     :style="{ '--hue': hue }"
   >
-    <img v-if="hasPhoto" :src="src!" alt="" class="avatar__img" @error="imgFailed = true">
+    <SmartImage v-if="hasPhoto" :src="src!" :width="px" :height="px" class="avatar__img" @error="imgFailed = true" />
     <template v-else>{{ initials }}</template>
   </div>
 </template>

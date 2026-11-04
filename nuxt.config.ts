@@ -53,9 +53,15 @@ export default defineNuxtConfig({
   },
 
   image: {
-    quality: 85,
+    quality: 78,
     format: ['webp'],
-    // Las fotos de portada vienen de Unsplash: usamos su provider dedicado
+    // Las portadas subidas a Supabase Storage (y las de demo, de varios MB) se
+    // sirven redimensionadas y en webp por el optimizador de la propia app
+    // (IPX): hay que permitir ese dominio. La caché larga es segura porque la
+    // URL de cada portada lleva `?v=` y cambia al subir otra.
+    domains: [process.env.SUPABASE_URL ? new URL(process.env.SUPABASE_URL).hostname : 'placeholder.supabase.co'],
+    // La caché del resultado se define en `routeRules['/_ipx/**']` (más abajo).
+    // Las fotos de portada de la landing vienen de Unsplash: usamos su provider dedicado
     // (prop `provider="unsplash"` en cada NuxtImg) para que construya la URL
     // optimizada directamente contra su CDN, sin reprocesarlas en nuestro servidor.
     unsplash: {
@@ -65,7 +71,11 @@ export default defineNuxtConfig({
 
   // La página Redes (/creator/socials) se eliminó: sus funciones viven en Métricas > Conexiones. Se conserva el enlace antiguo (marcadores, correos).
   routeRules: {
-    '/creator/socials': { redirect: { to: '/creator/metrics', statusCode: 302 } }
+    '/creator/socials': { redirect: { to: '/creator/metrics', statusCode: 302 } },
+    // Imágenes optimizadas de la landing (IPX): el navegador las conserva un año.
+    // Las portadas y avatares de usuarios van por /api/img (ver server/api/img.get.ts),
+    // que además cachea el resultado en el servidor.
+    '/_ipx/**': { headers: { 'cache-control': 'public, max-age=31536000, immutable' } }
   },
 
   runtimeConfig: {
