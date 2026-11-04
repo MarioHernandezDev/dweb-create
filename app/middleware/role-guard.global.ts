@@ -37,35 +37,48 @@ export default defineNuxtRouteMiddleware(async (to) => {
   // durante una ventana corta, para no repetir la llamada en cada clic.
   // Una recarga completa de página siempre arranca con la caché vacía, así
   // que el caso que de verdad arregló el bug (sesión recién creada, ref
-  // todavía no actualizado) sigue yendo siempre por la red, sin cambios.
+  // todavía no actualizado) sigue yendo siempre por la red en el NAVEGADOR;
+  // en el servidor se usa la sesión que ya verificó el módulo (ver abajo).
   const cachedUser = useState<{ id: string } | null>('role-guard-user-cache', () => null)
   const cachedAt = useState<number>('role-guard-user-cache-at', () => 0)
 
   let user = cachedUser.value
   if (!user || Date.now() - cachedAt.value > USER_CACHE_TTL_MS) {
-    const { data } = await useSupabaseClient().auth.getUser()
-    user = data.user
+    // En el SERVIDOR la sesión ya la ha verificado el módulo de Supabase (firma
+    // del JWT contra la clave pública, sin salir a la red por usuario): se usa
+    // tal cual en vez de repetir `getUser()`, que costaba una ida y vuelta a la
+    // base de datos en cada carga de página. En el navegador sigue yendo por la
+    // red (ver arriba), y si el servidor no tuviera la sesión, también.
+    const claims = import.meta.server ? useSupabaseUser().value : null
+    if (claims?.sub) {
+      user = { id: claims.sub }
+    } else {
+      const { data } = await useSupabaseClient().auth.getUser()
+      user = data.user
+    }
     cachedUser.value = user
     cachedAt.value = Date.now()
   }
   if (!user) return
 
+  // Rol, ficha de creador, ficha de partner y foto de la cuenta, TODO A LA VEZ:
+  // ninguna depende de las otras para pedirse (la ficha que no corresponde al
+  // rol simplemente no existe y se guarda como `null`, que es lo correcto).
+  // Antes eran dos tandas seguidas (rol y, después, ficha + foto): una ida y
+  // vuelta más a la base de datos en cada carga completa de página. Las fichas
+  // y la foto quedan en caché antes de montar cualquier página, así que
+  // TopBar/SideRail las leen ya listas, sin parpadeo.
   const { ensureRole } = useMyRole()
-  const myRole = await ensureRole(user.id)
+  const [myRole] = await Promise.all([
+    ensureRole(user.id),
+    useMyCreator().ensureCreator(user.id),
+    useMyPartner().ensurePartner(user.id),
+    useMyAvatar().ensureAvatar(user.id)
+  ])
 
   // Sesión iniciada pero sin fila en `profiles` todavía (no debería pasar
   // con el trigger de la migración, pero por si acaso no lo dejamos colgado).
   if (!myRole) return
-
-  // Deja lista la ficha de rol (creator/partner) y la foto de perfil de la
-  // cuenta antes de montar cualquier página — así TopBar.vue/SideRail.vue la
-  // leen ya en caché, sin parpadeo, y ninguna página necesita su propio
-  // "cargando…" solo para saber quién es el usuario. Las dos son
-  // independientes entre sí, en paralelo.
-  await Promise.all([
-    myRole === 'creator' ? useMyCreator().ensureCreator(user.id) : useMyPartner().ensurePartner(user.id),
-    useMyAvatar().ensureAvatar(user.id)
-  ])
 
   if (to.path === '/login') {
     return navigateTo(roleMeta[myRole].home)

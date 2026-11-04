@@ -2,6 +2,7 @@
 import { useDebounceFn, useIntersectionObserver } from '@vueuse/core'
 import { formatEuros } from '~/utils/mock-data'
 import type { DiscoveryResult } from '~/composables/useDiscover'
+import { prefersReducedMotion } from '~/composables/useGsap'
 
 /**
  * Exploración de Descubrir, igual para los dos roles: `kind` es lo que se
@@ -91,6 +92,22 @@ const visibleRest = computed(() => rest.value.slice(0, visibleCount.value))
 const hasMore = computed(() => rest.value.length > visibleCount.value)
 const showSkeleton = computed(() => loading.value && !results.value.length)
 
+// Vista: rejilla o carrusel (GSAP, ver ResultsCarousel.vue). Al filtrar o buscar por nombre se
+// pasa sola al carrusel; si la persona elige una vista, se respeta su elección.
+const CAROUSEL_MIN = 4
+const CAROUSEL_MAX = 24
+const viewOptions = [{ value: 'grid', label: 'Rejilla' }, { value: 'carousel', label: 'Carrusel' }]
+const view = ref<'grid' | 'carousel'>('grid')
+const viewPicked = ref(false)
+// Solo en el navegador (y sin «reducir movimiento»): el servidor pinta siempre la rejilla.
+const clientReady = ref(false)
+onMounted(() => { clientReady.value = !prefersReducedMotion() })
+const carouselAllowed = computed(() => clientReady.value && filtered.value.length >= CAROUSEL_MIN)
+const showCarousel = computed(() => view.value === 'carousel' && carouselAllowed.value)
+const filteringNow = computed(() => hasActiveFilters.value || nameQuery.value.trim().length > 0)
+watch(filteringNow, (on) => { if (!viewPicked.value) view.value = on ? 'carousel' : 'grid' })
+function pickView(v: string) { viewPicked.value = true; view.value = v as 'grid' | 'carousel' }
+
 // Carga automática al llegar al final de la rejilla.
 const sentinel = ref<HTMLElement | null>(null)
 useIntersectionObserver(sentinel, ([entry]) => { if (entry?.isIntersecting && hasMore.value) visibleCount.value += PAGE_SIZE }, { rootMargin: '600px' })
@@ -159,6 +176,7 @@ useIntersectionObserver(sentinel, ([entry]) => { if (entry?.isIntersecting && ha
               {{ num(minEuros) ? formatEuros(num(minEuros)! * 100) : '…' }}–{{ num(maxEuros) ? formatEuros(num(maxEuros)! * 100) : '…' }}
             </Chip>
           </div>
+          <SegmentedTabs v-if="carouselAllowed" :model-value="view" :options="viewOptions" label="Vista de los resultados" class="discover__view" @update:model-value="pickView" />
         </div>
 
         <!-- Cargando la primera vez -->
@@ -172,6 +190,11 @@ useIntersectionObserver(sentinel, ([entry]) => { if (entry?.isIntersecting && ha
         >
           <BaseButton v-if="hasActiveFilters || nameQuery" variant="secondary" size="sm" icon="ph:x-bold" @click="clearFilters(); nameQuery = ''">Quitar filtros</BaseButton>
         </EmptyState>
+
+        <ResultsCarousel
+          v-else-if="showCarousel" :results="filtered.slice(0, CAROUSEL_MAX)" :kind="kind" :cta-label="ctaLabel"
+          :pending-ids="pendingIds" :show-score="scoreMeaningful" @contact="emit('contact', $event)"
+        />
 
         <template v-else>
           <section v-if="featured.length" class="discover__featured" aria-labelledby="discover-featured">

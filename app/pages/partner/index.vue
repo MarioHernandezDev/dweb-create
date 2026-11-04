@@ -15,7 +15,9 @@ const { posts, ensureLoaded: ensurePostsLoaded, approvePost } = usePartnerPosts(
 const { conversations, ensureConversations } = useChat()
 
 // En paralelo, no en serie — cuatro consultas independientes.
-await Promise.all([ensureCollaborationsLoaded(), ensurePostsLoaded(), ensurePartner(), ensureConversations()])
+await Promise.all([ensureCollaborationsLoaded(), ensurePostsLoaded(), ensurePartner()])
+// Los mensajes solo alimentan el bloque de «mensajes sin leer»: no bloquean el primer pintado.
+ensureConversations()
 
 // Panel de descubrimiento: SIN await arriba a propósito, no debe bloquear el
 // primer pintado — mismo criterio que creator/index.vue.

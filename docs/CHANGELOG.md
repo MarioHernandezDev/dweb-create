@@ -4,6 +4,18 @@ Registro de qué se hizo, por qué, y qué queda pendiente de verificar — pens
 
 ---
 
+## 2026-11-04 (Alex-63) — [Alex] Descubrir: carrusel GSAP al filtrar; y carga de página al ~50 %
+
+- **Carrusel (Descubrir):** `ResultsCarousel.vue`, adaptado del pen de `codepen.md` (bucle infinito con `buildSeamlessLoop`) y con nuestros estilos. Al filtrar o buscar por nombre, los resultados pasan al carrusel (selector Rejilla | Carrusel; si se elige, se respeta). **Diferencias deliberadas con el pen:** sin ScrollTrigger ni `pin` (el scroll sigue siendo de la página; botones, flechas y arrastre); tarjetas reales de Descubrir; separación `max(0.1, 1/n)` porque con menos de 10 tarjetas una misma tarjeta se pisaría a sí misma; mínimo 4 y máximo 24 resultados; con «reducir movimiento» se ve la rejilla. Antes, una prueba con Flip (descartada: era una suposición mía sobre el pen).
+- **Rendimiento, segunda parte (carga completa de página, con 350 ms por consulta simulados en servidor y navegador mediante un proxy local):**
+  - `role-guard.global.ts` hacía 4–5 consultas **en serie** en cada carga: `getUser()`, rol, ficha, foto y datos de la página. Ahora el servidor usa la sesión que ya verifica el módulo de Supabase (sin red) y pide a la vez rol, ficha de creador, ficha de partner y foto. Si el servidor no tuviera la sesión, vuelve a `getUser()`.
+  - Inicio del creador y del partner ya no esperan a los mensajes ni a las páginas extra de publicaciones para pintar (se completan después, en el navegador).
+  - **Medido (HTML de la página):** Inicio del creador 3,25 s → 1,4 s; Publicaciones 1,66 → 0,95; Colaboraciones 1,65 → 0,88; Bandeja 1,57 → 0,78; Inicio del partner 1,26 s; Colaboraciones del partner 1,19 s.
+- **Verificado:** typecheck limpio; unitarios 636/636; `nuxt build`; carrusel en navegador a 1 440 y 390 px (avanza, 6 tarjetas, sin errores de consola salvo un aviso de hidratación que corregí: la vista dependía de algo solo del navegador).
+- **Sin verificar:** contra el Supabase compartido real (los números son con un retraso simulado de 350 ms); la prueba con `/partner/discover` sigue en ~2,3 s porque la búsqueda inicial se espera en el servidor (queda para otra pasada); la carga tras volver a abrir el carrusel con la IA; Safari y Firefox. El aviso de hidratación se corrigió después de la última captura y no repetí el recorrido completo.
+
+---
+
 ## 2026-11-04 (Alex-62) — [Alex] Rediseño: Colaboraciones, Guardados, Bandeja y perfil público; y por qué la app iba lenta
 
 Mismo lenguaje «Señal» que el resto, sin tocar datos, rutas ni lógica. Sin migraciones.

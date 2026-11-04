@@ -30,11 +30,17 @@ const myProfileId = await resolveMyProfileId()
 // tras otra solo suma su latencia de red sin motivo.
 await Promise.all([
   ensureLoaded(), ensureRequestsLoaded(), ensureSocialsLoaded(), ensureCreator(),
-  myProfileId ? ensureMyPackages(myProfileId) : Promise.resolve([]),
-  ensureConversations()
+  myProfileId ? ensureMyPackages(myProfileId) : Promise.resolve([])
 ])
-// Hoy necesita lo de hoy, lo próximo y lo atrasado aunque haya mucho historial: se cargan páginas hasta pasar de la próxima semana.
-await loadUntilDue(new Date(Date.now() + 7 * 86_400_000).toISOString().slice(0, 10))
+// Lo siguiente NO bloquea el primer pintado (cada espera encadenada suma una ida
+// y vuelta a la base de datos a la carga de la página):
+//  - los mensajes (solo alimentan el bloque de «mensajes sin leer»);
+//  - las páginas extra de publicaciones: Hoy necesita lo de hoy, lo próximo y lo
+//    atrasado aunque haya mucho historial, así que se siguen cargando hasta pasar
+//    de la próxima semana, pero después de pintar lo que ya llegó. Solo en el
+//    navegador: el servidor pinta con la primera página y el cliente completa.
+ensureConversations()
+if (import.meta.client) void loadUntilDue(new Date(Date.now() + 7 * 86_400_000).toISOString().slice(0, 10))
 
 // Panel de descubrimiento: SIN await en el Promise.all de arriba a
 // propósito — no debe bloquear el primer pintado del home. Mismo patrón de
