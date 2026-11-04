@@ -1,0 +1,213 @@
+import type { CollaborationStatus, PostStatus } from '~/types'
+import type { CollaborationTerms } from './collaboration-terms'
+import { hasAnyBriefSpecified, hasAnyTermsSpecified } from './collaboration-terms'
+
+/**
+ * Qué le toca hacer a cada parte en una colaboración. Única fuente de verdad de
+ * dos pantallas: el «Siguiente paso» de la página de la colaboración y la bandeja
+ * «Qué me toca». Es una función pura de datos que YA existen (estado de la
+ * colaboración, fase de sus publicaciones y la cronología registrada): no inventa
+ * nada que no esté en la base de datos.
+ */
+export type WorkRole = 'creator' | 'partner'
+
+export interface WorkCollab extends CollaborationTerms {
+  id: string
+  status: CollaborationStatus
+  initiatedBy: WorkRole
+  counterpartName: string
+  /** Texto del brief: sirve para distinguir tareas de varias colaboraciones con la misma persona. */
+  brief?: string
+}
+
+export interface WorkPost {
+  id: string
+  collaborationId?: string | null
+  title: string
+  status: PostStatus
+  dueInDays: number
+}
+
+export interface WorkEvent {
+  collaborationId: string
+  kind: string
+  postId: string | null
+  actorProfileId: string | null
+  detail: Record<string, unknown>
+  createdAt: string
+}
+
+export type WorkTaskKind =
+  | 'respond_request'
+  | 'review_deliverable'
+  | 'fix_changes'
+  | 'send_deliverable'
+  | 'start_deliverable'
+  | 'complete_brief'
+  | 'close_collaboration'
+  | 'rate'
+  | 'respond_offer'
+
+export interface WorkTask {
+  id: string
+  kind: WorkTaskKind
+  collaborationId: string | null
+  postId?: string
+  counterpartName: string
+  title: string
+  detail?: string
+  /** Más bajo = más urgente. */
+  priority: number
+  /** Texto del botón. */
+  cta: string
+  to: string
+}
+
+export interface WorkWaiting {
+  collaborationId: string
+  counterpartName: string
+  text: string
+}
+
+export type DeliverableState = 'pending' | 'in_review' | 'changes' | 'approved'
+
+/**
+ * Estado de una entrega según su fase y la última revisión registrada:
+ *  - «Para revisar» → en revisión;
+ *  - vuelve a producción tras «pedir cambios» → cambios pedidos;
+ *  - Programado/Publicado → aprobada (o sin revisión, en publicaciones sin colaboración);
+ *  - el resto → pendiente.
+ */
+export function deliverableState(post: Pick<WorkPost, 'id' | 'status'>, events: WorkEvent[]): DeliverableState {
+  if (post.status === 'ready_for_review') return 'in_review'
+  if (post.status === 'scheduled' || post.status === 'published') return 'approved'
+  const last = [...events].reverse().find((e) => e.postId === post.id && (e.kind === 'changes_requested' || e.kind === 'approved' || e.kind === 'deliverable_sent'))
+  return last?.kind === 'changes_requested' ? 'changes' : 'pending'
+}
+
+function lastChangesComment(post: WorkPost, events: WorkEvent[]): string | undefined {
+  const e = [...events].reverse().find((ev) => ev.postId === post.id && ev.kind === 'changes_requested')
+  const c = e?.detail?.comment
+  return typeof c === 'string' && c.trim() ? c.trim() : undefined
+}
+
+function clip(text: string, max = 110): string {
+  return text.length > max ? `${text.slice(0, max - 1).trimEnd()}…` : text
+}
+
+function dueText(dueInDays: number): string {
+  if (dueInDays < 0) return `Atrasada ${Math.abs(dueInDays)} día${Math.abs(dueInDays) === 1 ? '' : 's'}`
+  if (dueInDays === 0) return 'Vence hoy'
+  if (dueInDays === 1) return 'Vence mañana'
+  return `Vence en ${dueInDays} días`
+}
+
+/** Cada persona solo valora una vez: ¿ya lo hice yo? */
+export function hasRated(events: WorkEvent[], myProfileId: string | null): boolean {
+  return !!myProfileId && events.some((e) => e.kind === 'rated' && e.actorProfileId === myProfileId)
+}
+
+export function collaborationHref(role: WorkRole, collaborationId: string, query?: Record<string, string>): string {
+  const qs = query && Object.keys(query).length ? `?${new URLSearchParams(query).toString()}` : ''
+  return `/${role}/collaborations/${collaborationId}${qs}`
+}
+
+/**
+ * Tareas (acciones que dependen de mí) y, si no hay ninguna, a qué espera la
+ * colaboración. Solo contempla colaboraciones vivas o recién completadas.
+ */
+export function collaborationWork(
+  role: WorkRole,
+  collab: WorkCollab,
+  posts: WorkPost[],
+  events: WorkEvent[],
+  myProfileId: string | null
+): { tasks: WorkTask[]; waiting: WorkWaiting | null } {
+  const tasks: WorkTask[] = []
+  const who = collab.counterpartName
+  const base = { collaborationId: collab.id, counterpartName: who }
+  const mine = posts.filter((p) => p.collaborationId === collab.id)
+  const states = mine.map((p) => ({ post: p, state: deliverableState(p, events) }))
+  let waitingText: string | null = null
+
+  if (collab.status === 'requested') {
+    if (collab.initiatedBy === role) {
+      waitingText = `Esperando la respuesta de ${who}`
+    } else {
+      tasks.push({
+        ...base, id: `respond:${collab.id}`, kind: 'respond_request', priority: 10,
+        title: `Responde a la solicitud de ${who}`,
+        detail: collab.brief ? `«${clip(collab.brief, 70)}» · acepta, rechaza o propón otro presupuesto.` : 'Acepta, rechaza o propón otro presupuesto.',
+        cta: 'Responder', to: collaborationHref(role, collab.id) + '#respuesta'
+      })
+    }
+  } else if (collab.status === 'accepted' || collab.status === 'in_progress') {
+    for (const { post, state } of states) {
+      if (state === 'in_review') {
+        if (role === 'partner') {
+          tasks.push({
+            ...base, id: `review:${post.id}`, kind: 'review_deliverable', postId: post.id, priority: 20,
+            title: `Revisa «${post.title}»`, detail: `${who} la ha enviado a revisión.`,
+            cta: 'Revisar', to: collaborationHref(role, collab.id, { post: post.id }) + '#entregables'
+          })
+        } else {
+          waitingText ??= `${who} está revisando «${post.title}»`
+        }
+      } else if (state === 'changes' && role === 'creator') {
+        const comment = lastChangesComment(post, events)
+        tasks.push({
+          ...base, id: `fix:${post.id}`, kind: 'fix_changes', postId: post.id, priority: 25,
+          title: `Corrige «${post.title}»`, detail: comment ? `${who} pide: ${clip(comment)}` : `${who} ha pedido cambios.`,
+          cta: 'Corregir', to: `/creator/post/${post.id}`
+        })
+      } else if (state === 'pending' && role === 'creator') {
+        const late = post.dueInDays < 0
+        tasks.push({
+          ...base, id: `send:${post.id}`, kind: 'send_deliverable', postId: post.id, priority: late ? 22 : 30 + Math.min(Math.max(post.dueInDays, 0), 20),
+          title: `Envía «${post.title}» a revisión`, detail: `${dueText(post.dueInDays)} · ${who}`,
+          cta: 'Abrir publicación', to: `/creator/post/${post.id}`
+        })
+      }
+    }
+
+    if (role === 'creator' && !mine.length) {
+      tasks.push({
+        ...base, id: `start:${collab.id}`, kind: 'start_deliverable', priority: 35,
+        title: `Crea la primera publicación para ${who}`, detail: 'Aún no hay ninguna publicación vinculada a esta colaboración.',
+        cta: 'Abrir Studio', to: '/creator/timeline'
+      })
+    }
+    if (role === 'partner' && !mine.length) waitingText ??= `${who} aún no ha creado ninguna publicación`
+    if (role === 'partner' && mine.length && !tasks.length) {
+      const pending = states.filter((s) => s.state === 'pending' || s.state === 'changes').length
+      if (pending) waitingText ??= `${who} trabaja en ${pending} entrega${pending === 1 ? '' : 's'}`
+    }
+
+    if (role === 'partner' && !hasAnyBriefSpecified(collab) && !hasAnyTermsSpecified(collab)) {
+      tasks.push({
+        ...base, id: `brief:${collab.id}`, kind: 'complete_brief', priority: 40,
+        title: `Completa el brief para ${who}`, detail: collab.brief ? `«${clip(collab.brief, 70)}» · objetivo, público, tono y condiciones se fijan una sola vez.` : 'Objetivo, público, tono y condiciones: se fijan una sola vez.',
+        cta: 'Completar brief', to: collaborationHref(role, collab.id) + '#brief'
+      })
+    }
+
+    if (states.length && states.every((s) => s.state === 'approved')) {
+      tasks.push({
+        ...base, id: `close:${collab.id}`, kind: 'close_collaboration', priority: 50,
+        title: `Cierra la colaboración con ${who}`, detail: collab.brief ? `«${clip(collab.brief, 70)}» · todas las entregas están aprobadas.` : 'Todas las entregas están aprobadas.',
+        cta: 'Ver colaboración', to: collaborationHref(role, collab.id) + '#respuesta'
+      })
+    }
+  } else if (collab.status === 'completed') {
+    if (!hasRated(events, myProfileId)) {
+      tasks.push({
+        ...base, id: `rate:${collab.id}`, kind: 'rate', priority: 60,
+        title: `Valora a ${who}`, detail: 'Tu valoración ayuda a otros usuarios.',
+        cta: 'Valorar', to: collaborationHref(role, collab.id) + '#respuesta'
+      })
+    }
+  }
+
+  tasks.sort((a, b) => a.priority - b.priority)
+  return { tasks, waiting: waitingText ? { collaborationId: collab.id, counterpartName: who, text: waitingText } : null }
+}

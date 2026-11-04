@@ -60,5 +60,6 @@
 @import "./patterns/discover.css";
 @import "./patterns/lists.css";
 @import "./patterns/collab.css";
+@import "./patterns/collab-detail.css";
 @import "./patterns/public-profile.css";
 @import "./patterns/settings.css";

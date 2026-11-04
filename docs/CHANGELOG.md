@@ -4,6 +4,19 @@ Registro de qué se hizo, por qué, y qué queda pendiente de verificar — pens
 
 ---
 
+## 2026-11-04 (Alex-66) — [Alex] Colaboraciones · Fase 1 de la auditoría competitiva: página de colaboración, cronología y «Qué me toca»
+
+Parte de `CIBERAN_COMPETITIVE_AUDIT.md` (F1, F3, F4). Sin tocar pagos ni redes sociales.
+
+- **F1 · Página de colaboración** `/creator/collaborations/[id]` y `/partner/collaborations/[id]` (componente único `CollabWorkspace`): cabecera con la otra parte y el estado, «Siguiente paso», presupuesto y respuesta (mismo `NegotiationPanel`, pago, completar y valoración de siempre), entregables (lista con estado y revisión), acuerdo (brief y condiciones) y cronología; el partner además ve «Rendimiento». Las listas `*/requests` pasan a ser solo listas y **reenvían los enlaces antiguos** `?collaboration=<id>` (avisos, chat y regreso de Stripe, con `post` y `payment`) a la página nueva. La hoja modal y `CollaborationLogCard` se retiran.
+- **F3 · Cronología:** tabla `collaboration_events` rellenada por triggers (solicitud, aceptación, rechazo, cierre, contraoferta, entrega enviada/reenviada, cambios pedidos, aprobación, publicación, valoración sin la nota, apuntes del registro). Solo lectura para las dos partes; sin vía de escritura desde el cliente. Relleno de lo existente con marcas de tiempo reales; aceptación/rechazo/cierre de colaboraciones antiguas con `updated_at` y señaladas como «fecha aproximada». La UI distingue cambios de estado de mensajes y acciones de personas, y permite filtrar.
+- **F4 · «Qué me toca»:** primera pestaña de la Bandeja de entrada. Se calcula en cliente con `collaborationWork` (`utils/collaboration-work.ts`, la misma lógica del «Siguiente paso»): responder solicitud u oferta del chat, revisar entrega, corregir cambios, enviar entrega, crear la primera publicación, completar brief (marca), cerrar y valorar. «Esperando a otros» recoge lo que depende de la otra parte.
+- **Migración (PREPARADA, NO APLICADA en el proyecto compartido):** `20261104130000_collaboration_events.sql` (aplicada y probada solo en el Supabase local). Requiere `20261104110000` ya aplicada.
+- **Pruebas:** `tests/unit/collaboration-work.spec.ts` (12), `tests/integration/collaboration-events.spec.ts` (3; contra el Supabase local), recorrido en navegador. `supabase-setup.ts` admite `TEST_CREATOR_EMAIL`/`TEST_PARTNER_EMAIL` para probar con otras cuentas.
+- **Pendiente de la Fase 1:** contador de «Qué me toca» en la barra lateral, pista de «siguiente paso» en las tarjetas de las listas, validación en Safari/Firefox y con datos de la base compartida.
+
+---
+
 ## 2026-11-04 (Alex-65) — [Alex] Rediseño de «Tu perfil» (creador y partner)
 
 Mismo lenguaje «Señal»; sin tocar datos, rutas, Supabase ni Stripe. Se conservan todos los `data-*` y los `id` de los campos.

@@ -40,11 +40,11 @@ async function signIn(email: string): Promise<{ client: SupabaseClient; userId: 
 }
 
 export function creatorSession() {
-  return signIn('creator@feedma.test')
+  return signIn(process.env.TEST_CREATOR_EMAIL ?? 'creator@feedma.test')
 }
 
 export function partnerSession() {
-  return signIn('partner@feedma.test')
+  return signIn(process.env.TEST_PARTNER_EMAIL ?? 'partner@feedma.test')
 }
 
 /** Un perfil real sin ninguna relación con creator@/partner@feedma.test — para probar que un ajeno no puede leer/escribir algo que no es suyo. Mismas credenciales de demo (ver scripts/seed-discover-demo.mjs). */

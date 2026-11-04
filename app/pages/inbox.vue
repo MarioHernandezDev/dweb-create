@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { AppNotification } from '~/composables/useNotifications'
 import { relativeTime } from '~/utils/status'
+import { initialsFromName, hueFromString } from '~/utils/avatar'
 import { groupNotifications, type NotificationGroup } from '~/utils/notifications'
 
 useHead({ title: 'Bandeja de entrada' })
@@ -21,13 +22,22 @@ const router = useRouter()
 // entre solicitudes/ofertas reales. Separado en dos pestañas, con la de
 // Importantes por delante (la que importa de verdad) y el contador del
 // badge (useNotifications().unreadCount) ya solo cuenta esta.
-const tab = ref<'important' | 'activity'>('important')
+// «Qué me toca» va primero: lo accionable (responder, revisar, entregar…) por
+// delante de los avisos. Se calcula con el estado real de tus colaboraciones y se
+// carga en el cliente para no retrasar la página.
+const work = useMyWork()
+onMounted(() => work.load(true))
+const taskCount = computed(() => work.tasks.value.length)
+
+const route = useRoute()
+const tab = ref<'tasks' | 'important' | 'activity'>(route.query.tab === 'important' || route.query.tab === 'activity' ? route.query.tab : 'tasks')
 const tabs = computed(() => [
+  { value: 'tasks', label: taskCount.value ? `Qué me toca (${taskCount.value})` : 'Qué me toca' },
   { value: 'important', label: important.value.some((n) => !n.readAt) ? `Importantes (${important.value.filter((n) => !n.readAt).length})` : 'Importantes' },
   { value: 'activity', label: 'Actividad' }
 ])
 // M-N1: avisos idénticos se muestran agrupados, con contador.
-const visible = computed(() => groupNotifications(tab.value === 'important' ? important.value : activity.value))
+const visible = computed(() => groupNotifications(tab.value === 'activity' ? activity.value : important.value))
 
 const typeIcon: Record<string, string> = {
   welcome: 'ph:hand-waving-fill',
@@ -57,14 +67,44 @@ async function open(n: NotificationGroup<AppNotification>) {
 </script>
 
 <template>
-  <AppShell :role="myRole" title="Bandeja de entrada" subtitle="Avisos de tu cuenta">
+  <AppShell :role="myRole" title="Bandeja de entrada" subtitle="Lo que te toca y los avisos de tu cuenta">
     <div class="list-toolbar">
       <SegmentedTabs v-model="tab" :options="tabs" />
-      <BaseButton v-if="hasUnread" variant="ghost" size="sm" icon="ph:checks-bold" @click="markAllRead">Marcar todo como leído</BaseButton>
+      <BaseButton v-if="hasUnread && tab !== 'tasks'" variant="ghost" size="sm" icon="ph:checks-bold" @click="markAllRead">Marcar todo como leído</BaseButton>
     </div>
 
+    <!-- Qué me toca -->
+    <template v-if="tab === 'tasks'">
+      <div v-if="!work.loaded.value" class="tasks" aria-busy="true">
+        <SkeletonBlock v-for="n in 3" :key="n" height="5rem" rounded="var(--radius-md)" />
+      </div>
+      <EmptyState
+        v-else-if="!work.tasks.value.length"
+        icon="ph:check-circle" title="Estás al día"
+        description="No hay respuestas, revisiones ni entregas pendientes por tu parte. Cuando algo necesite tu atención, aparecerá aquí."
+      />
+      <div v-else class="tasks" data-tasks>
+        <article v-for="t in work.tasks.value" :key="t.id" class="task" :data-kind="t.kind">
+          <div class="task__main">
+            <p class="task__who"><BaseAvatar :initials="initialsFromName(t.counterpartName)" :hue="hueFromString(t.counterpartName)" size="sm" /> {{ t.counterpartName }}</p>
+            <h2 class="task__title">{{ t.title }}</h2>
+            <p v-if="t.detail" class="task__detail">{{ t.detail }}</p>
+          </div>
+          <BaseButton :to="t.to" variant="primary" size="sm">{{ t.cta }}</BaseButton>
+        </article>
+      </div>
+
+      <PanelCard v-if="work.loaded.value && work.waiting.value.length" title="Esperando a otros" description="Sin acción por tu parte ahora mismo." class="mt-6">
+        <div class="task-waiting">
+          <NuxtLink v-for="w in work.waiting.value" :key="w.collaborationId" :to="`/${work.myRole.value}/collaborations/${w.collaborationId}`" class="task-waiting__row">
+            <span>{{ w.text }}</span><Icon name="ph:arrow-right-bold" class="size-4" />
+          </NuxtLink>
+        </div>
+      </PanelCard>
+    </template>
+
     <EmptyState
-      v-if="!visible.length"
+      v-else-if="!visible.length"
       icon="ph:tray" :title="tab === 'important' ? 'Sin avisos importantes' : 'Sin actividad todavía'"
       :description="tab === 'important' ? 'Aquí verás solicitudes, ofertas, cambios pedidos, aprobaciones y valoraciones.' : 'Aquí verás tus inicios de sesión y la bienvenida de alta de cuenta.'"
     />

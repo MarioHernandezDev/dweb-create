@@ -3,13 +3,16 @@ const props = defineProps<{
   collaborationId: string
   counterpartName: string
 }>()
+const emit = defineEmits<{ rated: [] }>()
 
 const { myRatings, submitting, submitError, ensureMyRatingsLoaded, submitRating } = useRatings()
 
 // Sin `await` a nivel de script, mismo motivo que NegotiationPanel.vue: este
 // componente vive dentro de una hoja inferior que se monta/desmonta con
 // `v-if`, fuera del Suspense inicial de la página.
-onMounted(() => ensureMyRatingsLoaded())
+// Hasta saber si ya has valorado no se pinta nada (si no, un instante se vería el formulario aunque ya lo hubieras enviado).
+const ready = ref(false)
+onMounted(async () => { await ensureMyRatingsLoaded(); ready.value = true })
 
 const myRating = computed(() => myRatings.value[props.collaborationId] ?? null)
 
@@ -20,6 +23,7 @@ async function send() {
   if (!stars.value) return
   try {
     await submitRating(props.collaborationId, stars.value, comment.value)
+    emit('rated')
   } catch {
     // submitError ya queda puesto por el composable — el formulario se deja como está para reintentar.
   }
@@ -28,7 +32,8 @@ async function send() {
 
 <template>
   <div class="pt-3 mt-1 border-t border-[var(--color-hairline)]">
-    <template v-if="myRating">
+    <SkeletonBlock v-if="!ready" height="4rem" rounded="var(--radius-sm)" />
+    <template v-else-if="myRating">
       <p class="text-micro text-[var(--color-text-muted)] mb-1.5">Tu valoración a {{ counterpartName }}</p>
       <RatingStars :model-value="myRating.stars" readonly size="sm" />
       <p v-if="myRating.comment" class="text-sm text-[var(--color-text-muted)] mt-1.5">{{ myRating.comment }}</p>
