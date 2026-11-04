@@ -94,7 +94,7 @@ const showSkeleton = computed(() => loading.value && !results.value.length)
 
 // Vista: rejilla o carrusel (GSAP, ver ResultsCarousel.vue). Al filtrar o buscar por nombre se
 // pasa sola al carrusel; si la persona elige una vista, se respeta su elección.
-const CAROUSEL_MIN = 4
+const CAROUSEL_MIN = 2
 const CAROUSEL_MAX = 24
 const viewOptions = [{ value: 'grid', label: 'Rejilla' }, { value: 'carousel', label: 'Carrusel' }]
 const view = ref<'grid' | 'carousel'>('grid')
