@@ -4,6 +4,15 @@ Registro de qué se hizo, por qué, y qué queda pendiente de verificar — pens
 
 ---
 
+## 2026-11-04 (Alex-64) — [Alex] Carrusel de Descubrir: arrastre con ratón y panel táctil
+
+- **Causa:** arrastrar con el ratón no movía el carrusel. Al pulsar sobre la foto o el nombre (un enlace), el navegador iniciaba su arrastre nativo de imagen o enlace y cancelaba el gesto (`pointercancel`), así que nunca llegaba el «soltar». Y si el arrastre terminaba sobre el nombre, se abría el perfil.
+- **Arreglo (`ResultsCarousel.vue`, `.dcar__stage`):** se bloquea el arrastre nativo (`dragstart` + `-webkit-user-drag: none`), se captura el puntero al moverse más de 8 px, y el clic que cierra un arrastre se anula. Nuevo: deslizar en horizontal con el panel táctil (o Mayús + rueda) pasa tarjetas; la rueda vertical sigue desplazando la página. Cursor de agarre.
+- **Verificado en navegador (1 440 y 390 px, Supabase local):** botones, 5 clics rápidos, flechas, cambio de filtros con el carrusel abierto, alternar Rejilla/Carrusel, arrastre con ratón, arrastre que acaba en el nombre (no navega), clic normal en el nombre (abre el perfil), deslizar con el dedo, panel táctil horizontal; imágenes cargadas; sin errores de consola. Unitarios 636/636, typecheck limpio.
+- **Sin verificar:** Safari y Firefox; un trackpad real (simulado con la rueda horizontal).
+
+---
+
 ## 2026-11-04 (Alex-63) — [Alex] Descubrir: carrusel GSAP al filtrar; y carga de página al ~50 %
 
 - **Carrusel (Descubrir):** `ResultsCarousel.vue`, adaptado del pen de `codepen.md` (bucle infinito con `buildSeamlessLoop`) y con nuestros estilos. Al filtrar o buscar por nombre, los resultados pasan al carrusel (selector Rejilla | Carrusel; si se elige, se respeta). **Diferencias deliberadas con el pen:** sin ScrollTrigger ni `pin` (el scroll sigue siendo de la página; botones, flechas y arrastre); tarjetas reales de Descubrir; separación `max(0.1, 1/n)` porque con menos de 10 tarjetas una misma tarjeta se pisaría a sí misma; mínimo 4 y máximo 24 resultados; con «reducir movimiento» se ve la rejilla. Antes, una prueba con Flip (descartada: era una suposición mía sobre el pen).

@@ -108,6 +108,11 @@
     overflow: hidden;
     touch-action: pan-y;
     user-select: none;
+    cursor: grab;
+
+    &:active { cursor: grabbing; }
+    /* Las fotos y enlaces no se arrastran como archivos (rompía el gesto). */
+    & img, & a { -webkit-user-drag: none; user-select: none; }
   }
   .dcar__item {
     position: absolute;

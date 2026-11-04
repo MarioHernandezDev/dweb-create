@@ -12,7 +12,8 @@ import { prefersReducedMotion } from '~/composables/useGsap'
  * Diferencias con el pen, a propósito:
  *  - NO fija la página ni la mueve con el scroll (ScrollTrigger + pin): dentro
  *    de la app, el scroll tiene que seguir siendo de la página. Se maneja con
- *    los botones, las flechas del teclado y arrastrando.
+ *    los botones, las flechas del teclado, arrastrando (ratón o dedo) y
+ *    deslizando en horizontal en el panel táctil.
  *  - Las tarjetas son las reales de Descubrir (enlace, guardar, contactar).
  *  - Con pocos resultados la separación crece (`spacing`), porque una misma
  *    tarjeta no puede estar en dos sitios a la vez: cada una necesita al menos
@@ -98,18 +99,56 @@ function step(direction: 1 | -1) {
   scrub.invalidate().restart()
 }
 
-// ---- Entrada: flechas y arrastre ------------------------------------------
+// ---- Entrada: flechas, arrastre y panel táctil ------------------------------
 function onKey(e: KeyboardEvent) {
   if (e.key === 'ArrowRight') { step(1); e.preventDefault() }
   else if (e.key === 'ArrowLeft') { step(-1); e.preventDefault() }
 }
+
+// Arrastrar con ratón o dedo. Antes, con ratón no funcionaba: al pulsar sobre la
+// foto o el nombre (un enlace) el navegador empezaba a arrastrar la imagen como
+// un archivo y cancelaba el gesto (`pointercancel`), así que nunca llegaba el
+// «soltar». Ahora se bloquea ese arrastre nativo (`dragstart`) y se captura el
+// puntero. Un arrastre que termina sobre un enlace no lo abre (`suppressClick`).
+const DRAG_THRESHOLD = 50
 let dragX: number | null = null
-function onDown(e: PointerEvent) { dragX = e.clientX }
+let suppressClick = false
+function onDown(e: PointerEvent) {
+  if (e.button !== 0) return
+  dragX = e.clientX
+  suppressClick = false
+}
+function onMove(e: PointerEvent) {
+  if (dragX === null || suppressClick) return
+  if (Math.abs(e.clientX - dragX) > 8) {
+    suppressClick = true
+    ;(e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId)
+  }
+}
 function onUp(e: PointerEvent) {
   if (dragX === null) return
   const dx = e.clientX - dragX
   dragX = null
-  if (Math.abs(dx) > 50) step(dx < 0 ? 1 : -1)
+  if (Math.abs(dx) > DRAG_THRESHOLD) step(dx < 0 ? 1 : -1)
+}
+function onClickCapture(e: MouseEvent) {
+  if (!suppressClick) return
+  suppressClick = false
+  e.preventDefault()
+  e.stopPropagation()
+}
+
+// Panel táctil (deslizar en horizontal) y Mayús + rueda. La rueda vertical normal
+// sigue desplazando la página: aquí no se fija el scroll, a diferencia del pen.
+let wheelLock = 0
+function onWheel(e: WheelEvent) {
+  const dx = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.shiftKey ? e.deltaY : 0
+  if (Math.abs(dx) < 12) return
+  e.preventDefault()
+  const now = Date.now()
+  if (now < wheelLock) return
+  wheelLock = now + 420
+  step(dx > 0 ? 1 : -1)
 }
 
 onMounted(() => {
@@ -122,7 +161,11 @@ onBeforeUnmount(teardown)
 
 <template>
   <section class="dcar" aria-roledescription="carrusel" aria-label="Resultados" tabindex="0" @keydown="onKey">
-    <div ref="stage" class="dcar__stage" @pointerdown="onDown" @pointerup="onUp" @pointercancel="dragX = null">
+    <div
+      ref="stage" class="dcar__stage"
+      @pointerdown="onDown" @pointermove="onMove" @pointerup="onUp" @pointercancel="dragX = null"
+      @dragstart.prevent @click.capture="onClickCapture" @wheel="onWheel"
+    >
       <div v-for="(r, i) in results" :key="r.id" class="dcar__item">
         <DiscoveryCard
           :result="r" :kind="kind" :cta-label="ctaLabel" :show-score="showScore" :priority="i < 3"
