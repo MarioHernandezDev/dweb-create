@@ -112,8 +112,10 @@ Aplicadas en la base compartida hasta `20261104100000_collaboration_flow_phase1.
 ## 9. Orden sugerido
 
 1. R-01 (contraseña), Q3 y Q2: son decisiones o cambios pequeños que desbloquean el resto.
-2. Aplicar la migración de la Fase 2 y seguir con las fases 3 y 4 del flujo de colaboraciones.
+2. Seguir con las fases 3 y 4 del flujo de colaboraciones.
 3. R-09 (plan S1–S9) → R-10 → R-11 → M-D3.
 4. M-L1 (datos reales) y M-L2 + R-07 (borrado de cuenta).
 5. R-21…R-24 y R-25 (interfaz), M-U3.
 6. R-08 y R-19 justo antes del lanzamiento.
+
+La migración de la fase 2 ya está ejecutada.
