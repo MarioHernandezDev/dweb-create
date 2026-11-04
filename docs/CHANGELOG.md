@@ -4,6 +4,20 @@ Registro de qué se hizo, por qué, y qué queda pendiente de verificar — pens
 
 ---
 
+## 2026-11-04 (Alex-65) — [Alex] Rediseño de «Tu perfil» (creador y partner)
+
+Mismo lenguaje «Señal»; sin tocar datos, rutas, Supabase ni Stripe. Se conservan todos los `data-*` y los `id` de los campos.
+
+- **Páginas:** `creator/profile.vue` (568 → 506 líneas) y `partner/profile.vue` (453 → 397): paneles con `PanelCard`, filas de ajustes (etiqueta y explicación a la izquierda, valor o acción a la derecha, sin una caja por fila), chips del sistema en la cabecera, botones con `BaseButton`, avisos de pago con `BaseCard`.
+- **Componentes nuevos:** `ChatPrivacyChoices` (opciones excluyentes, antes copiadas en las dos páginas), `ProfileTodoList`, `AccountActions`.
+- **Reescritos con clases del sistema:** `ProfileSettingsNav` (pestaña activa con barra voltio), `ProfileSaveBar` (barra de tinta con «Guardar cambios» en voltio) y `ProfileFichaForm` (`.input`/`.textarea`, categorías con `Chip` seleccionable, contadores con `data-over`).
+- **CSS:** `patterns/settings.css`. Quitadas las constantes de clases de las páginas y el `<style scoped>`.
+- **Verificado:** typecheck limpio; unitarios 636/636; capturas de las 4 pestañas de cada rol a 1 440 y 390 px sin desbordes ni errores de consola; editar la biografía muestra la barra de guardado.
+- **Sin verificar:** guardar la ficha de verdad (no escribí en la base), subir foto o portada, reordenar paquetes arrastrando, los flujos de pago (Stripe), y Safari/Firefox. Tras la última captura ajusté las filas de ajustes para que envuelvan en columnas estrechas y no repetí la captura.
+- **Pendiente:** `PackageFormSheet`, `ProfileHeaderCard` (vista previa), `CoverPhotoUploader` y `AvatarUploader` conservan clases antiguas.
+
+---
+
 ## 2026-11-04 (Alex-64) — [Alex] Carrusel de Descubrir: arrastre con ratón y panel táctil
 
 - **Causa:** arrastrar con el ratón no movía el carrusel. Al pulsar sobre la foto o el nombre (un enlace), el navegador iniciaba su arrastre nativo de imagen o enlace y cancelaba el gesto (`pointercancel`), así que nunca llegaba el «soltar». Y si el arrastre terminaba sobre el nombre, se abría el perfil.

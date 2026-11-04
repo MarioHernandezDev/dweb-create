@@ -25,22 +25,16 @@ function onKey(e: KeyboardEvent, index: number) {
 </script>
 
 <template>
-  <div class="overflow-x-auto nx-scroll -mx-5 px-5 md:mx-0 md:px-0 border-b border-[var(--color-hairline)]">
-    <div role="tablist" aria-label="Secciones de tu perfil" class="flex gap-1 min-w-max">
+  <div class="settings-tabs nx-scroll">
+    <div role="tablist" aria-label="Secciones de tu perfil" class="settings-tabs__list">
       <button
         v-for="(tab, i) in tabs" :id="`profile-tab-${tab.id}`" :key="tab.id" :ref="(el) => { if (el) refs[i] = el as HTMLElement }"
-        type="button" role="tab" :aria-selected="modelValue === tab.id" :aria-controls="`profile-panel-${tab.id}`"
+        type="button" role="tab" class="settings-tabs__tab" :aria-selected="modelValue === tab.id" :aria-controls="`profile-panel-${tab.id}`"
         :tabindex="modelValue === tab.id ? 0 : -1"
-        class="relative inline-flex items-center gap-2 px-4 h-11 text-sm font-medium whitespace-nowrap transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-[var(--color-primary-500)] focus-visible:-outline-offset-2 rounded-t-[var(--radius-xs)]"
-        :class="modelValue === tab.id ? 'text-[var(--color-text)]' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text)]'"
         @click="emit('update:modelValue', tab.id)" @keydown="onKey($event, i)"
       >
-        <Icon :name="tab.icon" class="size-4 shrink-0" :class="modelValue === tab.id && 'text-[var(--color-primary-500)]'" />
+        <Icon :name="tab.icon" class="size-4 shrink-0" />
         {{ tab.label }}
-        <span
-          class="absolute left-3 right-3 -bottom-px h-0.5 rounded-full bg-[var(--color-primary-500)] transition-opacity duration-200"
-          :class="modelValue === tab.id ? 'opacity-100' : 'opacity-0'" aria-hidden="true"
-        />
       </button>
     </div>
   </div>
