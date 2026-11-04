@@ -11,6 +11,7 @@ interface PostRow {
   status: PostStatus
   due_date: string
   media_url: string | null
+  content_version: number | null
   metadata: { hashtags?: string[] } | null
 }
 
@@ -39,6 +40,7 @@ function mapRow(row: PostRow, checklist?: { total: number; done: number }): Post
     hashtags: row.metadata?.hashtags ?? [],
     cover: coverFromId(row.id),
     mediaUrl: row.media_url,
+    contentVersion: row.content_version ?? 1,
     // Las labels se quedan fuera a propósito — son organización personal
     // del creador, no información de progreso (ver migración
     // 20261025160000_checklist_partner_visibility.sql). El checklist sí es
@@ -119,20 +121,27 @@ export function usePartnerPosts() {
   }
 
   /** `comment` opcional en aprobar ("¡Perfecto!"), nunca obligatorio — a diferencia de `requestChanges`. */
-  async function approvePost(id: string, comment?: string) {
-    const { error } = await client.rpc('approve_post', { target_post_id: id, p_comment: comment?.trim() || null } as never)
+  async function approvePost(id: string, comment?: string, contentVersion?: number) {
+    // La versión que la marca estaba viendo: si el creador cambió algo mientras tanto, el servidor lo rechaza.
+    const { error } = await client.rpc('approve_post', { target_post_id: id, p_comment: comment?.trim() || null, p_content_version: contentVersion ?? null } as never)
     if (error) throw error
-    const local = posts.value.find((p) => p.id === id)
-    if (local) local.status = 'scheduled'
   }
 
   /** El servidor rechaza un comentario vacío — no es opcional, sin él "pedir cambios" no explica nada de verdad. */
-  async function requestChanges(id: string, comment: string) {
-    const { error } = await client.rpc('request_post_changes', { target_post_id: id, p_comment: comment } as never)
+  async function requestChanges(id: string, comment: string, contentVersion?: number) {
+    const { error } = await client.rpc('request_post_changes', { target_post_id: id, p_comment: comment, p_content_version: contentVersion ?? null } as never)
     if (error) throw error
-    const local = posts.value.find((p) => p.id === id)
-    if (local) local.status = 'in_production'
   }
 
-  return { posts, loaded, refresh, ensureLoaded, approvePost, requestChanges }
+  /**
+   * Refleja en local el resultado de una revisión YA confirmada por el servidor. Va aparte de las RPC a
+   * propósito: cambiar la fase desmonta el formulario de revisión (que se muestra solo «Para revisar»),
+   * y un componente desmontado ya no puede emitir `done` — los avisos al padre se perdían.
+   */
+  function applyReview(id: string, status: PostStatus) {
+    const local = posts.value.find((p) => p.id === id)
+    if (local) local.status = status
+  }
+
+  return { posts, loaded, refresh, ensureLoaded, approvePost, requestChanges, applyReview }
 }

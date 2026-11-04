@@ -71,7 +71,7 @@ tab.value = queryTab === 'active' || queryTab === 'history' || queryTab === 'pen
       <CollabCard
         v-for="req in visible" :key="req.id"
         :name="req.partnerName" :status="req.status" :brief="req.brief" :budget-cents="req.budgetCents" :created-at="req.createdAt"
-        :hint="hintOf(req)?.text" :hint-tone="hintOf(req)?.tone"
+        :hint="hintOf(req)?.text" :hint-tone="hintOf(req)?.tone" :progress="work.progressFor(req.id)"
         @open="navigateTo(`/creator/collaborations/${req.id}`)"
       />
     </div>

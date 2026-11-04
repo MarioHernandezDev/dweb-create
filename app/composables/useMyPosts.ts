@@ -14,6 +14,7 @@ interface PostRow {
   created_at: string | null
   updated_at: string | null
   published_at: string | null
+  content_version: number | null
   media_url: string | null
   metadata: { hashtags?: string[] } | null
   ml_predictions: { success_score: number; model_version: string | null; suggestions: Suggestion[] | null; created_at: string }[] | null
@@ -48,6 +49,7 @@ function mapRow(row: PostRow): Post {
     createdAt: row.created_at ?? undefined,
     updatedAt: row.updated_at ?? undefined,
     publishedAt: row.published_at ?? null,
+    contentVersion: row.content_version ?? 1,
     hashtags: row.metadata?.hashtags ?? [],
     cover: coverArtFromString(row.id),
     mediaUrl: row.media_url,

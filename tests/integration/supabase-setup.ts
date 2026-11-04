@@ -49,5 +49,5 @@ export function partnerSession() {
 
 /** Un perfil real sin ninguna relación con creator@/partner@feedma.test — para probar que un ajeno no puede leer/escribir algo que no es suyo. Mismas credenciales de demo (ver scripts/seed-discover-demo.mjs). */
 export function unrelatedCreatorSession() {
-  return signIn('mateo.rivas@feedma.test')
+  return signIn(process.env.TEST_OUTSIDER_EMAIL ?? 'mateo.rivas@feedma.test')
 }

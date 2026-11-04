@@ -27,6 +27,7 @@ export function useMyWork() {
   const { posts: myPosts, ensureLoaded: ensureMyPosts } = useMyPosts()
   const { posts: partnerPosts, ensureLoaded: ensurePartnerPosts } = usePartnerPosts()
   const { eventsByCollab, loadMany } = useCollabEvents()
+  const { byCollab: deliverablesByCollab, loadMany: loadManyDeliverables } = useCollabDeliverables()
 
   const myProfileId = useState<string | null>('my-work-profile-id', () => null)
   const offers = useState<WorkTask[]>('my-work-offers', () => [])
@@ -51,7 +52,7 @@ export function useMyWork() {
     const waiting: WorkWaiting[] = []
     for (const c of collabs.value) {
       const events = eventsByCollab.value[c.id] ?? []
-      const work = collaborationWork(myRole.value, c, posts.value, events, myProfileId.value)
+      const work = collaborationWork(myRole.value, c, posts.value, events, myProfileId.value, deliverablesByCollab.value[c.id] ?? [])
       tasks.push(...work.tasks)
       if (work.waiting) waiting.push(work.waiting)
     }
@@ -113,7 +114,8 @@ export function useMyWork() {
       myProfileId.value = me
       if (myRole.value === 'partner') await Promise.all([ensureCollaborations(), ensurePartnerPosts()])
       else await Promise.all([ensureRequests(), ensureMyPosts()])
-      await Promise.all([loadMany(collabs.value.map((c) => c.id)), me ? loadOffers(me) : Promise.resolve()])
+      const ids = collabs.value.map((c) => c.id)
+      await Promise.all([loadMany(ids), loadManyDeliverables(ids), me ? loadOffers(me) : Promise.resolve()])
       loaded.value = true
       loadedAt.value = Date.now()
       taskCount.value = tasks.value.length
@@ -122,11 +124,18 @@ export function useMyWork() {
     }
   }
 
+  /** «2 de 3 resueltos» de una colaboración con entregables exigibles (null si no tiene: modo libre). */
+  function progressFor(collaborationId: string): { done: number; total: number } | null {
+    if (!loaded.value) return null
+    const list = (deliverablesByCollab.value[collaborationId] ?? []).filter((d) => d.enforceable)
+    return list.length ? { done: list.filter((d) => d.resolved).length, total: list.length } : null
+  }
+
   /** Vuelve a calcular solo si lo último tiene más de `maxAgeMs` (se llama desde la barra superior en cada pantalla). */
   async function refreshIfStale(maxAgeMs = 30_000) {
     if (loaded.value && Date.now() - loadedAt.value < maxAgeMs) return
     await load(true)
   }
 
-  return { tasks, waiting, loaded, loading, load, refreshIfStale, hintFor, taskCount, myRole, myProfileId, hasRated }
+  return { tasks, waiting, loaded, loading, load, refreshIfStale, hintFor, progressFor, taskCount, myRole, myProfileId, hasRated }
 }

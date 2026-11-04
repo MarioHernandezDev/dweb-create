@@ -67,30 +67,15 @@ export function overdueLabel(dueInDays: number): string {
 }
 
 /**
- * Si el creador puede saltarse la revisión real del partner moviendo una
- * publicación ligada a una colaboración activa directamente a esta fase.
- * `approve_post`/`request_post_changes` son las únicas puertas "oficiales"
- * hacia `scheduled` para una publicación de colaboración — las ejecuta el
- * partner, dejan una nota en `post_revision_notes` y avisan al creador. Pero
- * nada en el esquema impide que el propio creador haga un `update` directo
- * (arrastrando la card o con el selector de fase) y llegue a "Programado"/
- * "Publicado" sin que el partner haya aprobado nada. No se bloquea aquí
- * (sería un cambio de permisos/RLS, fuera de alcance sin confirmarlo antes)
- * — solo se usa para avisar con una confirmación antes de dejarlo pasar.
- *
- * Desde "Programado" o "Publicado" ya no hay revisión que saltarse: es la fase
- * en la que deja `approve_post`, así que pasar de ahí a "Publicado" es el
- * camino normal (antes avisaba también en ese paso, justo después de aprobar).
+ * ¿El servidor ha rechazado el cambio porque la publicación (de una colaboración
+ * activa) necesita la aprobación de la marca? Desde la Fase 2 ya no se puede pasar a
+ * «Programado» o «Publicado» sin ella (trigger `posts_review_guard`, que vale también
+ * para service_role): antes solo se avisaba con una confirmación y se dejaba pasar.
+ * Las pantallas lo usan para ofrecer «Enviar a revisión» en vez de un error genérico.
  */
-export function movingSkipsPartnerReview(
-  targetStatus: PostStatus,
-  collaborationStatus: CollaborationStatus | null | undefined,
-  fromStatus: PostStatus
-): boolean {
-  if (targetStatus !== 'scheduled' && targetStatus !== 'published') return false
-  if (fromStatus === 'scheduled' || fromStatus === 'published') return false
-  if (!collaborationStatus) return false
-  return isActiveCollaborationStatus(collaborationStatus)
+export function isApprovalRequiredError(err: unknown): boolean {
+  const message = err && typeof err === 'object' && 'message' in err ? String((err as { message: unknown }).message) : ''
+  return /necesita la aprobación de la marca/i.test(message)
 }
 
 /**

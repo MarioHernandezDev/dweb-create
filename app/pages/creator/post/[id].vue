@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { contentTypeMeta, statusMeta, relativeTime, isPostOverdue, overdueLabel, movingSkipsPartnerReview, creatorNextStepHint } from '~/utils/status'
+import { contentTypeMeta, statusMeta, relativeTime, isPostOverdue, overdueLabel, creatorNextStepHint } from '~/utils/status'
 import { platformMeta, suggestionsForDraft } from '~/utils/mock-data'
 import { LABEL_COLORS } from '~/utils/labels'
 import type { PostStatus } from '~/types'
@@ -68,36 +68,13 @@ const nextStatus = computed(() => {
   const idx = statusFlow.indexOf(post.value.status)
   return idx >= 0 && idx < statusFlow.length - 1 ? statusFlow[idx + 1] : null
 })
-const { updatePost } = useMyPosts()
-const { confirm } = useConfirm()
-const toast = useToast()
+const { changeStatus } = usePostActions()
 useUnsavedChangesGuard(dirty, 'de la publicación')
+// Mismo camino que el Tablero y la lista (usePostActions): si la publicación es de una colaboración
+// activa y aún no tiene la aprobación de la marca, se ofrece enviarla a revisión.
 async function advanceStatus() {
   if (!post.value || !nextStatus.value) return
-  const p = post.value
-  const next = nextStatus.value
-
-  // Mismo aviso que PhaseBoard.vue al arrastrar — ver movingSkipsPartnerReview
-  // en utils/status.ts. En este botón secuencial solo salta al llegar a
-  // "scheduled" desde "ready_for_review" (lo que debería hacer `approve_post`);
-  // de "scheduled" a "published" ya no avisa, porque ahí ya está aprobada.
-  if (p.collaborationId && movingSkipsPartnerReview(next, collabRequests.value.find((c) => c.id === p.collaborationId)?.status, p.status)) {
-    const partnerName = collabRequests.value.find((c) => c.id === p.collaborationId)?.partnerName ?? 'el partner'
-    const ok = await confirm({
-      title: 'Vas a saltarte la revisión del partner',
-      message: `Esta publicación pertenece a una colaboración activa con ${partnerName}. Normalmente es ${partnerName} quien la aprueba antes de pasar a "${statusMeta[next].label}". ¿Moverla igualmente sin su aprobación?`,
-      confirmLabel: 'Mover igualmente'
-    })
-    if (!ok) return
-  }
-
-  try {
-    await updatePost(p.id, { status: next })
-    toast.success(`Movida a ${statusMeta[next].label}`)
-  } catch (err) {
-    console.error('[post/[id]] fallo al cambiar de fase:', err)
-    toast.error('No se ha podido cambiar de fase. Inténtalo de nuevo.')
-  }
+  await changeStatus(post.value, nextStatus.value)
 }
 </script>
 

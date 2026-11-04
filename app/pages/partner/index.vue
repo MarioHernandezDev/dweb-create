@@ -257,7 +257,7 @@ const tips = computed(() => {
 
     <PostDetailSheet v-model="detailOpen" :post="detailPost" :creator="collaborator ?? undefined">
       <template #actions="{ post }">
-        <PostReviewActions v-if="post.status === 'ready_for_review'" class="mt-5" :post-id="post.id" @done="detailOpen = false" />
+        <PostReviewActions v-if="post.status === 'ready_for_review'" class="mt-5" :post-id="post.id" :content-version="post.contentVersion" @done="detailOpen = false" />
       </template>
     </PostDetailSheet>
   </AppShell>

@@ -111,7 +111,7 @@ El aviso «Entrega para revisar» solo está probado por integración, no en nav
 ## 8. Estado de las migraciones (resumen)
 
 Aplicadas en la base compartida hasta `20261104100000_collaboration_flow_phase1.sql`.
-**Pendiente de aplicar (por este orden):** `20261104110000_collaboration_agreement_phase2.sql` (probada en el Supabase local, 207/207 de integración) `20261104120000_rename_brand_ciberan.sql` (cambio de marca: solo el texto de dos avisos) y `20261104130000_collaboration_events.sql` (cronología de colaboraciones; la página nueva de colaboración la necesita). El detalle de cada migración está en `docs/CHANGELOG.md`.
+**Aplicadas en la base compartida** (confirmado por Alex y verificado con la huella del esquema el 04/11): `20261104110000_collaboration_agreement_phase2.sql`, `20261104120000_rename_brand_ciberan.sql` y `20261104130000_collaboration_events.sql`. **Fase 2, pendientes de aplicar tras revisión** (en este orden): `20261105100000_deliverables_snapshot_and_model.sql`, `20261105110000_post_versions_and_approval_guard.sql` y `20261105120000_deliverable_rpcs_and_close_rule.sql` (ver `docs/CHANGELOG.md`, Alex-68). El detalle de cada migración está en `docs/CHANGELOG.md`.
 
 ## 9. Orden sugerido
 

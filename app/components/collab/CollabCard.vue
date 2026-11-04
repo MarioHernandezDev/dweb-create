@@ -19,6 +19,8 @@ defineProps<{
   hint?: string
   /** «action»: me toca a mí (se marca con la firma); «waiting»: espera a la otra parte. */
   hintTone?: 'action' | 'waiting'
+  /** Entregables resueltos / exigibles (solo si la colaboración los tiene). */
+  progress?: { done: number; total: number } | null
 }>()
 defineEmits<{ open: [] }>()
 </script>
@@ -34,6 +36,10 @@ defineEmits<{ open: [] }>()
       <span class="collab-card__price">{{ budgetCents ? formatEuros(budgetCents) : 'Sin precio' }}</span>
     </span>
     <span class="collab-card__brief">{{ brief }}</span>
+    <span v-if="progress" class="collab-card__progress" :aria-label="`${progress.done} de ${progress.total} entregables resueltos`">
+      <span class="collab-card__bar"><span class="collab-card__bar-fill" :style="{ width: `${(progress.done / progress.total) * 100}%` }" /></span>
+      <span class="collab-card__count">{{ progress.done }} de {{ progress.total }} entregables</span>
+    </span>
     <span class="collab-card__foot">
       <CollabStatus :status="status" />
       <span v-if="hint" class="collab-card__hint" :data-tone="hintTone">{{ hint }}</span>

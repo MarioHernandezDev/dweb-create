@@ -75,6 +75,8 @@ export interface Post {
   updatedAt?: string
   /** Cuándo pasó a `published` (`posts.published_at`); `null` en las publicadas antes de existir ese campo. */
   publishedAt?: string | null
+  /** Versión del contenido (`posts.content_version`): sube solo con cambios materiales (título, texto, medio, tipo, plataforma, hashtags). Una aprobación vale para una versión. */
+  contentVersion?: number
 }
 
 export interface SparklinePoint {

@@ -16,7 +16,7 @@ import type { Post } from '~/types'
  * verdad (edición rápida desde el tablero vs. página dedicada).
  */
 export function usePostEditorPanel(post: Ref<Post | null | undefined>) {
-  const { updatePost, deletePost } = useMyPosts()
+  const { updatePost, deletePost, refresh: refreshPosts } = useMyPosts()
   const { balance: creditBalance, ensureLoaded: ensureCreditsLoaded, setBalance: setCreditBalance } = useMyCredits()
   const { labels, ensureLabels, createLabel, attachLabel, detachLabel } = useLabels()
   const { itemsByPost, ensureItems, addItem: addChecklistItem, toggleItem: toggleChecklistItem, deleteItem: deleteChecklistItem } = useChecklist()
@@ -34,9 +34,22 @@ export function usePostEditorPanel(post: Ref<Post | null | undefined>) {
   const saving = ref(false)
   async function save() {
     if (!post.value) return
+    // Una pieza ya aprobada de una colaboración: cambiar el título o el texto invalida la aprobación
+    // (el servidor la devuelve a «En producción»). Se avisa antes, no después.
+    const changesApprovedContent = post.value.status === 'scheduled' && !!post.value.collaborationId
+      && (title.value !== post.value.title || caption.value !== post.value.caption)
+    if (changesApprovedContent) {
+      const ok = await confirm({
+        title: 'Esta publicación ya está aprobada',
+        message: 'Si cambias el título o el texto, la marca tendrá que aprobarla de nuevo: volverá a «En producción» y tendrás que enviarla otra vez a revisión.',
+        confirmLabel: 'Guardar y pedir nueva aprobación'
+      })
+      if (!ok) return
+    }
     saving.value = true
     try {
       await updatePost(post.value.id, { title: title.value, caption: caption.value, dueDate: dueDate.value })
+      if (changesApprovedContent) await refreshPosts() // el servidor cambió la fase: se muestra la real
       toast.success('Cambios guardados')
     } catch (err) {
       console.error('[usePostEditorPanel] fallo al guardar:', err)

@@ -33,6 +33,7 @@ function actor(e: CollabEvent): string {
   if (e.actorProfileId === props.counterpartProfileId) return props.counterpartName
   return 'Alguien'
 }
+const ver = (d: Record<string, unknown>) => (typeof d.contentVersion === 'number' ? ` (v${d.contentVersion})` : '')
 const str = (v: unknown) => (typeof v === 'string' && v.trim() ? v.trim() : undefined)
 
 function toLine(e: CollabEvent): Line {
@@ -48,11 +49,20 @@ function toLine(e: CollabEvent): Line {
     case 'completed': return { ...base, tone: 'system', icon: 'ph:flag-checkered', text: 'Colaboración completada' }
     case 'counteroffer': return { ...base, tone: 'people', icon: 'ph:arrows-left-right', text: `Nuevo presupuesto propuesto: ${formatEuros(d.budgetCents as number)}`, quote: str(d.message) }
     case 'deliverable_sent': return { ...base, tone: 'people', icon: 'ph:upload-simple', text: d.resubmission ? `Nueva versión de ${title} enviada a revisión` : `${title} enviada a revisión` }
-    case 'changes_requested': return { ...base, tone: 'people', icon: 'ph:pencil-simple-line', text: `Cambios pedidos en ${title}`, quote: str(d.comment) }
-    case 'approved': return { ...base, tone: 'people', icon: 'ph:seal-check', text: `${title} aprobada`, quote: str(d.comment) }
+    case 'changes_requested': return { ...base, tone: 'people', icon: 'ph:pencil-simple-line', text: `Cambios pedidos en ${title}${ver(d)}`, quote: str(d.comment) }
+    case 'approved': return { ...base, tone: 'people', icon: 'ph:seal-check', text: `${title} aprobada${ver(d)}`, quote: str(d.comment) }
     case 'deliverable_published': return { ...base, tone: 'system', icon: 'ph:broadcast', text: `${title} publicada` }
     case 'rated': return { ...base, tone: 'people', icon: 'ph:star', text: 'Valoración enviada' }
     case 'note': return { ...base, tone: 'people', icon: d.logKind === 'incident' ? 'ph:warning-circle' : 'ph:handshake', text: d.logKind === 'incident' ? 'Incidencia registrada' : 'Cambio acordado registrado', quote: str(d.text) }
+    case 'deliverables_defined': return { ...base, tone: 'people', icon: 'ph:list-checks', text: `Entregables definidos por la marca (${d.count ?? '?'})`, quote: Array.isArray(d.titles) ? (d.titles as string[]).join(' · ') : undefined }
+    case 'deliverables_confirmed': return { ...base, tone: 'people', icon: 'ph:check-square', text: 'Entregables confirmados por el creador' }
+    case 'deliverable_assigned': return { ...base, tone: 'system', icon: 'ph:link', text: `«${str(d.postTitle) ?? 'Publicación'}» asignada a «${str(d.deliverableTitle) ?? 'un entregable'}»` }
+    case 'deliverable_unassigned': return { ...base, tone: 'system', icon: 'ph:link-break', text: `Publicación soltada de «${str(d.deliverableTitle) ?? 'un entregable'}»` }
+    case 'approval_invalidated': return { ...base, tone: 'system', icon: 'ph:arrow-counter-clockwise', text: `Aprobación de ${title} invalidada: cambió el contenido (v${d.fromVersion} → v${d.toVersion})` }
+    case 'edited_after_publish': return { ...base, tone: 'system', icon: 'ph:pencil-simple', text: `${title} editada tras publicarse (v${d.fromVersion} → v${d.toVersion})` }
+    case 'deliverable_waived': return { ...base, tone: 'people', icon: 'ph:prohibit', text: `Entregable «${str(d.deliverableTitle) ?? ''}» renunciado`, quote: str(d.reason) }
+    case 'deliverable_accepted_without_approval': return { ...base, tone: 'people', icon: 'ph:seal-warning', text: `«${str(d.deliverableTitle) ?? ''}» aceptado sin aprobación formal (v${d.contentVersion ?? '?'})`, quote: str(d.reason) }
+    case 'deliverable_reopened': return { ...base, tone: 'people', icon: 'ph:arrow-u-up-left', text: `Entregable «${str(d.deliverableTitle) ?? ''}» reabierto`, quote: str(d.reason) }
     default: return { ...base, tone: 'system', icon: 'ph:circle', text: e.kind }
   }
 }

@@ -10,6 +10,12 @@ const { posts, ensureLoaded, hasMore, loadingMore, loadMoreError, loadMore } = u
 const { requests: collabRequests, ensureLoaded: ensureCollabRequestsLoaded } = useCollabRequests()
 const { changeStatus, remove } = usePostActions()
 const composerOpen = ref(false)
+// «Crear publicación» desde un entregable llega con ?nueva=1&colaboracion=<id>&entregable=<id>.
+const composerPreset = computed(() => ({
+  collaborationId: route.query.nueva === '1' && typeof route.query.colaboracion === 'string' ? route.query.colaboracion : undefined,
+  deliverableId: route.query.nueva === '1' && typeof route.query.entregable === 'string' ? route.query.entregable : undefined
+}))
+onMounted(() => { if (route.query.nueva === '1') composerOpen.value = true })
 
 await Promise.all([ensureLoaded(), ensureCollabRequestsLoaded()])
 
@@ -92,6 +98,6 @@ async function onRemove(post: Post) {
     </div>
 
     <Fab :active="composerOpen" @click="composerOpen = true" />
-    <PostComposerSheet v-model="composerOpen" />
+    <PostComposerSheet v-model="composerOpen" :collaboration-id="composerPreset.collaborationId" :deliverable-id="composerPreset.deliverableId" />
   </AppShell>
 </template>

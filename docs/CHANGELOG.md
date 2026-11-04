@@ -4,6 +4,18 @@ Registro de qué se hizo, por qué, y qué queda pendiente de verificar — pens
 
 ---
 
+## 2026-11-05 (Alex-68) — [Alex] Colaboraciones · Fase 2: entregables como datos y reglas de aprobación
+
+Propuesta técnica en `docs/audit/10_FASE2_PROPUESTA_ENTREGABLES.md` (§13: desviaciones). Sin tocar pagos ni redes sociales. **Tres migraciones PREPARADAS, NO APLICADAS en el proyecto compartido** (probadas solo en el Supabase local, por este orden):
+- `20261105100000_deliverables_snapshot_and_model.sql`: instantánea del paquete en la oferta (`create_offer`/`respond_offer`), tablas `collaboration_deliverables` y `collaboration_deliverable_decisions` (append-only), triggers de consistencia e inmutabilidad (también para service_role), cronología inmutable y nuevos eventos, relleno desde `package_deliverables` (solo colaboraciones activas; sin asignar posts).
+- `20261105110000_post_versions_and_approval_guard.sql`: `posts.content_version` (solo cambios materiales), `post_revision_notes.content_version` (**suposición D7**: las notas anteriores se consideran versión 1), guarda de estado (no se programa ni se publica sin aprobación vigente), invalidación al editar una pieza aprobada, protección de borrado/movimiento (D6), `approve_post`/`request_post_changes` con versión y bloqueo de fila.
+- `20261105120000_deliverable_rpcs_and_close_rule.sql`: RPC de asignar/soltar/definir/confirmar/resolver/reabrir, vista de estado derivado `collaboration_deliverable_status` y regla de cierre (D3).
+- **Interfaz**: panel de entregables en la página de colaboración (progreso «2 de 3», estados derivados, versión, fechas, comentarios, decisiones de la marca con motivo y reapertura, asignar/soltar/crear desde el hueco, definir y confirmar), progreso en las tarjetas, tareas nuevas en «Qué me toca», nuevos eventos en la cronología, avisos antes de editar una pieza aprobada y «Enviar a revisión» en vez de saltarse la revisión.
+- **Pruebas**: `tests/integration/collaboration-deliverables.spec.ts` (18, con carreras reales y los intentos con service_role), regresión completa de integración en local (228/228 con `RUN_SOCIAL_ACCOUNTS_RLS=1`), unitarias (+8), recorrido en navegador con ambos roles a 1440 y 390 px. `supabase-setup.ts` admite `TEST_OUTSIDER_EMAIL`.
+- **Pendiente de validar**: Safari/Firefox, y todo contra la base compartida (hoy sin colaboraciones de oferta ni publicaciones vinculadas, así que el relleno no tendría efecto allí).
+
+---
+
 ## 2026-11-04 (Alex-66) — [Alex] Colaboraciones · Fase 1 de la auditoría competitiva: página de colaboración, cronología y «Qué me toca»
 
 Parte de `CIBERAN_COMPETITIVE_AUDIT.md` (F1, F3, F4). Sin tocar pagos ni redes sociales.

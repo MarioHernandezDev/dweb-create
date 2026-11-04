@@ -10,7 +10,8 @@ const props = defineProps<{
 
 const emit = defineEmits<{ 'update:mediaUrl': [url: string] }>()
 
-const { uploadCover } = useMyPosts()
+const { uploadCover, posts, refresh } = useMyPosts()
+const { confirm } = useConfirm()
 const inputEl = ref<HTMLInputElement | null>(null)
 const uploading = ref(false)
 const error = ref('')
@@ -19,11 +20,27 @@ async function onChange(event: Event) {
   const file = (event.target as HTMLInputElement).files?.[0]
   if (!file) return
 
+  // Cambiar la imagen de una pieza ya aprobada de una colaboración invalida la aprobación (Fase 2).
+  const current = posts.value.find((p) => p.id === props.postId)
+  const invalidatesApproval = current?.status === 'scheduled' && !!current.collaborationId
+  if (invalidatesApproval) {
+    const ok = await confirm({
+      title: 'Esta publicación ya está aprobada',
+      message: 'Si cambias la imagen, la marca tendrá que aprobarla de nuevo: volverá a «En producción».',
+      confirmLabel: 'Cambiar y pedir nueva aprobación'
+    })
+    if (!ok) {
+      if (inputEl.value) inputEl.value.value = ''
+      return
+    }
+  }
+
   uploading.value = true
   error.value = ''
   try {
     const url = await uploadCover(props.postId, file)
     emit('update:mediaUrl', url)
+    if (invalidatesApproval) await refresh()
   } catch (err) {
     console.error('[CoverUploader] fallo al subir la foto:', err)
     error.value = 'No se ha podido subir. Prueba con otra imagen (JPG/PNG/WebP, máx. 8MB).'

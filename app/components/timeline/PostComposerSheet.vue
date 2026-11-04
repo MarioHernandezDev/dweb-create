@@ -6,6 +6,10 @@ import { contentTypeMeta } from '~/utils/status'
 const props = defineProps<{
   /** Rellena el borrador al abrir — viene de "Usar esta idea" en Tendencias. */
   prefill?: { title: string; hashtags: string[]; contentType: ContentType; platform: Platform } | null
+  /** Vincula la publicación a esta colaboración al crearla (viene de «Crear publicación» en un entregable). */
+  collaborationId?: string
+  /** Y la asigna a este entregable (hueco) de la colaboración. */
+  deliverableId?: string
 }>()
 
 const open = defineModel<boolean>({ default: false })
@@ -14,6 +18,7 @@ const router = useRouter()
 const toast = useToast()
 const { balance: creditBalance, ensureLoaded: ensureCreditsLoaded, setBalance: setCreditBalance } = useMyCredits()
 const { requests: collabRequests, ensureLoaded: ensureCollabRequestsLoaded } = useCollabRequests()
+const { assign: assignDeliverable } = useCollabDeliverables()
 
 // Solo las colaboraciones ya aceptadas tienen sentido aquí — pedir vincular
 // una "requested" sería prometerle algo al partner que todavía no acordó.
@@ -86,6 +91,15 @@ async function saveDraft(): Promise<string> {
     })
     createdPostId.value = created.id
     justCreated.value = true
+    // Creada desde un entregable: se asigna en el mismo paso (el servidor valida que el hueco esté libre).
+    if (props.deliverableId && props.collaborationId && collaborationId.value === props.collaborationId) {
+      try {
+        await assignDeliverable({ id: props.deliverableId, collaborationId: props.collaborationId }, created.id)
+        toast.success('Publicación asignada al entregable.')
+      } catch (e) {
+        toast.error(e instanceof Error ? `Creada, pero no se ha podido asignar al entregable: ${e.message}` : 'Creada, pero no se ha podido asignar al entregable.')
+      }
+    }
   } else {
     await updatePost(createdPostId.value, { title: title.value, caption: caption.value, hashtags: parsedHashtags(), dueDate: dueDate.value })
   }
@@ -165,7 +179,7 @@ watch(open, (value) => {
   title.value = ''
   caption.value = ''
   hashtagsInput.value = ''
-  collaborationId.value = ''
+  collaborationId.value = props.collaborationId ?? ''
   dueDate.value = defaultDueDate()
   createdPostId.value = null
   result.value = null

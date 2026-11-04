@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { collaborationWork, deliverableState, hasRated, type WorkCollab, type WorkEvent, type WorkPost } from '../../app/utils/collaboration-work'
+import { collaborationWork, deliverableState, hasRated, type WorkCollab, type WorkDeliverable, type WorkEvent, type WorkPost } from '../../app/utils/collaboration-work'
 
 const empty = { scopeNotes: null, revisionsIncluded: null, exclusivity: false, usageRights: null, campaignGoal: null, targetAudience: null, tone: null }
 const collab = (over: Partial<WorkCollab> = {}): WorkCollab => ({
@@ -80,5 +80,62 @@ describe('valoración', () => {
   })
   it('rechazada: sin tareas', () => {
     expect(collaborationWork('creator', collab({ status: 'declined' }), [], [], 'me')).toEqual({ tasks: [], waiting: null })
+  })
+})
+
+// ---------------------------------------------------------------- Fase 2: entregables como datos
+const deliv = (over: Partial<WorkDeliverable> = {}): WorkDeliverable => ({
+  id: 'd1', collaborationId: 'c1', title: '1 reel', state: 'open', enforceable: true, resolved: false,
+  postId: null, postTitle: null, lastReviewComment: null, approvalInvalidated: false, ...over
+})
+
+describe('collaborationWork con entregables · creador', () => {
+  it('hueco libre: asignar una publicación', () => {
+    const r = collaborationWork('creator', collab(), [], [], 'me', [deliv()])
+    expect(kinds(r)).toEqual(['assign_deliverable'])
+    expect(r.tasks[0]!.title).toContain('1 reel')
+  })
+  it('cambios pedidos con su comentario; aprobación invalidada pide reenviar; en revisión espera', () => {
+    const posts = [post({ id: 'p1', title: 'Reel A' })]
+    const fix = collaborationWork('creator', collab(), posts, [], 'me', [deliv({ postId: 'p1', postTitle: 'Reel A', state: 'changes_requested', lastReviewComment: 'Más luz' })])
+    expect(kinds(fix)).toEqual(['fix_changes'])
+    expect(fix.tasks[0]!.detail).toContain('Más luz')
+    const again = collaborationWork('creator', collab(), posts, [], 'me', [deliv({ postId: 'p1', postTitle: 'Reel A', state: 'in_progress', approvalInvalidated: true })])
+    expect(again.tasks[0]).toMatchObject({ kind: 'send_deliverable', priority: 26 })
+    expect(again.tasks[0]!.title).toContain('Vuelve a enviar')
+    const wait = collaborationWork('creator', collab(), posts, [], 'me', [deliv({ postId: 'p1', postTitle: 'Reel A', state: 'in_review' })])
+    expect(wait.tasks).toEqual([])
+    expect(wait.waiting?.text).toContain('revisando')
+  })
+  it('entregables definidos por la marca sin confirmar: confirmar, y no son exigibles (no piden asignar ni cerrar)', () => {
+    const r = collaborationWork('creator', collab(), [], [], 'me', [deliv({ enforceable: false })])
+    expect(kinds(r)).toEqual(['confirm_deliverables'])
+  })
+  it('todo resuelto: cerrar la colaboración', () => {
+    const r = collaborationWork('creator', collab(), [], [], 'me', [deliv({ state: 'approved', resolved: true }), deliv({ id: 'd2', state: 'waived', resolved: true })])
+    expect(kinds(r)).toEqual(['close_collaboration'])
+  })
+  it('con entregables no se pide «crear la primera publicación» (modo libre)', () => {
+    const r = collaborationWork('creator', collab(), [], [], 'me', [deliv({ state: 'approved', resolved: true })])
+    expect(kinds(r)).not.toContain('start_deliverable')
+  })
+})
+
+describe('collaborationWork con entregables · partner', () => {
+  it('en revisión: revisar la publicación del hueco; el resto espera', () => {
+    const posts = [post({ id: 'p1', title: 'Reel A', status: 'ready_for_review' })]
+    const r = collaborationWork('partner', collab(), posts, [], 'me', [deliv({ postId: 'p1', postTitle: 'Reel A', state: 'in_review' }), deliv({ id: 'd2', title: '3 stories' })])
+    expect(kinds(r)).toEqual(['review_deliverable', 'complete_brief'].filter((k) => k === 'review_deliverable'))
+    expect(r.tasks[0]).toMatchObject({ postId: 'p1' })
+  })
+  it('sin tareas: espera al creador y cuenta los pendientes; sin confirmar, espera la confirmación', () => {
+    const r = collaborationWork('partner', collab(), [], [], 'me', [deliv(), deliv({ id: 'd2', title: 'B' })])
+    expect(r.waiting?.text).toContain('2 entregables')
+    const u = collaborationWork('partner', collab(), [], [], 'me', [deliv({ enforceable: false })])
+    expect(u.waiting?.text).toContain('confirmar')
+  })
+  it('ignora entregables de otras colaboraciones', () => {
+    const r = collaborationWork('creator', collab(), [], [], 'me', [deliv({ collaborationId: 'otra' })])
+    expect(kinds(r)).toEqual(['start_deliverable'])
   })
 })
