@@ -46,14 +46,18 @@ function buildSeamlessLoop(items: HTMLElement[], gap: number) {
   const loop = gsap.timeline({ paused: true, repeat: -1 }) // solo mueve el cabezal de rawSequence
   const total = items.length + overlap * 2
 
-  gsap.set(items, { xPercent: 400, autoAlpha: 0, scale: 0 })
+  // Recorrido horizontal: se calcula para que dos tarjetas vecinas queden siempre a
+  // ~120 % de su ancho (con pocos resultados, recorrido corto; con muchos, largo).
+  const reach = Math.round(60 / gap)
+  gsap.set(items, { xPercent: reach, autoAlpha: 0, scale: 0.6 })
 
   for (let i = 0; i < total; i++) {
     const item = items[i % items.length]!
     const time = i * gap
     rawSequence
-      .fromTo(item, { scale: 0, autoAlpha: 0 }, { scale: 1, autoAlpha: 1, zIndex: 100, duration: 0.5, yoyo: true, repeat: 1, ease: 'power1.in', immediateRender: false }, time)
-      .fromTo(item, { xPercent: 400 }, { xPercent: -400, duration: 1, ease: 'none', immediateRender: false }, time)
+      .fromTo(item, { scale: 0.6 }, { scale: 1, zIndex: 100, duration: 0.5, yoyo: true, repeat: 1, ease: 'power2.out', immediateRender: false }, time)
+      .fromTo(item, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.5, yoyo: true, repeat: 1, ease: 'sine.out', immediateRender: false }, time)
+      .fromTo(item, { xPercent: reach }, { xPercent: -reach, duration: 1, ease: 'none', immediateRender: false }, time)
   }
 
   rawSequence.time(startTime)
