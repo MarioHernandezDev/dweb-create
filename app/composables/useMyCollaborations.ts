@@ -2,16 +2,32 @@ import type { CollaborationStatus } from '~/types'
 import type { CollaborationTerms } from '~/utils/collaboration-terms'
 import { isActiveCollaborationStatus, isUnresolvedCollaborationStatus } from '~/utils/status'
 
+export interface BriefFields {
+  campaignGoal?: string | null
+  targetAudience?: string | null
+  tone?: string | null
+  scopeNotes?: string | null
+  revisionsIncluded?: number | null
+  exclusivity?: boolean | null
+  usageRights?: string | null
+}
+
 export interface MyCollaboration extends CollaborationTerms {
   id: string
   status: CollaborationStatus
   creatorId: string
   creatorName: string | null
+  /** profiles.id del creador — para abrir el chat desde la colaboración. */
+  creatorProfileId: string | null
   brief: string
   budgetCents: number | null
   paidAt: string | null
   createdAt: string
   initiatedBy: 'creator' | 'partner'
+  /** Instantánea del paquete aceptado en el chat (null si no nació de una oferta o el paquete ya no existía). */
+  packageTitle: string | null
+  packageDescription: string | null
+  packageDeliverables: string[] | null
 }
 
 interface CollaborationRow {
@@ -30,7 +46,10 @@ interface CollaborationRow {
   campaign_goal: string | null
   target_audience: string | null
   tone: string | null
-  creators: { display_name: string } | null
+  package_title: string | null
+  package_description: string | null
+  package_deliverables: string[] | null
+  creators: { display_name: string; profile_id: string } | null
 }
 
 /**
@@ -54,7 +73,7 @@ export function useMyCollaborations() {
 
     const { data, error } = await client
       .from('collaborations')
-      .select('id, status, creator_id, brief, budget_cents, paid_at, created_at, initiated_by, scope_notes, revisions_included, exclusivity, usage_rights, campaign_goal, target_audience, tone, creators(display_name)')
+      .select('id, status, creator_id, brief, budget_cents, paid_at, created_at, initiated_by, scope_notes, revisions_included, exclusivity, usage_rights, campaign_goal, target_audience, tone, package_title, package_description, package_deliverables, creators(display_name, profile_id)')
       .eq('partner_id', me.id)
       .order('created_at', { ascending: false })
       .limit(300)
@@ -68,6 +87,7 @@ export function useMyCollaborations() {
       status: r.status as CollaborationStatus,
       creatorId: r.creator_id,
       creatorName: r.creators?.display_name ?? null,
+      creatorProfileId: r.creators?.profile_id ?? null,
       brief: r.brief,
       budgetCents: r.budget_cents,
       paidAt: r.paid_at,
@@ -79,7 +99,10 @@ export function useMyCollaborations() {
       usageRights: r.usage_rights,
       campaignGoal: r.campaign_goal,
       targetAudience: r.target_audience,
-      tone: r.tone
+      tone: r.tone,
+      packageTitle: r.package_title,
+      packageDescription: r.package_description,
+      packageDeliverables: r.package_deliverables
     }))
     loaded.value = true
   }
@@ -132,6 +155,31 @@ export function useMyCollaborations() {
     }
   }
 
+  /**
+   * La marca completa los campos vacíos del brief y las condiciones (una sola
+   * vez por campo; un valor ya fijado no se cambia). Ver
+   * `complete_collaboration_brief` en 20261104110000.
+   */
+  async function completeBrief(id: string, fields: BriefFields) {
+    acting.value = id
+    try {
+      const { error } = await client.rpc('complete_collaboration_brief' as never, {
+        p_collaboration_id: id,
+        p_campaign_goal: fields.campaignGoal ?? null,
+        p_target_audience: fields.targetAudience ?? null,
+        p_tone: fields.tone ?? null,
+        p_scope_notes: fields.scopeNotes ?? null,
+        p_revisions_included: fields.revisionsIncluded ?? null,
+        p_exclusivity: fields.exclusivity ?? null,
+        p_usage_rights: fields.usageRights ?? null
+      } as never)
+      if (error) throw error
+      await refresh()
+    } finally {
+      acting.value = null
+    }
+  }
+
   async function markCompleted(id: string) {
     acting.value = id
     try {
@@ -161,5 +209,5 @@ export function useMyCollaborations() {
     }
   }
 
-  return { collaborations, loaded, paying, acting, payError, activeCount, pendingCount, awaitingMyResponseCount, refresh, ensureLoaded, payForCollaboration, accept, decline, markCompleted }
+  return { collaborations, loaded, paying, acting, payError, activeCount, pendingCount, awaitingMyResponseCount, refresh, ensureLoaded, payForCollaboration, accept, decline, completeBrief, markCompleted }
 }

@@ -49,12 +49,15 @@ export function useRatings() {
   const submitError = useState<string>('collaboration-ratings-submit-error', () => '')
 
   async function ensureMyRatingsLoaded() {
-    if (loaded.value || !user.value) return myRatings.value
+    // useSupabaseUser() son los claims del JWT: el id del usuario va en `sub`
+    // (con `.id` esta consulta salía con rater_profile_id=undefined → 400).
+    const myId = user.value?.sub
+    if (loaded.value || !myId) return myRatings.value
 
     const { data, error } = await client
       .from('collaboration_ratings')
       .select('id, collaboration_id, rater_profile_id, ratee_profile_id, stars, comment, created_at')
-      .eq('rater_profile_id', user.value.id)
+      .eq('rater_profile_id', myId)
     if (error) {
       console.error('[useRatings] fallo al cargar tus valoraciones:', error.message)
       return myRatings.value

@@ -42,16 +42,17 @@ describe.skipIf(!hasSupabaseEnv)('collaborations: RLS y RPCs de seguridad (Supab
     const target = collabs[0] as { id: string; budget_cents: number | null }
     const tamperedAmount = (target.budget_cents ?? 0) + 999_999
 
-    // Intento de manipulación directa — sin policy de update, PostgREST
-    // devuelve éxito pero CERO filas afectadas (comportamiento estándar de
-    // Supabase/PostgREST cuando RLS filtra todas las filas candidatas).
+    // Intento de manipulación directa. Desde 20261103170000 (permisos por
+    // columna) `authenticated` no tiene UPDATE sobre collaborations: la base lo
+    // rechaza con 42501 en vez de "éxito con cero filas" (que era lo que pasaba
+    // solo con RLS). Cualquiera de los dos deja el valor intacto.
     const { data: updated, error: updErr } = await creator.client
       .from('collaborations')
       .update({ budget_cents: tamperedAmount } as never)
       .eq('id', target.id)
       .select('id, budget_cents')
 
-    expect(updErr).toBeNull()
+    expect(updErr?.code).toBe('42501')
     expect(updated ?? []).toHaveLength(0)
 
     // Confirma que el valor real en la base de datos no cambió.

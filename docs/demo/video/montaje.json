@@ -1,0 +1,221 @@
+[
+ {
+  "escena": "card-intro",
+  "inicio": 0,
+  "duracion": 5.48,
+  "rotulos": [
+   "FEEDMA — Cómo funciona, paso a paso"
+  ]
+ },
+ {
+  "escena": "card-m1",
+  "inicio": 4.88,
+  "duracion": 3.88,
+  "rotulos": [
+   "Módulo 1 de 6 — Conoce a AREZZ"
+  ]
+ },
+ {
+  "escena": "arezz-hoy",
+  "inicio": 8.16,
+  "duracion": 7.58,
+  "rotulos": [
+   "Paso 1 · Este es «Hoy», el panel de AREZZ",
+   "Paso 1 · De un vistazo: colaboraciones, solicitudes, entregas y objetivo semanal",
+   "Paso 1 · Y lo próximo que necesita su atención"
+  ]
+ },
+ {
+  "escena": "arezz-metricas",
+  "inicio": 15.14,
+  "duracion": 13.25,
+  "rotulos": [
+   "Paso 2 · Métricas: los seguidores de cada red conectada",
+   "Paso 2 · Cada red, con su peso en el total y su última actualización",
+   "Paso 2 · Hoy se conectan Instagram y YouTube; el resto aparece como «Próximamente»"
+  ]
+ },
+ {
+  "escena": "card-m2",
+  "inicio": 27.79,
+  "duracion": 3.87,
+  "rotulos": [
+   "Módulo 2 de 6 — Descubre creadores"
+  ]
+ },
+ {
+  "escena": "nova-descubre",
+  "inicio": 31.06,
+  "duracion": 19.95,
+  "rotulos": [
+   "Paso 3 · NOVA STUDIO, una marca de moda sostenible, entra en FEEDMA",
+   "Paso 3 · Va a Descubrir…",
+   "Paso 3 · …y filtra por la categoría que le interesa: Moda",
+   "Paso 4 · AREZZ encaja: moda, lifestyle y viajes"
+  ]
+ },
+ {
+  "escena": "nova-perfil",
+  "inicio": 50.4,
+  "duracion": 12.59,
+  "rotulos": [
+   "Paso 5 · Su perfil público: categorías, redes conectadas y tarifa",
+   "Paso 5 · Su reputación: valoraciones de colaboraciones ya completadas",
+   "Paso 6 · Y su catálogo de paquetes, cada uno con su precio"
+  ]
+ },
+ {
+  "escena": "card-m3",
+  "inicio": 62.39,
+  "duracion": 3.91,
+  "rotulos": [
+   "Módulo 3 de 6 — Negocia colaboraciones"
+  ]
+ },
+ {
+  "escena": "nova-chat",
+  "inicio": 65.7,
+  "duracion": 29.59,
+  "rotulos": [
+   "Paso 7 · NOVA abre una conversación con AREZZ",
+   "Paso 8 · Y le envía una oferta sobre uno de sus paquetes",
+   "Paso 8 · Propone 900 € por la campaña completa (en catálogo: 1.200 €)"
+  ]
+ },
+ {
+  "escena": "arezz-recibe",
+  "inicio": 94.69,
+  "duracion": 22.73,
+  "rotulos": [
+   "Paso 9 · AREZZ recibe la oferta en su chat",
+   "Paso 10 · Negocia: responde con su precio…",
+   "Paso 10 · …y rechaza esta primera oferta"
+  ]
+ },
+ {
+  "escena": "nova-contraoferta",
+  "inicio": 116.83,
+  "duracion": 19.75,
+  "rotulos": [
+   "Paso 11 · NOVA lee la respuesta de AREZZ…",
+   "Paso 11 · …y manda una nueva oferta: 1.050 €"
+  ]
+ },
+ {
+  "escena": "arezz-acepta",
+  "inicio": 135.97,
+  "duracion": 12.3,
+  "rotulos": [
+   "Paso 12 · AREZZ acepta la nueva oferta",
+   "Paso 12 · La colaboración se crea sola, con el precio acordado"
+  ]
+ },
+ {
+  "escena": "card-m4",
+  "inicio": 147.67,
+  "duracion": 3.88,
+  "rotulos": [
+   "Módulo 4 de 6 — Gestiona tus proyectos"
+  ]
+ },
+ {
+  "escena": "arezz-studio",
+  "inicio": 150.95,
+  "duracion": 33.73,
+  "rotulos": [
+   "Paso 13 · FEEDMA Studio: el tablero de publicaciones de AREZZ, por fases",
+   "Paso 13 · Crea la publicación de la colaboración",
+   "Paso 13 · Vinculada a la colaboración con NOVA STUDIO",
+   "Paso 13 · Una estimación orientativa del borrador (sin IA: solo longitud y hashtags)"
+  ]
+ },
+ {
+  "escena": "arezz-entrega",
+  "inicio": 184.08,
+  "duracion": 14.09,
+  "rotulos": [
+   "Paso 14 · Sube la pieza…",
+   "Paso 14 · …y la avanza de fase: en producción",
+   "Paso 15 · Lista: la envía a revisión de NOVA STUDIO"
+  ]
+ },
+ {
+  "escena": "card-m5",
+  "inicio": 197.58,
+  "duracion": 3.88,
+  "rotulos": [
+   "Módulo 5 de 6 — Revisa y aprueba"
+  ]
+ },
+ {
+  "escena": "nova-pide-cambios",
+  "inicio": 200.85,
+  "duracion": 18.44,
+  "rotulos": [
+   "Paso 16 · NOVA ve la entrega pendiente de revisar",
+   "Paso 16 · Pide un cambio concreto"
+  ]
+ },
+ {
+  "escena": "arezz-corrige",
+  "inicio": 218.69,
+  "duracion": 26.89,
+  "rotulos": [
+   "Paso 17 · AREZZ recibe el aviso con el comentario",
+   "Paso 17 · Cambia la imagen y el texto…",
+   "Paso 17 · …y la vuelve a enviar a revisión"
+  ]
+ },
+ {
+  "escena": "nova-aprueba",
+  "inicio": 244.98,
+  "duracion": 17.43,
+  "rotulos": [
+   "Paso 18 · NOVA revisa la nueva versión…",
+   "Paso 18 · …y la aprueba",
+   "Paso 18 · Queda programada en su calendario"
+  ]
+ },
+ {
+  "escena": "arezz-publica",
+  "inicio": 261.81,
+  "duracion": 12.61,
+  "rotulos": [
+   "Paso 19 · Aprobada: AREZZ la publica y lo marca en FEEDMA"
+  ]
+ },
+ {
+  "escena": "card-m6",
+  "inicio": 273.82,
+  "duracion": 3.89,
+  "rotulos": [
+   "Módulo 6 de 6 — Cierra y valora"
+  ]
+ },
+ {
+  "escena": "nova-completa",
+  "inicio": 277.11,
+  "duracion": 23.39,
+  "rotulos": [
+   "Paso 20 · NOVA marca la colaboración como completada",
+   "Paso 20 · Y valora el trabajo de AREZZ"
+  ]
+ },
+ {
+  "escena": "arezz-valora",
+  "inicio": 299.9,
+  "duracion": 17.71,
+  "rotulos": [
+   "Paso 21 · AREZZ también valora a NOVA STUDIO",
+   "Paso 21 · Las valoraciones construyen la reputación de cada perfil"
+  ]
+ },
+ {
+  "escena": "card-outro",
+  "inicio": 317.01,
+  "duracion": 5.87,
+  "rotulos": [
+   "FEEDMA — Del primer mensaje a la publicación aprobada"
+  ]
+ }
+]

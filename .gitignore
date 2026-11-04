@@ -23,3 +23,6 @@ logs
 .env.*
 .env.example
 !.env.example
+
+# Vídeo de la demo (25 MB): se genera con scripts/demo-video, no se versiona
+docs/demo/video/*.mp4

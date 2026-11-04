@@ -4,6 +4,60 @@ Registro de qué se hizo, por qué, y qué queda pendiente de verificar — pens
 
 ---
 
+## 2026-11-04 (Alex-58) — [Alex] Flujo de colaboraciones, Fase 2: acuerdo y brief («rellenar una vez»)
+
+Decisiones aprobadas por Alex (todas las recomendaciones de `docs/audit/08_COLLABORATION_FLOW_AUDIT.md` §12). Sin tocar pagos: `budget_cents`, `paid_at` y `stripe_*` quedan igual.
+
+- **Migración `20261104110000_collaboration_agreement_phase2.sql`** (**preparada, NO aplicada en la base compartida**; aplicada y probada en el Supabase local):
+  - Instantánea del paquete en `collaborations` (`package_title`, `package_description`, `package_deliverables`), copiada en `respond_offer` (cuerpo idéntico a la definición viva; solo se añaden las tres columnas al insert). Relleno de las colaboraciones antiguas desde `offers.package_id` si el paquete existe (solo columnas nuevas y vacías).
+  - `prevent_collaboration_terms_update`: un valor ya fijado no se cambia; uno vacío sí se puede completar. La exclusividad solo pasa de `false` a `true`.
+  - RPC `complete_collaboration_brief`: solo la marca de la colaboración, solo en `accepted` o `in_progress`, solo campos vacíos, todo o nada; avisa al creador (`collaboration_brief_added`, con enlace `?collaboration=`).
+- **Interfaz:** «Lo contratado» (copia del paquete) en el detalle de las dos partes; la marca ve «Completar el brief» con solo los campos vacíos; el detalle de la marca se mantiene al día tras recargar la lista.
+- **Verificado:** integración 207/207 contra el Supabase local (nuevo `collaboration-agreement-phase2.spec.ts`, 7 casos: instantánea, rellenar una vez, sobrescribir ❌, creador y ajeno ❌, estados, aviso); unitarios 613/613; typecheck limpio. Navegador (servidor de desarrollo + Supabase local, datos ficticios de la demo): enlace `?collaboration=`, «Precio acordado», botón Chat, «Lo contratado», rellenar el brief como marca y verlo como creador (11/11 comprobaciones).
+- **Sin verificar:** la migración en la base compartida; el aviso de «Entrega para revisar» en navegador (cubierto solo por integración); móvil.
+
+---
+
+## 2026-11-04 (Alex-57) — [Alex] Flujo de colaboraciones: auditoría (`propuesta-postvideo.md`) y Fase 1
+
+- **Auditoría y propuesta:** [`docs/audit/08_COLLABORATION_FLOW_AUDIT.md`](audit/08_COLLABORATION_FLOW_AUDIT.md) (matriz correcto/parcial/ausente, 13 problemas confirmados con evidencia, modelo propuesto, fases 1-7 y 9 decisiones D-1…D-9 que necesitan aprobación). Pagos y Stripe, fuera del alcance: no se ha tocado nada económico.
+- **Fase 1 implementada** (no necesita decisiones de producto). Migración `20261104100000_collaboration_flow_phase1.sql`, **preparada y NO aplicada en la base compartida** (aplicada y probada en el Supabase local):
+  - C-04: aviso a la marca al enviar o reenviar una entrega a revisión (trigger `on_post_review_requested`, solo en la transición, solo colaboraciones activas).
+  - C-05/F-02: aceptar una oferta del chat ya no avisa al creador de una «nueva solicitud».
+  - C-14: aceptar o rechazar una solicitud avisa a quien no hizo la acción (antes siempre al partner).
+  - C-11: los avisos llevan a `?collaboration=<id>` (y `&post=<id>` para revisar); las dos páginas de colaboraciones abren esa colaboración. «Ver colaboración» del chat también.
+  - C-09: aceptar, rechazar y completar exigen el estado de partida en el propio update.
+- **Interfaz:** «Precio acordado» tras aceptar (antes «Propuesta inicial»), estados vacíos del brief según el estado y botón «Chat» en el detalle (`CollaborationChatButton.vue`).
+- **Verificado:** integración **200/200 contra el Supabase local** con la migración aplicada (nuevo `collaboration-flow-phase1.spec.ts`, 8 casos con concurrencia; `notification-links`, `collaboration-log` y `collaborations-rls` actualizados a los enlaces nuevos y a los permisos por columna); 613/613 unitarios; typecheck limpio.
+- **Después:** la migración `20261104100000` fue aplicada por Alex en la base compartida. El recorrido en navegador de la Fase 1 (enlace `?collaboration=`, «Precio acordado», botón Chat) se hizo en el Alex-58.
+- Los tests de aviso usaban la hora del equipo y fallaban con un reloj adelantado respecto a la base (Docker tras suspender); ahora toman la hora del servidor.
+
+---
+
+## 2026-11-03 (Alex-56) — [Alex] Fases 1-10 de la auditoría: entorno de demo aislado, vídeo guiado y 4 fallos corregidos
+
+- **Entorno de demo aislado:**
+  - Supabase local (Docker) con las 44 migraciones aplicadas desde cero.
+  - Copia de la app (`git archive HEAD`) servida en `localhost:3300`, con su `.env` local, sin Stripe, OpenRouter ni OAuth.
+  - Nuevo [`scripts/seed-demo-video.mjs`](../scripts/seed-demo-video.mjs), que **aborta** si la URL no es `127.0.0.1` o si la base ya tiene usuarios. Siembra el escenario ficticio AREZZ × NOVA STUDIO más el reparto de fondo ([docs/demo/DEMO_DATA_PLAN.md](demo/DEMO_DATA_PLAN.md)).
+- **Fallos encontrados al recorrer la app en el navegador y corregidos:**
+  - **F-01:** `useSupabaseUser()` devuelve los *claims* del JWT (`sub`, no `id`). La privacidad del chat no se guardaba nunca y «tus valoraciones» daba 400. Arreglado en `useRatings`, `useChatSettings`, `useMyAvatar` y `useMyProfileId`.
+  - **F-07:** después de aprobar la marca, «Mover a "Publicado"» avisaba de que se saltaba la revisión. `movingSkipsPartnerReview` ahora recibe la fase de origen; con 4 tests (`tests/unit/partner-review-skip.spec.ts`).
+  - **F-03:** la predicción hecha al crear la publicación no aparecía en su ficha hasta recargar. `PostComposerSheet` actualiza la publicación compartida.
+- **Vídeo guiado** (5:23, 1920×1080, sin voz ni música, 6 módulos con tarjetas de título y 21 pasos rotulados, más un `.srt`). Grabado con Playwright sobre la app real y montado con FFmpeg ([`scripts/demo-video/`](../scripts/demo-video/README.md)).
+  - Hicieron falta 4 tomas: las tomas 2 y 3 destaparon F-07 y F-03, que se corrigieron antes de volver a grabar.
+  - La toma final no tiene errores de página.
+  - El montaje recorta 37 min de tiempo muerto por una suspensión del equipo, sin tocar el contenido ([docs/demo/FINAL_DEMO_REPORT.md](demo/FINAL_DEMO_REPORT.md)).
+  - El MP4 no se versiona (`.gitignore`).
+- **Documentos:** `docs/audit/01` a `06`, `FEEDMA_FINAL_AUDIT.md` y `docs/demo/` (plan de datos, storyboard e informe final).
+- **Verificado:**
+  - 613/613 tests unitarios y typecheck limpio.
+  - Los 17 pasos del escenario en el navegador.
+  - axe-core en 28 páginas y capturas a 3 tamaños.
+- **Sin verificar:** el pago de una colaboración y la suscripción con Stripe (requieren Stripe CLI), el OAuth real y el alta desde `/onboarding` en el navegador.
+
+---
+
 ## 2026-11-03 (Alex-55) — [Alex] Dependencias: de 21 avisos de `npm audit` a 7 bajos, sin código vulnerable en el servidor
 
 - **`npm audit fix`** (sin saltos mayores): Nuxt 4.6.2 → 4.6.4 (rutas con `..` que se saltaban `server/middleware`, `appSecret` y lectura de ficheros del servidor de desarrollo) y la cadena de Nitro; `node-forge` (alta) sale del árbol.

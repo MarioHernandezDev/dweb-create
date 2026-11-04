@@ -69,6 +69,25 @@ function toggleExpandedPost(post: { id: string }) {
   expandedPostId.value = expandedPostId.value === post.id ? null : post.id
 }
 
+// Enlace directo (`?collaboration=<id>`, desde un aviso o el chat): abre esa
+// colaboración en su grupo de la lista y, con `&post=<id>`, la pestaña
+// Calendario con esa publicación desplegada. Antes los enlaces llevaban solo a
+// la lista y había que buscarla.
+function openFromQuery() {
+  const id = route.query.collaboration
+  const match = typeof id === 'string' ? requests.value.find((r) => r.id === id) : undefined
+  if (!match) return
+  tab.value = match.status === 'requested' ? 'pending' : ACTIVE_STATUSES.includes(match.status) ? 'active' : 'history'
+  openDetail(match)
+  const postId = route.query.post
+  if (typeof postId === 'string' && collaborationPosts.value.some((p) => p.id === postId)) {
+    detailTab.value = 'calendar'
+    expandedPostId.value = postId
+  }
+}
+openFromQuery()
+watch(() => [route.query.collaboration, route.query.post], openFromQuery)
+
 // Consultar el checklist de un entregable sin salir de la colaboración — ya
 // no hace falta ir al Tablero y buscar el mismo post ahí (auditoría de
 // usabilidad, pestaña Calendario). Solo lectura aquí: editar el checklist
@@ -175,7 +194,7 @@ async function handleMarkCompleted() {
       <template v-if="detailReq">
         <div class="flex items-center gap-3 mb-5">
           <BaseAvatar :initials="initialsFromName(detailReq.partnerName)" :hue="hueFromString(detailReq.partnerName)" size="lg" />
-          <div class="min-w-0">
+          <div class="min-w-0 flex-1">
             <p class="text-[0.9375rem] font-medium text-[var(--color-text)] truncate">{{ detailReq.partnerName }}</p>
             <span
               class="inline-flex items-center px-2.5 py-0.5 rounded-[var(--radius-xs)] text-[0.75rem] font-medium mt-1"
@@ -187,21 +206,23 @@ async function handleMarkCompleted() {
               {{ collaborationStatusMeta[detailReq.status].label }}
             </span>
           </div>
+          <CollaborationChatButton :counterpart-profile-id="detailReq.partnerProfileId" :counterpart-name="detailReq.partnerName" />
         </div>
 
         <p class="text-[0.8125rem] text-[var(--color-text-muted)] line-clamp-1 mb-4">{{ detailReq.brief }}</p>
 
-        <!-- Nivel 1: la acción del momento, siempre visible, nunca dentro de una pestaña. -->
+        <!-- Nivel 1: la acción del momento, siempre visible, nunca dentro de una pestaña.
+             El panel se muestra en todos los estados (antes solo en "requested"): tras
+             aceptar es el único sitio del detalle con el precio acordado. -->
         <div class="mb-5">
           <NegotiationPanel
-            v-if="detailReq.status === 'requested'"
             :collaboration-id="detailReq.id" :initial-budget-cents="detailReq.budgetCents" :status="detailReq.status"
             my-role="creator" :initiated-by="detailReq.initiatedBy"
             @accept="handleAccept" @decline="handleDecline"
           />
           <BaseButton
-            v-else-if="detailReq.status === 'accepted' || detailReq.status === 'in_progress'"
-            variant="secondary" size="md" class="w-full" :disabled="acting === detailReq.id" :icon-spin="acting === detailReq.id"
+            v-if="detailReq.status === 'accepted' || detailReq.status === 'in_progress'"
+            variant="secondary" size="md" class="w-full mt-3" :disabled="acting === detailReq.id" :icon-spin="acting === detailReq.id"
             @click="handleMarkCompleted"
           >
             Marcar como completada
@@ -218,7 +239,7 @@ async function handleMarkCompleted() {
 
         <div v-show="detailTab === 'brief'">
           <p class="text-[0.9375rem] text-[var(--color-text)] leading-relaxed mb-5">{{ detailReq.brief }}</p>
-          <CollaborationTermsCard :terms="detailReq" :collaboration-id="detailReq.id" />
+          <CollaborationTermsCard :terms="detailReq" :collaboration-id="detailReq.id" :status="detailReq.status" :package-info="{ title: detailReq.packageTitle, description: detailReq.packageDescription, deliverables: detailReq.packageDeliverables }" />
           <dl class="flex flex-col gap-3 mb-5 text-[0.8125rem]">
             <div class="flex items-center justify-between">
               <dt class="text-[var(--color-text-muted)]">Pedida</dt>

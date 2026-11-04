@@ -1,0 +1,203 @@
+1
+00:00:00,167 --> 00:00:04,989
+FEEDMA — Cómo funciona, paso a paso
+
+2
+00:00:05,039 --> 00:00:08,267
+Módulo 1 de 6 — Conoce a AREZZ
+
+3
+00:00:08,317 --> 00:00:09,874
+Paso 1 · Este es «Hoy», el panel de AREZZ
+
+4
+00:00:10,024 --> 00:00:12,730
+Paso 1 · De un vistazo: colaboraciones, solicitudes, entregas y objetivo semanal
+
+5
+00:00:12,880 --> 00:00:15,101
+Paso 1 · Y lo próximo que necesita su atención
+
+6
+00:00:15,292 --> 00:00:20,087
+Paso 2 · Métricas: los seguidores de cada red conectada
+
+7
+00:00:20,237 --> 00:00:25,142
+Paso 2 · Cada red, con su peso en el total y su última actualización
+
+8
+00:00:25,292 --> 00:00:27,761
+Paso 2 · Hoy se conectan Instagram y YouTube; el resto aparece como «Próximamente»
+
+9
+00:00:27,945 --> 00:00:31,161
+Módulo 2 de 6 — Descubre creadores
+
+10
+00:00:31,211 --> 00:00:33,278
+Paso 3 · NOVA STUDIO, una marca de moda sostenible, entra en FEEDMA
+
+11
+00:00:33,428 --> 00:00:36,255
+Paso 3 · Va a Descubrir…
+
+12
+00:00:36,405 --> 00:00:44,011
+Paso 3 · …y filtra por la categoría que le interesa: Moda
+
+13
+00:00:44,161 --> 00:00:50,386
+Paso 4 · AREZZ encaja: moda, lifestyle y viajes
+
+14
+00:00:50,558 --> 00:00:55,098
+Paso 5 · Su perfil público: categorías, redes conectadas y tarifa
+
+15
+00:00:55,248 --> 00:00:58,192
+Paso 5 · Su reputación: valoraciones de colaboraciones ya completadas
+
+16
+00:00:58,342 --> 00:01:02,354
+Paso 6 · Y su catálogo de paquetes, cada uno con su precio
+
+17
+00:01:02,541 --> 00:01:05,804
+Módulo 3 de 6 — Negocia colaboraciones
+
+18
+00:01:05,854 --> 00:01:18,273
+Paso 7 · NOVA abre una conversación con AREZZ
+
+19
+00:01:18,423 --> 00:01:24,022
+Paso 8 · Y le envía una oferta sobre uno de sus paquetes
+
+20
+00:01:24,172 --> 00:01:34,660
+Paso 8 · Propone 900 € por la campaña completa (en catálogo: 1.200 €)
+
+21
+00:01:34,847 --> 00:01:40,724
+Paso 9 · AREZZ recibe la oferta en su chat
+
+22
+00:01:40,874 --> 00:01:51,057
+Paso 10 · Negocia: responde con su precio…
+
+23
+00:01:51,207 --> 00:01:56,796
+Paso 10 · …y rechaza esta primera oferta
+
+24
+00:01:56,981 --> 00:01:59,391
+Paso 11 · NOVA lee la respuesta de AREZZ…
+
+25
+00:01:59,541 --> 00:02:15,939
+Paso 11 · …y manda una nueva oferta: 1.050 €
+
+26
+00:02:16,126 --> 00:02:19,379
+Paso 12 · AREZZ acepta la nueva oferta
+
+27
+00:02:19,529 --> 00:02:27,627
+Paso 12 · La colaboración se crea sola, con el precio acordado
+
+28
+00:02:27,824 --> 00:02:31,057
+Módulo 4 de 6 — Gestiona tus proyectos
+
+29
+00:02:31,107 --> 00:02:33,567
+Paso 13 · FEEDMA Studio: el tablero de publicaciones de AREZZ, por fases
+
+30
+00:02:33,717 --> 00:02:45,826
+Paso 13 · Crea la publicación de la colaboración
+
+31
+00:02:45,976 --> 00:02:54,938
+Paso 13 · Vinculada a la colaboración con NOVA STUDIO
+
+32
+00:02:55,088 --> 00:03:04,062
+Paso 13 · Una estimación orientativa del borrador (sin IA: solo longitud y hashtags)
+
+33
+00:03:04,235 --> 00:03:08,137
+Paso 14 · Sube la pieza…
+
+34
+00:03:08,287 --> 00:03:11,566
+Paso 14 · …y la avanza de fase: en producción
+
+35
+00:03:11,716 --> 00:03:17,527
+Paso 15 · Lista: la envía a revisión de NOVA STUDIO
+
+36
+00:03:17,733 --> 00:03:20,953
+Módulo 5 de 6 — Revisa y aprueba
+
+37
+00:03:21,003 --> 00:03:27,081
+Paso 16 · NOVA ve la entrega pendiente de revisar
+
+38
+00:03:27,231 --> 00:03:38,684
+Paso 16 · Pide un cambio concreto
+
+39
+00:03:38,846 --> 00:03:46,974
+Paso 17 · AREZZ recibe el aviso con el comentario
+
+40
+00:03:47,124 --> 00:04:01,117
+Paso 17 · Cambia la imagen y el texto…
+
+41
+00:04:01,267 --> 00:04:04,945
+Paso 17 · …y la vuelve a enviar a revisión
+
+42
+00:04:05,132 --> 00:04:14,643
+Paso 18 · NOVA revisa la nueva versión…
+
+43
+00:04:14,793 --> 00:04:18,819
+Paso 18 · …y la aprueba
+
+44
+00:04:18,969 --> 00:04:21,759
+Paso 18 · Queda programada en su calendario
+
+45
+00:04:21,965 --> 00:04:33,705
+Paso 19 · Aprobada: AREZZ la publica y lo marca en FEEDMA
+
+46
+00:04:33,995 --> 00:04:37,218
+Módulo 6 de 6 — Cierra y valora
+
+47
+00:04:37,268 --> 00:04:49,714
+Paso 20 · NOVA marca la colaboración como completada
+
+48
+00:04:49,864 --> 00:04:59,863
+Paso 20 · Y valora el trabajo de AREZZ
+
+49
+00:05:00,052 --> 00:05:14,570
+Paso 21 · AREZZ también valora a NOVA STUDIO
+
+50
+00:05:14,720 --> 00:05:16,985
+Paso 21 · Las valoraciones construyen la reputación de cada perfil
+
+51
+00:05:17,161 --> 00:05:22,872
+FEEDMA — Del primer mensaje a la publicación aprobada

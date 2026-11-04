@@ -62,6 +62,12 @@ describe.skipIf(!hasSupabaseEnv || !hasServiceRole)('collaboration_log_entries (
     await admin.from('collaborations').delete().eq('id', collaborationId)
   })
 
+  // Punto de partida con la hora del SERVIDOR (último aviso guardado), no la del equipo.
+  async function serverMark() {
+    const { data } = await admin.from('notifications').select('created_at').order('created_at', { ascending: false }).limit(1)
+    return (data as { created_at: string }[] | null)?.[0]?.created_at ?? '1970-01-01T00:00:00Z'
+  }
+
   it('la colaboración de prueba queda creada', () => {
     expect(creator).not.toBeNull()
     expect(partner).not.toBeNull()
@@ -107,7 +113,7 @@ describe.skipIf(!hasSupabaseEnv || !hasServiceRole)('collaboration_log_entries (
 
   it('camino feliz: el creador registra una incidencia; solo el partner es notificado, no el propio creador', async () => {
     if (!creator || !partner) return
-    const beforeInsert = new Date().toISOString()
+    const beforeInsert = await serverMark()
 
     const { data: entry, error } = await creator.client.from('collaboration_log_entries').insert({
       collaboration_id: collaborationId, author_profile_id: creatorProfileId, kind: 'incident',
@@ -121,22 +127,22 @@ describe.skipIf(!hasSupabaseEnv || !hasServiceRole)('collaboration_log_entries (
       .select('id, type, link')
       .eq('profile_id', partnerProfileId)
       .eq('type', 'collaboration_incident_logged')
-      .gte('created_at', beforeInsert)
+      .gt('created_at', beforeInsert)
     expect(partnerNotifs).toHaveLength(1)
-    expect((partnerNotifs as { link: string }[])[0].link).toBe('/partner/requests')
+    expect((partnerNotifs as { link: string }[])[0].link).toBe(`/partner/requests?collaboration=${collaborationId}`)
 
     const { data: creatorNotifs } = await admin
       .from('notifications')
       .select('id')
       .eq('profile_id', creatorProfileId)
       .eq('type', 'collaboration_incident_logged')
-      .gte('created_at', beforeInsert)
+      .gt('created_at', beforeInsert)
     expect(creatorNotifs).toEqual([])
   })
 
   it('camino feliz en la otra dirección: el partner registra un cambio acordado; solo el creador es notificado', async () => {
     if (!creator || !partner) return
-    const beforeInsert = new Date().toISOString()
+    const beforeInsert = await serverMark()
 
     const { error } = await partner.client.from('collaboration_log_entries').insert({
       collaboration_id: collaborationId, author_profile_id: partnerProfileId, kind: 'agreed_change',
@@ -149,16 +155,16 @@ describe.skipIf(!hasSupabaseEnv || !hasServiceRole)('collaboration_log_entries (
       .select('id, type, link')
       .eq('profile_id', creatorProfileId)
       .eq('type', 'collaboration_change_logged')
-      .gte('created_at', beforeInsert)
+      .gt('created_at', beforeInsert)
     expect(creatorNotifs).toHaveLength(1)
-    expect((creatorNotifs as { link: string }[])[0].link).toBe('/creator/requests')
+    expect((creatorNotifs as { link: string }[])[0].link).toBe(`/creator/requests?collaboration=${collaborationId}`)
 
     const { data: partnerNotifs } = await admin
       .from('notifications')
       .select('id')
       .eq('profile_id', partnerProfileId)
       .eq('type', 'collaboration_change_logged')
-      .gte('created_at', beforeInsert)
+      .gt('created_at', beforeInsert)
     expect(partnerNotifs).toEqual([])
   })
 

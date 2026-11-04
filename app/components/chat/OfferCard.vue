@@ -23,11 +23,13 @@ const packageTitle = ref<string | null>(null)
 const respondError = ref('')
 const loaded = ref(false)
 const collaborationCreated = ref(false)
+const collaborationId = ref<string | null>(null)
 
 async function checkCollaboration() {
   if (offer.value?.status !== 'accepted') return
   const { data } = await client.from('collaborations').select('id').eq('offer_id', props.offerId).maybeSingle()
   collaborationCreated.value = !!data
+  collaborationId.value = (data as { id: string } | null)?.id ?? null
 }
 
 // Sin `await` a nivel de módulo: este componente puede montarse dinámicamente
@@ -102,7 +104,7 @@ async function declineWithConfirm() {
     <p v-if="offer.message" class="mt-2 whitespace-pre-wrap break-words text-[0.8125rem] text-[var(--color-text-muted)]">{{ offer.message }}</p>
 
     <p class="mt-3 text-[0.8125rem] text-[var(--color-text-muted)]" data-offer-consequence>{{ copy.consequence }}</p>
-    <NuxtLink v-if="offer.status === 'accepted' && collaborationCreated" :to="`/${myRole}/requests?tab=active`" class="mt-1.5 inline-flex min-h-8 items-center gap-1 text-[0.8125rem] font-medium text-[var(--color-primary-500)] hover:text-[var(--color-primary-600)]" data-offer-collab>
+    <NuxtLink v-if="offer.status === 'accepted' && collaborationCreated" :to="collaborationId ? `/${myRole}/requests?collaboration=${collaborationId}` : `/${myRole}/requests?tab=active`" class="mt-1.5 inline-flex min-h-8 items-center gap-1 text-[0.8125rem] font-medium text-[var(--color-primary-500)] hover:text-[var(--color-primary-600)]" data-offer-collab>
       Ver colaboración <Icon name="ph:arrow-right-bold" class="size-3.5" />
     </NuxtLink>
 

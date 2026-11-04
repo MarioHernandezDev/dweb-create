@@ -35,6 +35,10 @@ const myTurn = computed(() => props.status === 'requested' && currentProposer.va
 const otherRoleLabel = computed(() => (props.myRole === 'creator' ? 'el partner' : 'el creador'))
 const initiatorLabel = computed(() => (props.initiatedBy === 'partner' ? 'partner' : 'creador'))
 
+// Tras aceptar, la cifra de `collaborations.budget_cents` ya es el precio ACORDADO,
+// no la propuesta inicial (C-03 de docs/audit/08_COLLABORATION_FLOW_AUDIT.md).
+const isAgreed = computed(() => ['accepted', 'in_progress', 'completed'].includes(props.status))
+
 const countering = ref(false)
 const counterEuros = ref<number | null>(null)
 const counterMessage = ref('')
@@ -91,11 +95,11 @@ async function sendReport() {
   <div>
     <div class="flex flex-col gap-2 mb-5">
       <div class="flex items-center justify-between rounded-[var(--radius-sm)] bg-[var(--color-ink-overlay)] px-3 py-2 text-[0.8125rem]">
-        <span class="text-[var(--color-text-muted)]">Propuesta inicial ({{ initiatorLabel }})</span>
+        <span class="text-[var(--color-text-muted)]">{{ isAgreed ? 'Precio acordado' : `Propuesta inicial (${initiatorLabel})` }}</span>
         <span class="font-medium text-[var(--color-text)]">{{ initialBudgetCents ? formatEuros(initialBudgetCents) : 'Sin fijar' }}</span>
       </div>
 
-      <div v-for="offer in offers" :key="offer.id" class="rounded-[var(--radius-sm)] bg-[var(--color-ink-overlay)] px-3 py-2 text-[0.8125rem]">
+      <div v-for="offer in (isAgreed ? [] : offers)" :key="offer.id" class="rounded-[var(--radius-sm)] bg-[var(--color-ink-overlay)] px-3 py-2 text-[0.8125rem]">
         <div class="flex items-center justify-between">
           <span class="text-[var(--color-text-muted)]">
             Contraoferta de {{ offer.proposedBy === 'creator' ? 'el creador' : 'el partner' }} · {{ relativeTime(offer.createdAt) }}

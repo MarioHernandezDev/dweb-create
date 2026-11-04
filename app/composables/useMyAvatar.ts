@@ -23,7 +23,7 @@ export function useMyAvatar() {
   async function ensureAvatar(userId?: string) {
     if (info.value !== undefined) return info.value
 
-    const id = userId ?? user.value?.id ?? (await client.auth.getUser()).data.user?.id
+    const id = userId ?? user.value?.sub ?? (await client.auth.getUser()).data.user?.id
     if (!id) return { avatarUrl: null, fullName: 'Usuario' }
 
     const { data } = await client.from('profiles').select('avatar_url, full_name').eq('id', id).maybeSingle<{ avatar_url: string | null; full_name: string | null }>()

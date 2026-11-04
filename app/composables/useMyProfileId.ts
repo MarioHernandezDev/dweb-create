@@ -11,7 +11,8 @@ export function useMyProfileId() {
   const client = useSupabaseClient()
 
   async function resolveMyProfileId(): Promise<string | null> {
-    return user.value?.id ?? (await client.auth.getUser()).data.user?.id ?? null
+    // useSupabaseUser() son los claims del JWT: el id va en `sub`, no en `id`.
+    return user.value?.sub ?? (await client.auth.getUser()).data.user?.id ?? null
   }
 
   return { resolveMyProfileId }

@@ -15,7 +15,7 @@ export function useChatSettings() {
 
   async function ensureChatPrivacy() {
     if (chatPrivacy.value !== undefined) return chatPrivacy.value
-    const id = user.value?.id ?? (await client.auth.getUser()).data.user?.id
+    const id = await myId()
     if (!id) return 'everyone' as ChatPrivacy
 
     const { data } = await client.from('profiles').select('chat_privacy').eq('id', id).maybeSingle<{ chat_privacy: ChatPrivacy }>()
@@ -23,8 +23,14 @@ export function useChatSettings() {
     return chatPrivacy.value
   }
 
+  // useSupabaseUser() son los claims del JWT: el id va en `sub`. Con `.id`
+  // setChatPrivacy salía sin guardar nada (id siempre undefined).
+  async function myId() {
+    return user.value?.sub ?? (await client.auth.getUser()).data.user?.id
+  }
+
   async function setChatPrivacy(value: ChatPrivacy) {
-    const id = user.value?.id
+    const id = await myId()
     if (!id) return
     chatPrivacyError.value = ''
     const { error } = await client.from('profiles').update({ chat_privacy: value } as never).eq('id', id)

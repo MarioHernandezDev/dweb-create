@@ -8,7 +8,7 @@
  *
  * Esto es una plantilla, no asesoramiento jurídico: antes de publicar con
  * usuarios reales, que lo revise un gestor/abogado (ver Q13 en
- * docs/TRABAJO_MARIO.md).
+ * docs/PENDIENTE_MARIO.md).
  */
 export const legal = {
   /** Nombre comercial; ya conocido. */

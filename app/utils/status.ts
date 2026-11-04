@@ -77,9 +77,18 @@ export function overdueLabel(dueInDays: number): string {
  * "Publicado" sin que el partner haya aprobado nada. No se bloquea aquí
  * (sería un cambio de permisos/RLS, fuera de alcance sin confirmarlo antes)
  * — solo se usa para avisar con una confirmación antes de dejarlo pasar.
+ *
+ * Desde "Programado" o "Publicado" ya no hay revisión que saltarse: es la fase
+ * en la que deja `approve_post`, así que pasar de ahí a "Publicado" es el
+ * camino normal (antes avisaba también en ese paso, justo después de aprobar).
  */
-export function movingSkipsPartnerReview(targetStatus: PostStatus, collaborationStatus: CollaborationStatus | null | undefined): boolean {
+export function movingSkipsPartnerReview(
+  targetStatus: PostStatus,
+  collaborationStatus: CollaborationStatus | null | undefined,
+  fromStatus: PostStatus
+): boolean {
   if (targetStatus !== 'scheduled' && targetStatus !== 'published') return false
+  if (fromStatus === 'scheduled' || fromStatus === 'published') return false
   if (!collaborationStatus) return false
   return isActiveCollaborationStatus(collaborationStatus)
 }

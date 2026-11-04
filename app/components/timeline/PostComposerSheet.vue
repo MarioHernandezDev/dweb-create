@@ -9,7 +9,7 @@ const props = defineProps<{
 }>()
 
 const open = defineModel<boolean>({ default: false })
-const { createPost, updatePost } = useMyPosts()
+const { posts, createPost, updatePost } = useMyPosts()
 const router = useRouter()
 const toast = useToast()
 const { balance: creditBalance, ensureLoaded: ensureCreditsLoaded, setBalance: setCreditBalance } = useMyCredits()
@@ -100,6 +100,14 @@ async function predict() {
     if (justCreated.value) toast.success('Publicación creada. Tienes su predicción abajo.', { action: { label: 'Abrir', to: detailPath(postId) } })
     const prediction = await $fetch('/api/ml/predict', { method: 'POST', body: { postId } })
     result.value = { score: prediction.successScore, aiEvaluated: prediction.aiEvaluated, suggestions: prediction.suggestions }
+    // Igual que usePostEditorPanel: sin esto, al «Abrir publicación» la ficha
+    // decía «Todavía no has predicho» hasta recargar (y ofrecía gastar otro crédito).
+    const stored = posts.value.find((p) => p.id === postId)
+    if (stored) {
+      stored.successScore = prediction.successScore
+      stored.aiEvaluated = prediction.aiEvaluated
+      stored.suggestions = prediction.suggestions.length ? prediction.suggestions : undefined
+    }
     setCreditBalance(prediction.creditsRemaining)
     stage.value = 'result'
   } catch (err) {

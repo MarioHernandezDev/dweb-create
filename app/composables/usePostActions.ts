@@ -21,7 +21,7 @@ export function usePostActions() {
     if (post.status === phase) return 'ok'
 
     const collab = post.collaborationId ? collabRequests.value.find((c) => c.id === post.collaborationId) : undefined
-    if (post.collaborationId && movingSkipsPartnerReview(phase, collab?.status)) {
+    if (post.collaborationId && movingSkipsPartnerReview(phase, collab?.status, post.status)) {
       const partnerName = collab?.partnerName ?? 'el partner'
       const ok = await confirm({
         title: 'Vas a saltarte la revisión del partner',

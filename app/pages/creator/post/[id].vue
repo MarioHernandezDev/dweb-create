@@ -78,10 +78,10 @@ async function advanceStatus() {
   const next = nextStatus.value
 
   // Mismo aviso que PhaseBoard.vue al arrastrar — ver movingSkipsPartnerReview
-  // en utils/status.ts. Aquí solo puede pasar al llegar a "scheduled" desde
-  // "ready_for_review": es el único salto de este botón secuencial que
-  // coincide con lo que debería hacer `approve_post`, no un update directo.
-  if (p.collaborationId && movingSkipsPartnerReview(next, collabRequests.value.find((c) => c.id === p.collaborationId)?.status)) {
+  // en utils/status.ts. En este botón secuencial solo salta al llegar a
+  // "scheduled" desde "ready_for_review" (lo que debería hacer `approve_post`);
+  // de "scheduled" a "published" ya no avisa, porque ahí ya está aprobada.
+  if (p.collaborationId && movingSkipsPartnerReview(next, collabRequests.value.find((c) => c.id === p.collaborationId)?.status, p.status)) {
     const partnerName = collabRequests.value.find((c) => c.id === p.collaborationId)?.partnerName ?? 'el partner'
     const ok = await confirm({
       title: 'Vas a saltarte la revisión del partner',

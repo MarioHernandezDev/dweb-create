@@ -76,6 +76,14 @@ const detailTabs = [
 ]
 const expandedPostId = ref<string | null>(null)
 
+// El detalle abierto es una copia: se mantiene al día cuando la lista se recarga
+// (p. ej. tras completar el brief), sin que cada acción tenga que volver a buscarla.
+watch(collaborations, (list) => {
+  if (!detailCollab.value) return
+  const fresh = list.find((c) => c.id === detailCollab.value!.id)
+  if (fresh) detailCollab.value = fresh
+})
+
 function openDetail(collab: MyCollaboration) {
   detailCollab.value = collab
   actionError.value = ''
@@ -84,18 +92,28 @@ function openDetail(collab: MyCollaboration) {
   detailOpen.value = true
 }
 
-// Al volver de Stripe (éxito o cancelación) se reabre automáticamente la
-// misma colaboración que se estaba pagando — sin esto, "volver al mismo
-// sitio" solo habría significado la lista, no el contexto real en el que
-// se estaba antes de ir a pagar.
-const returnedCollabId = route.query.collaboration as string | undefined
-if (returnedCollabId) {
-  const match = collaborations.value.find((c) => c.id === returnedCollabId)
-  if (match) openDetail(match)
-}
-
 const collaborationPosts = computed(() => partnerPosts.value.filter((p) => p.collaborationId === detailCollab.value?.id))
 const expandedPost = computed(() => collaborationPosts.value.find((p) => p.id === expandedPostId.value) ?? null)
+
+// Enlace directo `?collaboration=<id>`: al volver de Stripe (éxito o
+// cancelación) reabre la colaboración que se estaba pagando, y desde los
+// avisos o el chat abre la colaboración concreta en su grupo de la lista. Con
+// `&post=<id>` (aviso «Entrega para revisar») abre además la pestaña
+// Calendario con esa entrega desplegada y sus botones de revisión.
+function openFromQuery() {
+  const id = route.query.collaboration
+  const match = typeof id === 'string' ? collaborations.value.find((c) => c.id === id) : undefined
+  if (!match) return
+  tab.value = match.status === 'requested' ? 'pending' : ACTIVE_STATUSES.includes(match.status) ? 'active' : 'history'
+  openDetail(match)
+  const postId = route.query.post
+  if (typeof postId === 'string' && collaborationPosts.value.some((p) => p.id === postId)) {
+    detailTab.value = 'calendar'
+    expandedPostId.value = postId
+  }
+}
+openFromQuery()
+watch(() => [route.query.collaboration, route.query.post], openFromQuery)
 
 function toggleExpandedPost(post: { id: string }) {
   expandedPostId.value = expandedPostId.value === post.id ? null : post.id
@@ -212,7 +230,7 @@ async function handleMarkCompleted() {
             :initials="initialsFromName(detailCollab.creatorName ?? '?')" :hue="hueFromString(detailCollab.creatorName ?? '')"
             size="lg"
           />
-          <div class="min-w-0">
+          <div class="min-w-0 flex-1">
             <p class="text-[0.9375rem] font-medium text-[var(--color-text)] truncate">{{ detailCollab.creatorName ?? 'Sin asignar' }}</p>
             <span
               class="inline-flex items-center px-2.5 py-0.5 rounded-[var(--radius-xs)] text-[0.75rem] font-medium mt-1"
@@ -224,6 +242,7 @@ async function handleMarkCompleted() {
               {{ collaborationStatusMeta[detailCollab.status].label }}
             </span>
           </div>
+          <CollaborationChatButton :counterpart-profile-id="detailCollab.creatorProfileId" :counterpart-name="detailCollab.creatorName ?? 'el creador'" />
         </div>
 
         <p class="text-[0.8125rem] text-[var(--color-text-muted)] line-clamp-1 mb-4">{{ detailCollab.brief }}</p>
@@ -267,7 +286,10 @@ async function handleMarkCompleted() {
 
         <div v-show="detailTab === 'brief'">
           <p class="text-[0.9375rem] text-[var(--color-text)] leading-relaxed mb-5">{{ detailCollab.brief }}</p>
-          <CollaborationTermsCard :terms="detailCollab" :collaboration-id="detailCollab.id" />
+          <CollaborationTermsCard :terms="detailCollab" :collaboration-id="detailCollab.id" :status="detailCollab.status"
+            :package-info="{ title: detailCollab.packageTitle, description: detailCollab.packageDescription, deliverables: detailCollab.packageDeliverables }"
+            :can-complete-brief="detailCollab.status === 'accepted' || detailCollab.status === 'in_progress'"
+          />
           <dl class="flex flex-col gap-3 text-[0.8125rem]">
             <div class="flex items-center justify-between">
               <dt class="text-[var(--color-text-muted)]">Pedida</dt>

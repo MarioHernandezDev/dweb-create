@@ -52,6 +52,14 @@ describe.skipIf(!hasSupabaseEnv || !hasServiceRole)('enlaces de notificación (S
     }
   })
 
+  // Punto de partida con la hora del SERVIDOR (último aviso guardado), no la del equipo:
+  // con un reloj local adelantado (p. ej. Docker tras suspender el equipo) un `since`
+  // del cliente dejaba fuera avisos que sí se habían creado.
+  async function serverMark() {
+    const { data } = await admin.from('notifications').select('created_at').order('created_at', { ascending: false }).limit(1)
+    return (data as { created_at: string }[] | null)?.[0]?.created_at ?? '1970-01-01T00:00:00Z'
+  }
+
   async function makeCollab(status: 'accepted' | 'completed') {
     const { data, error } = await admin
       .from('collaborations')
@@ -72,10 +80,10 @@ describe.skipIf(!hasSupabaseEnv || !hasServiceRole)('enlaces de notificación (S
     expect(partner).not.toBeNull()
   })
 
-  it('mark_collaboration_completed por el CREADOR notifica al partner con link /partner/requests', async () => {
+  it('mark_collaboration_completed por el CREADOR notifica al partner con link a la colaboración', async () => {
     if (!creator) return
     const id = await makeCollab('accepted')
-    const since = new Date().toISOString()
+    const since = await serverMark()
 
     const { error } = await creator.client.rpc('mark_collaboration_completed', { p_collaboration_id: id })
     expect(error).toBeNull()
@@ -85,15 +93,15 @@ describe.skipIf(!hasSupabaseEnv || !hasServiceRole)('enlaces de notificación (S
       .select('link')
       .eq('profile_id', partnerProfileId)
       .eq('type', 'collaboration_completed')
-      .gte('created_at', since)
+      .gt('created_at', since)
     expect(data).toHaveLength(1)
-    expect((data as { link: string }[])[0].link).toBe('/partner/requests')
+    expect((data as { link: string }[])[0].link).toBe(`/partner/requests?collaboration=${id}`)
   })
 
-  it('mark_collaboration_completed por el PARTNER notifica al creador con link /creator/requests', async () => {
+  it('mark_collaboration_completed por el PARTNER notifica al creador con link a la colaboración', async () => {
     if (!partner) return
     const id = await makeCollab('accepted')
-    const since = new Date().toISOString()
+    const since = await serverMark()
 
     const { error } = await partner.client.rpc('mark_collaboration_completed', { p_collaboration_id: id })
     expect(error).toBeNull()
@@ -103,15 +111,15 @@ describe.skipIf(!hasSupabaseEnv || !hasServiceRole)('enlaces de notificación (S
       .select('link')
       .eq('profile_id', creatorProfileId)
       .eq('type', 'collaboration_completed')
-      .gte('created_at', since)
+      .gt('created_at', since)
     expect(data).toHaveLength(1)
-    expect((data as { link: string }[])[0].link).toBe('/creator/requests')
+    expect((data as { link: string }[])[0].link).toBe(`/creator/requests?collaboration=${id}`)
   })
 
   it('submit_collaboration_rating por el CREADOR notifica al partner con link /partner/requests (antes cruzado a /partner/profile)', async () => {
     if (!creator) return
     const id = await makeCollab('completed')
-    const since = new Date().toISOString()
+    const since = await serverMark()
 
     const { error } = await creator.client.rpc('submit_collaboration_rating', { p_collaboration_id: id, p_stars: 5 })
     expect(error).toBeNull()
@@ -121,7 +129,7 @@ describe.skipIf(!hasSupabaseEnv || !hasServiceRole)('enlaces de notificación (S
       .select('link')
       .eq('profile_id', partnerProfileId)
       .eq('type', 'rating_received')
-      .gte('created_at', since)
+      .gt('created_at', since)
     expect(data).toHaveLength(1)
     expect((data as { link: string }[])[0].link).toBe('/partner/requests')
   })
@@ -129,7 +137,7 @@ describe.skipIf(!hasSupabaseEnv || !hasServiceRole)('enlaces de notificación (S
   it('submit_collaboration_rating por el PARTNER notifica al creador con link /creator/requests (antes cruzado)', async () => {
     if (!partner) return
     const id = await makeCollab('completed')
-    const since = new Date().toISOString()
+    const since = await serverMark()
 
     const { error } = await partner.client.rpc('submit_collaboration_rating', { p_collaboration_id: id, p_stars: 4 })
     expect(error).toBeNull()
@@ -139,7 +147,7 @@ describe.skipIf(!hasSupabaseEnv || !hasServiceRole)('enlaces de notificación (S
       .select('link')
       .eq('profile_id', creatorProfileId)
       .eq('type', 'rating_received')
-      .gte('created_at', since)
+      .gt('created_at', since)
     expect(data).toHaveLength(1)
     expect((data as { link: string }[])[0].link).toBe('/creator/requests')
   })
