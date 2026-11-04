@@ -38,7 +38,7 @@ const ariaValue = computed(() => {
     <span v-if="kpi.hero" class="absolute inset-y-0 left-0 w-1" :style="{ background: accent }" aria-hidden="true" />
 
     <div class="flex items-start justify-between gap-2">
-      <p class="flex items-center gap-1.5 text-[0.8125rem] text-[var(--color-text-muted)]">
+      <p class="flex items-center gap-1.5 text-sm text-[var(--color-text-muted)]">
         <Icon :name="kpi.icon" class="size-4 shrink-0" :style="{ color: accent }" />
         {{ kpi.label }}
       </p>
@@ -61,9 +61,9 @@ const ariaValue = computed(() => {
       </p>
       <template v-else>
         <p class="font-display leading-none text-[var(--color-text-faint)]" :class="kpi.hero ? 'text-[2.75rem]' : 'text-[1.75rem]'">—</p>
-        <p class="mt-1.5 text-[0.75rem] text-[var(--color-text-muted)] leading-snug">{{ kpi.reason }}</p>
+        <p class="mt-1.5 text-micro text-[var(--color-text-muted)] leading-snug">{{ kpi.reason }}</p>
       </template>
-      <p v-if="kpi.delta" class="mt-1.5 flex flex-wrap items-center gap-x-1.5 text-[0.75rem] font-medium" :style="{ color: deltaColor }">
+      <p v-if="kpi.delta" class="mt-1.5 flex flex-wrap items-center gap-x-1.5 text-micro font-medium" :style="{ color: deltaColor }">
         <Icon :name="deltaIcon" class="size-3.5 shrink-0" />
         {{ kpi.delta.text }}
         <span class="font-normal text-[var(--color-text-faint)]">{{ kpi.delta.label }}</span>
@@ -72,7 +72,7 @@ const ariaValue = computed(() => {
       <span v-if="kpi.value !== null && spark && spark.length > 1" class="mt-2 block pr-1 [&_svg]:overflow-visible" title="Tendencia diaria del periodo (dato de YouTube)" data-spark>
         <MiniSparkline :values="spark" :width="96" :height="22" :color="accent" />
       </span>
-      <p class="mt-2 text-[0.6875rem] uppercase tracking-wide text-[var(--color-text-faint)]">{{ provenance }}</p>
+      <p class="mt-2 text-micro text-[var(--color-text-faint)]">{{ provenance }}</p>
     </div>
   </div>
 </template>

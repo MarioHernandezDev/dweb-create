@@ -91,7 +91,7 @@ async function onRemove() {
           :class="uploading ? 'bg-black/45 opacity-100' : 'group-hover:bg-black/45 group-hover:opacity-100'"
         >
           <Icon :name="uploading ? 'ph:circle-notch-bold' : 'ph:camera-plus-fill'" class="size-5" :class="uploading && 'animate-spin'" />
-          <span class="text-[0.8125rem] font-medium">{{ uploading ? 'Subiendo…' : coverUrl ? 'Cambiar foto de portada' : 'Añadir foto de portada' }}</span>
+          <span class="text-sm font-medium">{{ uploading ? 'Subiendo…' : coverUrl ? 'Cambiar foto de portada' : 'Añadir foto de portada' }}</span>
         </div>
       </button>
 
@@ -106,6 +106,6 @@ async function onRemove() {
 
     <input ref="inputEl" type="file" accept="image/jpeg,image/png,image/webp" class="hidden" @change="onChange">
 
-    <p v-if="error" class="text-[0.8125rem] text-[var(--color-status-alert)] mt-2">{{ error }}</p>
+    <p v-if="error" class="text-sm text-[var(--color-status-alert)] mt-2">{{ error }}</p>
   </div>
 </template>

@@ -66,7 +66,7 @@ const isReconnect = computed(() => props.error?.code === 'reconnect_required')
           <img v-if="shown.thumbnailUrl" :src="shown.thumbnailUrl" alt="" class="absolute inset-0 size-full object-cover">
           <span v-else class="absolute inset-0 flex items-center justify-center text-[var(--color-text-faint)]"><Icon name="ph:video-camera-fill" class="size-6" /></span>
         </a>
-        <div class="min-w-0 text-[0.8125rem] text-[var(--color-text-muted)]">
+        <div class="min-w-0 text-sm text-[var(--color-text-muted)]">
           <p v-if="shown.publishedAt" :title="new Date(shown.publishedAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })">
             Publicado {{ relativeTime(shown.publishedAt) }}
           </p>
@@ -79,8 +79,8 @@ const isReconnect = computed(() => props.error?.code === 'reconnect_required')
 
       <!-- Total acumulado (Data API) -->
       <section v-if="shown" aria-label="Total acumulado">
-        <h3 class="text-[0.6875rem] font-semibold uppercase tracking-wide text-[var(--color-text-faint)]">Total · desde la publicación</h3>
-        <dl class="mt-1.5 flex flex-wrap gap-x-5 gap-y-1 text-[0.875rem] text-[var(--color-text)]" style="font-variant-numeric: tabular-nums">
+        <h3 class="text-sm font-semibold text-[var(--text-muted)]">Total · desde la publicación</h3>
+        <dl class="mt-1.5 flex flex-wrap gap-x-5 gap-y-1 text-sm text-[var(--color-text)]" style="font-variant-numeric: tabular-nums">
           <div class="flex items-center gap-1.5" :title="countDisplay('views', shown.viewCount).reason ?? 'Visualizaciones'">
             <dt class="sr-only">Visualizaciones</dt><Icon name="ph:eye" class="size-4" /><dd>{{ countDisplay('views', shown.viewCount, compact).text }}</dd>
           </div>
@@ -91,11 +91,11 @@ const isReconnect = computed(() => props.error?.code === 'reconnect_required')
             <dt class="sr-only">Comentarios</dt><Icon name="ph:chat-circle-text" class="size-4" /><dd>{{ countDisplay('comments', shown.commentCount, compact).text }}</dd>
           </div>
         </dl>
-        <p class="mt-1 text-[0.6875rem] text-[var(--color-text-faint)]">Dato de YouTube</p>
+        <p class="mt-1 text-micro text-[var(--color-text-faint)]">Dato de YouTube</p>
       </section>
 
       <!-- Error -->
-      <div v-if="error && !report" class="rounded-[var(--radius-md)] border border-[var(--color-hairline)] bg-[var(--color-paper)] p-4 text-[0.8125rem]" role="alert">
+      <div v-if="error && !report" class="rounded-[var(--radius-md)] border border-[var(--color-hairline)] bg-[var(--color-paper)] p-4 text-sm" role="alert">
         <p class="text-[var(--color-text)]">{{ error.message }}</p>
         <div class="mt-3 flex gap-2">
           <BaseButton v-if="isReconnect" size="sm" icon="ph:plug" @click="emit('reconnect')">Reconectar YouTube</BaseButton>
@@ -113,9 +113,9 @@ const isReconnect = computed(() => props.error?.code === 'reconnect_required')
       <template v-else>
         <!-- Periodo -->
         <section aria-label="Rendimiento en el periodo">
-          <h3 class="text-[0.6875rem] font-semibold uppercase tracking-wide text-[var(--color-text-faint)]">{{ periodLabel(days) }}</h3>
-          <p class="mt-0.5 text-[0.75rem] text-[var(--color-text-faint)]">{{ formatRangeLabel(report.range) }} · dato de YouTube</p>
-          <p v-if="report.partialPeriod" class="mt-2 rounded-[var(--radius-sm)] bg-[var(--color-ink-overlay)] px-3 py-2 text-[0.8125rem] text-[var(--color-text-muted)]" data-partial-note>
+          <h3 class="text-sm font-semibold text-[var(--text-muted)]">{{ periodLabel(days) }}</h3>
+          <p class="mt-0.5 text-micro text-[var(--color-text-faint)]">{{ formatRangeLabel(report.range) }} · dato de YouTube</p>
+          <p v-if="report.partialPeriod" class="mt-2 rounded-[var(--radius-sm)] bg-[var(--color-ink-overlay)] px-3 py-2 text-sm text-[var(--color-text-muted)]" data-partial-note>
             Este vídeo se publicó dentro del periodo: las cifras cubren solo desde su publicación, así que no se compara con el periodo anterior.
           </p>
           <div class="mt-3 grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -125,33 +125,33 @@ const isReconnect = computed(() => props.error?.code === 'reconnect_required')
 
         <!-- Evolución diaria de visualizaciones -->
         <section aria-label="Visualizaciones por día">
-          <h3 class="text-[0.6875rem] font-semibold uppercase tracking-wide text-[var(--color-text-faint)] mb-2">Visualizaciones por día</h3>
+          <h3 class="text-sm font-semibold text-[var(--text-muted)] mb-2">Visualizaciones por día</h3>
           <YoutubeEvolutionChart v-if="hasViews && series" :series="series" metric="views" :show-compare="comparing" :height="200" />
-          <p v-else class="text-[0.8125rem] text-[var(--color-text-muted)]">YouTube no ha devuelto visualizaciones diarias de este vídeo para el periodo.</p>
-          <p v-if="series && series.gaps > 0 && hasViews" class="mt-1 text-[0.75rem] text-[var(--color-text-faint)]">
+          <p v-else class="text-sm text-[var(--color-text-muted)]">YouTube no ha devuelto visualizaciones diarias de este vídeo para el periodo.</p>
+          <p v-if="series && series.gaps > 0 && hasViews" class="mt-1 text-micro text-[var(--color-text-faint)]">
             {{ series.gaps }} {{ series.gaps === 1 ? 'día sin dato' : 'días sin dato' }} de YouTube (no se rellenan con ceros)
           </p>
         </section>
 
         <!-- Frente a lo habitual del canal, con el criterio a la vista -->
         <section aria-label="Frente a lo habitual del canal">
-          <h3 class="text-[0.6875rem] font-semibold uppercase tracking-wide text-[var(--color-text-faint)]">Frente a lo habitual del canal</h3>
+          <h3 class="text-sm font-semibold text-[var(--text-muted)]">Frente a lo habitual del canal</h3>
           <ul v-if="comparisons.length" class="mt-2 grid gap-3 md:grid-cols-3">
             <li v-for="row in comparisons" :key="row.key" class="rounded-[var(--radius-sm)] border border-[var(--color-hairline)] p-3" data-comparison>
-              <div class="flex items-center justify-between gap-3 text-[0.875rem]">
+              <div class="flex items-center justify-between gap-3 text-sm">
                 <span class="text-[var(--color-text)]">{{ row.label }}</span>
                 <span class="inline-flex items-center gap-1 font-medium" :style="{ color: verdictColor[row.verdict] }">
                   <Icon :name="verdictIcon[row.verdict]" class="size-3.5" /> {{ VERDICT_TEXT[row.verdict] }}
                 </span>
               </div>
-              <p class="mt-0.5 text-[0.8125rem] text-[var(--color-text-muted)]" style="font-variant-numeric: tabular-nums">
+              <p class="mt-0.5 text-sm text-[var(--color-text-muted)]" style="font-variant-numeric: tabular-nums">
                 {{ row.videoText }} frente a {{ row.referenceText }} ({{ row.referenceLabel }})
               </p>
-              <p class="mt-1 text-[0.6875rem] leading-relaxed text-[var(--color-text-faint)]">Criterio: {{ row.criterion }}</p>
-              <p class="text-[0.6875rem] text-[var(--color-text-faint)]">Cálculo de CIBERAN sobre datos de YouTube</p>
+              <p class="mt-1 text-micro leading-relaxed text-[var(--color-text-faint)]">Criterio: {{ row.criterion }}</p>
+              <p class="text-micro text-[var(--color-text-faint)]">Cálculo de CIBERAN sobre datos de YouTube</p>
             </li>
           </ul>
-          <p v-else class="mt-2 text-[0.8125rem] text-[var(--color-text-muted)]">
+          <p v-else class="mt-2 text-sm text-[var(--color-text-muted)]">
             No hay datos suficientes para comparar este vídeo con el canal en este periodo.
           </p>
         </section>

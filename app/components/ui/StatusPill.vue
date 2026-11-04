@@ -1,18 +1,10 @@
 <script setup lang="ts">
 import type { PostStatus } from '~/types'
-import { statusMeta } from '~/utils/status'
 
-const props = defineProps<{ status: PostStatus; compact?: boolean }>()
-const meta = computed(() => statusMeta[props.status])
+/** Adaptador: las pantallas que aún usan StatusPill reciben el chip de fase nuevo. Nuevo código: PhaseChip. */
+defineProps<{ status: PostStatus; compact?: boolean }>()
 </script>
 
 <template>
-  <span
-    class="inline-flex items-center rounded-[var(--radius-xs)] font-medium"
-    :class="compact ? 'gap-1 px-2 py-0.5 text-[0.6875rem]' : 'gap-1.5 px-2.5 py-1 text-[0.75rem]'"
-    :style="{ color: meta.color, background: `color-mix(in oklab, ${meta.color} 16%, transparent)` }"
-  >
-    <StatusGlyph :status="status" class="size-[1.1em]" />
-    {{ meta.label }}
-  </span>
+  <PhaseChip :status="status" :compact="compact" />
 </template>

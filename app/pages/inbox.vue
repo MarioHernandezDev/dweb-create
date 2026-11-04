@@ -59,7 +59,7 @@ async function open(n: NotificationGroup<AppNotification>) {
 <template>
   <AppShell :role="myRole" title="Bandeja de entrada" subtitle="Avisos de tu cuenta">
     <div v-if="hasUnread" class="flex justify-end mb-4">
-      <button type="button" class="text-[0.8125rem] font-medium text-[var(--color-text-muted)] hover:text-[var(--color-text)]" @click="markAllRead">
+      <button type="button" class="text-sm font-medium text-[var(--color-text-muted)] hover:text-[var(--color-text)]" @click="markAllRead">
         Marcar todo como leído
       </button>
     </div>
@@ -82,14 +82,14 @@ async function open(n: NotificationGroup<AppNotification>) {
           </span>
           <div class="min-w-0 flex-1">
             <div class="flex items-center justify-between gap-2">
-              <p class="text-[0.9375rem] font-medium text-[var(--color-text)] truncate">
+              <p class="text-base font-medium text-[var(--color-text)] truncate">
                 {{ n.title }}
-                <span v-if="n.count > 1" class="ml-1 text-[0.75rem] font-normal text-[var(--color-text-faint)]" :aria-label="`${n.count} avisos iguales`">×{{ n.count }}</span>
+                <span v-if="n.count > 1" class="ml-1 text-micro font-normal text-[var(--color-text-faint)]" :aria-label="`${n.count} avisos iguales`">×{{ n.count }}</span>
               </p>
               <span v-if="n.unread" class="shrink-0 size-2 rounded-full bg-[var(--color-primary-500)]" />
             </div>
-            <p v-if="n.body" class="text-[0.8125rem] text-[var(--color-text-muted)] leading-relaxed mt-0.5">{{ n.body }}</p>
-            <p class="text-[0.75rem] text-[var(--color-text-faint)] mt-1">{{ relativeTime(n.createdAt) }}</p>
+            <p v-if="n.body" class="text-sm text-[var(--color-text-muted)] leading-relaxed mt-0.5">{{ n.body }}</p>
+            <p class="text-micro text-[var(--color-text-faint)] mt-1">{{ relativeTime(n.createdAt) }}</p>
           </div>
         </BaseCard>
       </button>

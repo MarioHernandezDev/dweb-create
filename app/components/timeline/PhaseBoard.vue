@@ -213,7 +213,7 @@ async function bulkDelete() {
     <PostFilterBar v-if="posts.length" v-model:filters="filters" :collabs="collabRequests" class="mb-5">
       <template #end>
         <button
-          type="button" class="text-[0.8125rem] font-medium transition-colors"
+          type="button" class="text-sm font-medium transition-colors"
           :class="selectionMode ? 'text-[var(--color-text)]' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text)]'"
           @click="selectionMode ? cancelSelection() : (selectionMode = true)"
         >
@@ -242,20 +242,17 @@ async function bulkDelete() {
       <div class="lg:hidden flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 nx-scroll">
         <button
           v-for="phase in phases" :key="phase" type="button"
-          class="shrink-0 inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-[0.75rem] font-medium border border-[var(--color-hairline-strong)]"
-          :style="{ color: statusMeta[phase].color }"
+          class="chip chip--outline chip--sm shrink-0"
           @click="jumpToPhase(phase)"
         >
-          <span class="size-1.5 rounded-full shrink-0" :style="{ background: statusMeta[phase].color }" />
           {{ statusMeta[phase].label }} ({{ board[phase].length }})
         </button>
       </div>
 
-      <section v-for="phase in phases" :key="phase" :ref="(el) => setPhaseSectionRef(phase, el)" class="flex flex-col min-w-0 lg:max-w-[20rem]">
+      <section v-for="phase in phases" :key="phase" :ref="(el) => setPhaseSectionRef(phase, el)" class="board-col flex flex-col min-w-0 lg:max-w-[20rem]" :data-status="phase">
         <div class="mb-3">
           <div class="flex items-center gap-2 px-0.5">
-            <span class="size-2 rounded-full shrink-0" :style="{ background: statusMeta[phase].color }" />
-            <h2 class="text-[0.8125rem] font-medium text-[var(--color-text)]">{{ statusMeta[phase].label }}</h2>
+            <h2 class="board-col__title">{{ statusMeta[phase].label }}</h2>
             <span
               class="flex items-center justify-center size-4 rounded-full text-[var(--color-text-faint)] cursor-help" tabindex="0"
               :title="phaseDescription[phase]" :aria-label="phaseDescription[phase]"
@@ -264,7 +261,7 @@ async function bulkDelete() {
             </span>
             <div class="ml-auto flex items-center gap-1">
               <Icon v-if="isOverLimit(phase)" name="ph:warning-fill" class="size-3.5 text-[var(--color-status-alert)]" />
-              <span class="text-[0.75rem]" :class="isOverLimit(phase) ? 'text-[var(--color-status-alert)] font-semibold' : 'text-[var(--color-text-faint)]'">
+              <span class="text-micro" :class="isOverLimit(phase) ? 'text-[var(--color-status-alert)] font-semibold' : 'text-[var(--color-text-faint)]'">
                 {{ board[phase].length }}{{ wipLimits[phase] ? `/${wipLimits[phase]}` : '' }}
               </span>
               <button
@@ -286,10 +283,10 @@ async function bulkDelete() {
           <div v-if="wipEditingPhase === phase" class="flex items-center gap-1.5 mt-2 px-0.5">
             <input
               v-model="wipInput" type="number" min="1" placeholder="Sin límite"
-              class="w-24 h-7 px-2 rounded-[var(--radius-xs)] bg-[var(--color-ink-overlay)] border border-[var(--color-hairline)] text-[0.75rem] text-[var(--color-text)] focus:outline-none focus:border-[var(--color-primary-500)]/60"
+              class="input w-24 h-7"
               @keydown.enter.prevent="saveWipLimit(phase)"
             >
-            <button type="button" class="text-[0.75rem] font-medium text-[var(--color-primary-500)]" @click="saveWipLimit(phase)">Guardar</button>
+            <button type="button" class="text-micro font-medium text-[var(--color-primary-500)]" @click="saveWipLimit(phase)">Guardar</button>
           </div>
         </div>
 
@@ -312,7 +309,7 @@ async function bulkDelete() {
           @change="(e: { added?: { element: Post } }) => onChange(phase, e)"
         >
           <template #item="{ element }: { element: Post }">
-            <div class="relative" :class="isOverdue(element) && 'rounded-[var(--radius-md)] ring-2 ring-[var(--color-status-alert)]'">
+            <div class="relative">
               <BoardCard :post="element" :phases="phases" :overdue="isOverdue(element)" :project="projectNameOf(element)" @open="openEdit(element)" @move="moveTo(element, $event)" />
               <template v-if="selectionMode">
                 <button
@@ -331,7 +328,7 @@ async function bulkDelete() {
           </template>
 
           <template v-if="!board[phase].length" #footer>
-            <div class="flex items-center justify-center h-14 rounded-[var(--radius-md)] border border-dashed border-[var(--color-hairline-strong)] text-[0.75rem] text-[var(--color-text-faint)]">
+            <div class="board-col__empty">
               Suelta aquí
             </div>
           </template>
@@ -347,7 +344,7 @@ async function bulkDelete() {
         v-if="selectionMode && selectedIds.size"
         class="fixed z-30 bottom-20 md:bottom-6 left-1/2 -translate-x-1/2 inline-flex items-center gap-3 h-12 pl-4 pr-2 rounded-full bg-[var(--color-ink-raised)] border border-[var(--color-hairline-strong)] shadow-[var(--shadow-float)]"
       >
-        <span class="text-[0.8125rem] font-medium text-[var(--color-text)]">{{ selectedIds.size }} seleccionada{{ selectedIds.size > 1 ? 's' : '' }}</span>
+        <span class="text-sm font-medium text-[var(--color-text)]">{{ selectedIds.size }} seleccionada{{ selectedIds.size > 1 ? 's' : '' }}</span>
         <BaseButton variant="danger" size="sm" :icon-spin="bulkDeleting" :disabled="bulkDeleting" @click="bulkDelete">Borrar</BaseButton>
       </div>
     </Transition>

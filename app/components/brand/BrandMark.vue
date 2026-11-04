@@ -1,12 +1,14 @@
 <script setup lang="ts">
 /**
- * Logotipo de CIBERAN: el símbolo (dos arcos de onda con el punto voltio) y,
+ * Logotipo de CIBERAN: el símbolo (la manta raya dentro del círculo) y,
  * opcionalmente, el wordmark. Es la única forma de pintar la marca en la app;
- * los SVG sueltos de public/img/brand son para favicon, manifiesto y correos.
+ * los PNG de public/img/brand son para favicon, manifiesto y correos
+ * (se generan con scripts/design/build-brand-assets.mjs).
  *
- * `tone`: "ink" para fondos claros, "light" para fondos oscuros (barra lateral,
- * portada). El tamaño sale de `size` (alto del símbolo, en px) y el wordmark
- * escala con él.
+ * El símbolo es claro (blanco y voltio): necesita fondo oscuro.
+ * - `tone="light"`: para fondos oscuros (barra lateral, portada). Sin ficha.
+ * - `tone="ink"` (por defecto): para fondos claros. El símbolo se apoya en una
+ *   ficha de tinta, que ocupa el alto indicado en `size`.
  */
 withDefaults(defineProps<{
   tone?: 'ink' | 'light'
@@ -31,11 +33,9 @@ withDefaults(defineProps<{
     :aria-label="label || undefined"
     :aria-hidden="label ? undefined : 'true'"
   >
-    <svg class="brand-mark__symbol" viewBox="0 0 64 64" aria-hidden="true" focusable="false">
-      <path d="M 51.92 15.29 A 26 26 0 1 0 51.92 48.71" />
-      <path d="M 41.96 23.64 A 13 13 0 1 0 41.96 40.36" />
-      <circle cx="52" cy="32" r="6" />
-    </svg>
+    <span class="brand-mark__symbol">
+      <img src="/img/brand/mark-512.png" alt="" width="512" height="512" decoding="async">
+    </span>
     <span v-if="wordmark" class="brand-mark__word" aria-hidden="true">ciberan</span>
   </span>
 </template>

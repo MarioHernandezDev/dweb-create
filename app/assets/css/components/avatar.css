@@ -1,0 +1,37 @@
+/* ==========================================================================
+   Componente · Avatar (BaseAvatar.vue)
+   Foto o iniciales. El matiz de las iniciales llega en --hue (0–360); el fondo
+   es siempre un tono claro con texto tinta, así el contraste no depende del
+   matiz.
+   ========================================================================== */
+
+@layer components {
+  .avatar {
+    --hue: 230;
+    --avatar-size: 2.75rem;
+    --avatar-fs: var(--text-sm);
+
+    display: grid;
+    place-items: center;
+    width: var(--avatar-size);
+    height: var(--avatar-size);
+    flex-shrink: 0;
+    overflow: hidden;
+    border-radius: var(--radius-pill);
+    background: hsl(var(--hue) 62% 84%);
+    color: var(--color-tinta-950);
+    font-family: var(--font-display);
+    font-size: var(--avatar-fs);
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    line-height: 1;
+
+    &.avatar--sm { --avatar-size: 2rem; --avatar-fs: 0.6875rem; }
+    &.avatar--lg { --avatar-size: 4rem; --avatar-fs: var(--text-lg); }
+    &.avatar--xl { --avatar-size: 6rem; --avatar-fs: var(--text-title); }
+    /* Ocupa la caja de su contenedor (avatar grande del perfil). */
+    &.avatar--fluid { --avatar-size: 100%; --avatar-fs: clamp(2rem, 4vw, 3rem); }
+    &.avatar--has-photo { background: var(--surface-sunken); }
+  }
+  .avatar__img { width: 100%; height: 100%; object-fit: cover; }
+}

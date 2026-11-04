@@ -19,17 +19,17 @@ const scoreWord = computed(() => (props.score < 45 ? 'bajo' : props.score < 72 ?
     <div class="relative flex items-start gap-5">
       <ProgressRing :value="score" :size="88" :stroke="8" />
       <div class="min-w-0 pt-1">
-        <p class="inline-flex items-center gap-1.5 text-[0.75rem] font-medium text-[var(--color-signal-500)]">
+        <p class="inline-flex items-center gap-1.5 text-micro font-medium text-[var(--color-signal-500)]">
           <Icon name="ph:sparkle-fill" class="size-3.5" />
           Predicción de éxito
         </p>
-        <p class="mt-1 text-[0.9375rem] text-[var(--color-text)]">
+        <p class="mt-1 text-base text-[var(--color-text)]">
           Potencial <strong class="font-semibold">{{ scoreWord }}</strong>
         </p>
         <!-- Honesto sobre qué se evaluó de verdad — nada de un "% de confianza"
              inventado ni de afirmar que se mira tu historial o tendencias, que
              nunca ha sido cierto (ver server/api/ml/predict.post.ts). -->
-        <p class="mt-1 text-[0.8125rem] text-[var(--color-text-muted)]">
+        <p class="mt-1 text-sm text-[var(--color-text-muted)]">
           {{ aiEvaluated ? 'Evaluado con IA sobre el contenido real de este borrador.' : 'Evaluado solo por la forma del borrador (longitud, hashtags) — sin IA disponible ahora mismo.' }}
         </p>
       </div>
@@ -37,14 +37,14 @@ const scoreWord = computed(() => (props.score < 45 ? 'bajo' : props.score < 72 ?
 
     <!-- Contexto real (A-R9): solo si hay muestra suficiente de publicaciones ya
          medidas; no modifica el score, que sigue siendo heurístico/IA. -->
-    <p v-if="history" data-history-context class="relative mt-4 text-[0.8125rem] text-[var(--color-text-muted)]">
+    <p v-if="history" data-history-context class="relative mt-4 text-sm text-[var(--color-text-muted)]">
       Tus {{ history.sampleSize }} publicaciones medidas en esta plataforma tienen una mediana de
       {{ history.medianViews.toLocaleString('es-ES', { useGrouping: 'always' }) }} visualizaciones
       (entre {{ history.minViews.toLocaleString('es-ES', { useGrouping: 'always' }) }} y {{ history.maxViews.toLocaleString('es-ES', { useGrouping: 'always' }) }}).
       Cálculo de CIBERAN con tus datos; el potencial de arriba no se basa en ellos.
     </p>
 
-    <p v-if="genericSuggestions" class="relative mt-6 inline-flex items-center gap-1.5 text-[0.75rem] font-medium text-[var(--color-text-faint)]">
+    <p v-if="genericSuggestions" class="relative mt-6 inline-flex items-center gap-1.5 text-micro font-medium text-[var(--color-text-faint)]">
       <Icon name="ph:info-fill" class="size-3.5" />
       Consejos generales — no son un análisis de esta publicación en concreto
     </p>
@@ -53,7 +53,7 @@ const scoreWord = computed(() => (props.score < 45 ? 'bajo' : props.score < 72 ?
         <span class="flex items-center justify-center size-7 rounded-full bg-[var(--color-ink-raised)] text-[var(--color-text-muted)] shrink-0 mt-0.5">
           <Icon :name="kindMeta[s.kind].icon" class="size-3.5" />
         </span>
-        <p class="text-[0.875rem] text-[var(--color-text)] leading-relaxed">{{ s.text }}</p>
+        <p class="text-sm text-[var(--color-text)] leading-relaxed">{{ s.text }}</p>
       </li>
     </ul>
   </BaseCard>

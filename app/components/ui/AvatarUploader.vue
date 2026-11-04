@@ -13,6 +13,8 @@ const props = defineProps<{
   hue: number
   upload: (file: File) => Promise<string>
   remove?: () => Promise<void>
+  /** El avatar rellena la caja que le da `--uploader-size` (perfil a ancho completo). */
+  fluid?: boolean
 }>()
 
 const emit = defineEmits<{ 'update:avatarUrl': [url: string | null] }>()
@@ -74,12 +76,12 @@ async function onRemove() {
 
 <template>
   <div>
-    <div class="relative size-16 shrink-0">
+    <div class="relative size-[var(--uploader-size,4rem)] shrink-0">
       <button
         type="button" :aria-label="avatarUrl ? 'Cambiar foto de perfil' : 'Añadir foto de perfil'"
-        class="group relative size-16 rounded-full block" :disabled="uploading || removing" @click="inputEl?.click()"
+        class="group relative size-full rounded-full block" :disabled="uploading || removing" @click="inputEl?.click()"
       >
-        <BaseAvatar :initials="initials" :src="avatarUrl" :hue="hue" size="lg" />
+        <BaseAvatar :initials="initials" :src="avatarUrl" :hue="hue" :size="fluid ? 'fluid' : 'lg'" />
 
         <div
           class="absolute inset-0 flex items-center justify-center rounded-full bg-black/0 text-white opacity-0 transition-[background-color,opacity] duration-200"
@@ -91,15 +93,15 @@ async function onRemove() {
 
       <button
         v-if="avatarUrl && remove" type="button" aria-label="Quitar foto de perfil"
-        class="absolute -top-0.5 -right-0.5 size-5 rounded-full bg-[var(--color-ink-raised)] border border-[var(--color-hairline)] text-[var(--color-text-muted)] flex items-center justify-center hover:text-[var(--color-status-alert)] hover:border-[var(--color-status-alert)]/40 transition-colors"
+        class="absolute top-1 right-1 z-10 size-6 rounded-full bg-[var(--color-ink-raised)] border border-[var(--color-hairline)] text-[var(--color-text-muted)] flex items-center justify-center hover:text-[var(--color-status-alert)] hover:border-[var(--color-status-alert)]/40 transition-colors"
         :disabled="removing" @click="onRemove"
       >
-        <Icon name="ph:x-bold" class="size-2.5" />
+        <Icon name="ph:x-bold" class="size-3" />
       </button>
     </div>
 
     <input ref="inputEl" type="file" accept="image/jpeg,image/png,image/webp" class="hidden" @change="onChange">
 
-    <p v-if="error" class="text-[0.75rem] text-[var(--color-status-alert)] mt-1.5 max-w-[11rem]">{{ error }}</p>
+    <p v-if="error" class="text-micro text-[var(--color-status-alert)] mt-1.5 max-w-[11rem]">{{ error }}</p>
   </div>
 </template>

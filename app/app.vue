@@ -1,11 +1,11 @@
 <script setup lang="ts">
 useHead({
-  titleTemplate: (title) => (title ? `${title} · CIBERAN` : 'CIBERAN — Estudio de contenido')
+  titleTemplate: (title) => (title ? `${title} · CIBERAN` : 'CIBERAN — Creadores y marcas')
 })
 </script>
 
 <template>
-  <NuxtLoadingIndicator color="var(--color-primary-500)" :height="3" />
+  <NuxtLoadingIndicator color="var(--color-cobalto-600)" :height="3" />
   <LoadingOverlay />
   <NuxtPage :transition="{ name: 'page', mode: 'default' }" />
 </template>

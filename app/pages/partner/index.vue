@@ -5,6 +5,8 @@ import { isFichaIncomplete } from '~/utils/ficha'
 import { relativeTime, isUnresolvedCollaborationStatus } from '~/utils/status'
 import type { Creator, Post } from '~/types'
 
+import { weekDays, overdueCount, phaseShares } from '~/utils/home-charts'
+
 useHead({ title: 'Inicio' })
 
 const { partner, ensurePartner } = useMyPartner()
@@ -133,6 +135,20 @@ function onHeroClick() {
 
 const unreadConversations = computed(() => conversations.value.filter((c) => c.unread).slice(0, 4))
 
+// Gráficas de resumen (datos ya cargados; nada se consulta aparte).
+const chartDays = computed(() => weekDays(posts.value, new Date()))
+const chartOverdue = computed(() => overdueCount(posts.value))
+const chartShares = computed(() => phaseShares(posts.value))
+
+// Frase de estado: solo con lo que de verdad hay (nada inventado).
+const statusLine = computed(() => {
+  const parts: string[] = []
+  if (pendingForMe.value.length) parts.push(`${pendingForMe.value.length} ${pendingForMe.value.length === 1 ? 'solicitud por responder' : 'solicitudes por responder'}`)
+  if (pendingReview.value.length) parts.push(`${pendingReview.value.length} ${pendingReview.value.length === 1 ? 'entrega por revisar' : 'entregas por revisar'}`)
+  if (unreadConversations.value.length) parts.push(`${unreadConversations.value.length} ${unreadConversations.value.length === 1 ? 'conversación con mensajes nuevos' : 'conversaciones con mensajes nuevos'}`)
+  return parts.length ? parts.join(' · ') : 'Todo al día por ahora.'
+})
+
 const tips = computed(() => {
   const list: { icon: string; text: string; cta: string; to: string }[] = []
   if (fichaIncomplete.value) {
@@ -144,31 +160,40 @@ const tips = computed(() => {
 
 <template>
   <AppShell role="partner" title="Inicio" :subtitle="partner?.name">
-    <section class="mb-6">
-      <h1 class="font-display text-[1.75rem] md:text-[2.125rem] leading-[1.1] text-[var(--color-text)]">¡Bienvenido! Organiza tus colaboraciones</h1>
+    <section class="home-greeting">
+      <h1 class="home-greeting__title">¡Bienvenido! Organiza tus colaboraciones</h1>
+      <p class="home-greeting__status">{{ statusLine }}</p>
     </section>
 
-    <section class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
-      <StatTile label="Colaboraciones activas" :value="String(activeCollaborations)" />
-      <StatTile label="Por responder" :value="String(pendingForMe.length)" />
-      <StatTile label="Por revisar" :value="String(pendingReview.length)" />
-      <StatTile label="Entregas próximas" :value="String(nextDeliveries.length)" />
+    <section class="home-stats">
+      <StatTile label="Colaboraciones activas" :value="String(activeCollaborations)" tint="menta" />
+      <StatTile label="Por responder" :value="String(pendingForMe.length)" tint="mantequilla" />
+      <StatTile label="Por revisar" :value="String(pendingReview.length)" tint="rosa" />
+      <StatTile label="Entregas próximas" :value="String(nextDeliveries.length)" tint="cielo" />
     </section>
 
-    <div class="grid lg:grid-cols-[1fr_22rem] gap-5 items-start">
-      <div class="flex flex-col gap-5 min-w-0">
+    <section class="home-charts">
+      <PanelCard title="Entregas de los próximos 7 días" description="Pendientes y publicadas, día a día">
+        <WeekColumns :days="chartDays" :overdue="chartOverdue" />
+      </PanelCard>
+      <PanelCard title="Publicaciones por fase" description="Dónde está cada una ahora mismo">
+        <PhaseStack :shares="chartShares" empty-text="Aún no hay publicaciones de tus colaboraciones: cuando un creador entregue la primera, verás aquí en qué fase está." />
+      </PanelCard>
+    </section>
+
+    <div class="home-grid">
+      <div class="home-col">
         <HomeHeroCard
-          :cover-url="hero.coverUrl" :cover-seed="hero.coverSeed" :icon="hero.icon"
+          :cover-url="hero.coverUrl" :icon="hero.icon"
           :eyebrow="hero.eyebrow" :title="hero.title" :description="hero.description"
           :cta-label="hero.ctaLabel" :cta-to="hero.ctaTo || undefined"
           @cta-click="onHeroClick"
         />
 
         <section>
-          <div class="flex items-center justify-between mb-3.5">
-            <h2 class="font-display text-[1.125rem] text-[var(--color-text)]">Tu calendario</h2>
-            <span class="text-[0.8125rem] text-[var(--color-text-faint)]">{{ reviewedPct }}% revisado</span>
-          </div>
+          <SectionTitle title="Tu calendario" class="mb-3.5">
+            <span class="text-sm text-[var(--text-muted)]">{{ reviewedPct }}% revisado</span>
+          </SectionTitle>
           <WeekBoard :posts="posts" @open="openDetail">
             <template #actions="{ post }">
               <div v-if="post.status === 'ready_for_review'" class="mt-3 flex gap-2">
@@ -180,61 +205,51 @@ const tips = computed(() => {
         </section>
 
         <section v-if="discoverLoading || discoverError || suggestedCreators.length">
-          <div class="flex items-center justify-between mb-3">
-            <h2 class="font-display text-[1.125rem] text-[var(--color-text)]">Creadores que podrían encajar</h2>
-            <NuxtLink to="/partner/discover" class="text-[0.8125rem] font-medium text-[var(--color-text-muted)] hover:text-[var(--color-text)]">Ver todo</NuxtLink>
-          </div>
-          <p v-if="discoverError" class="text-[0.8125rem] text-[var(--color-text-faint)]">No se han podido cargar sugerencias ahora mismo.</p>
+          <SectionTitle title="Creadores que podrían encajar" class="mb-3">
+            <NuxtLink to="/partner/discover" class="text-sm font-semibold text-[var(--text-muted)] hover:text-[var(--text-strong)]">Ver todo</NuxtLink>
+          </SectionTitle>
+          <p v-if="discoverError" class="text-sm text-[var(--text-muted)]">No se han podido cargar sugerencias ahora mismo.</p>
           <div v-else class="grid sm:grid-cols-3 gap-3">
             <template v-if="discoverLoading">
-              <div v-for="n in 3" :key="`sk-${n}`" class="h-32 rounded-[var(--radius-md)] border border-[var(--color-hairline)] bg-[var(--color-ink-overlay)] animate-pulse" />
+              <SkeletonBlock v-for="n in 3" :key="`sk-${n}`" height="8rem" rounded="var(--radius-md)" />
             </template>
-            <NuxtLink
-              v-else v-for="c in suggestedCreators" :key="c.id" :to="`/profile/creator/${c.id}`"
-              class="rounded-[var(--radius-md)] border border-[var(--color-hairline)] bg-[var(--color-paper)] p-4 hover:border-[var(--color-hairline-strong)] transition-colors"
-            >
-              <p class="text-[0.9375rem] font-semibold text-[var(--color-text)] truncate">{{ c.name }}</p>
-              <p v-if="c.categories.length" class="text-[0.75rem] text-[var(--color-text-muted)] mt-0.5 truncate">{{ c.categories.slice(0, 2).join(' · ') }}</p>
-              <p v-if="c.minCents || c.maxCents" class="text-[0.75rem] text-[var(--color-text-faint)] mt-1.5 inline-flex items-center gap-1">
-                <Icon name="ph:currency-eur" class="size-3" />
-                {{ c.minCents ? formatEuros(c.minCents) : '…' }}–{{ c.maxCents ? formatEuros(c.maxCents) : '…' }}
-              </p>
+            <NuxtLink v-else v-for="c in suggestedCreators" :key="c.id" :to="`/profile/creator/${c.id}`" class="block">
+              <BaseCard interactive class="h-full">
+                <p class="font-semibold truncate">{{ c.name }}</p>
+                <p v-if="c.categories.length" class="text-sm text-[var(--text-muted)] mt-0.5 truncate">{{ c.categories.slice(0, 2).join(' · ') }}</p>
+                <p v-if="c.minCents || c.maxCents" class="text-sm text-[var(--text-muted)] mt-2 inline-flex items-center gap-1">
+                  <Icon name="ph:currency-eur" class="size-4" />
+                  {{ c.minCents ? formatEuros(c.minCents) : '…' }}–{{ c.maxCents ? formatEuros(c.maxCents) : '…' }}
+                </p>
+              </BaseCard>
             </NuxtLink>
           </div>
         </section>
       </div>
 
-      <div class="flex flex-col gap-5 min-w-0">
-        <section v-if="unreadConversations.length" class="rounded-[var(--radius-md)] border border-[var(--color-hairline)] bg-[var(--color-paper)] p-4">
-          <h2 class="text-[0.6875rem] font-semibold uppercase tracking-wide text-[var(--color-text-faint)] mb-3">Mensajes sin leer</h2>
-          <div class="flex flex-col gap-1">
-            <NuxtLink
-              v-for="c in unreadConversations" :key="c.id" :to="`/chat/${c.id}`"
-              class="flex items-center gap-3 py-2 px-1 -mx-1 rounded-[var(--radius-sm)] hover:bg-[var(--color-ink-overlay)] transition-colors"
-            >
-              <span class="flex items-center justify-center size-8 rounded-full bg-[var(--color-ink-overlay)] text-[var(--color-primary-500)] shrink-0">
-                <Icon name="ph:chat-circle-fill" class="size-3.5" />
-              </span>
+      <div class="home-col">
+        <PanelCard v-if="unreadConversations.length" title="Mensajes sin leer" padding="sm">
+          <div class="activity">
+            <NuxtLink v-for="c in unreadConversations" :key="c.id" :to="`/chat/${c.id}`" class="activity__row">
+              <span class="activity__icon"><Icon name="ph:chat-circle-fill" class="size-4" /></span>
               <div class="min-w-0 flex-1">
-                <p class="text-[0.8125rem] font-medium text-[var(--color-text)] truncate">{{ c.otherName }}</p>
-                <p class="text-[0.75rem] text-[var(--color-text-faint)] truncate">{{ c.lastMessagePreview ?? 'Mensaje nuevo' }}</p>
+                <p class="activity__title truncate">{{ c.otherName }}</p>
+                <p class="activity__sub truncate">{{ c.lastMessagePreview ?? 'Mensaje nuevo' }}</p>
               </div>
-              <span v-if="c.lastMessageAt" class="shrink-0 text-[0.6875rem] text-[var(--color-text-faint)]">{{ relativeTime(c.lastMessageAt) }}</span>
+              <span v-if="c.lastMessageAt" class="shrink-0 text-sm text-[var(--text-muted)]">{{ relativeTime(c.lastMessageAt) }}</span>
             </NuxtLink>
           </div>
-        </section>
+        </PanelCard>
 
-        <section v-if="tips.length" class="rounded-[var(--radius-md)] border border-[var(--color-hairline)] bg-[var(--color-ink-overlay)]/60 p-4">
-          <h2 class="text-[0.6875rem] font-semibold uppercase tracking-wide text-[var(--color-text-faint)] mb-3">Para sacarle más partido</h2>
-          <div class="flex flex-col gap-3">
-            <div v-for="(tip, i) in tips" :key="i" class="flex items-start gap-2.5">
-              <Icon :name="tip.icon" class="size-4 text-[var(--color-primary-500)] shrink-0 mt-0.5" />
-              <p class="min-w-0 flex-1 text-[0.8125rem] text-[var(--color-text)] leading-snug">
-                {{ tip.text }} <NuxtLink :to="tip.to" class="font-medium underline underline-offset-2">{{ tip.cta }}</NuxtLink>
-              </p>
-            </div>
+        <BaseCard v-if="tips.length" tone="overlay" radius="lg">
+          <SectionTitle title="Para sacarle más partido" as="h2" class="mb-3" />
+          <div v-for="(tip, i) in tips" :key="i" class="tip">
+            <Icon :name="tip.icon" class="size-5 shrink-0 mt-0.5" />
+            <p class="min-w-0 flex-1">
+              {{ tip.text }} <NuxtLink :to="tip.to" class="font-semibold underline">{{ tip.cta }}</NuxtLink>
+            </p>
           </div>
-        </section>
+        </BaseCard>
       </div>
     </div>
 

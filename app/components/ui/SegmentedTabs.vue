@@ -1,41 +1,31 @@
 <script setup lang="ts">
-const props = defineProps<{ options: { value: string; label: string }[]; modelValue: string }>()
-defineEmits<{ 'update:modelValue': [value: string] }>()
+/**
+ * Pestañas o selector de vista. El indicador se mueve con CSS a partir de dos
+ * variables (--tab-count, --tab-index); aquí no se mide ningún elemento.
+ * Admite flechas izquierda/derecha (patrón de pestañas WAI-ARIA).
+ */
+const props = defineProps<{ options: { value: string; label: string }[]; modelValue: string; label?: string }>()
+const emit = defineEmits<{ 'update:modelValue': [value: string] }>()
 
-const btnRefs = ref<(HTMLElement | null)[]>([])
-const indicatorStyle = ref({ width: '0px', transform: 'translateX(0px)' })
+const index = computed(() => Math.max(0, props.options.findIndex((o) => o.value === props.modelValue)))
 
-function setBtnRef(el: Element | null, i: number) {
-  btnRefs.value[i] = el as HTMLElement | null
+function move(step: number, event: KeyboardEvent) {
+  const next = props.options[(index.value + step + props.options.length) % props.options.length]
+  if (!next) return
+  emit('update:modelValue', next.value)
+  event.preventDefault()
+  nextTick(() => (event.currentTarget as HTMLElement | null)?.parentElement?.querySelector<HTMLElement>('[aria-selected="true"]')?.focus())
 }
-
-function updateIndicator() {
-  const idx = props.options.findIndex((o) => o.value === props.modelValue)
-  const el = btnRefs.value[idx]
-  if (!el) return
-  indicatorStyle.value = { width: `${el.offsetWidth}px`, transform: `translateX(${el.offsetLeft}px)` }
-}
-
-onMounted(() => nextTick(updateIndicator))
-watch(() => props.modelValue, () => nextTick(updateIndicator))
-watch(() => props.options, () => nextTick(updateIndicator), { deep: true })
 </script>
 
 <template>
-  <div class="relative inline-flex items-center gap-1 rounded-[var(--radius-xs)] bg-[var(--color-ink-overlay)] border border-[var(--color-hairline)] p-1">
-    <span
-      class="absolute top-1 bottom-1 left-0 rounded-[calc(var(--radius-xs)-4px)] bg-[var(--color-ink-raised)] shadow-sm transition-[transform,width] duration-300 ease-[var(--ease-spring)]"
-      :style="indicatorStyle"
-      aria-hidden="true"
-    />
+  <div class="tabs" role="tablist" :aria-label="label" :style="{ '--tab-count': options.length, '--tab-index': index }">
+    <span class="tabs__indicator" aria-hidden="true" />
     <button
-      v-for="(opt, i) in options" :key="opt.value" type="button"
-      :ref="(el) => setBtnRef(el as Element | null, i)"
-      class="relative z-10 px-3.5 h-8 rounded-[calc(var(--radius-xs)-4px)] text-[0.8125rem] font-medium transition-colors duration-150"
-      :class="modelValue === opt.value
-        ? 'text-[var(--color-text)]'
-        : 'text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-ink-raised)]/60'"
-      @click="$emit('update:modelValue', opt.value)"
+      v-for="opt in options" :key="opt.value" type="button" role="tab"
+      class="tabs__tab" :aria-selected="modelValue === opt.value" :tabindex="modelValue === opt.value ? 0 : -1"
+      @click="emit('update:modelValue', opt.value)"
+      @keydown.right="move(1, $event)" @keydown.left="move(-1, $event)"
     >
       {{ opt.label }}
     </button>

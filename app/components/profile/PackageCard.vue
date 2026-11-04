@@ -34,10 +34,10 @@ function hueFromId(id: string): number {
         </div>
 
         <div class="min-w-0 flex-1" :class="!pkg.active && 'opacity-60'">
-          <p class="text-[0.9375rem] font-semibold text-[var(--color-text)] truncate">{{ pkg.title }}</p>
-          <p v-if="pkg.description" class="text-[0.8125rem] text-[var(--color-text-muted)] mt-0.5 leading-relaxed line-clamp-2">{{ pkg.description }}</p>
+          <p class="text-base font-semibold text-[var(--color-text)] truncate">{{ pkg.title }}</p>
+          <p v-if="pkg.description" class="text-sm text-[var(--color-text-muted)] mt-0.5 leading-relaxed line-clamp-2">{{ pkg.description }}</p>
           <ul v-if="pkg.deliverables.length" class="mt-2 flex flex-wrap gap-x-3 gap-y-1">
-            <li v-for="d in pkg.deliverables" :key="d" class="flex items-center gap-1 text-[0.8125rem] text-[var(--color-text-muted)]">
+            <li v-for="d in pkg.deliverables" :key="d" class="flex items-center gap-1 text-sm text-[var(--color-text-muted)]">
               <Icon name="ph:check-bold" class="size-3.5 text-[var(--color-primary-500)] shrink-0" /> {{ d }}
             </li>
           </ul>
@@ -59,10 +59,10 @@ function hueFromId(id: string): number {
 
       <div class="flex items-center gap-2 px-4 pb-3.5 pt-3 border-t border-[var(--color-hairline)]">
         <template v-if="editable">
-          <span v-if="pendingOffers" class="inline-flex items-center gap-1 px-2 h-7 rounded-full text-[0.75rem] font-medium bg-[var(--color-status-review)]/15 text-[var(--color-status-review)]">
+          <span v-if="pendingOffers" class="inline-flex items-center gap-1 px-2 h-7 rounded-full text-micro font-medium bg-[var(--color-status-review)]/15 text-[var(--color-status-review)]">
             <Icon name="ph:hourglass-fill" class="size-3.5" /> {{ pendingOffers }} pendiente{{ pendingOffers > 1 ? 's' : '' }}
           </span>
-          <span v-else-if="!pkg.active" class="text-[0.75rem] text-[var(--color-text-faint)]">Inactivo</span>
+          <span v-else-if="!pkg.active" class="text-micro text-[var(--color-text-faint)]">Inactivo</span>
           <BaseButton variant="secondary" size="sm" class="ml-auto" @click="$emit('edit', pkg)">Editar</BaseButton>
           <BaseButton variant="ghost" size="sm" icon="ph:copy-fill" icon-only aria-label="Duplicar" @click="$emit('duplicate', pkg)" />
           <BaseButton variant="danger" size="sm" @click="$emit('delete', pkg)">Eliminar</BaseButton>
@@ -80,7 +80,7 @@ function hueFromId(id: string): number {
     <!-- Talón de precio -->
     <div class="w-24 shrink-0 rounded-r-[var(--radius-sm)] flex flex-col items-center justify-center gap-0.5 p-2.5 bg-[var(--color-slate)]">
       <p class="font-display text-[1.375rem] text-white leading-none">{{ formatEuros(pkg.priceCents) }}</p>
-      <p class="text-[0.625rem] text-white/55">precio</p>
+      <p class="text-micro text-white/55">precio</p>
     </div>
   </div>
 </template>

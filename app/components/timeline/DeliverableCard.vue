@@ -50,25 +50,25 @@ const coverStyle = computed(() => {
 
         <div class="min-w-0 flex-1">
           <div class="flex items-start justify-between gap-2">
-            <p class="text-[0.9375rem] font-medium text-[var(--color-text)] leading-snug line-clamp-2">{{ post.title }}</p>
+            <p class="text-base font-medium text-[var(--color-text)] leading-snug line-clamp-2">{{ post.title }}</p>
             <Icon :name="platformMeta[post.platform].icon" class="size-4 shrink-0 mt-0.5" :style="{ color: platformMeta[post.platform].colorVar }" />
           </div>
 
           <div class="mt-2 flex flex-wrap items-center gap-2">
-            <span v-if="overdue" class="inline-flex items-center gap-1 text-[0.75rem] font-medium text-[var(--color-status-alert)]">
+            <span v-if="overdue" class="inline-flex items-center gap-1 text-micro font-medium text-[var(--color-status-alert)]">
               <Icon name="ph:warning-fill" class="size-3.5" />
               {{ overdueLabel(post.dueInDays) }}
             </span>
             <StatusPill :status="post.status" compact />
-            <span v-if="creator" class="inline-flex items-center gap-1 text-[0.75rem] text-[var(--color-text-faint)]">
+            <span v-if="creator" class="inline-flex items-center gap-1 text-micro text-[var(--color-text-faint)]">
               <span class="size-1 rounded-full bg-[var(--color-text-faint)]" />
               {{ creator.name }}
             </span>
-            <span v-if="post.successScore" class="inline-flex items-center gap-1 text-[0.75rem] font-medium text-[var(--color-signal-500)]">
+            <span v-if="post.successScore" class="inline-flex items-center gap-1 text-micro font-medium text-[var(--color-signal-500)]">
               <Icon name="ph:sparkle-fill" class="size-3.5" />
               {{ post.successScore }}
             </span>
-            <span v-if="post.checklist.total" class="inline-flex items-center gap-1 text-[0.75rem] text-[var(--color-text-faint)]">
+            <span v-if="post.checklist.total" class="inline-flex items-center gap-1 text-micro text-[var(--color-text-faint)]">
               <Icon name="ph:check-square-fill" class="size-3.5" :class="post.checklist.done === post.checklist.total && 'text-[var(--color-status-published)]'" />
               {{ post.checklist.done }}/{{ post.checklist.total }}
             </span>

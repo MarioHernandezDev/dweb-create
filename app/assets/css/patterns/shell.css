@@ -1,0 +1,226 @@
+/* ==========================================================================
+   Patrón · Shell de la app (AppShell, SideRail, TopBar, BottomTabBar)
+   Escritorio: columna de tinta a altura completa (el fondo llega hasta el
+   final de la página aunque el contenido sea largo) con la navegación fija
+   dentro. Móvil: barra superior y barra inferior flotante en píldora.
+   El voltio marca solo lo activo.
+   ========================================================================== */
+
+@layer components {
+  .shell { min-height: 100dvh; @media (width >= 48rem) { display: flex; } }
+  .shell__main { flex: 1; min-width: 0; }
+  /* El contenido ocupa todo el ancho disponible; el relleno sale de --content-pad
+     para que un bloque a sangre (banner del perfil) pueda compensarlo. */
+  .shell__content {
+    --content-pad: 1.25rem;
+    padding: var(--content-pad) var(--content-pad) 7rem;
+    @media (width >= 48rem) { --content-pad: 2rem; padding-bottom: 3rem; }
+  }
+
+  /* ---- Columna lateral ---- */
+  .shell__rail {
+    --rail-w: 16rem;
+    --rail-pad: 1.25rem;
+
+    display: none;
+    width: var(--rail-w);
+    flex-shrink: 0;
+    background: var(--surface-inverse);
+    transition: width var(--dur-slow) var(--ease-out);
+    @media (width >= 48rem) { display: block; }
+
+    /* Plegada: solo iconos. */
+    .shell[data-rail="collapsed"] & { --rail-w: 5rem; --rail-pad: 0.75rem; }
+  }
+  .rail {
+    position: sticky;
+    top: 0;
+    display: flex;
+    flex-direction: column;
+    height: 100dvh;
+    padding: 1.75rem var(--rail-pad);
+    overflow: hidden auto;
+    color: var(--text-on-inverse);
+    transition: padding var(--dur-slow) var(--ease-out);
+  }
+  .rail__head { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; margin-bottom: 2rem; min-height: 2.5rem; }
+  .rail__brand { display: inline-flex; padding-inline: 0.375rem; min-width: 0; }
+  .rail__toggle {
+    display: grid; place-items: center; width: 2.25rem; height: 2.25rem; flex-shrink: 0;
+    border-radius: var(--radius-pill); color: var(--text-on-inverse-muted); cursor: pointer;
+    transition: background-color var(--dur) var(--ease-out), color var(--dur) var(--ease-out);
+    &:hover { background: rgb(245 241 234 / 10%); color: var(--color-hueso-50); }
+  }
+  .rail__toggle-icon { width: 1.125rem; height: 1.125rem; transition: transform var(--dur-slow) var(--ease-out); }
+  .shell[data-rail="collapsed"] .rail__toggle-icon { transform: rotate(180deg); }
+
+  /* Textos que se pliegan con la columna: se recortan y desvanecen, sin saltos. */
+  .rail__label,
+  .rail__text {
+    min-width: 0;
+    max-width: 14rem;
+    overflow: hidden;
+    white-space: nowrap;
+    transition: max-width var(--dur-slow) var(--ease-out), opacity var(--dur) var(--ease-out);
+  }
+  .rail .brand-mark { transition: gap var(--dur-slow) var(--ease-out); }
+  .rail .brand-mark__word { max-width: 10rem; overflow: hidden; transition: max-width var(--dur-slow) var(--ease-out), opacity var(--dur) var(--ease-out); }
+  .shell[data-rail="collapsed"] {
+    & .rail__label, & .rail__text { max-width: 0; opacity: 0; }
+    & .rail .brand-mark { gap: 0; }
+    & .rail .brand-mark__word { max-width: 0; opacity: 0; }
+    & .rail__head { flex-direction: column; justify-content: center; gap: 0.75rem; }
+    & .rail__brand { padding-inline: 0; }
+    & .rail__link { justify-content: center; gap: 0; padding-inline: 0; }
+    & .rail__account { justify-content: center; gap: 0; padding-inline: 0; }
+    & .rail__link .badge { position: absolute; top: 0.25rem; right: 0.5rem; margin-left: 0; }
+  }
+  .rail__nav { display: flex; flex-direction: column; gap: 0.25rem; }
+  .rail__link {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    height: 2.75rem;
+    padding-inline: 0.875rem;
+    border-radius: var(--radius-sm);
+    color: var(--text-on-inverse-muted);
+    font-weight: 600;
+    text-decoration: none;
+    transition: background-color var(--dur) var(--ease-out), color var(--dur) var(--ease-out), padding var(--dur-slow) var(--ease-out), gap var(--dur-slow) var(--ease-out);
+
+    &:hover { background: rgb(245 241 234 / 8%); color: var(--color-hueso-50); }
+    &.is-active {
+      background: rgb(245 241 234 / 10%);
+      color: var(--color-hueso-50);
+      /* Indicador de voltio sobre el borde de la columna. */
+      &::before {
+        content: "";
+        position: absolute;
+        left: calc(-1 * var(--rail-pad));
+        top: 0.5rem;
+        bottom: 0.5rem;
+        width: 4px;
+        border-radius: 0 4px 4px 0;
+        background: var(--color-voltio-400);
+      }
+    }
+    &.rail__link--small { height: 2.25rem; font-size: var(--text-sm); }
+  }
+  .rail__link-icon { width: 1.25rem; height: 1.25rem; flex-shrink: 0; }
+  .rail__foot { margin-top: auto; padding-top: 1.25rem; border-top: 1px solid rgb(245 241 234 / 14%); }
+  .rail__account {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem;
+    border-radius: var(--radius-sm);
+    text-decoration: none;
+    transition: background-color var(--dur) var(--ease-out);
+    &:hover { background: rgb(245 241 234 / 8%); }
+  }
+  .rail__account-name { font-weight: 600; font-size: var(--text-sm); color: var(--color-hueso-50); }
+  .rail__account-role { font-size: var(--text-micro); color: var(--text-on-inverse-muted); }
+  .rail__secondary { display: flex; flex-direction: column; gap: 0.125rem; margin-top: 0.5rem; }
+
+  /* ---- Contador numérico (siempre con número) ---- */
+  .badge {
+    display: inline-grid;
+    place-items: center;
+    min-width: 1.25rem;
+    height: 1.25rem;
+    padding-inline: 0.3125rem;
+    border-radius: var(--radius-pill);
+    background: var(--color-voltio-400);
+    color: var(--color-tinta-950);
+    font-size: var(--text-micro);
+    font-weight: 700;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    &.badge--on-light { background: var(--color-tinta-950); color: var(--color-voltio-400); }
+    &.badge--corner { position: absolute; top: 0; right: 0; transform: translate(25%, -25%); }
+  }
+
+  /* ---- Barra superior ---- */
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.875rem 1.25rem;
+    background: rgb(245 241 234 / 88%);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--line);
+    @media (width >= 48rem) { padding: 1.25rem 2rem; }
+  }
+  .topbar__title {
+    font-family: var(--font-display);
+    font-size: var(--text-lg);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    @media (width >= 48rem) { font-size: var(--text-headline); line-height: 1.15; }
+  }
+  .topbar__subtitle { display: none; font-size: var(--text-sm); color: var(--text-muted); @media (width >= 48rem) { display: block; } }
+
+  .icon-link {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    flex-shrink: 0;
+    border-radius: var(--radius-pill);
+    color: var(--text-muted);
+    transition: background-color var(--dur) var(--ease-out), color var(--dur) var(--ease-out);
+    &:hover { background: var(--surface-sunken); color: var(--text-strong); }
+  }
+
+  /* ---- Barra inferior móvil: píldora flotante ---- */
+  .tabbar {
+    position: fixed;
+    z-index: 30;
+    left: 0.75rem;
+    right: 0.75rem;
+    bottom: calc(0.75rem + env(safe-area-inset-bottom));
+    padding: 0.375rem;
+    background: var(--surface-inverse);
+    border-radius: var(--radius-pill);
+    box-shadow: var(--shadow-3);
+    @media (width >= 48rem) { display: none; }
+  }
+  .tabbar__list { display: flex; align-items: center; justify-content: space-between; gap: 0.125rem; }
+  .tabbar__item {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    height: 2.75rem;
+    min-width: 2.75rem;
+    padding-inline: 0.75rem;
+    border-radius: var(--radius-pill);
+    color: var(--text-on-inverse-muted);
+    font-size: var(--text-sm);
+    font-weight: 700;
+    white-space: nowrap;
+    transition: background-color var(--dur) var(--ease-out), color var(--dur) var(--ease-out);
+
+    &:hover { color: var(--color-hueso-50); }
+    &.is-active { background: var(--color-voltio-400); color: var(--color-tinta-950); }
+  }
+  /* Solo la pestaña activa muestra su texto; en las demás es solo para lectores. */
+  .tabbar__label {
+    position: absolute;
+    width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap;
+    .tabbar__item.is-active & {
+      position: static; width: auto; height: auto; margin: 0; overflow: visible; clip-path: none;
+    }
+  }
+  .tabbar__icon { width: 1.375rem; height: 1.375rem; flex-shrink: 0; }
+}

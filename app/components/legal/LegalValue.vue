@@ -6,6 +6,6 @@ const pending = computed(() => props.value.startsWith(PLACEHOLDER_MARK))
 </script>
 
 <template>
-  <mark v-if="pending" class="rounded px-1 bg-[var(--color-logo-amber)]/30 text-[var(--color-text)]">{{ value }}</mark>
+  <mark v-if="pending" class="legal-pending">{{ value }}</mark>
   <span v-else>{{ value }}</span>
 </template>

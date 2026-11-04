@@ -1,5 +1,5 @@
 <script setup lang="ts">
-useHead({ title: 'Estudio de contenido' })
+useHead({ title: 'Creadores y marcas' })
 </script>
 
 <template>
@@ -7,7 +7,7 @@ useHead({ title: 'Estudio de contenido' })
     <LandingNav />
     <LandingHero />
     <LandingPipeline />
-    <LandingFilmstrip />
+    <LandingBento />
     <LandingRoles />
     <LandingCta />
     <LandingFooter />

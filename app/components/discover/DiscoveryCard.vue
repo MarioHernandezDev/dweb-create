@@ -71,17 +71,17 @@ const budgetLabel = computed(() => {
     <div class="flex flex-col flex-1 gap-2 p-3.5">
       <button type="button" class="text-left" @click="openProfile">
         <div class="flex items-center gap-1.5">
-          <p class="text-[0.9375rem] font-semibold text-[var(--color-text)] truncate">{{ result.name }}</p>
-          <span v-if="isPending" class="shrink-0 px-1.5 py-0.5 rounded-full text-[0.625rem] font-medium bg-[var(--color-status-review)]/15 text-[var(--color-status-review)]">Pendiente de respuesta</span>
+          <p class="text-base font-semibold text-[var(--color-text)] truncate">{{ result.name }}</p>
+          <span v-if="isPending" class="shrink-0 px-1.5 py-0.5 rounded-full text-micro font-medium bg-[var(--color-status-review)]/15 text-[var(--color-status-review)]">Pendiente de respuesta</span>
         </div>
-        <p v-if="topCategories.length" class="text-[0.75rem] text-[var(--color-text-muted)] truncate mt-0.5">{{ topCategories.join(' · ') }}</p>
+        <p v-if="topCategories.length" class="text-micro text-[var(--color-text-muted)] truncate mt-0.5">{{ topCategories.join(' · ') }}</p>
       </button>
 
-      <p v-if="result.bio" class="text-[0.8125rem] text-[var(--color-text-muted)] leading-snug line-clamp-2">{{ result.bio }}</p>
+      <p v-if="result.bio" class="text-sm text-[var(--color-text-muted)] leading-snug line-clamp-2">{{ result.bio }}</p>
       <!-- Hallazgo #9: antes se veía un hueco en blanco en vez de explicar por qué no hay descripción. -->
-      <p v-else class="text-[0.8125rem] text-[var(--color-text-faint)] italic">Ficha en construcción</p>
+      <p v-else class="text-sm text-[var(--color-text-faint)] italic">Ficha en construcción</p>
 
-      <div v-if="(kind === 'creator' && result.followers) || budgetLabel" class="flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.75rem] text-[var(--color-text-faint)] mt-auto pt-1">
+      <div v-if="(kind === 'creator' && result.followers) || budgetLabel" class="flex flex-wrap items-center gap-x-3 gap-y-1 text-micro text-[var(--color-text-faint)] mt-auto pt-1">
         <span v-if="kind === 'creator' && result.followers" class="inline-flex items-center gap-1"><Icon name="ph:users-three-fill" class="size-3" /> {{ formatCompactNumber(result.followers) }} seguidores</span>
         <span v-if="budgetLabel" class="inline-flex items-center gap-1"><Icon name="ph:currency-eur" class="size-3" /> {{ budgetLabel }}</span>
       </div>

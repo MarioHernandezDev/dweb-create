@@ -1,0 +1,28 @@
+/* ==========================================================================
+   Componente · Texto legal (LegalDocument.vue, LegalValue.vue)
+   Texto largo en columna de lectura (≈ 70 caracteres), 16 px, interlineado
+   generoso. Los datos aún por rellenar se marcan con .legal-pending.
+   ========================================================================== */
+
+@layer components {
+  .container.legal__main { max-width: 52rem; padding-top: 8rem; padding-bottom: 5rem; }
+  .legal__title { font-size: var(--text-display); line-height: var(--text-display--line-height); margin-bottom: 1rem; }
+  .legal__intro { max-width: 60ch; margin-bottom: 2rem; font-size: var(--text-lg); color: var(--text-muted); }
+  .legal__nav {
+    display: flex; flex-wrap: wrap; gap: 0.5rem 1.5rem; margin-top: 3.5rem; padding-top: 1.5rem;
+    border-top: 1px solid var(--line); font-size: var(--text-sm); font-weight: 600;
+    & a { color: var(--text-muted); text-decoration: underline; &:hover { color: var(--text-strong); } }
+  }
+
+  .prose-legal {
+    & h2 { margin: 2.5rem 0 0.75rem; font-family: var(--font-display); font-size: var(--text-title); font-weight: 700; line-height: 1.25; letter-spacing: -0.02em; }
+    & p, & li { max-width: 70ch; color: var(--text-muted); line-height: 1.7; }
+    & p { margin: 0 0 1rem; }
+    & ul { margin: 0 0 1rem; padding-left: 1.25rem; list-style: disc; }
+    & li { margin-bottom: 0.5rem; }
+    & strong { color: var(--text-strong); font-weight: 600; }
+    & a { color: var(--link); text-decoration: underline; }
+  }
+
+  .legal-pending { padding: 0.05em 0.35em; border-radius: 0.25rem; background: var(--color-mantequilla); color: var(--color-tinta-950); }
+}

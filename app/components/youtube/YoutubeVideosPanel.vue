@@ -65,7 +65,7 @@ const compact = (n: number) => formatCompactNumber(n)
   <section aria-labelledby="yt-videos">
     <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 mb-3">
       <h2 id="yt-videos" class="font-display text-[1.25rem] text-[var(--color-text)]">Vídeos</h2>
-      <p v-if="videos.length" class="text-[0.75rem] text-[var(--color-text-faint)]" aria-live="polite">{{ counter }}</p>
+      <p v-if="videos.length" class="text-micro text-[var(--color-text-faint)]" aria-live="polite">{{ counter }}</p>
     </div>
 
     <YoutubeStateBanner
@@ -84,35 +84,35 @@ const compact = (n: number) => formatCompactNumber(n)
           <Icon name="ph:magnifying-glass" class="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-[var(--color-text-faint)] pointer-events-none" />
           <input
             v-model="query" type="search" placeholder="Buscar por título" aria-label="Buscar vídeos por título"
-            class="w-full h-11 lg:h-10 pl-9 pr-3 rounded-full bg-[var(--color-ink-overlay)] border border-[var(--color-hairline)] text-[0.875rem] text-[var(--color-text)] placeholder:text-[var(--color-text-faint)] focus:outline-none focus:border-[var(--color-primary-500)]"
+            class="input w-full h-11 lg:h-10 pl-9 pr-3"
           >
         </div>
         <select
           v-model="sort" aria-label="Ordenar vídeos"
-          class="h-11 lg:h-10 px-3 rounded-full bg-[var(--color-ink-overlay)] border border-[var(--color-hairline)] text-[0.8125rem] text-[var(--color-text)]"
+          class="select h-11 lg:h-10"
         >
           <option v-for="o in VIDEO_SORTS" :key="o.value" :value="o.value">{{ o.label }}</option>
         </select>
         <select
           v-model="range" aria-label="Filtrar por fecha de publicación"
-          class="h-11 lg:h-10 px-3 rounded-full bg-[var(--color-ink-overlay)] border border-[var(--color-hairline)] text-[0.8125rem] text-[var(--color-text)]"
+          class="select h-11 lg:h-10"
         >
           <option v-for="o in VIDEO_RANGES" :key="o.value" :value="o.value">{{ o.label }}</option>
         </select>
       </div>
 
-      <p v-if="videos.length" class="-mt-1 mb-4 text-[0.75rem] leading-relaxed text-[var(--color-text-faint)]">
+      <p v-if="videos.length" class="-mt-1 mb-4 text-micro leading-relaxed text-[var(--color-text-faint)]">
         <strong class="font-medium text-[var(--color-text-muted)]">Total</strong> = acumulado desde la publicación (dato de YouTube).
         <strong class="font-medium text-[var(--color-text-muted)]">Periodo</strong> = lo ocurrido
         <template v-if="periodRange">del {{ formatRangeLabel(periodRange) }}</template><template v-else>en el periodo elegido arriba</template>
         (dato de YouTube).
         <template v-if="performanceLoading && !performance"> Cargando las cifras del periodo…</template>
       </p>
-      <p v-if="performanceError && videos.length" class="-mt-2 mb-4 text-[0.8125rem] text-[var(--color-status-alert)]" role="alert">
+      <p v-if="performanceError && videos.length" class="-mt-2 mb-4 text-sm text-[var(--color-status-alert)]" role="alert">
         {{ performanceError }}
         <button type="button" class="font-medium underline" @click="$emit('retryPerformance')">Reintentar</button>
       </p>
-      <p v-if="truncated && performance" class="-mt-2 mb-4 text-[0.75rem] text-[var(--color-text-faint)]">
+      <p v-if="truncated && performance" class="-mt-2 mb-4 text-micro text-[var(--color-text-faint)]">
         YouTube solo devuelve los 200 vídeos más vistos del periodo: los demás pueden no tener cifras.
       </p>
 
@@ -146,21 +146,21 @@ const compact = (n: number) => formatCompactNumber(n)
             >
               <img v-if="video.thumbnailUrl" :src="video.thumbnailUrl" alt="" loading="lazy" class="absolute inset-0 size-full object-cover">
               <span v-else class="absolute inset-0 flex items-center justify-center text-[var(--color-text-faint)]"><Icon name="ph:video-camera-fill" class="size-7" /></span>
-              <span v-if="video.durationSeconds" class="absolute bottom-1.5 right-1.5 rounded bg-black/70 px-1.5 py-0.5 text-[0.6875rem] font-medium text-white" style="font-variant-numeric: tabular-nums">
+              <span v-if="video.durationSeconds" class="absolute bottom-1.5 right-1.5 rounded bg-black/70 px-1.5 py-0.5 text-micro font-medium text-white" style="font-variant-numeric: tabular-nums">
                 {{ formatVideoDuration(video.durationSeconds) }}
               </span>
             </a>
 
             <div class="min-w-0 flex-1 py-3 pr-3 xl:p-3.5">
-              <a :href="videoUrl(video.id)" target="_blank" rel="noopener noreferrer" class="block text-[0.9375rem] font-medium leading-snug text-[var(--color-text)] line-clamp-2 hover:underline">
+              <a :href="videoUrl(video.id)" target="_blank" rel="noopener noreferrer" class="block text-base font-medium leading-snug text-[var(--color-text)] line-clamp-2 hover:underline">
                 {{ video.title }}
               </a>
-              <p v-if="video.publishedAt" class="mt-0.5 text-[0.75rem] text-[var(--color-text-faint)]" :title="new Date(video.publishedAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })">
+              <p v-if="video.publishedAt" class="mt-0.5 text-micro text-[var(--color-text-faint)]" :title="new Date(video.publishedAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })">
                 {{ relativeTime(video.publishedAt) }}
               </p>
 
-              <p class="mt-2 text-[0.625rem] font-semibold uppercase tracking-wide text-[var(--color-text-faint)]">Total</p>
-              <dl class="mt-0.5 flex flex-wrap gap-x-4 gap-y-1 text-[0.8125rem] text-[var(--color-text-muted)]" style="font-variant-numeric: tabular-nums">
+              <p class="mt-2 text-sm font-semibold text-[var(--text-muted)]">Total</p>
+              <dl class="mt-0.5 flex flex-wrap gap-x-4 gap-y-1 text-sm text-[var(--color-text-muted)]" style="font-variant-numeric: tabular-nums">
                 <div class="flex items-center gap-1" :title="countDisplay('views', video.viewCount).reason ?? 'Visualizaciones'">
                   <dt class="sr-only">Visualizaciones</dt>
                   <Icon name="ph:eye" class="size-3.5" />
@@ -185,9 +185,9 @@ const compact = (n: number) => formatCompactNumber(n)
 
               <!-- Lo ocurrido EN el periodo: sin fila no se inventan ceros -->
               <template v-for="st in [periodStatus(video.id, performance, truncated)]" :key="st.kind">
-                <p class="mt-2 text-[0.625rem] font-semibold uppercase tracking-wide text-[var(--color-text-faint)]">{{ periodName }}</p>
+                <p class="mt-2 text-sm font-semibold text-[var(--text-muted)]">{{ periodName }}</p>
                 <SkeletonBlock v-if="st.kind === 'unknown' && performanceLoading" class="mt-1" width="70%" height="0.875rem" />
-                <dl v-else-if="st.kind === 'data'" class="mt-0.5 flex flex-wrap gap-x-4 gap-y-1 text-[0.8125rem] text-[var(--color-text)]" style="font-variant-numeric: tabular-nums" data-period-stats>
+                <dl v-else-if="st.kind === 'data'" class="mt-0.5 flex flex-wrap gap-x-4 gap-y-1 text-sm text-[var(--color-text)]" style="font-variant-numeric: tabular-nums" data-period-stats>
                   <div class="flex items-center gap-1" title="Visualizaciones en el periodo">
                     <dt class="sr-only">Visualizaciones en el periodo</dt>
                     <Icon name="ph:eye" class="size-3.5" />
@@ -209,13 +209,13 @@ const compact = (n: number) => formatCompactNumber(n)
                     <dd>{{ st.performance.comments === null ? '—' : compact(st.performance.comments) }}</dd>
                   </div>
                 </dl>
-                <p v-else class="mt-0.5 text-[0.8125rem] text-[var(--color-text-faint)]" :title="PERIOD_STATUS_REASONS[st.kind]" data-period-none>
-                  — <span class="text-[0.75rem]">{{ PERIOD_STATUS_LABELS[st.kind] }}</span>
+                <p v-else class="mt-0.5 text-sm text-[var(--color-text-faint)]" :title="PERIOD_STATUS_REASONS[st.kind]" data-period-none>
+                  — <span class="text-micro">{{ PERIOD_STATUS_LABELS[st.kind] }}</span>
                 </p>
               </template>
 
               <button
-                type="button" class="mt-2.5 inline-flex items-center gap-1 text-[0.8125rem] font-medium text-[var(--color-text)] hover:underline"
+                type="button" class="mt-2.5 inline-flex items-center gap-1 text-sm font-medium text-[var(--color-text)] hover:underline"
                 :aria-label="`Ver el detalle de «${video.title}»`" data-open-detail @click="$emit('openDetail', video)"
               >
                 Ver detalle <Icon name="ph:caret-right-bold" class="size-3" />
@@ -231,7 +231,7 @@ const compact = (n: number) => formatCompactNumber(n)
         </BaseButton>
       </div>
 
-      <p v-if="error && videos.length" class="mt-3 text-[0.8125rem] text-[var(--color-status-alert)]" role="alert">
+      <p v-if="error && videos.length" class="mt-3 text-sm text-[var(--color-status-alert)]" role="alert">
         {{ error.message }}
         <button type="button" class="font-medium underline" @click="$emit('retry')">Reintentar</button>
       </p>

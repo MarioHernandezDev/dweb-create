@@ -43,7 +43,7 @@ const unit = computed(() => HISTORY_METRICS.find((m) => m.value === metric.value
     <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
       <div>
         <h2 id="yt-history" class="font-display text-[1.25rem] text-[var(--color-text)]">Histórico propio</h2>
-        <p class="mt-0.5 text-[0.75rem] text-[var(--color-text-faint)]">
+        <p class="mt-0.5 text-micro text-[var(--color-text-faint)]">
           Totales del canal que CIBERAN guarda cada día que lee tu cuenta: YouTube solo da el valor actual, por eso este histórico empieza el día del primer registro.
         </p>
       </div>
@@ -54,11 +54,11 @@ const unit = computed(() => HISTORY_METRICS.find((m) => m.value === metric.value
       <SkeletonBlock v-if="loading && !loaded" height="14rem" rounded="var(--radius-md)" />
 
       <div v-else-if="error" class="py-6 text-center" role="alert">
-        <p class="text-[0.875rem] text-[var(--color-text-muted)]">{{ error }}</p>
+        <p class="text-sm text-[var(--color-text-muted)]">{{ error }}</p>
         <BaseButton class="mt-3" variant="secondary" size="sm" icon="ph:arrow-clockwise" @click="$emit('retry')">Reintentar</BaseButton>
       </div>
 
-      <p v-else-if="!options.length" class="py-8 text-center text-[0.875rem] text-[var(--color-text-muted)]">
+      <p v-else-if="!options.length" class="py-8 text-center text-sm text-[var(--color-text-muted)]">
         Todavía no hay registros. Empezamos a guardar tu histórico la próxima vez que se lea tu canal; vuelve en unos días para ver cómo evoluciona.
       </p>
 
@@ -66,16 +66,16 @@ const unit = computed(() => HISTORY_METRICS.find((m) => m.value === metric.value
         <p class="font-display text-[2rem] leading-none text-[var(--color-text)]" style="font-variant-numeric: proportional-nums">
           {{ lastValue !== null ? formatCompactNumber(lastValue) : '—' }}
         </p>
-        <p class="mt-1 text-[0.8125rem] text-[var(--color-text-muted)]">{{ unit }} en el primer registro</p>
-        <p class="mt-3 text-[0.8125rem] text-[var(--color-text-muted)]">
+        <p class="mt-1 text-sm text-[var(--color-text-muted)]">{{ unit }} en el primer registro</p>
+        <p class="mt-3 text-sm text-[var(--color-text-muted)]">
           El histórico acaba de empezar: la evolución aparecerá en cuanto haya registros de más de un día.
         </p>
       </div>
 
       <div v-else>
-        <p v-if="summary" class="mb-3 text-[0.875rem] text-[var(--color-text)]" data-history-summary>{{ historySummaryText(summary) }}</p>
+        <p v-if="summary" class="mb-3 text-sm text-[var(--color-text)]" data-history-summary>{{ historySummaryText(summary) }}</p>
         <YoutubeEvolutionChart :series="series" metric="views" :show-compare="false" :height="260" :zero-based="false" connect-points />
-        <ul class="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1.5 text-[0.75rem] text-[var(--color-text-muted)]">
+        <ul class="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1.5 text-micro text-[var(--color-text-muted)]">
           <li class="inline-flex items-center gap-2">
             <span class="inline-block w-5 border-t-2 border-[var(--color-chart-primary)]" aria-hidden="true" /> {{ unit }}
           </li>

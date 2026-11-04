@@ -46,52 +46,26 @@ async function confirmLogout() {
 </script>
 
 <template>
-  <nav
-    class="md:hidden fixed bottom-0 inset-x-0 z-30 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-1.5 px-2 bg-[var(--color-ink)]/92 backdrop-blur-md border-t border-[var(--color-hairline)]"
-    aria-label="Navegación principal"
-  >
-    <ul class="flex items-stretch justify-between">
-      <li v-for="item in visibleItems" :key="item.to" class="flex-1">
+  <nav class="tabbar" aria-label="Navegación principal">
+    <ul class="tabbar__list">
+      <li v-for="item in visibleItems" :key="item.to">
         <NuxtLink
-          :to="item.to"
-          class="flex flex-col items-center gap-1 py-1.5 rounded-[var(--radius-sm)] transition-colors duration-200"
-          :class="isActive(item.to) ? 'text-[var(--color-primary-500)]' : 'text-[var(--color-text-faint)]'"
+          :to="item.to" class="tabbar__item" :class="isActive(item.to) && 'is-active'"
+          :aria-current="isActive(item.to) ? 'page' : undefined"
         >
-          <span
-            class="relative flex items-center justify-center size-8 rounded-full transition-[background-color,transform] duration-300 ease-[var(--ease-spring-out)]"
-            :class="isActive(item.to) ? 'bg-[var(--color-primary-500)]/12 scale-100' : 'scale-90'"
-          >
-            <Icon :name="item.icon" class="size-[1.35rem] transition-transform duration-300 ease-[var(--ease-spring-out)]" :class="isActive(item.to) && 'scale-110'" />
-            <span
-              v-if="badgeCount(item.to)"
-              class="absolute top-0 right-0 min-w-[0.9375rem] h-[0.9375rem] px-1 rounded-full bg-[var(--color-status-alert)] text-white text-[0.625rem] font-semibold leading-[0.9375rem] text-center"
-              data-tab-badge
-            >
-              {{ badgeCount(item.to) > 9 ? '9+' : badgeCount(item.to) }}
-            </span>
-          </span>
-          <span class="text-[0.6875rem] font-medium">{{ item.label }}</span>
+          <Icon :name="item.icon" class="tabbar__icon" />
+          <span class="tabbar__label">{{ item.label }}</span>
+          <span v-if="badgeCount(item.to) && !isActive(item.to)" class="badge badge--corner" data-tab-badge>{{ badgeCount(item.to) > 9 ? '9+' : badgeCount(item.to) }}</span>
         </NuxtLink>
       </li>
-      <li class="flex-1">
+      <li>
         <button
-          type="button" class="relative w-full flex flex-col items-center gap-1 py-1.5 rounded-[var(--radius-sm)] transition-colors duration-200"
-          :class="moreActive ? 'text-[var(--color-primary-500)]' : 'text-[var(--color-text-faint)]'"
+          type="button" class="tabbar__item" :class="moreActive && 'is-active'"
           aria-haspopup="true" :aria-expanded="moreOpen" @click="moreOpen = true"
         >
-          <span
-            class="relative flex items-center justify-center size-8 rounded-full transition-[background-color,transform] duration-300 ease-[var(--ease-spring-out)]"
-            :class="moreActive ? 'bg-[var(--color-primary-500)]/12 scale-100' : 'scale-90'"
-          >
-            <Icon name="ph:dots-three-bold" class="size-[1.35rem]" />
-            <span
-              v-if="moreBadgeTotal"
-              class="absolute top-0 right-0 min-w-[0.9375rem] h-[0.9375rem] px-1 rounded-full bg-[var(--color-status-alert)] text-white text-[0.625rem] font-semibold leading-[0.9375rem] text-center"
-            >
-              {{ moreBadgeTotal > 9 ? '9+' : moreBadgeTotal }}
-            </span>
-          </span>
-          <span class="text-[0.6875rem] font-medium">Más</span>
+          <Icon name="ph:dots-three-bold" class="tabbar__icon" />
+          <span class="tabbar__label">Más</span>
+          <span v-if="moreBadgeTotal && !moreActive" class="badge badge--corner">{{ moreBadgeTotal > 9 ? '9+' : moreBadgeTotal }}</span>
         </button>
       </li>
     </ul>
@@ -101,21 +75,19 @@ async function confirmLogout() {
         <NuxtLink
           v-for="item in moreItems" :key="item.to" :to="item.to"
           class="flex items-center gap-3 px-3 h-12 rounded-[var(--radius-sm)] transition-colors duration-150"
-          :class="isActive(item.to) ? 'bg-[var(--color-primary-500)]/10 text-[var(--color-primary-500)]' : 'text-[var(--color-text)] hover:bg-[var(--color-ink-overlay)]'"
+          :class="isActive(item.to) ? 'bg-[var(--color-voltio-200)] text-[var(--color-tinta-950)]' : 'text-[var(--color-text)] hover:bg-[var(--surface-sunken)]'"
           @click="moreOpen = false"
         >
           <Icon :name="item.icon" class="size-5 shrink-0" />
-          <span class="text-[0.9375rem] font-medium flex-1">{{ item.label }}</span>
-          <span v-if="badgeCount(item.to)" class="min-w-[1.125rem] h-[1.125rem] px-1 rounded-full bg-[var(--color-status-alert)] text-white text-[0.6875rem] font-semibold leading-[1.125rem] text-center">
-            {{ badgeCount(item.to) > 9 ? '9+' : badgeCount(item.to) }}
-          </span>
+          <span class="font-semibold flex-1">{{ item.label }}</span>
+          <span v-if="badgeCount(item.to)" class="badge badge--on-light">{{ badgeCount(item.to) > 9 ? '9+' : badgeCount(item.to) }}</span>
         </NuxtLink>
         <button
-          type="button" class="flex items-center gap-3 px-3 h-12 rounded-[var(--radius-sm)] text-[var(--color-status-alert)] hover:bg-[var(--color-ink-overlay)] transition-colors duration-150"
+          type="button" class="flex items-center gap-3 px-3 h-12 rounded-[var(--radius-sm)] text-[var(--color-danger)] hover:bg-[var(--color-danger-tint)] transition-colors duration-150"
           @click="confirmLogout"
         >
           <Icon name="ph:sign-out-bold" class="size-5 shrink-0" />
-          <span class="text-[0.9375rem] font-medium">Cerrar sesión</span>
+          <span class="font-semibold">Cerrar sesión</span>
         </button>
       </div>
     </BottomSheet>

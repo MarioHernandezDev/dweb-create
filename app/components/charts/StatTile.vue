@@ -1,10 +1,13 @@
 <script setup lang="ts">
+/** Tarjeta de cifra: la cifra es la protagonista. `tint` permite que un grupo de cifras no sea un bloque de tarjetas idénticas. */
 const props = defineProps<{
   label: string
   value: string
   deltaPct?: number
   goodDirection?: 'up' | 'down'
   trend?: number[]
+  tint?: 'voltio' | 'mantequilla' | 'menta' | 'cielo' | 'rosa'
+  large?: boolean
 }>()
 
 const deltaIsGood = computed(() => {
@@ -15,27 +18,16 @@ const deltaIsGood = computed(() => {
 </script>
 
 <template>
-  <!-- Spine neutra en vez de una card más del mismo molde blanco+sombra:
-       la cifra es la protagonista, no la caja que la rodea. -->
-  <div class="flex rounded-[var(--radius-sm)] border border-[var(--color-hairline)] bg-[var(--color-paper)] overflow-hidden">
-    <div class="w-[3px] shrink-0 bg-[var(--color-slate)]" />
-    <div class="min-w-0 flex-1 p-5">
-      <p class="text-[0.8125rem] text-[var(--color-text-muted)]">{{ label }}</p>
-      <div class="mt-2 flex items-end justify-between gap-3">
-        <p class="font-display text-[1.875rem] leading-none text-[var(--color-text)]" style="font-variant-numeric: proportional-nums">
-          {{ value }}
-        </p>
-        <MiniSparkline v-if="trend" :values="trend" class="mb-0.5" />
-      </div>
-      <p
-        v-if="deltaPct !== undefined"
-        class="mt-2 inline-flex items-center gap-1 text-[0.8125rem] font-medium"
-        :style="{ color: deltaIsGood ? 'var(--color-status-published)' : 'var(--color-status-alert)' }"
-      >
-        <Icon :name="deltaPct >= 0 ? 'ph:trend-up-bold' : 'ph:trend-down-bold'" class="size-3.5" />
-        {{ deltaPct >= 0 ? '+' : '' }}{{ deltaPct.toFixed(1) }}%
-        <span class="text-[var(--color-text-faint)] font-normal">vs. semana pasada</span>
-      </p>
+  <BaseCard :tint="tint" class="card--stat">
+    <p class="stat__label">{{ label }}</p>
+    <div class="mt-1 flex items-end justify-between gap-3">
+      <p class="stat__value" :class="large && 'stat__value--lg'">{{ value }}</p>
+      <MiniSparkline v-if="trend" :values="trend" class="mb-0.5" />
     </div>
-  </div>
+    <p v-if="deltaPct !== undefined" class="stat__delta" :class="deltaIsGood ? 'stat__delta--good' : 'stat__delta--bad'">
+      <Icon :name="deltaPct >= 0 ? 'ph:trend-up-bold' : 'ph:trend-down-bold'" class="size-4" />
+      {{ deltaPct >= 0 ? '+' : '' }}{{ deltaPct.toFixed(1) }}%
+      <span class="font-normal text-[var(--text-muted)]">vs. semana pasada</span>
+    </p>
+  </BaseCard>
 </template>

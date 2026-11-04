@@ -63,7 +63,7 @@ onUnmounted(() => {
               </span>
               <div class="min-w-0 pt-1">
                 <p class="font-display text-[1.0625rem] text-[var(--color-text)]">{{ state.title }}</p>
-                <p v-if="state.message" class="text-[0.875rem] text-[var(--color-text-muted)] mt-1.5 leading-relaxed">{{ state.message }}</p>
+                <p v-if="state.message" class="text-sm text-[var(--color-text-muted)] mt-1.5 leading-relaxed">{{ state.message }}</p>
               </div>
             </div>
             <div class="flex items-center gap-2.5">

@@ -29,17 +29,17 @@ async function send() {
 <template>
   <div class="pt-3 mt-1 border-t border-[var(--color-hairline)]">
     <template v-if="myRating">
-      <p class="text-[0.75rem] text-[var(--color-text-muted)] mb-1.5">Tu valoración a {{ counterpartName }}</p>
+      <p class="text-micro text-[var(--color-text-muted)] mb-1.5">Tu valoración a {{ counterpartName }}</p>
       <RatingStars :model-value="myRating.stars" readonly size="sm" />
-      <p v-if="myRating.comment" class="text-[0.8125rem] text-[var(--color-text-muted)] mt-1.5">{{ myRating.comment }}</p>
+      <p v-if="myRating.comment" class="text-sm text-[var(--color-text-muted)] mt-1.5">{{ myRating.comment }}</p>
     </template>
 
     <template v-else>
-      <p class="text-[0.8125rem] font-medium text-[var(--color-text)] mb-2">¿Cómo fue colaborar con {{ counterpartName }}?</p>
+      <p class="text-sm font-medium text-[var(--color-text)] mb-2">¿Cómo fue colaborar con {{ counterpartName }}?</p>
       <RatingStars v-model="stars" class="mb-3" />
       <textarea
         v-model="comment" rows="2" maxlength="500" placeholder="Comentario opcional (comunicación, cumplimiento de plazos…)"
-        class="w-full px-3 py-2 rounded-[var(--radius-sm)] bg-[var(--color-ink-overlay)] border border-[var(--color-hairline)] text-[0.8125rem] text-[var(--color-text)] placeholder:text-[var(--color-text-faint)] focus:outline-none resize-none mb-3"
+        class="textarea w-full resize-none mb-3"
       />
       <BaseButton
         variant="secondary" size="sm" :disabled="!stars || submitting === collaborationId" :icon-spin="submitting === collaborationId"
@@ -47,7 +47,7 @@ async function send() {
       >
         Enviar valoración
       </BaseButton>
-      <p v-if="submitError" class="text-[0.75rem] text-[var(--color-status-alert)] mt-2">{{ submitError }}</p>
+      <p v-if="submitError" class="text-micro text-[var(--color-status-alert)] mt-2">{{ submitError }}</p>
     </template>
   </div>
 </template>

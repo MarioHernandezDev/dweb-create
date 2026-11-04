@@ -88,8 +88,8 @@ const bars = computed(() => {
       class="pointer-events-none absolute top-0 -translate-x-1/2 rounded-[var(--radius-xs)] bg-[var(--color-ink-overlay)] border border-[var(--color-hairline-strong)] px-3 py-2 shadow-[var(--shadow-float)] whitespace-nowrap z-10"
       :style="{ left: `${(bars[hoveredIndex]!.centerX / width) * 100}%` }"
     >
-      <p class="text-[0.6875rem] text-[var(--color-text-muted)] mb-1">{{ bars[hoveredIndex]!.label }}</p>
-      <p v-for="(bar, j) in bars[hoveredIndex]!.items" :key="j" class="flex items-center gap-1.5 text-[0.8125rem] font-medium text-[var(--color-text)]">
+      <p class="text-micro text-[var(--color-text-muted)] mb-1">{{ bars[hoveredIndex]!.label }}</p>
+      <p v-for="(bar, j) in bars[hoveredIndex]!.items" :key="j" class="flex items-center gap-1.5 text-sm font-medium text-[var(--color-text)]">
         <span class="size-2 rounded-full shrink-0" :style="{ background: bar.color }" />
         {{ formatValue(bar.value) }}
         <span v-if="series[j]" class="text-[var(--color-text-faint)] font-normal">{{ series[j]!.label }}</span>
@@ -97,7 +97,7 @@ const bars = computed(() => {
     </div>
 
     <div v-if="series.length > 1" class="flex items-center gap-4 mt-2 justify-center">
-      <span v-for="s in series" :key="s.label" class="inline-flex items-center gap-1.5 text-[0.75rem] text-[var(--color-text-muted)]">
+      <span v-for="s in series" :key="s.label" class="inline-flex items-center gap-1.5 text-micro text-[var(--color-text-muted)]">
         <span class="size-2 rounded-full shrink-0" :style="{ background: s.color }" />
         {{ s.label }}
       </span>

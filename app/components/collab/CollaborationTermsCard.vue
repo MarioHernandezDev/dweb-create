@@ -95,23 +95,23 @@ onMounted(async () => {
 <template>
   <div class="mb-5">
     <template v-if="hasPackage">
-      <h3 class="text-[0.6875rem] font-semibold uppercase tracking-wide text-[var(--color-text-faint)] mb-2">Lo contratado</h3>
-      <div class="mb-4 text-[0.8125rem]" data-collab-package>
+      <h3 class="text-sm font-semibold text-[var(--text-muted)] mb-2">Lo contratado</h3>
+      <div class="mb-4 text-sm" data-collab-package>
         <p class="font-medium text-[var(--color-text)]">{{ packageInfo?.title }}</p>
         <p v-if="packageInfo?.description" class="text-[var(--color-text-muted)] leading-relaxed mt-1">{{ packageInfo.description }}</p>
         <ul v-if="packageInfo?.deliverables?.length" class="mt-2 list-disc pl-5 text-[var(--color-text)] flex flex-col gap-0.5">
           <li v-for="d in packageInfo.deliverables" :key="d">{{ d }}</li>
         </ul>
-        <p class="text-[0.75rem] text-[var(--color-text-faint)] mt-2">Copia fijada al aceptar la oferta: si el paquete cambia después, esto no.</p>
+        <p class="text-micro text-[var(--color-text-faint)] mt-2">Copia fijada al aceptar la oferta: si el paquete cambia después, esto no.</p>
       </div>
     </template>
 
-    <h3 class="text-[0.6875rem] font-semibold uppercase tracking-wide text-[var(--color-text-faint)] mb-2">Sobre la campaña</h3>
+    <h3 class="text-sm font-semibold text-[var(--text-muted)] mb-2">Sobre la campaña</h3>
 
-    <p v-if="!hasAnyBriefSpecified(terms)" class="text-[0.8125rem] text-[var(--color-text-muted)] leading-relaxed mb-4">
+    <p v-if="!hasAnyBriefSpecified(terms)" class="text-sm text-[var(--color-text-muted)] leading-relaxed mb-4">
       {{ decided ? 'Esta colaboración se acordó sin objetivo, público ni tono definidos — conviene aclararlos con la otra parte por el chat.' : 'No se especificó el objetivo, el público ni el tono al enviar esta propuesta — puedes pedir que se aclaren antes de decidir.' }}
     </p>
-    <dl v-else class="flex flex-col gap-2 text-[0.8125rem] mb-4">
+    <dl v-else class="flex flex-col gap-2 text-sm mb-4">
       <div class="flex items-start justify-between gap-3">
         <dt class="text-[var(--color-text-muted)] shrink-0">Objetivo</dt>
         <dd class="text-[var(--color-text)] text-right">{{ terms.campaignGoal || 'No se especificó el objetivo' }}</dd>
@@ -126,13 +126,13 @@ onMounted(async () => {
       </div>
     </dl>
 
-    <h3 class="text-[0.6875rem] font-semibold uppercase tracking-wide text-[var(--color-text-faint)] mb-2">Condiciones pactadas</h3>
+    <h3 class="text-sm font-semibold text-[var(--text-muted)] mb-2">Condiciones pactadas</h3>
 
-    <p v-if="!hasAnyTermsSpecified(terms)" class="text-[0.8125rem] text-[var(--color-text-muted)] leading-relaxed">
+    <p v-if="!hasAnyTermsSpecified(terms)" class="text-sm text-[var(--color-text-muted)] leading-relaxed">
       {{ decided ? 'Se acordó sin condiciones concretas (alcance, revisiones, derechos de uso) — conviene dejarlas por escrito en el Registro.' : 'No se especificaron condiciones concretas al enviar esta propuesta — puedes pedir que se aclaren antes de decidir.' }}
     </p>
 
-    <dl v-else class="flex flex-col gap-2 text-[0.8125rem]">
+    <dl v-else class="flex flex-col gap-2 text-sm">
       <div class="flex items-start justify-between gap-3">
         <dt class="text-[var(--color-text-muted)] shrink-0">Alcance</dt>
         <dd class="text-[var(--color-text)] text-right">{{ terms.scopeNotes || 'No se especificó el alcance' }}</dd>
@@ -160,23 +160,23 @@ onMounted(async () => {
         Completar el brief
       </BaseButton>
       <div v-else class="flex flex-col gap-2.5 p-3.5 rounded-[var(--radius-md)] border border-[var(--color-hairline)] bg-[var(--color-ink-overlay)]">
-        <p class="text-[0.75rem] text-[var(--color-text-faint)]">
+        <p class="text-micro text-[var(--color-text-faint)]">
           Solo los campos vacíos, y solo una vez: lo que se guarde aquí ya no se podrá cambiar. El creador recibirá un aviso.
         </p>
-        <input v-if="emptyFields.campaignGoal" v-model="form.campaignGoal" maxlength="500" placeholder="Objetivo de la campaña" aria-label="Objetivo de la campaña" data-brief-goal class="w-full px-3.5 py-2.5 rounded-[var(--radius-sm)] bg-[var(--color-ink-raised)] border border-[var(--color-hairline)] text-[0.875rem] text-[var(--color-text)] placeholder:text-[var(--color-text-faint)] focus:outline-none focus:border-[var(--color-primary-500)]/60 h-11">
-        <input v-if="emptyFields.targetAudience" v-model="form.targetAudience" maxlength="500" placeholder="Público objetivo" aria-label="Público objetivo" class="w-full px-3.5 py-2.5 rounded-[var(--radius-sm)] bg-[var(--color-ink-raised)] border border-[var(--color-hairline)] text-[0.875rem] text-[var(--color-text)] placeholder:text-[var(--color-text-faint)] focus:outline-none focus:border-[var(--color-primary-500)]/60 h-11">
-        <input v-if="emptyFields.tone" v-model="form.tone" maxlength="300" placeholder="Tono" aria-label="Tono" class="w-full px-3.5 py-2.5 rounded-[var(--radius-sm)] bg-[var(--color-ink-raised)] border border-[var(--color-hairline)] text-[0.875rem] text-[var(--color-text)] placeholder:text-[var(--color-text-faint)] focus:outline-none focus:border-[var(--color-primary-500)]/60 h-11">
-        <textarea v-if="emptyFields.scopeNotes" v-model="form.scopeNotes" rows="2" maxlength="1000" placeholder="Alcance (qué se entrega)" aria-label="Alcance" class="w-full px-3.5 py-2.5 rounded-[var(--radius-sm)] bg-[var(--color-ink-raised)] border border-[var(--color-hairline)] text-[0.875rem] text-[var(--color-text)] placeholder:text-[var(--color-text-faint)] focus:outline-none focus:border-[var(--color-primary-500)]/60 resize-none" />
-        <input v-if="emptyFields.revisionsIncluded" v-model.number="form.revisionsIncluded" type="number" min="0" max="20" step="1" placeholder="Revisiones incluidas (0–20)" aria-label="Revisiones incluidas" class="w-full px-3.5 py-2.5 rounded-[var(--radius-sm)] bg-[var(--color-ink-raised)] border border-[var(--color-hairline)] text-[0.875rem] text-[var(--color-text)] placeholder:text-[var(--color-text-faint)] focus:outline-none focus:border-[var(--color-primary-500)]/60 h-11">
-        <textarea v-if="emptyFields.usageRights" v-model="form.usageRights" rows="2" maxlength="1000" placeholder="Derechos de uso" aria-label="Derechos de uso" class="w-full px-3.5 py-2.5 rounded-[var(--radius-sm)] bg-[var(--color-ink-raised)] border border-[var(--color-hairline)] text-[0.875rem] text-[var(--color-text)] placeholder:text-[var(--color-text-faint)] focus:outline-none focus:border-[var(--color-primary-500)]/60 resize-none" />
-        <label v-if="emptyFields.exclusivity" class="flex items-center gap-2 text-[0.8125rem] text-[var(--color-text)]">
+        <input v-if="emptyFields.campaignGoal" v-model="form.campaignGoal" maxlength="500" placeholder="Objetivo de la campaña" aria-label="Objetivo de la campaña" data-brief-goal class="input w-full h-11">
+        <input v-if="emptyFields.targetAudience" v-model="form.targetAudience" maxlength="500" placeholder="Público objetivo" aria-label="Público objetivo" class="input w-full h-11">
+        <input v-if="emptyFields.tone" v-model="form.tone" maxlength="300" placeholder="Tono" aria-label="Tono" class="input w-full h-11">
+        <textarea v-if="emptyFields.scopeNotes" v-model="form.scopeNotes" rows="2" maxlength="1000" placeholder="Alcance (qué se entrega)" aria-label="Alcance" class="textarea w-full resize-none" />
+        <input v-if="emptyFields.revisionsIncluded" v-model.number="form.revisionsIncluded" type="number" min="0" max="20" step="1" placeholder="Revisiones incluidas (0–20)" aria-label="Revisiones incluidas" class="input w-full h-11">
+        <textarea v-if="emptyFields.usageRights" v-model="form.usageRights" rows="2" maxlength="1000" placeholder="Derechos de uso" aria-label="Derechos de uso" class="textarea w-full resize-none" />
+        <label v-if="emptyFields.exclusivity" class="flex items-center gap-2 text-sm text-[var(--color-text)]">
           <input v-model="form.exclusivity" type="checkbox"> Con exclusividad
         </label>
         <div class="flex gap-2.5">
           <BaseButton variant="secondary" size="sm" class="flex-1" @click="formOpen = false">Cancelar</BaseButton>
           <BaseButton variant="primary" size="sm" class="flex-1" :disabled="!canSave || saving" :icon-spin="saving" data-brief-save @click="saveBrief">Guardar</BaseButton>
         </div>
-        <p v-if="formError" class="text-[0.75rem] text-[var(--color-status-alert)]" role="alert">{{ formError }}</p>
+        <p v-if="formError" class="text-micro text-[var(--color-status-alert)]" role="alert">{{ formError }}</p>
       </div>
     </div>
   </div>

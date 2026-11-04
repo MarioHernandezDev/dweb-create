@@ -39,6 +39,6 @@ async function open() {
     >
       Chat
     </BaseButton>
-    <p v-if="error" class="mt-1.5 max-w-56 text-[0.75rem] text-[var(--color-status-alert)]" role="alert">{{ error }}</p>
+    <p v-if="error" class="mt-1.5 max-w-56 text-micro text-[var(--color-status-alert)]" role="alert">{{ error }}</p>
   </div>
 </template>

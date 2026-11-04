@@ -19,12 +19,12 @@ const visible = computed(() => props.dirty || props.saved || !!props.error)
       class="sticky bottom-20 md:bottom-4 z-20 mt-5 flex flex-wrap items-center justify-between gap-3 rounded-[var(--radius-md)] border border-[var(--color-hairline-strong)] bg-[var(--color-paper)] px-4 py-3 shadow-lg"
       role="status" aria-live="polite" data-save-bar
     >
-      <p v-if="error" class="text-[0.8125rem] text-[var(--color-status-alert)]" data-save-error>{{ error }}</p>
-      <p v-else-if="dirty && blockedReason" class="text-[0.8125rem] text-[var(--color-status-alert)]" data-save-blocked>{{ blockedReason }}</p>
-      <p v-else-if="dirty" class="inline-flex items-center gap-2 text-[0.8125rem] text-[var(--color-text)]" data-save-dirty>
+      <p v-if="error" class="text-sm text-[var(--color-status-alert)]" data-save-error>{{ error }}</p>
+      <p v-else-if="dirty && blockedReason" class="text-sm text-[var(--color-status-alert)]" data-save-blocked>{{ blockedReason }}</p>
+      <p v-else-if="dirty" class="inline-flex items-center gap-2 text-sm text-[var(--color-text)]" data-save-dirty>
         <span class="size-2 rounded-full bg-[var(--color-primary-500)]" aria-hidden="true" /> Cambios sin guardar
       </p>
-      <p v-else class="inline-flex items-center gap-2 text-[0.8125rem] text-[var(--color-status-published)]" data-save-done>
+      <p v-else class="inline-flex items-center gap-2 text-sm text-[var(--color-status-published)]" data-save-done>
         <Icon name="ph:check-circle-fill" class="size-4" /> Cambios guardados
       </p>
 

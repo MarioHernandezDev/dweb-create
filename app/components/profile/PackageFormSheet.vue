@@ -114,30 +114,30 @@ async function save() {
           :class="coverUploading ? 'bg-black/45 opacity-100' : 'group-hover:bg-black/45 group-hover:opacity-100'"
         >
           <Icon :name="coverUploading ? 'ph:circle-notch-bold' : 'ph:camera-plus-fill'" class="size-5" :class="coverUploading && 'animate-spin'" />
-          <span class="text-[0.8125rem] font-medium">{{ coverUploading ? 'Subiendo…' : editing.coverUrl ? 'Cambiar portada' : 'Añadir portada' }}</span>
+          <span class="text-sm font-medium">{{ coverUploading ? 'Subiendo…' : editing.coverUrl ? 'Cambiar portada' : 'Añadir portada' }}</span>
         </div>
       </button>
       <input ref="coverInputEl" type="file" accept="image/jpeg,image/png,image/webp" class="hidden" @change="onCoverChange">
-      <p v-if="coverError" class="text-[0.75rem] text-[var(--color-status-alert)] mt-1.5">{{ coverError }}</p>
+      <p v-if="coverError" class="text-micro text-[var(--color-status-alert)] mt-1.5">{{ coverError }}</p>
     </div>
 
-    <label class="block text-[0.8125rem] font-medium text-[var(--color-text-muted)] mb-1.5" for="pkg-title">Título</label>
+    <label class="block text-sm font-medium text-[var(--color-text-muted)] mb-1.5" for="pkg-title">Título</label>
     <input
       id="pkg-title" v-model="title" type="text" :placeholder="role === 'creator' ? 'Ej. 1 Reel + 3 Stories' : 'Ej. Lanzamiento de producto'"
-      class="w-full h-11 px-3.5 rounded-[var(--radius-sm)] bg-[var(--color-ink-overlay)] border border-[var(--color-hairline)] text-[0.9375rem] text-[var(--color-text)] placeholder:text-[var(--color-text-faint)] focus:outline-none focus:border-[var(--color-primary-500)]/60 mb-4"
+      class="input w-full mb-4 h-11"
     >
 
-    <label class="block text-[0.8125rem] font-medium text-[var(--color-text-muted)] mb-1.5" for="pkg-description">Descripción</label>
+    <label class="block text-sm font-medium text-[var(--color-text-muted)] mb-1.5" for="pkg-description">Descripción</label>
     <textarea
       id="pkg-description" v-model="description" rows="3" placeholder="Qué incluye…"
-      class="w-full px-3.5 py-2.5 rounded-[var(--radius-sm)] bg-[var(--color-ink-overlay)] border border-[var(--color-hairline)] text-[0.9375rem] text-[var(--color-text)] placeholder:text-[var(--color-text-faint)] focus:outline-none focus:border-[var(--color-primary-500)]/60 resize-none mb-4"
+      class="textarea w-full resize-none mb-4"
     />
 
-    <label class="block text-[0.8125rem] font-medium text-[var(--color-text-muted)] mb-1.5" for="pkg-deliverables">Entregables</label>
+    <label class="block text-sm font-medium text-[var(--color-text-muted)] mb-1.5" for="pkg-deliverables">Entregables</label>
     <div class="w-full px-2.5 py-2 rounded-[var(--radius-sm)] bg-[var(--color-ink-overlay)] border border-[var(--color-hairline)] mb-4 flex flex-wrap gap-1.5 items-center focus-within:border-[var(--color-primary-500)]/60">
       <span
         v-for="(d, i) in deliverables" :key="i"
-        class="inline-flex items-center gap-1 pl-2.5 pr-1.5 h-7 rounded-full bg-[var(--color-ink-raised)] border border-[var(--color-hairline-strong)] text-[0.8125rem] text-[var(--color-text)]"
+        class="inline-flex items-center gap-1 pl-2.5 pr-1.5 h-7 rounded-full bg-[var(--color-ink-raised)] border border-[var(--color-hairline-strong)] text-sm text-[var(--color-text)]"
       >
         {{ d }}
         <button type="button" aria-label="Quitar" class="size-4 flex items-center justify-center rounded-full hover:bg-[var(--color-hairline-strong)]" @click="deliverables.splice(i, 1)">
@@ -146,18 +146,18 @@ async function save() {
       </span>
       <input
         id="pkg-deliverables" v-model="deliverableInput" type="text" placeholder="Escribe uno y pulsa Enter…"
-        class="flex-1 min-w-[8rem] h-7 bg-transparent text-[0.875rem] text-[var(--color-text)] placeholder:text-[var(--color-text-faint)] focus:outline-none"
+        class="flex-1 min-w-[8rem] h-7 bg-transparent text-sm text-[var(--color-text)] placeholder:text-[var(--color-text-faint)] focus:outline-none"
         @keydown.enter.prevent="addDeliverable" @keydown="onDeliverableKeydown" @blur="addDeliverable"
       >
     </div>
 
-    <label class="block text-[0.8125rem] font-medium text-[var(--color-text-muted)] mb-1.5" for="pkg-price">{{ role === 'creator' ? 'Precio (€)' : 'Presupuesto (€)' }}</label>
+    <label class="block text-sm font-medium text-[var(--color-text-muted)] mb-1.5" for="pkg-price">{{ role === 'creator' ? 'Precio (€)' : 'Presupuesto (€)' }}</label>
     <input
       id="pkg-price" v-model.number="priceEuros" type="number" min="1" step="1" placeholder="Ej. 300"
-      class="w-full h-11 px-3.5 rounded-[var(--radius-sm)] bg-[var(--color-ink-overlay)] border border-[var(--color-hairline)] text-[0.9375rem] text-[var(--color-text)] placeholder:text-[var(--color-text-faint)] focus:outline-none focus:border-[var(--color-primary-500)]/60"
+      class="input w-full h-11"
     >
 
-    <p v-if="errorMsg" class="text-[0.8125rem] text-[var(--color-status-alert)] mt-3">{{ errorMsg }}</p>
+    <p v-if="errorMsg" class="text-sm text-[var(--color-status-alert)] mt-3">{{ errorMsg }}</p>
 
     <BaseButton variant="primary" size="lg" class="w-full mt-5" :icon-spin="saving" :disabled="!title || !priceEuros || saving" @click="save">
       {{ saving ? 'Guardando…' : 'Guardar' }}

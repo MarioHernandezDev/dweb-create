@@ -57,19 +57,19 @@ async function onUnlink() {
         <Icon :name="meta.icon" class="size-4" />
       </span>
       <div class="min-w-0">
-        <p class="text-[0.9375rem] font-medium text-[var(--color-text)]">Contenido en {{ meta.label }}</p>
-        <p class="text-[0.75rem] text-[var(--color-text-faint)]">Enlaza esta publicación con el contenido real para ver sus métricas.</p>
+        <p class="text-base font-medium text-[var(--color-text)]">Contenido en {{ meta.label }}</p>
+        <p class="text-micro text-[var(--color-text-faint)]">Enlaza esta publicación con el contenido real para ver sus métricas.</p>
       </div>
     </div>
 
     <SkeletonBlock v-if="loading && !loaded" height="2.5rem" rounded="var(--radius-sm)" />
 
     <!-- Sin cuenta o cuenta que ya no sirve -->
-    <p v-else-if="accountState === 'missing'" class="text-[0.8125rem] text-[var(--color-text-muted)]" data-link-state="missing">
+    <p v-else-if="accountState === 'missing'" class="text-sm text-[var(--color-text-muted)]" data-link-state="missing">
       Conecta tu cuenta de {{ meta.label }} para poder vincular contenido.
       <NuxtLink to="/creator/metrics#conexiones" class="font-medium text-[var(--color-text)] underline underline-offset-2">Ir a conexiones</NuxtLink>
     </p>
-    <p v-else-if="accountState === 'reconnect' && !link" class="text-[0.8125rem] text-[var(--color-status-alert)]" data-link-state="reconnect">
+    <p v-else-if="accountState === 'reconnect' && !link" class="text-sm text-[var(--color-status-alert)]" data-link-state="reconnect">
       Hay que reconectar tu cuenta de {{ meta.label }} antes de vincular contenido.
       <NuxtLink to="/creator/metrics#conexiones" class="font-medium underline underline-offset-2">Reconectar</NuxtLink>
     </p>
@@ -77,16 +77,16 @@ async function onUnlink() {
     <!-- Vinculada -->
     <template v-else-if="link">
       <div class="rounded-[var(--radius-sm)] border border-[var(--color-hairline)] bg-[var(--color-ink-overlay)] p-3" data-link-state="linked">
-        <p class="flex items-center gap-1.5 text-[0.75rem] font-medium text-[var(--color-status-published)]">
+        <p class="flex items-center gap-1.5 text-micro font-medium text-[var(--color-status-published)]">
           <Icon name="ph:seal-check-fill" class="size-4" /> Vinculada y verificada {{ relativeTime(link.verified_at) }}
         </p>
         <a
           v-if="link.external_url" :href="link.external_url" target="_blank" rel="noopener noreferrer"
-          class="mt-1 block truncate text-[0.8125rem] text-[var(--color-text)] hover:underline" :title="link.external_url"
+          class="mt-1 block truncate text-sm text-[var(--color-text)] hover:underline" :title="link.external_url"
         >
           {{ link.external_url }}
         </a>
-        <p class="mt-1 text-[0.6875rem] text-[var(--color-text-faint)]">Comprobado con {{ meta.label }}: el contenido es de tu cuenta conectada.</p>
+        <p class="mt-1 text-micro text-[var(--color-text-faint)]">Comprobado con {{ meta.label }}: el contenido es de tu cuenta conectada.</p>
       </div>
       <PostMetricsPanel :post-id="postId" :platform="platform" />
       <BaseButton variant="ghost" size="sm" icon="ph:link-break-bold" :disabled="busy" class="self-start" @click="onUnlink">Desvincular</BaseButton>
@@ -97,14 +97,14 @@ async function onUnlink() {
       <label class="sr-only" :for="`link-url-${postId}`">Enlace del contenido en {{ meta.label }}</label>
       <input
         :id="`link-url-${postId}`" v-model="url" type="url" inputmode="url" autocomplete="off" :placeholder="placeholder" :disabled="busy"
-        class="h-11 w-full px-3 rounded-[var(--radius-xs)] bg-[var(--color-ink-overlay)] border border-[var(--color-hairline)] text-[0.875rem] text-[var(--color-text)] placeholder:text-[var(--color-text-faint)] focus:outline-none focus:border-[var(--color-primary-500)]/60 disabled:opacity-60"
+        class="input w-full h-11"
       >
       <BaseButton type="submit" variant="secondary" size="sm" icon="ph:link-bold" :icon-spin="busy" :disabled="!url.trim() || busy">
         {{ busy ? `Comprobando con ${meta.label}…` : 'Vincular' }}
       </BaseButton>
     </form>
 
-    <p v-if="error" class="text-[0.8125rem] text-[var(--color-status-alert)]" role="alert" data-link-error>
+    <p v-if="error" class="text-sm text-[var(--color-status-alert)]" role="alert" data-link-error>
       {{ error.message }}
       <NuxtLink v-if="error.code === 'reconnect_required'" to="/creator/metrics#conexiones" class="font-medium underline underline-offset-2">Reconectar</NuxtLink>
     </p>

@@ -69,10 +69,10 @@ async function send() {
           @click="selectPackage(pkg)"
         >
           <span class="min-w-0">
-            <span class="block text-[0.9375rem] font-medium text-[var(--color-text)] truncate">{{ pkg.title }}</span>
-            <span v-if="pkg.description" class="block text-[0.8125rem] text-[var(--color-text-muted)] truncate">{{ pkg.description }}</span>
+            <span class="block text-base font-medium text-[var(--color-text)] truncate">{{ pkg.title }}</span>
+            <span v-if="pkg.description" class="block text-sm text-[var(--color-text-muted)] truncate">{{ pkg.description }}</span>
           </span>
-          <span class="shrink-0 text-[0.9375rem] font-display text-[var(--color-text)]">{{ formatEuros(pkg.priceCents) }}</span>
+          <span class="shrink-0 text-base font-display text-[var(--color-text)]">{{ formatEuros(pkg.priceCents) }}</span>
         </button>
       </div>
     </template>
@@ -80,27 +80,27 @@ async function send() {
     <template v-else>
       <button
         v-if="packages.length > 1" type="button"
-        class="text-[0.8125rem] text-[var(--color-text-muted)] mb-4 flex items-center gap-1 hover:text-[var(--color-text)]"
+        class="text-sm text-[var(--color-text-muted)] mb-4 flex items-center gap-1 hover:text-[var(--color-text)]"
         @click="stage = 'pick'"
       >
         <Icon name="ph:arrow-left-bold" class="size-3.5" /> Elegir otro paquete
       </button>
 
-      <label class="block text-[0.8125rem] font-medium text-[var(--color-text-muted)] mb-1.5" for="chat-offer-price">Precio propuesto (€)</label>
+      <label class="block text-sm font-medium text-[var(--color-text-muted)] mb-1.5" for="chat-offer-price">Precio propuesto (€)</label>
       <input
         id="chat-offer-price" v-model.number="priceEuros" type="number" min="1" step="1"
-        class="w-full h-11 px-3.5 rounded-[var(--radius-sm)] bg-[var(--color-ink-overlay)] border border-[var(--color-hairline)] text-[0.9375rem] text-[var(--color-text)] focus:outline-none focus:border-[var(--color-primary-500)]/60"
+        class="input w-full h-11"
       >
-      <p v-if="!priceEuros" class="text-[0.75rem] text-[var(--color-status-alert)] mt-1.5">Indica un precio para poder enviar la oferta.</p>
-      <p v-else class="text-[0.75rem] text-[var(--color-text-faint)] mt-1.5">Puedes proponer un precio distinto al listado, para negociar.</p>
+      <p v-if="!priceEuros" class="text-micro text-[var(--color-status-alert)] mt-1.5">Indica un precio para poder enviar la oferta.</p>
+      <p v-else class="text-micro text-[var(--color-text-faint)] mt-1.5">Puedes proponer un precio distinto al listado, para negociar.</p>
 
-      <label class="block text-[0.8125rem] font-medium text-[var(--color-text-muted)] mb-1.5 mt-4" for="chat-offer-message">Mensaje (opcional)</label>
+      <label class="block text-sm font-medium text-[var(--color-text-muted)] mb-1.5 mt-4" for="chat-offer-message">Mensaje (opcional)</label>
       <textarea
         id="chat-offer-message" v-model="message" rows="3" maxlength="500" placeholder="Cuéntale el contexto de tu oferta…"
-        class="w-full px-3.5 py-2.5 rounded-[var(--radius-sm)] bg-[var(--color-ink-overlay)] border border-[var(--color-hairline)] text-[0.9375rem] text-[var(--color-text)] placeholder:text-[var(--color-text-faint)] focus:outline-none focus:border-[var(--color-primary-500)]/60 resize-none"
+        class="textarea w-full resize-none"
       />
 
-      <p v-if="errorMsg" class="text-[0.8125rem] text-[var(--color-status-alert)] mt-3">{{ errorMsg }}</p>
+      <p v-if="errorMsg" class="text-sm text-[var(--color-status-alert)] mt-3">{{ errorMsg }}</p>
 
       <BaseButton variant="primary" size="lg" class="w-full mt-5" :icon-spin="creating" :disabled="!priceEuros || creating" @click="send">
         {{ creating ? 'Enviando…' : 'Enviar oferta' }}

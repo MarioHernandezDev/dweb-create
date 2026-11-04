@@ -28,11 +28,24 @@ app/assets/css/
   base.css            elementos HTML: fondo, texto, foco, selección
   motion.css          transiciones de Vue, animaciones, movimiento reducido
   utilities.css       utilidades propias (.nx-scroll, .is-scroll-locked)
-  components/         un archivo por componente (brand-mark.css)
-app/components/brand/BrandMark.vue   logotipo (símbolo + wordmark)
-public/favicon.svg, favicon.ico, img/brand/   favicon, iconos de instalación, SVG del símbolo
-scripts/design/check-contrast.mjs    contraste de las combinaciones del sistema
-scripts/design/render-brand-icons.mjs  regenera PNG e ICO desde los SVG
+  components/         un archivo por componente: brand-mark, button, field, chip,
+                      tabs, card (+panel, section-title, page-header, stat), pill
+                      (fase y estado de colaboración), avatar, data-list, empty
+                      (+skeleton), waves, platform, loading, prose, cover-art,
+                      post-card (+columna del tablero)
+  patterns/           patrones de pantalla: shell (barra lateral, superior, inferior),
+                      landing (portada, integraciones, acceso/alta, pantalla de marca), home
+app/components/brand/   BrandMark.vue (logotipo), WaveMotif.vue (motivo de ondas)
+app/components/ui/      BaseButton, IconButton, BaseField/BaseInput/BaseTextarea/BaseSelect,
+                        Chip, SegmentedTabs, BaseCard, PanelCard, SectionTitle, PageHeader,
+                        DataList, PhaseChip, CollabStatus, StatusPill (adaptador), BaseAvatar,
+                        EmptyState, SkeletonBlock, CoverArt, LoadingOverlay
+app/components/layout/  AppShell, SideRail, TopBar, BottomTabBar, AuthShell
+public/img/newlogo.jpeg   logotipo original (luz sobre negro): fuente de todo lo demás
+public/img/brand/       mark-*.png (símbolo con transparencia), icon-*.png, apple-touch-icon.png
+public/favicon.ico
+scripts/design/build-brand-assets.mjs   regenera todo lo anterior desde newlogo.jpeg
+scripts/design/check-contrast.mjs       contraste de las combinaciones del sistema
 ```
 
 ## 3. Tokens
@@ -105,9 +118,45 @@ Escala (genera las clases `text-micro`, `text-sm`, `text-base`, `text-lg`, `text
 
 ## 4. Marca
 
-- **Componente:** `<BrandMark />` con `tone="ink"` (fondo claro) o `tone="light"` (fondo oscuro), `:size` (alto del símbolo en px), `:wordmark="false"` para solo el símbolo, y `label=""` cuando acompaña a un texto que ya dice «CIBERAN».
+- **Símbolo:** la manta raya dentro de un círculo abierto, en blanco y voltio. Fuente única: `public/img/newlogo.jpeg` (luz sobre negro). `node scripts/design/build-brand-assets.mjs` convierte la luminosidad en transparencia y genera `img/brand/mark-{192,512,1024}.png`, los iconos de instalación (192, 512, maskable, Apple), el favicon (`favicon.ico` 16/32/48) y `icon-16/32.png`. Si cambia el logotipo, se sustituye ese archivo y se vuelve a ejecutar el script.
+- **El símbolo es claro: necesita fondo oscuro.** Sobre fondo claro se pierden las partes blancas, así que va siempre dentro de una ficha de tinta.
+- **Wordmark:** «ciberan» en minúsculas, Bricolage Grotesque 800, como texto (no forma parte del archivo del logotipo).
+- **Componente:** `<BrandMark />` con `tone="light"` (fondo oscuro: sin ficha) o `tone="ink"` (fondo claro: el símbolo sobre ficha de tinta de ese alto), `:size` (alto del símbolo en px), `:wordmark="false"` para solo el símbolo, y `label=""` cuando acompaña a un texto que ya dice «CIBERAN».
 - **Titular con la marca como texto** (h1 de la portada): clase `wordmark`.
-- **Archivos:** `public/favicon.svg` es la fuente del favicon; `scripts/design/render-brand-icons.mjs` regenera `favicon.ico`, los PNG de `img/brand/` y los iconos del manifiesto.
+- **Motivo de ondas:** `<WaveMotif />`. Anillos abiertos concéntricos que salen del círculo del símbolo, en trazo fino y baja opacidad (≤ 0.22), con el color del contenedor. Es el único gráfico de marca: portada, bloque destacado, llamada final, acceso, pantallas de error y portadas generadas (`CoverArt`).
+- **Sin hormigas** (ni en la portada, ni en las pantallas de carga ni en el pie): la identidad anterior queda retirada.
+
+## 4b. Componentes
+
+Todos mantienen las props que ya usaban las pantallas, salvo que se indique.
+
+| Componente | Variantes y notas |
+|---|---|
+| `BaseButton` | **Hover:** una capa se rellena de izquierda a derecha con los colores invertidos y el texto cambia a juego (`brand` voltio/tinta → tinta/voltio; `primary` tinta → voltio; `secondary` y `outline` → tinta; `destructive` → rojo; `ghost` solo un relleno suave). Cada variante solo define `--btn-bg`, `--btn-fg`, `--btn-fill`, `--btn-fg-hover`. `primary` (tinta) · `brand` (voltio; una por pantalla) · `secondary` · `outline` · `ghost` · `destructive` (`danger` es alias) · `inverse` y `outline-inverse` (sobre tinta). `sm` 36 · `md` 44 · `lg` 52 px. `loading` (spinner, `aria-busy`, bloquea), `block`, `iconOnly` |
+| `IconButton` | `label` obligatorio (nombre accesible). `ghost`/`secondary`/`outline`/`primary`/`inverse`, `sm`/`md` |
+| `BaseField` + `BaseInput`/`BaseTextarea`/`BaseSelect` | El campo pone etiqueta, ayuda, error (`role="alert"`) y éxito con la misma jerarquía y entrega `id`, `aria-describedby` e `invalid` al control: `<BaseField label="…" v-slot="f"><BaseInput v-bind="f" v-model="x" /></BaseField>`. Controles de 48 px, radio 12, foco cobalto, `icon`, `suffix`, `autosize` en el textarea. **Los campos sueltos de las pantallas usan las clases `.input`, `.textarea`, `.select`** (mismo aspecto sin envolverlos) |
+| `Chip` | Etiqueta, o filtro seleccionable si recibe `selected` (usa `aria-pressed`). `tint`, `outline`, `size="sm"` |
+| `SegmentedTabs` | Indicador con CSS (`--tab-count`, `--tab-index`); opciones del mismo ancho; flechas del teclado |
+| `BaseCard` | `tone="overlay"` (hundida), `radius`, `padding` como antes; `variant="featured"` (tinta + esquina de señal), `tint` (voltio, mantequilla, menta, cielo, rosa), `interactive` |
+| `PanelCard`, `SectionTitle`, `PageHeader`, `DataList` | Contenedor con título y acción · título de sección · cabecera de página · pares etiqueta/valor con `<dl>` (vacío = «—», nunca 0) |
+| `PhaseChip` / `CollabStatus` | **Dos sistemas separados.** Fase de publicación: chip rectangular con tinte, texto tinta. Estado de colaboración: píldora con contorno, sin relleno (solo «Rechazada» en rojo). El color lo decide el CSS por `data-status`; el TS solo da la clave. `StatusPill` queda como adaptador de `PhaseChip` |
+| `BaseAvatar` | Foto o iniciales; el matiz va en `--hue`. Tamaños `sm`/`md`/`lg`/`xl` |
+| `StatTile` | Cifra con `tint` y `large`; sin borde lateral |
+| `AnimatedMark` | Símbolo animado (pantalla de carga y portada): barrido circular que lo revela, entrada con escala, destello que recorre solo la silueta, flotación y, con `rings`, ondas. Todo CSS (máscara cónica con `@property --reveal`); con movimiento reducido se ve quieto |
+| `WeekColumns`, `PhaseStack` | Gráficas de resumen sin librerías. Columnas con las entregas de los próximos 7 días (pendientes y publicadas; «hoy» en voltio) y barra apilada del reparto por fase. Las alturas llegan como variables CSS (`--pending`, `--done`, `--max`, `--pct`); son imágenes accesibles con el detalle en su `aria-label`. Datos en `utils/home-charts.ts` (puro, con tests) |
+| `CoverArt` | Portada sin foto: tinte de la paleta + anillos, estable a partir de `seed` |
+| `EmptyState`, `SkeletonBlock` | El esqueleto recibe sus medidas como variables (`--sk-w`, `--sk-h`, `--sk-r`) |
+
+## 4c. Patrones de pantalla
+
+- **Ancho:** el contenido ocupa **todo el ancho** disponible (sin tope); el relleno sale de `--content-pad`, que un bloque a sangre compensa con márgenes negativos.
+- **Menú lateral plegable:** botón en la cabecera de la columna; 256 → 80 px con transición de ancho, textos recortados y desvanecidos, iconos centrados con `title`. El estado se guarda en la cookie `ciberan-rail-collapsed` (`useRailState`), no en localStorage, para que el servidor pinte el estado correcto sin parpadeo.
+- **Cabecera de perfil** (`ProfileHero`, `components/profile-hero.css`): el banner toca los bordes superior y laterales del contenedor; el avatar (`--avatar-d`, 6,5 rem en móvil y 9,5 rem en escritorio) se superpone al 50 % sobre el banner.
+- **Shell** (`patterns/shell.css`): columna lateral de tinta a **altura completa** (el fondo llega hasta el final de la página; arregla V-02) con la navegación fija dentro; indicador activo de voltio sobre su borde. En móvil, barra superior y **barra inferior flotante en píldora de tinta**: solo la pestaña activa muestra su texto y se pinta de voltio; las demás llevan el texto solo para lectores de pantalla. Los contadores (`.badge`) llevan siempre número.
+- **Públicas** (`patterns/landing.css`): portada de tinta con titular grande, símbolo y motivo de ondas; las cinco fases visibles; mosaico («bento») con tamaños distintos; perfiles de uso; llamada final; pie. **Todo el contenido es visible sin JavaScript ni animación**: la entrada de cada bloque (`.reveal`) es un efecto de `animation-timeline: view()` con `fill-mode: forwards`, que si el navegador no lo admite simplemente no ocurre (arregla V-01).
+- **Acceso y alta:** `AuthShell` (panel de marca a la izquierda en escritorio; el logotipo aparece una sola vez en cada tamaño; arregla V-04).
+- **Inicio** (`patterns/home.css`): cabecera editorial con una frase de estado calculada de datos reales, cifras con tinte, un único bloque destacado y listas de actividad sin una caja por fila.
+- **Tablero** (`components/post-card.css`): columnas sobre fondo hundido con la cabecera de fase en su color fuerte como barra superior (el título va en tinta: tres de los cinco colores fuertes no llegan a 4,5:1 como texto); la tarjeta dice la fase una vez, con el chip de fase, que además es el selector.
 
 ## 5. Convenciones CSS
 
@@ -120,5 +169,5 @@ Escala (genera las clases `text-micro`, `text-sm`, `text-base`, `text-lg`, `text
 
 ## 6. Comprobar
 
-- `node scripts/design/check-contrast.mjs`: contraste de las 31 combinaciones del sistema (sale con 1 si alguna falla).
+- `node scripts/design/check-contrast.mjs`: contraste de las 31 combinaciones del sistema (sale con 1 si alguna falla). No mide las combinaciones añadidas después (títulos sobre `surface-sunken`, etc.): esas se calculan a mano con la misma fórmula WCAG.
 - `scripts/demo-video/ux-capture.mjs`: capturas a 390, 768, 1 024 y 1 440 px con axe, contra la app de demo y el Supabase local.

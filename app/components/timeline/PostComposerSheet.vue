@@ -178,31 +178,31 @@ watch(open, (value) => {
     <Transition name="nx-fade-slide" mode="out-in">
       <div v-if="stage !== 'result'" key="draft" class="flex flex-col gap-4">
         <div>
-          <label class="block text-[0.8125rem] font-medium text-[var(--color-text-muted)] mb-1.5" for="post-title">Título interno</label>
+          <label class="block text-sm font-medium text-[var(--color-text-muted)] mb-1.5" for="post-title">Título interno</label>
           <input
             id="post-title" v-model="title" type="text" placeholder="Reel: rutina de escritorio"
-            class="w-full h-11 px-3.5 rounded-[var(--radius-sm)] bg-[var(--color-ink-overlay)] border border-[var(--color-hairline)] text-[0.9375rem] text-[var(--color-text)] placeholder:text-[var(--color-text-faint)] focus:outline-none focus:border-[var(--color-primary-500)]/60"
+            class="input w-full h-11"
           >
         </div>
 
         <div>
-          <label class="block text-[0.8125rem] font-medium text-[var(--color-text-muted)] mb-1.5" for="post-caption">Caption</label>
+          <label class="block text-sm font-medium text-[var(--color-text-muted)] mb-1.5" for="post-caption">Caption</label>
           <textarea
             id="post-caption" v-model="caption" rows="3" placeholder="Escribe el texto que acompaña tu publicación…"
-            class="w-full px-3.5 py-2.5 rounded-[var(--radius-sm)] bg-[var(--color-ink-overlay)] border border-[var(--color-hairline)] text-[0.9375rem] text-[var(--color-text)] placeholder:text-[var(--color-text-faint)] focus:outline-none focus:border-[var(--color-primary-500)]/60 resize-none"
+            class="textarea w-full resize-none"
           />
         </div>
 
         <div v-if="activeCollaborations.length">
-          <label class="block text-[0.8125rem] font-medium text-[var(--color-text-muted)] mb-1.5" for="post-collab">Colaboración</label>
+          <label class="block text-sm font-medium text-[var(--color-text-muted)] mb-1.5" for="post-collab">Colaboración</label>
           <select
             id="post-collab" v-model="collaborationId"
-            class="w-full h-11 px-3 rounded-[var(--radius-sm)] bg-[var(--color-ink-overlay)] border border-[var(--color-hairline)] text-[0.875rem] text-[var(--color-text)]"
+            class="select w-full h-11"
           >
             <option value="">Contenido propio</option>
             <option v-for="c in activeCollaborations" :key="c.id" :value="c.id">{{ c.partnerName }}</option>
           </select>
-          <p class="text-[0.75rem] text-[var(--color-text-faint)] mt-1.5 leading-relaxed">
+          <p class="text-micro text-[var(--color-text-faint)] mt-1.5 leading-relaxed">
             <template v-if="collaborationId">
               {{ activeCollaborations.find((c) => c.id === collaborationId)?.partnerName }} podrá ver su progreso (checklist y fase) y, cuando la marques "Para revisar", aprobarla o pedirte cambios.
             </template>
@@ -214,36 +214,36 @@ watch(open, (value) => {
 
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <p class="block text-[0.8125rem] font-medium text-[var(--color-text-muted)] mb-1.5">Formato</p>
-            <select v-model="contentType" class="w-full h-11 px-3 rounded-[var(--radius-sm)] bg-[var(--color-ink-overlay)] border border-[var(--color-hairline)] text-[0.875rem] text-[var(--color-text)]">
+            <p class="block text-sm font-medium text-[var(--color-text-muted)] mb-1.5">Formato</p>
+            <select v-model="contentType" class="select w-full h-11">
               <option v-for="t in contentTypes" :key="t" :value="t">{{ contentTypeMeta[t].label }}</option>
             </select>
           </div>
           <div>
-            <p class="block text-[0.8125rem] font-medium text-[var(--color-text-muted)] mb-1.5">Red</p>
-            <select v-model="platform" class="w-full h-11 px-3 rounded-[var(--radius-sm)] bg-[var(--color-ink-overlay)] border border-[var(--color-hairline)] text-[0.875rem] text-[var(--color-text)]">
+            <p class="block text-sm font-medium text-[var(--color-text-muted)] mb-1.5">Red</p>
+            <select v-model="platform" class="select w-full h-11">
               <option v-for="p in platforms" :key="p.value" :value="p.value">{{ p.label }}</option>
             </select>
           </div>
         </div>
 
         <div>
-          <label class="block text-[0.8125rem] font-medium text-[var(--color-text-muted)] mb-1.5" for="post-due-date">Fecha de entrega</label>
+          <label class="block text-sm font-medium text-[var(--color-text-muted)] mb-1.5" for="post-due-date">Fecha de entrega</label>
           <input
             id="post-due-date" v-model="dueDate" type="date" :min="todayIso"
-            class="w-full h-11 px-3.5 rounded-[var(--radius-sm)] bg-[var(--color-ink-overlay)] border border-[var(--color-hairline)] text-[0.9375rem] text-[var(--color-text)] focus:outline-none focus:border-[var(--color-primary-500)]/60"
+            class="input w-full h-11"
           >
         </div>
 
         <div>
-          <label class="block text-[0.8125rem] font-medium text-[var(--color-text-muted)] mb-1.5" for="post-hashtags">Hashtags</label>
+          <label class="block text-sm font-medium text-[var(--color-text-muted)] mb-1.5" for="post-hashtags">Hashtags</label>
           <input
             id="post-hashtags" v-model="hashtagsInput" type="text" placeholder="#rutina #escritorio #productividad"
-            class="w-full h-11 px-3.5 rounded-[var(--radius-sm)] bg-[var(--color-ink-overlay)] border border-[var(--color-hairline)] text-[0.9375rem] text-[var(--color-text)] placeholder:text-[var(--color-text-faint)] focus:outline-none focus:border-[var(--color-primary-500)]/60"
+            class="input w-full h-11"
           >
         </div>
 
-        <p v-if="error" class="text-[0.8125rem] text-[var(--color-status-alert)] -mt-1">{{ error }}</p>
+        <p v-if="error" class="text-sm text-[var(--color-status-alert)] -mt-1">{{ error }}</p>
 
         <BaseButton
           variant="primary" size="lg"
@@ -253,7 +253,7 @@ watch(open, (value) => {
         >
           {{ stage === 'predicting' ? 'Analizando…' : 'Predecir éxito' }}
         </BaseButton>
-        <p class="text-center text-[0.75rem] text-[var(--color-text-faint)] -mt-2">
+        <p class="text-center text-micro text-[var(--color-text-faint)] -mt-2">
           <template v-if="creditBalance === 0">
             Sin créditos —
             <NuxtLink to="/creator/profile?tab=billing" class="text-[var(--color-primary-500)] hover:text-[var(--color-primary-600)] underline underline-offset-2">mejora tu plan</NuxtLink>

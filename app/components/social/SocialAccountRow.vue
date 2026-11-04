@@ -20,22 +20,22 @@ const needsReconnect = computed(() => props.account.connected && !!props.account
     </span>
 
     <div class="min-w-0 flex-1">
-      <p class="text-[0.9375rem] font-medium text-[var(--color-text)]">{{ platformMeta[account.platform].label }}</p>
-      <p v-if="isComingSoonPlatform(account.platform)" class="text-[0.8125rem] text-[var(--color-text-faint)]">
+      <p class="text-base font-medium text-[var(--color-text)]">{{ platformMeta[account.platform].label }}</p>
+      <p v-if="isComingSoonPlatform(account.platform)" class="text-sm text-[var(--color-text-faint)]">
         Próximamente · todavía no se puede conectar
       </p>
-      <p v-else-if="needsReconnect" class="text-[0.8125rem] text-[var(--color-status-alert)]">
+      <p v-else-if="needsReconnect" class="text-sm text-[var(--color-status-alert)]">
         {{ account.status === 'missing_permissions' ? 'Falta un permiso' : 'Acceso caducado o revocado' }} · reconecta la cuenta
       </p>
-      <p v-else-if="account.connected" class="text-[0.8125rem] text-[var(--color-text-muted)]">
+      <p v-else-if="account.connected" class="text-sm text-[var(--color-text-muted)]">
         {{ account.handle }} · {{ formatCompactNumber(account.followers) }} {{ account.followers === 1 ? 'seguidor' : 'seguidores' }}
       </p>
-      <p v-else class="text-[0.8125rem] text-[var(--color-text-faint)]">No conectada</p>
+      <p v-else class="text-sm text-[var(--color-text-faint)]">No conectada</p>
     </div>
 
     <span
       v-if="account.connected && account.deltaPct"
-      class="hidden sm:inline-flex items-center gap-1 text-[0.8125rem] font-medium text-[var(--color-status-published)]"
+      class="hidden sm:inline-flex items-center gap-1 text-sm font-medium text-[var(--color-status-published)]"
     >
       <Icon name="ph:trend-up-bold" class="size-3.5" />
       +{{ account.deltaPct }}%
@@ -43,7 +43,7 @@ const needsReconnect = computed(() => props.account.connected && !!props.account
 
     <span
       v-if="isComingSoonPlatform(account.platform)"
-      class="shrink-0 rounded-full px-2.5 py-1 text-[0.75rem] font-medium bg-[var(--color-ink-overlay)] text-[var(--color-text-faint)]"
+      class="shrink-0 rounded-full px-2.5 py-1 text-micro font-medium bg-[var(--color-ink-overlay)] text-[var(--color-text-faint)]"
     >
       Próximamente
     </span>

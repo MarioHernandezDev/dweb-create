@@ -72,7 +72,7 @@ function createBlank() {
       <div class="flex flex-wrap gap-1.5">
         <button
           v-for="opt in platformOptions" :key="opt.value" type="button"
-          class="px-3 h-8 rounded-[var(--radius-xs)] text-[0.8125rem] font-medium border transition-colors"
+          class="px-3 h-8 rounded-[var(--radius-xs)] text-sm font-medium border transition-colors"
           :class="platformFilter === opt.value
             ? 'bg-[var(--color-primary-500)] border-[var(--color-primary-500)] text-white'
             : 'bg-[var(--color-ink-overlay)] border-[var(--color-hairline)] text-[var(--color-text-muted)] hover:text-[var(--color-text)]'"

@@ -18,17 +18,17 @@ defineProps<{ kpis: Kpi[] }>()
       :aria-label="k.value !== null ? `${k.label}: ${k.exact ?? k.value}` : `${k.label}: sin dato. ${k.reason ?? ''}`" data-total-row
     >
       <dt class="min-w-0">
-        <span class="flex items-center gap-1.5 text-[0.8125rem] text-[var(--color-text-muted)]">
+        <span class="flex items-center gap-1.5 text-sm text-[var(--color-text-muted)]">
           <Icon :name="k.icon" class="size-4 shrink-0 text-[var(--color-platform-youtube)]" />
           <span class="truncate" :title="k.hint">{{ k.label }}</span>
         </span>
-        <span class="block text-[0.625rem] uppercase tracking-wide text-[var(--color-text-faint)]">{{ k.source === 'youtube' ? 'Dato de YouTube' : 'Cálculo de CIBERAN' }}</span>
+        <span class="block text-micro text-[var(--color-text-faint)]">{{ k.source === 'youtube' ? 'Dato de YouTube' : 'Cálculo de CIBERAN' }}</span>
       </dt>
       <dd class="shrink-0 text-right">
         <span v-if="k.value !== null" class="font-display text-[1.375rem] leading-none text-[var(--color-text)]" :title="k.exact ?? undefined" style="font-variant-numeric: proportional-nums">{{ k.value }}</span>
         <template v-else>
           <span class="font-display text-[1.375rem] leading-none text-[var(--color-text-faint)]">—</span>
-          <span class="block max-w-[11rem] text-[0.6875rem] leading-snug text-[var(--color-text-muted)]">{{ k.reason }}</span>
+          <span class="block max-w-[11rem] text-micro leading-snug text-[var(--color-text-muted)]">{{ k.reason }}</span>
         </template>
       </dd>
     </div>

@@ -39,11 +39,11 @@ const meta = computed(() => platformMeta[props.platform])
           <Icon :name="meta.icon" class="size-5" />
         </span>
         <div class="min-w-0 flex-1">
-          <p class="text-[0.9375rem] font-medium text-[var(--color-text)]">{{ meta.label }}</p>
-          <p v-if="handle" class="truncate text-[0.8125rem] text-[var(--color-text-muted)]">{{ handle }}</p>
+          <p class="text-base font-medium text-[var(--color-text)]">{{ meta.label }}</p>
+          <p v-if="handle" class="truncate text-sm text-[var(--color-text-muted)]">{{ handle }}</p>
         </div>
         <span
-          class="shrink-0 rounded-full px-2.5 py-1 text-[0.6875rem] font-medium"
+          class="shrink-0 rounded-full px-2.5 py-1 text-micro font-medium"
           :class="needsReconnect ? 'bg-[color-mix(in_oklab,var(--color-status-alert)_14%,transparent)] text-[var(--color-status-alert)]' : 'bg-[color-mix(in_oklab,var(--color-status-published)_14%,transparent)] text-[var(--color-status-published)]'"
         >
           {{ needsReconnect ? 'Reconectar' : 'Conectada' }}
@@ -54,7 +54,7 @@ const meta = computed(() => platformMeta[props.platform])
         <p class="font-display text-[2.5rem] leading-none text-[var(--color-text)]" style="font-variant-numeric: proportional-nums">
           {{ formatCompactNumber(followers ?? 0) }}
         </p>
-        <p class="mt-1 text-[0.8125rem] text-[var(--color-text-muted)]">
+        <p class="mt-1 text-sm text-[var(--color-text-muted)]">
           {{ platform === 'youtube' ? (followers === 1 ? 'suscriptor' : 'suscriptores') : (followers === 1 ? 'seguidor' : 'seguidores') }}{{ needsReconnect ? ' · último dato guardado' : '' }}
         </p>
       </div>
@@ -63,10 +63,10 @@ const meta = computed(() => platformMeta[props.platform])
         <div class="h-1.5 rounded-full bg-[var(--color-ink-overlay)] overflow-hidden">
           <div class="h-full rounded-full transition-[width] duration-500" :style="{ width: `${sharePct ?? 0}%`, background: meta.colorVar }" />
         </div>
-        <p class="mt-1.5 text-[0.75rem] text-[var(--color-text-faint)]">{{ Math.round(sharePct ?? 0) }} % de tus seguidores totales</p>
+        <p class="mt-1.5 text-micro text-[var(--color-text-faint)]">{{ Math.round(sharePct ?? 0) }} % de tus seguidores totales</p>
       </div>
 
-      <div class="mt-auto flex items-center justify-between gap-3 text-[0.75rem]">
+      <div class="mt-auto flex items-center justify-between gap-3 text-micro">
         <span class="text-[var(--color-text-faint)]">
           {{ lastSyncedAt ? `Actualizado ${relativeTime(lastSyncedAt)}` : 'Aún sin sincronizar' }}
         </span>
@@ -86,8 +86,8 @@ const meta = computed(() => platformMeta[props.platform])
         <Icon :name="meta.icon" class="size-5" />
       </span>
       <div class="min-w-0 flex-1">
-        <p class="text-[0.9375rem] font-medium text-[var(--color-text)]">{{ meta.label }}</p>
-        <p class="text-[0.75rem] text-[var(--color-text-faint)]">{{ isComingSoonPlatform(platform) ? 'Próximamente' : 'No conectada' }}</p>
+        <p class="text-base font-medium text-[var(--color-text)]">{{ meta.label }}</p>
+        <p class="text-micro text-[var(--color-text-faint)]">{{ isComingSoonPlatform(platform) ? 'Próximamente' : 'No conectada' }}</p>
       </div>
     </div>
 

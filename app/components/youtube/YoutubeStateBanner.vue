@@ -49,8 +49,8 @@ const content = computed(() => {
       :class="content.tone === 'alert' ? 'text-[var(--color-status-alert)]' : 'text-[var(--color-text-faint)]'"
     />
     <div class="min-w-0 flex-1">
-      <p class="text-[0.9375rem] font-medium text-[var(--color-text)] mb-1">{{ content.title }}</p>
-      <p class="text-[0.8125rem] text-[var(--color-text-muted)] leading-relaxed mb-3">{{ content.text }}</p>
+      <p class="text-base font-medium text-[var(--color-text)] mb-1">{{ content.title }}</p>
+      <p class="text-sm text-[var(--color-text-muted)] leading-relaxed mb-3">{{ content.text }}</p>
       <BaseButton v-if="content.action === 'reconnect'" variant="primary" size="sm" @click="$emit('reconnect')">Reconectar YouTube</BaseButton>
       <BaseButton v-else variant="secondary" size="sm" :icon-spin="busy" :disabled="busy" @click="$emit('retry')">Reintentar</BaseButton>
     </div>

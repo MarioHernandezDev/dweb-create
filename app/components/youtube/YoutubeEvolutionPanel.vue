@@ -24,14 +24,14 @@ const comparing = computed(() => props.showCompare && !!series.value?.previous)
     <BaseCard radius="lg" padding="lg" class="flex-1" :aria-busy="loading">
       <SkeletonBlock v-if="!report || !series" height="16.25rem" rounded="var(--radius-md)" />
 
-      <p v-else-if="!hasData" class="py-10 text-center text-[0.875rem] text-[var(--color-text-muted)]">
+      <p v-else-if="!hasData" class="py-10 text-center text-sm text-[var(--color-text-muted)]">
         YouTube no ha devuelto datos de {{ CHART_METRICS.find((m) => m.value === metric)?.unit }} para este periodo.
       </p>
 
       <div v-else :class="loading && 'opacity-60 transition-opacity'">
         <YoutubeEvolutionChart :series="series" :metric="metric" :show-compare="comparing" :height="tall ? 500 : 320" />
 
-        <ul class="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1.5 text-[0.75rem] text-[var(--color-text-muted)]">
+        <ul class="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1.5 text-micro text-[var(--color-text-muted)]">
           <li class="inline-flex items-center gap-2">
             <span class="inline-block w-5 border-t-2 border-[var(--color-chart-primary)]" aria-hidden="true" />
             {{ periodLabel(report.days) }}

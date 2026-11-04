@@ -31,7 +31,7 @@ function onKey(e: KeyboardEvent, index: number) {
         v-for="(tab, i) in tabs" :id="`profile-tab-${tab.id}`" :key="tab.id" :ref="(el) => { if (el) refs[i] = el as HTMLElement }"
         type="button" role="tab" :aria-selected="modelValue === tab.id" :aria-controls="`profile-panel-${tab.id}`"
         :tabindex="modelValue === tab.id ? 0 : -1"
-        class="relative inline-flex items-center gap-2 px-4 h-11 text-[0.875rem] font-medium whitespace-nowrap transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-[var(--color-primary-500)] focus-visible:-outline-offset-2 rounded-t-[var(--radius-xs)]"
+        class="relative inline-flex items-center gap-2 px-4 h-11 text-sm font-medium whitespace-nowrap transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-[var(--color-primary-500)] focus-visible:-outline-offset-2 rounded-t-[var(--radius-xs)]"
         :class="modelValue === tab.id ? 'text-[var(--color-text)]' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text)]'"
         @click="emit('update:modelValue', tab.id)" @keydown="onKey($event, i)"
       >

@@ -56,7 +56,7 @@ const updated = computed(() => {
 
     <div class="min-w-0 flex-1 basis-56">
       <p class="font-display text-[1.375rem] leading-tight text-[var(--color-text)] truncate">{{ title ?? meta.label }}</p>
-      <p class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[0.8125rem] text-[var(--color-text-muted)]">
+      <p class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-sm text-[var(--color-text-muted)]">
         <span class="inline-flex items-center gap-1.5 font-medium" :style="{ color: chip.color }">
           <span class="size-2 rounded-full shrink-0" :style="{ background: chip.color }" aria-hidden="true" />
           {{ chip.label }}
@@ -64,7 +64,7 @@ const updated = computed(() => {
         <span v-if="updated" class="text-[var(--color-text-faint)]">· actualizado {{ updated }}</span>
         <span v-if="memberSince" class="text-[var(--color-text-faint)]">· miembro desde {{ memberSince }}</span>
       </p>
-      <p class="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-[0.8125rem]">
+      <p class="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
         <a
           v-if="channelId" :href="`https://www.youtube.com/channel/${channelId}`" target="_blank" rel="noopener noreferrer"
           class="inline-flex items-center gap-1 font-medium text-[var(--color-primary-500)] hover:underline"

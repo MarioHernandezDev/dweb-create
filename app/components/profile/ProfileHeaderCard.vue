@@ -66,12 +66,12 @@ function memberSinceLabel(iso: string) {
         />
         <div class="min-w-0">
           <p
-            class="font-display text-white truncate" :class="compact ? 'text-[0.9375rem]' : 'text-[1.1875rem]'"
+            class="font-display text-white truncate" :class="compact ? 'text-base' : 'text-[1.1875rem]'"
             style="text-shadow: 0 1px 8px rgba(0,0,0,0.4)"
           >
             {{ name }}
           </p>
-          <p class="text-white/85" :class="compact ? 'text-[0.6875rem]' : 'text-[0.8125rem]'" style="text-shadow: 0 1px 6px rgba(0,0,0,0.4)">
+          <p class="text-white/85" :class="compact ? 'text-micro' : 'text-sm'" style="text-shadow: 0 1px 6px rgba(0,0,0,0.4)">
             {{ roleLabel }}
           </p>
         </div>
@@ -80,7 +80,7 @@ function memberSinceLabel(iso: string) {
 
     <div
       v-if="!compact && (memberSince || catalogCount > 0)"
-      class="flex flex-wrap items-center gap-x-4 gap-y-1.5 mt-3 mb-5 text-[0.8125rem] text-[var(--color-text-muted)]"
+      class="flex flex-wrap items-center gap-x-4 gap-y-1.5 mt-3 mb-5 text-sm text-[var(--color-text-muted)]"
     >
       <span v-if="memberSince" class="inline-flex items-center gap-1.5">
         <Icon name="ph:calendar-check-fill" class="size-4 text-[var(--color-text-faint)]" />
@@ -95,7 +95,7 @@ function memberSinceLabel(iso: string) {
     <div v-if="verifiedSocials.length" class="flex flex-wrap gap-2" :class="compact ? 'mt-3 mb-4' : 'mt-5 mb-6'">
       <span
         v-for="social in verifiedSocials" :key="social.platform"
-        class="inline-flex items-center gap-1.5 h-7 pl-2 pr-2.5 rounded-full border border-[var(--color-hairline)] bg-[var(--color-ink-overlay)] text-[0.75rem] font-medium text-[var(--color-text)]"
+        class="inline-flex items-center gap-1.5 h-7 pl-2 pr-2.5 rounded-full border border-[var(--color-hairline)] bg-[var(--color-ink-overlay)] text-micro font-medium text-[var(--color-text)]"
       >
         <Icon :name="platformMeta[social.platform].icon" class="size-3.5 shrink-0" :style="{ color: platformMeta[social.platform].colorVar }" />
         {{ formatCompactNumber(social.followersCount) }}
@@ -104,12 +104,12 @@ function memberSinceLabel(iso: string) {
     </div>
 
     <section v-if="bio || categories.length" :class="compact ? 'mt-3 mb-4' : 'mt-5 mb-6'">
-      <h2 class="text-[0.6875rem] font-semibold uppercase tracking-wide text-[var(--color-text-faint)] mb-2.5">Bio</h2>
-      <p v-if="bio" class="text-[0.9375rem] text-[var(--color-text)] leading-relaxed">{{ bio }}</p>
+      <h2 class="text-sm font-semibold text-[var(--text-muted)] mb-2.5">Bio</h2>
+      <p v-if="bio" class="text-base text-[var(--color-text)] leading-relaxed">{{ bio }}</p>
       <div v-if="categories.length" class="flex flex-wrap gap-1.5" :class="bio && 'mt-3'">
         <span
           v-for="cat in categories" :key="cat"
-          class="px-2.5 h-7 flex items-center rounded-full text-[0.75rem] font-medium bg-[var(--color-ink-overlay)] text-[var(--color-text-muted)] border border-[var(--color-hairline)]"
+          class="px-2.5 h-7 flex items-center rounded-full text-micro font-medium bg-[var(--color-ink-overlay)] text-[var(--color-text-muted)] border border-[var(--color-hairline)]"
         >
           {{ cat }}
         </span>
@@ -117,19 +117,19 @@ function memberSinceLabel(iso: string) {
     </section>
 
     <section v-if="rangeLabel || lookingFor" :class="compact ? 'mb-4' : 'mb-6'">
-      <h2 class="text-[0.6875rem] font-semibold uppercase tracking-wide text-[var(--color-text-faint)] mb-2.5">Datos clave</h2>
+      <h2 class="text-sm font-semibold text-[var(--text-muted)] mb-2.5">Datos clave</h2>
       <BaseCard radius="lg" padding="md" class="flex flex-col gap-3">
         <div v-if="rangeLabel" class="flex items-center gap-3">
           <span class="shrink-0 size-9 rounded-full bg-[var(--color-primary-500)]/12 flex items-center justify-center">
             <Icon name="ph:coins-fill" class="size-4 text-[var(--color-primary-500)]" />
           </span>
           <div class="min-w-0">
-            <p class="text-[0.75rem] text-[var(--color-text-faint)]">{{ rangeFieldLabel }}</p>
-            <p class="text-[0.9375rem] font-medium text-[var(--color-text)]">{{ rangeLabel }}</p>
+            <p class="text-micro text-[var(--color-text-faint)]">{{ rangeFieldLabel }}</p>
+            <p class="text-base font-medium text-[var(--color-text)]">{{ rangeLabel }}</p>
           </div>
         </div>
         <div v-if="rangeLabel && lookingFor" class="h-px bg-[var(--color-hairline)]" />
-        <p v-if="lookingFor" class="text-[0.8125rem] text-[var(--color-text-muted)] leading-relaxed">{{ lookingFor }}</p>
+        <p v-if="lookingFor" class="text-sm text-[var(--color-text-muted)] leading-relaxed">{{ lookingFor }}</p>
       </BaseCard>
     </section>
   </div>

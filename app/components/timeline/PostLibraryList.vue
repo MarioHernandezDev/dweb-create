@@ -40,7 +40,7 @@ const day = (iso: string) => new Date(`${iso}T12:00:00`).toLocaleDateString('es-
     </EmptyState>
 
     <template v-else>
-      <p class="mb-3 text-[0.8125rem] text-[var(--color-text-muted)]" data-list-count>
+      <p class="mb-3 text-sm text-[var(--color-text-muted)]" data-list-count>
         {{ shown.length }} publicación{{ shown.length === 1 ? '' : 'es' }}<template v-if="filtered"> de {{ posts.length }}</template>
       </p>
       <ul class="flex flex-col gap-2">
@@ -54,8 +54,8 @@ const day = (iso: string) => new Date(`${iso}T12:00:00`).toLocaleDateString('es-
               <Icon v-else :name="contentTypeMeta[p.contentType].icon" class="size-5 text-[var(--color-text)] opacity-25" />
             </span>
             <span class="min-w-0 flex-1">
-              <span class="block truncate text-[0.9375rem] font-medium text-[var(--color-text)]">{{ p.title }}</span>
-              <span class="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[0.75rem] text-[var(--color-text-faint)]">
+              <span class="block truncate text-base font-medium text-[var(--color-text)]">{{ p.title }}</span>
+              <span class="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-micro text-[var(--color-text-faint)]">
                 <span class="inline-flex items-center gap-1"><Icon :name="platformMeta[p.platform].icon" class="size-3.5" :style="{ color: platformMeta[p.platform].colorVar }" /> {{ platformMeta[p.platform].label }}</span>
                 <span :class="isPostOverdue(p) && 'font-medium text-[var(--color-status-alert)]'">Entrega {{ day(p.dueDate) }}<template v-if="isPostOverdue(p)"> · {{ overdueLabel(p.dueInDays) }}</template></span>
                 <span v-if="p.updatedAt" class="hidden md:inline">Modificada {{ relativeTime(p.updatedAt) }}</span>
@@ -67,7 +67,7 @@ const day = (iso: string) => new Date(`${iso}T12:00:00`).toLocaleDateString('es-
 
           <label class="sr-only" :for="`row-status-${p.id}`">Cambiar de fase</label>
           <select
-            :id="`row-status-${p.id}`" class="h-9 shrink-0 max-w-[9.5rem] rounded-full border border-[var(--color-hairline)] bg-transparent px-3 text-[0.8125rem] font-semibold"
+            :id="`row-status-${p.id}`" class="h-9 shrink-0 max-w-[9.5rem] rounded-full border border-[var(--color-hairline)] bg-transparent px-3 text-sm font-semibold"
             :style="{ color: statusMeta[p.status].color }" :value="p.status"
             @change="emit('move', p, ($event.target as HTMLSelectElement).value as PostStatus)"
           >

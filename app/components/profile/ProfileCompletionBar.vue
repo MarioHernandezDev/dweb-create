@@ -17,7 +17,7 @@ defineProps<{ percent: number; items?: { label: string; done: boolean }[] }>()
 <template>
   <div class="mb-6">
     <div class="flex items-center justify-between mb-1.5">
-      <p class="text-[0.8125rem] font-medium text-[var(--color-text-muted)]">
+      <p class="text-sm font-medium text-[var(--color-text-muted)]">
         Tu ficha está completa al <span class="text-[var(--color-text)] font-semibold">{{ percent }}%</span>
       </p>
       <Icon v-if="percent >= 100" name="ph:check-circle-fill" class="size-4 text-[var(--color-status-published)]" />
@@ -29,7 +29,7 @@ defineProps<{ percent: number; items?: { label: string; done: boolean }[] }>()
         :style="{ width: `${percent}%` }"
       />
     </div>
-    <p v-if="percent < 100 && items?.some((i) => !i.done)" class="text-[0.75rem] text-[var(--color-text-faint)] mt-1.5">
+    <p v-if="percent < 100 && items?.some((i) => !i.done)" class="text-micro text-[var(--color-text-faint)] mt-1.5">
       Te falta: {{ items.filter((i) => !i.done).map((i) => i.label).join(', ') }}.
     </p>
   </div>

@@ -1,0 +1,128 @@
+/* ==========================================================================
+   Componentes · Tarjetas y paneles (BaseCard, PanelCard, SectionTitle,
+   PageHeader)
+   Cada patrón existe por una razón (docs/design/00_PROPUESTA_FASE0.md §3.6):
+     card            información de lectura (papel, borde, radio md)
+     card--stat      cifras; admite tinte para no repetir el mismo bloque
+     card--featured  lo más importante de la pantalla (tinta + esquina de señal)
+     card--interactive  modificador de cualquier tarjeta clicable
+   Un panel (.panel) es una tarjeta con título y acción.
+   ========================================================================== */
+
+@layer components {
+  .card {
+    --card-pad: var(--card-padding);
+
+    position: relative;
+    min-width: 0;
+    padding: var(--card-pad);
+    background: var(--surface-raised);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    color: var(--text-strong);
+
+    &.card--pad-none { --card-pad: 0; }
+    &.card--pad-sm { --card-pad: 1rem; }
+    &.card--pad-lg { --card-pad: 1.75rem; }
+    &.card--r-sm { border-radius: var(--radius-sm); }
+    &.card--r-lg { border-radius: var(--radius-lg); }
+    &.card--sunken { background: var(--surface-sunken); border-color: transparent; }
+
+    &.card--tint-mantequilla { background: var(--color-mantequilla); border-color: transparent; }
+    &.card--tint-menta { background: var(--color-menta); border-color: transparent; }
+    &.card--tint-cielo { background: var(--color-cielo); border-color: transparent; }
+    &.card--tint-rosa { background: var(--color-rosa); border-color: transparent; }
+    &.card--tint-voltio { background: var(--color-voltio-200); border-color: transparent; }
+
+    &.card--featured {
+      background: var(--surface-inverse);
+      color: var(--text-on-inverse);
+      border-color: transparent;
+      border-radius: var(--radius-signal);
+      overflow: hidden;
+    }
+
+    &.card--interactive {
+      cursor: pointer;
+      transition:
+        transform var(--dur) var(--ease-out),
+        box-shadow var(--dur) var(--ease-out),
+        border-color var(--dur) var(--ease-out);
+
+      &:hover { transform: translateY(-2px); box-shadow: var(--shadow-2); border-color: var(--line-strong); }
+      &:active { transform: translateY(0); box-shadow: var(--shadow-1); }
+    }
+  }
+
+  /* ---- Panel: tarjeta con cabecera ---- */
+  .panel__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--gap);
+    margin-bottom: var(--gap);
+  }
+  .panel__footer {
+    margin-top: var(--gap);
+    padding-top: var(--gap);
+    border-top: 1px solid var(--line);
+  }
+
+  /* ---- Título de sección ---- */
+  .section-title {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--gap);
+    min-width: 0;
+  }
+  .section-title__text { min-width: 0; }
+  .section-title__title {
+    font-family: var(--font-display);
+    font-size: var(--text-title);
+    line-height: var(--text-title--line-height);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+  .section-title__desc {
+    margin-top: 0.125rem;
+    font-size: var(--text-sm);
+    color: var(--text-muted);
+  }
+
+  /* ---- Cifra (tarjetas de estadísticas) ---- */
+  .stat__label { font-size: var(--text-sm); font-weight: 600; color: var(--text-muted); }
+  .stat__value {
+    margin-top: 0.25rem;
+    font-family: var(--font-display);
+    font-size: var(--text-headline);
+    line-height: 1.05;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    font-variant-numeric: tabular-nums;
+  }
+  .stat__value--lg { font-size: var(--text-display); line-height: var(--text-display--line-height); }
+  .stat__delta { margin-top: 0.5rem; display: inline-flex; align-items: center; gap: 0.25rem; font-size: var(--text-sm); font-weight: 600; }
+  .stat__delta--good { color: var(--color-phase-published); }
+  .stat__delta--bad { color: var(--color-danger); }
+  .card--featured .stat__label { color: var(--text-on-inverse-muted); }
+
+  /* ---- Cabecera de página ---- */
+  .page-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--gap);
+    margin-bottom: var(--gap-loose);
+  }
+  .page-header__title {
+    font-family: var(--font-display);
+    font-size: var(--text-headline);
+    line-height: var(--text-headline--line-height);
+    font-weight: 700;
+    letter-spacing: -0.025em;
+  }
+  .page-header__subtitle { margin-top: 0.25rem; color: var(--text-muted); max-width: 60ch; }
+  .page-header__actions { display: flex; flex-wrap: wrap; gap: var(--gap-tight); }
+}

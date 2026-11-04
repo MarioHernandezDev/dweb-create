@@ -46,7 +46,7 @@ async function onVisibility(open: boolean) {
   <BottomSheet :model-value="modelValue" :title="post?.title ?? 'Publicación'" @update:model-value="onVisibility">
     <template v-if="post">
       <NuxtLink
-        :to="`/creator/post/${post.id}?desde=tablero`" class="inline-flex items-center gap-1.5 min-h-11 mb-2 text-[0.8125rem] font-medium text-[var(--color-primary-500)] hover:text-[var(--color-primary-600)]"
+        :to="`/creator/post/${post.id}?desde=tablero`" class="inline-flex items-center gap-1.5 min-h-11 mb-2 text-sm font-medium text-[var(--color-primary-500)] hover:text-[var(--color-primary-600)]"
         data-open-full-page
       >
         <Icon name="ph:arrow-square-out-bold" class="size-3.5" /> Abrir página completa
@@ -59,24 +59,24 @@ async function onVisibility(open: boolean) {
       <BaseCard v-if="pendingChangeRequest" radius="md" padding="md" class="flex items-start gap-3 mb-5 border-[var(--color-status-alert)]/30 bg-[var(--color-status-alert)]/[0.06]">
         <Icon name="ph:arrow-counter-clockwise-bold" class="size-5 text-[var(--color-status-alert)] shrink-0 mt-0.5" />
         <div class="min-w-0">
-          <p class="text-[0.8125rem] font-medium text-[var(--color-text)]">{{ pendingChangeRequest.authorName }} ha pedido cambios</p>
-          <p class="text-[0.875rem] text-[var(--color-text)] leading-relaxed mt-0.5">{{ pendingChangeRequest.comment }}</p>
+          <p class="text-sm font-medium text-[var(--color-text)]">{{ pendingChangeRequest.authorName }} ha pedido cambios</p>
+          <p class="text-sm text-[var(--color-text)] leading-relaxed mt-0.5">{{ pendingChangeRequest.comment }}</p>
         </div>
       </BaseCard>
 
       <div class="flex items-center gap-2.5 mb-4 flex-wrap">
-        <span v-if="isPostOverdue(post)" class="inline-flex items-center gap-1 text-[0.8125rem] font-medium text-[var(--color-status-alert)]">
+        <span v-if="isPostOverdue(post)" class="inline-flex items-center gap-1 text-sm font-medium text-[var(--color-status-alert)]">
           <Icon name="ph:warning-fill" class="size-4" />
           {{ overdueLabel(post.dueInDays) }}
         </span>
-        <span class="inline-flex items-center gap-1.5 text-[0.8125rem] text-[var(--color-text-muted)]">
+        <span class="inline-flex items-center gap-1.5 text-sm text-[var(--color-text-muted)]">
           <Icon :name="platformMeta[post.platform].icon" class="size-4" :style="{ color: platformMeta[post.platform].colorVar }" />
           {{ platformMeta[post.platform].label }}
         </span>
-        <span class="text-[0.8125rem] text-[var(--color-text-faint)]">{{ contentTypeMeta[post.contentType].label }}</span>
+        <span class="text-sm text-[var(--color-text-faint)]">{{ contentTypeMeta[post.contentType].label }}</span>
 
         <select
-          class="ml-auto h-9 px-2.5 rounded-[var(--radius-xs)] text-[0.8125rem] font-medium text-white"
+          class="ml-auto h-9 px-2.5 rounded-[var(--radius-xs)] text-sm font-medium text-white"
           :style="{ background: statusMeta[post.status].color }"
           :value="post.status" aria-label="Cambiar de fase"
           @change="onStatusChange"
@@ -87,42 +87,42 @@ async function onVisibility(open: boolean) {
         </select>
       </div>
 
-      <p class="text-[0.8125rem] text-[var(--color-text-muted)] leading-relaxed mb-5 -mt-1">
+      <p class="text-sm text-[var(--color-text-muted)] leading-relaxed mb-5 -mt-1">
         {{ creatorNextStepHint(post, !!pendingChangeRequest) }}
       </p>
 
       <div class="flex flex-col gap-4 mb-5">
         <div>
-          <label class="block text-[0.8125rem] font-medium text-[var(--color-text-muted)] mb-1.5" for="pes-title">Título interno</label>
+          <label class="block text-sm font-medium text-[var(--color-text-muted)] mb-1.5" for="pes-title">Título interno</label>
           <input
             id="pes-title" v-model="title" type="text"
-            class="w-full h-11 px-3.5 rounded-[var(--radius-sm)] bg-[var(--color-ink-overlay)] border border-[var(--color-hairline)] text-[0.9375rem] text-[var(--color-text)] focus:outline-none focus:border-[var(--color-primary-500)]/60"
+            class="input w-full h-11"
           >
         </div>
         <div>
-          <label class="block text-[0.8125rem] font-medium text-[var(--color-text-muted)] mb-1.5" for="pes-caption">Caption</label>
+          <label class="block text-sm font-medium text-[var(--color-text-muted)] mb-1.5" for="pes-caption">Caption</label>
           <textarea
             id="pes-caption" v-model="caption" rows="3"
-            class="w-full px-3.5 py-2.5 rounded-[var(--radius-sm)] bg-[var(--color-ink-overlay)] border border-[var(--color-hairline)] text-[0.9375rem] text-[var(--color-text)] focus:outline-none focus:border-[var(--color-primary-500)]/60 resize-none"
+            class="textarea w-full resize-none"
           />
         </div>
         <div>
-          <label class="block text-[0.8125rem] font-medium text-[var(--color-text-muted)] mb-1.5" for="pes-due-date">Fecha de entrega</label>
+          <label class="block text-sm font-medium text-[var(--color-text-muted)] mb-1.5" for="pes-due-date">Fecha de entrega</label>
           <input
             id="pes-due-date" v-model="dueDate" type="date"
-            class="w-full h-11 px-3.5 rounded-[var(--radius-sm)] bg-[var(--color-ink-overlay)] border border-[var(--color-hairline)] text-[0.9375rem] text-[var(--color-text)] focus:outline-none focus:border-[var(--color-primary-500)]/60"
+            class="input w-full h-11"
           >
         </div>
         <p v-if="post.hashtags.length" class="flex flex-wrap gap-1.5">
-          <span v-for="tag in post.hashtags" :key="tag" class="text-[0.8125rem] text-[var(--color-text-faint)]">{{ tag }}</span>
+          <span v-for="tag in post.hashtags" :key="tag" class="text-sm text-[var(--color-text-faint)]">{{ tag }}</span>
         </p>
       </div>
 
       <!-- Etiquetas -->
       <div class="mb-5">
         <div class="flex items-center justify-between mb-1.5">
-          <span class="text-[0.8125rem] font-medium text-[var(--color-text-muted)]">Etiquetas</span>
-          <button type="button" class="text-[0.8125rem] font-medium text-[var(--color-primary-500)]" @click="labelsPickerOpen = !labelsPickerOpen">
+          <span class="text-sm font-medium text-[var(--color-text-muted)]">Etiquetas</span>
+          <button type="button" class="text-sm font-medium text-[var(--color-primary-500)]" @click="labelsPickerOpen = !labelsPickerOpen">
             {{ labelsPickerOpen ? 'Cerrar' : '+ Añadir' }}
           </button>
         </div>
@@ -130,7 +130,7 @@ async function onVisibility(open: boolean) {
         <div v-if="attachedLabels.length" class="flex flex-wrap gap-1.5 mb-2">
           <span
             v-for="l in attachedLabels" :key="l.id"
-            class="inline-flex items-center gap-1.5 pl-2.5 pr-1.5 h-7 rounded-full text-[0.8125rem] font-medium text-white"
+            class="inline-flex items-center gap-1.5 pl-2.5 pr-1.5 h-7 rounded-full text-sm font-medium text-white"
             :style="{ background: l.color }"
           >
             {{ l.name }}
@@ -147,10 +147,10 @@ async function onVisibility(open: boolean) {
             @click="toggleLabel(l)"
           >
             <span class="size-3 rounded-full shrink-0" :style="{ background: l.color }" />
-            <span class="flex-1 text-left text-[0.875rem] text-[var(--color-text)]">{{ l.name }}</span>
+            <span class="flex-1 text-left text-sm text-[var(--color-text)]">{{ l.name }}</span>
             <Icon v-if="isLabelAttached(l.id)" name="ph:check-bold" class="size-4 text-[var(--color-primary-500)]" />
           </button>
-          <p v-if="!labels.length" class="text-[0.8125rem] text-[var(--color-text-faint)] px-2 py-1.5">Todavía no tienes ninguna etiqueta.</p>
+          <p v-if="!labels.length" class="text-sm text-[var(--color-text-faint)] px-2 py-1.5">Todavía no tienes ninguna etiqueta.</p>
 
           <div class="border-t border-[var(--color-hairline)] mt-2 pt-2.5">
             <div class="flex items-center gap-1.5 mb-2">
@@ -165,7 +165,7 @@ async function onVisibility(open: boolean) {
             <div class="flex gap-2">
               <input
                 v-model="newLabelName" type="text" placeholder="Nueva etiqueta…"
-                class="flex-1 h-9 px-3 rounded-[var(--radius-xs)] bg-[var(--color-ink-raised)] border border-[var(--color-hairline)] text-[0.875rem] text-[var(--color-text)] placeholder:text-[var(--color-text-faint)] focus:outline-none focus:border-[var(--color-primary-500)]/60"
+                class="input flex-1 h-9"
                 @keydown.enter.prevent="createAndAttachLabel"
               >
               <BaseButton size="sm" variant="secondary" :disabled="!newLabelName.trim()" @click="createAndAttachLabel">Crear</BaseButton>
@@ -177,7 +177,7 @@ async function onVisibility(open: boolean) {
       <!-- Checklist -->
       <div class="mb-5">
         <div class="flex items-center justify-between mb-1.5">
-          <span class="text-[0.8125rem] font-medium text-[var(--color-text-muted)]">
+          <span class="text-sm font-medium text-[var(--color-text-muted)]">
             Checklist{{ checklistItems.length ? ` · ${checklistItems.filter((i) => i.done).length}/${checklistItems.length}` : '' }}
           </span>
         </div>
@@ -195,7 +195,7 @@ async function onVisibility(open: boolean) {
             >
               <Icon v-if="item.done" name="ph:check-bold" class="size-3 text-white" />
             </button>
-            <span class="flex-1 text-[0.875rem]" :class="item.done ? 'text-[var(--color-text-faint)] line-through' : 'text-[var(--color-text)]'">{{ item.text }}</span>
+            <span class="flex-1 text-sm" :class="item.done ? 'text-[var(--color-text-faint)] line-through' : 'text-[var(--color-text)]'">{{ item.text }}</span>
             <button type="button" aria-label="Borrar elemento" class="size-6 flex items-center justify-center rounded-full text-[var(--color-text-faint)] opacity-0 group-hover:opacity-100 hover:bg-[var(--color-ink-overlay)] hover:text-[var(--color-status-alert)]" @click="deleteItem(item.id)">
               <Icon name="ph:x-bold" class="size-3" />
             </button>
@@ -205,7 +205,7 @@ async function onVisibility(open: boolean) {
         <div class="flex gap-2">
           <input
             v-model="newItemText" type="text" placeholder="Añadir elemento…"
-            class="flex-1 h-9 px-3 rounded-[var(--radius-xs)] bg-[var(--color-ink-overlay)] border border-[var(--color-hairline)] text-[0.875rem] text-[var(--color-text)] placeholder:text-[var(--color-text-faint)] focus:outline-none focus:border-[var(--color-primary-500)]/60"
+            class="input flex-1 h-9"
             @keydown.enter.prevent="addItem"
           >
           <BaseButton size="sm" variant="secondary" :disabled="!newItemText.trim()" @click="addItem">Añadir</BaseButton>
@@ -218,15 +218,15 @@ async function onVisibility(open: boolean) {
       />
       <BaseCard v-else radius="lg" padding="lg" class="flex items-center justify-between gap-4 mb-5">
         <div>
-          <p class="text-[0.9375rem] text-[var(--color-text)]">Todavía no has predicho el éxito</p>
-          <p class="text-[0.8125rem] text-[var(--color-text-muted)] mt-0.5">
+          <p class="text-base text-[var(--color-text)]">Todavía no has predicho el éxito</p>
+          <p class="text-sm text-[var(--color-text-muted)] mt-0.5">
             <template v-if="creditBalance === 0">
               Sin créditos —
               <NuxtLink to="/creator/profile?tab=billing" class="text-[var(--color-primary-500)] hover:text-[var(--color-primary-600)] underline underline-offset-2">mejora tu plan</NuxtLink>
             </template>
             <template v-else>1 crédito · quedan {{ creditBalance ?? '…' }}</template>
           </p>
-          <p v-if="predictError" class="text-[0.8125rem] text-[var(--color-status-alert)] mt-1">{{ predictError }}</p>
+          <p v-if="predictError" class="text-sm text-[var(--color-status-alert)] mt-1">{{ predictError }}</p>
         </div>
         <BaseButton
           variant="primary" icon="ph:sparkle-fill" :icon-spin="predicting" :disabled="predicting || creditBalance === 0"
@@ -237,7 +237,7 @@ async function onVisibility(open: boolean) {
       </BaseCard>
 
       <section v-if="revisionNotes.length" class="mb-5">
-        <h2 class="text-[0.6875rem] font-semibold uppercase tracking-wide text-[var(--color-text-faint)] mb-3">Historial de revisión</h2>
+        <h2 class="text-sm font-semibold text-[var(--text-muted)] mb-3">Historial de revisión</h2>
         <div class="flex flex-col gap-2.5">
           <div
             v-for="note in revisionNotes" :key="note.id"
@@ -250,12 +250,12 @@ async function onVisibility(open: boolean) {
               <Icon :name="note.kind === 'approved' ? 'ph:check-bold' : 'ph:arrow-counter-clockwise-bold'" class="size-4" />
             </span>
             <div class="min-w-0 flex-1">
-              <p class="text-[0.8125rem] text-[var(--color-text)]">
+              <p class="text-sm text-[var(--color-text)]">
                 <span class="font-medium">{{ note.authorName }}</span>
                 {{ note.kind === 'approved' ? 'aprobó esta publicación' : 'pidió cambios' }}
                 <span class="text-[var(--color-text-faint)]">· {{ relativeTime(note.createdAt) }}</span>
               </p>
-              <p v-if="note.comment" class="text-[0.8125rem] text-[var(--color-text-muted)] leading-relaxed mt-1">{{ note.comment }}</p>
+              <p v-if="note.comment" class="text-sm text-[var(--color-text-muted)] leading-relaxed mt-1">{{ note.comment }}</p>
             </div>
           </div>
         </div>

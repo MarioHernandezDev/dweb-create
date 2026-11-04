@@ -20,20 +20,20 @@ async function submit() {
 </script>
 
 <template>
-  <div class="min-h-dvh flex items-center justify-center bg-[var(--color-ink)] px-5">
-    <form class="w-full max-w-sm" @submit.prevent="submit">
-      <h1 class="font-display text-[1.5rem] text-[var(--color-text)] mb-1">Panel de administración</h1>
-      <p class="text-[0.875rem] text-[var(--color-text-muted)] mb-6">Solo para el equipo.</p>
+  <div class="auth__main min-h-dvh">
+    <form class="auth__box" @submit.prevent="submit">
+      <BrandMark :size="40" class="mb-8" />
+      <h1 class="auth__title">Panel de administración</h1>
+      <p class="auth__sub">Solo para el equipo.</p>
 
-      <input
-        v-model="password" type="password" placeholder="Contraseña" autofocus
-        class="w-full h-12 px-4 rounded-[var(--radius-sm)] bg-[var(--color-ink-overlay)] border border-[var(--color-hairline)] text-[0.9375rem] text-[var(--color-text)] placeholder:text-[var(--color-text-faint)] focus:outline-none focus:border-[var(--color-primary-500)]/60 mb-3"
-      >
-      <p v-if="error" class="text-[0.8125rem] text-[var(--color-status-alert)] mb-3">{{ error }}</p>
-
-      <BaseButton type="submit" variant="primary" size="lg" class="w-full" :icon-spin="loading" :disabled="!password || loading">
-        {{ loading ? 'Entrando…' : 'Entrar' }}
-      </BaseButton>
+      <div class="auth__form">
+        <BaseField label="Contraseña" :error="error" v-slot="f">
+          <BaseInput v-bind="f" v-model="password" type="password" autofocus autocomplete="current-password" />
+        </BaseField>
+        <BaseButton type="submit" variant="primary" size="lg" block :loading="loading" :disabled="!password">
+          {{ loading ? 'Entrando…' : 'Entrar' }}
+        </BaseButton>
+      </div>
     </form>
   </div>
 </template>

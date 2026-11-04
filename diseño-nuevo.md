@@ -10,8 +10,12 @@
 |---|---|---|
 | 0 · Auditoría y propuesta | **Hecha y aprobada por Alex**, con una pasada de refinamiento («menos decoración gratuita») | [`docs/design/00_PROPUESTA_FASE0.md`](docs/design/00_PROPUESTA_FASE0.md), sobre todo §2 (paleta), §3 (sistema), §3.9 (criterios de acabado), §4 (arquitectura CSS), §5 (componentes) y §6 (orden de migración) |
 | 1 · Fundamentos | **Hecha** (CHANGELOG Alex-61) | [`docs/design/01_DESIGN_SYSTEM.md`](docs/design/01_DESIGN_SYSTEM.md) y `app/assets/css/` |
-| 2 · Biblioteca de componentes | **Siguiente** | — |
-| 3 a 6 | Pendientes | — |
+| 2 · Biblioteca de componentes | **Hecha** (CHANGELOG «[Mario] Rediseño Señal, Fases 2 a 4») | [`docs/design/01_DESIGN_SYSTEM.md`](docs/design/01_DESIGN_SYSTEM.md) §4b y `app/assets/css/components/` |
+| 3 · Shell y navegación | **Hecha** | `patterns/shell.css`, `AppShell`, `SideRail`, `TopBar`, `BottomTabBar` |
+| 4 · Migración de páginas | **Parcial.** Hecho: portada, integraciones, acceso, alta, error, legales, Hoy (2 roles), tablero, colaboraciones (lista), Métricas > Conexiones. **Pendiente de recomponer:** Descubrir, detalle de colaboración, Chat/Bandeja, YouTube, Perfiles, Perfil público, Guardados, detalle de publicación, Admin | CHANGELOG, sección «Sin verificar o pendiente» |
+| 5 y 6 | Pendientes | — |
+
+> **Actualización 2026-11-04 (logotipo y hormigas):** el logotipo vigente es `public/img/newlogo.jpeg` (manta raya en círculo), no el símbolo de dos arcos de la Fase 1; se regenera todo con `node scripts/design/build-brand-assets.mjs`. Las hormigas están eliminadas de toda la app. Donde esta sección habla del «símbolo de dos arcos y punto voltio» o de «las hormigas decorativas», manda esta nota.
 
 Lienzo visual de la propuesta (sistema, inicio de escritorio y móvil): https://claude.ai/artifact/CMy3yfWPDDgMDWByoRGSZ6. **Es privado de Alex**: si no lo puedes abrir, pídele que lo comparta. Todo lo que muestra está descrito en `00_PROPUESTA_FASE0.md`.
 

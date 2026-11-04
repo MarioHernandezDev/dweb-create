@@ -1,40 +1,46 @@
 /* ==========================================================================
    Componente · BrandMark (app/components/brand/BrandMark.vue)
-   Símbolo de dos arcos + punto, y wordmark en minúsculas. El tamaño llega en
-   --brand-size (alto del símbolo); todo lo demás se deriva de él.
+   Símbolo (manta raya en círculo, PNG con transparencia) y wordmark en
+   minúsculas. El tamaño llega en --brand-size (alto del símbolo); todo lo
+   demás se deriva de él. El símbolo es claro: sobre fondo claro va en ficha.
    ========================================================================== */
 
 @layer components {
   .brand-mark {
     --brand-ink: var(--color-tinta-950);
-    --brand-dot: var(--color-voltio-700);
 
     display: inline-flex;
     align-items: center;
-    gap: calc(var(--brand-size, 32px) * 0.32);
+    gap: calc(var(--brand-size, 32px) * 0.3);
     color: var(--brand-ink);
     line-height: 1;
     flex-shrink: 0;
 
     &.brand-mark--light {
       --brand-ink: var(--color-hueso-100);
-      --brand-dot: var(--color-voltio-400);
     }
   }
 
   .brand-mark__symbol {
+    display: grid;
+    place-items: center;
     width: var(--brand-size, 32px);
     height: var(--brand-size, 32px);
     flex-shrink: 0;
 
-    & path {
-      fill: none;
-      stroke: currentColor;
-      stroke-width: 9;
-      stroke-linecap: round;
+    & img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
     }
 
-    & circle { fill: var(--brand-dot); }
+    /* Fondo claro: ficha de tinta con el símbolo algo más pequeño dentro. */
+    .brand-mark--ink & {
+      background: var(--color-tinta-950);
+      border-radius: 28%;
+      padding: calc(var(--brand-size, 32px) * 0.08);
+    }
   }
 
   /* Wordmark como texto, para titulares que deben seguir siendo texto (h1 de

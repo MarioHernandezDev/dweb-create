@@ -24,46 +24,27 @@ const { avatarUrl, initials: myInitials, hue: myHue } = useMyAvatar()
 </script>
 
 <template>
-  <header class="sticky top-0 z-30 flex items-center gap-3 px-5 py-4 md:px-8 md:py-6 bg-[var(--color-ink)]/85 backdrop-blur-md border-b border-[var(--color-hairline)]">
-    <button
-      v-if="showBack"
-      type="button" aria-label="Volver" class="md:hidden -ml-1 size-8 flex items-center justify-center rounded-full text-[var(--color-text-muted)] hover:bg-[var(--color-ink-overlay)]"
-      @click="router.back()"
-    >
-      <Icon name="ph:arrow-left-bold" class="size-5" />
-    </button>
-    <BrandMark v-else :wordmark="false" :size="28" class="md:hidden" />
+  <header class="topbar">
+    <IconButton v-if="showBack" icon="ph:arrow-left-bold" label="Volver" class="md:hidden -ml-1" @click="router.back()" />
+    <BrandMark v-else :wordmark="false" :size="32" label="" class="md:hidden" />
 
     <div class="min-w-0 flex-1">
-      <h1 class="font-display text-[1.1875rem] md:text-[1.75rem] text-[var(--color-text)] truncate">{{ title }}</h1>
-      <!-- El subtítulo se oculta en móvil a propósito: con el icono de volver/logo,
-           el título, el buscador, chat, bandeja y avatar compartiendo una sola fila
-           en ~375px, era la primera víctima de la falta de espacio — el título
-           llegaba a truncarse a una o dos letras. La propia pantalla ya explica
-           su contenido; el subtítulo vuelve a partir de `md` donde sí cabe. -->
-      <p v-if="subtitle" class="hidden md:block text-[0.8125rem] text-[var(--color-text-muted)] truncate">{{ subtitle }}</p>
+      <h1 class="topbar__title">{{ title }}</h1>
+      <!-- El subtítulo se oculta en móvil: con volver/logo, título, buscador, chat,
+           bandeja y avatar en una sola fila de ~375 px, era el primero en perder sitio. -->
+      <p v-if="subtitle" class="topbar__subtitle truncate">{{ subtitle }}</p>
     </div>
 
     <ProfileSearchBar />
 
-    <NuxtLink to="/chat" aria-label="Chat" class="relative shrink-0 size-9 flex items-center justify-center rounded-full text-[var(--color-text-muted)] hover:bg-[var(--color-ink-overlay)] hover:text-[var(--color-text)]">
-      <Icon name="ph:chat-circle-fill" class="size-[1.15rem]" />
-      <span
-        v-if="chatUnreadCount"
-        class="absolute top-1 right-1 min-w-[0.9375rem] h-[0.9375rem] px-1 rounded-full bg-[var(--color-status-alert)] text-white text-[0.625rem] font-semibold leading-[0.9375rem] text-center"
-      >
-        {{ chatUnreadCount > 9 ? '9+' : chatUnreadCount }}
-      </span>
+    <NuxtLink to="/chat" aria-label="Chat" class="icon-link max-md:hidden">
+      <Icon name="ph:chat-circle-fill" class="size-5" />
+      <span v-if="chatUnreadCount" class="badge badge--on-light badge--corner">{{ chatUnreadCount > 9 ? '9+' : chatUnreadCount }}</span>
     </NuxtLink>
 
-    <NuxtLink to="/inbox" aria-label="Bandeja de entrada" class="relative shrink-0 size-9 flex items-center justify-center rounded-full text-[var(--color-text-muted)] hover:bg-[var(--color-ink-overlay)] hover:text-[var(--color-text)]">
-      <Icon name="ph:tray-fill" class="size-[1.15rem]" />
-      <span
-        v-if="unreadCount"
-        class="absolute top-1 right-1 min-w-[0.9375rem] h-[0.9375rem] px-1 rounded-full bg-[var(--color-status-alert)] text-white text-[0.625rem] font-semibold leading-[0.9375rem] text-center"
-      >
-        {{ unreadCount > 9 ? '9+' : unreadCount }}
-      </span>
+    <NuxtLink to="/inbox" aria-label="Bandeja de entrada" class="icon-link">
+      <Icon name="ph:tray-fill" class="size-5" />
+      <span v-if="unreadCount" class="badge badge--on-light badge--corner">{{ unreadCount > 9 ? '9+' : unreadCount }}</span>
     </NuxtLink>
 
     <NuxtLink :to="`/${role}/profile`" aria-label="Perfil" class="shrink-0">

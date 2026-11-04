@@ -4,6 +4,68 @@ Registro de qué se hizo, por qué, y qué queda pendiente de verificar — pens
 
 ---
 
+## 2026-11-04 (2) — [Mario] Rediseño «Señal»: ancho completo, perfil a sangre, hover de botones, logo animado, menú plegable y gráficas de «Hoy»
+
+Sin cambios en datos, rutas, permisos, Supabase, RPC, endpoints ni Stripe.
+
+### Qué se cambió
+
+- **Ancho completo:** se quita el tope de 1100 px del contenido; todas las pantallas aprovechan el ancho (la prop `fullWidth` de `AppShell` se conserva por compatibilidad). La lista de colaboraciones pasa a 2 o 3 columnas en pantallas anchas.
+- **Perfil (`/creator/profile`, `/partner/profile`):** el banner toca los bordes superior y laterales del contenedor (márgenes negativos sobre `--content-pad`), el avatar pasa de 64 px a 104 px (móvil) / 152 px (escritorio) y se superpone al 50 % sobre el banner. Sin foto de portada, `CoverArt` en vez del degradado. El hero pasa a ser el primer elemento de la página. No se ha tocado el perfil público (`/profile/...`).
+- **Hover de botones:** relleno de izquierda a derecha con colores invertidos y texto a juego (verde con texto oscuro → oscuro con texto verde, etc.); ver tabla en `01_DESIGN_SYSTEM.md` §4b.
+- **Logo animado (`AnimatedMark`):** barrido circular que revela el trazo, entrada con escala, destello que recorre solo la silueta, flotación y ondas. Se usa en la **pantalla de carga** (ahora fondo de tinta) y en la portada. Todo CSS, sin dependencias; con movimiento reducido se ve quieto.
+- **Menú lateral plegable** con animación de ancho (256 → 80 px), botón con `aria-expanded`, `title` en los iconos y estado en cookie (sin parpadeo al cargar).
+- **Gráficas de «Hoy» (creador y partner):** columnas con las entregas de los próximos 7 días (pendientes/publicadas, «hoy» en voltio, aviso de fuera de plazo) y barra apilada con el reparto por fase. Sin librerías; calculadas con lo ya cargado (`utils/home-charts.ts`, 8 tests nuevos). Un día sin entregas no muestra número y, si no hay ninguna, se dice con un mensaje en vez de siete ceros.
+
+### Verificado de verdad
+
+- `vue-tsc` limpio; **629 pruebas unitarias** OK (8 nuevas); `nuxt build` completo en copia aislada.
+- **Navegador real (Chromium por Playwright):** menú: 256 → 107 px a los 120 ms → 80 px, cookie guardada, contenido pasa a 1360 px y el estado persiste al recargar. Botón de marca: relleno al 0 % en reposo, 89 % a los 110 ms y 100 % al final, con el texto pasando de tinta a voltio (medido con `getComputedStyle`). Logo: fotogramas a 150 ms, 450 ms y 2,3 s (revelado en curso, casi completo, completo). Sin desbordes (0 px) ni errores de consola en: Hoy, Descubrir, Publicaciones, Colaboraciones, Métricas y Chat del creador, y Hoy y Descubrir del partner, a 1920 y 390 px; Perfil del creador a 1440 y 390; Perfil y Hoy del partner a 1440.
+- Defectos corregidos al medir: gráfica de semana vacía con siete ceros; texto de la barra de fases del partner decía «cuando crees la primera» (el partner no crea publicaciones); tarjetas de colaboraciones descentradas verticalmente por el `<button>` envolvente.
+
+### Sin verificar
+
+- La pantalla de carga completa no se ha visto en el navegador (solo `AnimatedMark` en la portada): aparece tras 200 ms de navegación lenta y no se forzó. Tampoco el efecto con movimiento reducido ni en Safari/Firefox (la máscara cónica con `@property` necesita Safari 16.4+/Firefox 128+; si falta, se ve el símbolo completo sin barrido).
+- Gráficas: probadas solo con los datos de las cuentas demo (sin entregas en los próximos 7 días); no se ha visto con barras reales ni con muchas entregas. No se ha medido accesibilidad con lector de pantalla.
+- 768 y 1024 px no medidos; hover de botones no revisado en táctil ni con teclado (el foco mantiene el anillo cobalto, sin relleno).
+- Menú plegado: no se ha revisado cada página con él plegado ni el comportamiento de la insignia numérica en la esquina.
+- Para comprobar en el navegador se iniciaron otras dos sesiones con las cuentas demo (una por rol) contra el Supabase compartido: dos avisos más de «Has iniciado sesión».
+
+---
+
+## 2026-11-04 — [Mario] Rediseño «Señal», Fases 2 a 4 (parcial): logotipo nuevo, componentes, shell, portada y subpáginas, sin hormigas
+
+Continúa `diseño-nuevo.md` (traspaso de Alex-61). Sin cambios en datos, rutas, permisos, Supabase, RPC, endpoints ni Stripe.
+
+### Qué se cambió
+
+- **Logotipo nuevo** (`public/img/newlogo.jpeg`, manta raya en círculo). `scripts/design/build-brand-assets.mjs` convierte la luminosidad en transparencia y genera el símbolo (`mark-*.png`), `favicon.ico`, iconos de instalación (192, 512, maskable, Apple) y `icon-16/32`. `BrandMark` pinta el PNG: sin ficha sobre fondo oscuro, con ficha de tinta sobre fondo claro (el símbolo es claro y se pierde sobre papel). Manifiesto y `theme-color` pasan a tinta. Se borran el favicon SVG, los símbolos SVG, `render-brand-icons.mjs` y las fuentes Snasm.
+- **Hormigas eliminadas** de la portada, el pie, integraciones, instalación y la pantalla de carga (que ahora es el símbolo sobre ficha de tinta con un pulso). `grep` sin resultados en código y en el compilado.
+- **Fase 2 · biblioteca de componentes** (CSS en `app/assets/css/components/`, documentada en `01_DESIGN_SYSTEM.md` §4b): `BaseButton` rehecho (6 variantes + inverse, 3 tamaños, `loading`), `IconButton`, `BaseField`/`BaseInput`/`BaseTextarea`/`BaseSelect`, `Chip`, `SegmentedTabs` (indicador solo con CSS), `BaseCard` con variantes, `PanelCard`, `SectionTitle`, `PageHeader`, `DataList`, `PhaseChip` y `CollabStatus` (dos sistemas visuales separados; `StatusPill` queda como adaptador), `BaseAvatar` (matiz por variable CSS), `EmptyState`, `SkeletonBlock` (medidas por variables), `CoverArt`, `WaveMotif`. Se mantienen las props existentes.
+- **Fase 3 · shell:** columna lateral de tinta a altura completa (V-02), indicador activo de voltio, contadores siempre con número, barra superior sin el chat en móvil (ya está en la inferior) y **barra inferior flotante en píldora** con la pestaña activa en voltio.
+- **Fase 4 · pantallas:** portada pública nueva (titular, símbolo con ondas, fases visibles, mosaico, perfiles de uso, llamada final, pie), integraciones e instalación (estado real de cada red: YouTube disponible, Instagram en verificación con Meta, el resto próximamente; antes decía «conexión manual disponible» para seis), acceso, alta, confirmación, error 404, login de admin y páginas legales (columna de lectura de ~70 caracteres). **Inicio del creador y del partner** (cabecera con frase de estado calculada de datos reales, cifras con tinte, bloque destacado, actividad sin cajas), **tablero** (columnas hundidas con la fase en su color, tarjetas con chip de fase, portadas `CoverArt`), colaboraciones (`CollabStatus`, rejilla de 2–3 columnas), Métricas > Conexiones (solo las redes disponibles ocupan fila; las demás, en una línea).
+- **Barridos mecánicos en toda la app:** 689 tamaños de letra de 10–15 px pasan a la escala (`text-micro` 12, `text-sm` 14, `text-base` 16); 39 etiquetas en mayúsculas espaciadas pasan a texto normal de 14 px peso 600; 69 campos de formulario pasan a `.input`/`.textarea`/`.select` (conservando `pl-*`, `pr-*`, `h-*`); el botón «+» pasa a voltio.
+- **Contenido de la portada corregido:** «El parte de rodaje de tu contenido» (eslogan del tema de cine) sustituido por la descripción del manifiesto; el pie ya no afirma que se conecten seis redes.
+- Captura del móvil de la guía de instalación regenerada con el diseño nuevo (cuenta demo del creador).
+
+### Verificado de verdad
+
+- `vue-tsc --noEmit` limpio; **621 pruebas unitarias** OK; `nuxt build` de producción completo (en una copia aislada; los avisos de «Duplicated imports» ya existían); `check-contrast.mjs` 31/31.
+- **Navegador real (Chromium por Playwright, copia aislada en `:3100`)**, sin desbordes horizontales (0 px) y sin errores de consola ni respuestas ≥ 400 en: portada, integraciones, acceso, alta (paso 1), términos y 404 a 1440 y 390 px; creador (Hoy, Publicaciones tablero y lista, Descubrir, Colaboraciones, Métricas, Perfil, Chat, Bandeja, Guardados) a 1440 y 390; partner (Inicio, Descubrir, Colaboraciones, Perfil) a 1440 y 390. Revisadas visualmente las capturas de la portada (1440 y 390), integraciones, acceso, términos, Hoy (ambos roles), tablero, colaboraciones, Métricas y Perfil.
+- Defectos reales encontrados al medir y corregidos: el contenido de la portada salía **en blanco** en capturas de página completa (la animación de scroll lo dejaba a opacidad 0 fuera de pantalla: ahora `fill-mode: forwards`); los anillos del motivo salían descentrados; el barrido de campos eliminó el relleno izquierdo de los buscadores con lupa y los pasó a 48 px de alto fijo (restaurado, y `.input` usa `height` en vez de `min-height` para que `h-9` funcione); el título de columna con el color fuerte de la fase no llegaba a 4,5:1 en tres fases (idea 4,32, producción 3,99, publicado 4,30): ahora va en tinta.
+- El logotipo sobre fondo claro (papel) se comprobó a ojo: se pierde, por eso lleva ficha.
+
+### Sin verificar o pendiente
+
+- **No recompuestas aún (solo reciben el shell, los tokens, los tamaños, las etiquetas y los campos nuevos):** Descubrir (los dos roles, 66 % duplicados), detalle de colaboración (hoja), Chat y Bandeja, panel de YouTube, Perfiles privados, Perfil público, Guardados, detalle de publicación y hojas, y el panel de administración. Siguen con sus degradados de portada (`ProfileHero`, `FeaturedDeck`, `DiscoveryCard`, `PublicProfileView`, `CoverPhotoUploader`; ~15 archivos con degradado en línea), con `:style` de color en gráficas y con los **alias de transición** de `tokens.css` en las páginas (siguen sin poder borrarse).
+- No se han unificado las páginas duplicadas entre roles (§8 del encargo).
+- No medido: 768 y 1024 px, axe-core, teclado real, lector de pantalla, Safari/Firefox, táctil, impresión; ni el paso 2 de la alta, la confirmación, el envío de formularios (error de contraseña, éxito), las hojas inferiores ni los diálogos. El efecto `.reveal` solo se comprobó en la captura de página completa y que el contenido es visible; no se ha visto la animación en un scroll real.
+- La captura de `panel-preview.png` incluye los datos de la cuenta demo del creador en el Supabase compartido.
+- GSAP (`useGsap`, `useScrollReveal`, `useCountUp`) ya no lo usa ningún componente tras reescribir la portada: candidatos a borrar, junto con la dependencia, en la limpieza final (no se ha tocado `package.json`).
+- Para comprobar en el navegador se iniciaron dos sesiones con las cuentas demo de desarrollo contra el Supabase compartido (una por rol): crean dos avisos «Has iniciado sesión».
+
+---
+
 ## 2026-11-04 (Alex-61) — [Alex] Rediseño «Señal», Fase 1: fundamentos, identidad y estructura del CSS
 
 Encargo: `diseño-nuevo.md`. Propuesta aprobada: `docs/design/00_PROPUESTA_FASE0.md` (y lienzo visual). Sin cambios en datos, rutas, Supabase ni Stripe.

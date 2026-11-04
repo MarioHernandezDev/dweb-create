@@ -150,12 +150,12 @@ const liveStatus = computed(() => {
     <div class="flex items-center gap-2.5 mb-3">
       <Icon name="ph:sparkle-fill" class="size-4 text-[var(--color-primary-500)]" />
       <h2 class="font-display text-[1.125rem] text-[var(--color-text)]">{{ scoreMeaningful ? 'Destacados para ti' : 'Perfiles para explorar' }}</h2>
-      <span v-if="loading" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[var(--color-primary-50)] text-[var(--color-primary-600)] text-[0.8125rem] font-semibold">
+      <span v-if="loading" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[var(--color-primary-50)] text-[var(--color-primary-600)] text-sm font-semibold">
         <Icon name="ph:circle-notch-bold" class="size-3.5 animate-spin" /> La IA está analizando…
       </span>
       <button
         v-if="loading" type="button"
-        class="text-[0.75rem] font-medium text-[var(--color-text-muted)] hover:text-[var(--color-text)] underline underline-offset-2"
+        class="text-micro font-medium text-[var(--color-text-muted)] hover:text-[var(--color-text)] underline underline-offset-2"
         @click="$emit('cancel')"
       >
         Cancelar
@@ -187,7 +187,7 @@ const liveStatus = computed(() => {
               <p class="text-[0.84375rem] text-white leading-relaxed">{{ summary }}</p>
             </div>
             <div v-if="categories.length" class="flex flex-wrap gap-1.5 mt-3">
-              <span v-for="c in categories" :key="c" class="px-2 py-0.5 rounded-full text-[0.6875rem] font-medium bg-white/12 text-white/85">{{ c }}</span>
+              <span v-for="c in categories" :key="c" class="px-2 py-0.5 rounded-full text-micro font-medium bg-white/12 text-white/85">{{ c }}</span>
             </div>
           </div>
 
@@ -217,24 +217,24 @@ const liveStatus = computed(() => {
                 <span class="absolute inset-x-0 bottom-0 h-3/4" style="background: linear-gradient(to top, rgb(10 9 12 / 92%) 10%, rgb(10 9 12 / 0%) 100%)" />
 
                 <span v-if="scoreMeaningful" class="absolute top-3 left-3 inline-flex items-center gap-0.5 px-2.5 py-1.5 rounded-full bg-[var(--color-primary-500)] shadow-[0_4px_14px_-4px_rgb(0_0_0/45%)]">
-                  <span class="font-display text-[1.375rem] leading-none text-white">{{ r.score }}</span><span class="text-[0.75rem] font-medium text-white/90">%</span>
+                  <span class="font-display text-[1.375rem] leading-none text-white">{{ r.score }}</span><span class="text-micro font-medium text-white/90">%</span>
                 </span>
 
                 <div class="absolute inset-x-0 bottom-0 p-4 flex flex-col gap-1.5 text-left">
                   <div v-if="r.categories.length" class="flex flex-wrap gap-1">
-                    <span v-for="c in r.categories.slice(0, 2)" :key="c" class="px-2 py-0.5 rounded-full text-[0.625rem] font-medium bg-white/15 text-white backdrop-blur-sm">{{ c }}</span>
+                    <span v-for="c in r.categories.slice(0, 2)" :key="c" class="px-2 py-0.5 rounded-full text-micro font-medium bg-white/15 text-white backdrop-blur-sm">{{ c }}</span>
                   </div>
                   <h3 class="font-display text-[1.25rem] text-white leading-snug truncate">{{ r.name }}</h3>
-                  <span v-if="isPending(r)" class="self-start px-1.5 py-0.5 rounded-full text-[0.625rem] font-medium bg-white/15 text-white backdrop-blur-sm">Pendiente de respuesta</span>
-                  <p v-if="r.reason || r.bio" class="text-[0.8125rem] text-white/85 leading-snug line-clamp-2">{{ r.reason ?? r.bio }}</p>
+                  <span v-if="isPending(r)" class="self-start px-1.5 py-0.5 rounded-full text-micro font-medium bg-white/15 text-white backdrop-blur-sm">Pendiente de respuesta</span>
+                  <p v-if="r.reason || r.bio" class="text-sm text-white/85 leading-snug line-clamp-2">{{ r.reason ?? r.bio }}</p>
                   <!-- Hallazgo #9: antes se veía un hueco en blanco en vez de explicar por qué no hay descripción. -->
-                  <p v-else class="text-[0.8125rem] text-white/60 italic">Ficha en construcción</p>
+                  <p v-else class="text-sm text-white/60 italic">Ficha en construcción</p>
                 </div>
               </button>
 
               <div class="p-3.5 flex flex-col gap-2">
-                <p v-if="r.lookingFor" class="text-[0.75rem] text-[var(--color-text-muted)] leading-snug line-clamp-1"><span class="text-[var(--color-text-faint)]">Busca:</span> {{ r.lookingFor }}</p>
-                <div class="flex items-center gap-3 text-[0.75rem] text-[var(--color-text-muted)]">
+                <p v-if="r.lookingFor" class="text-micro text-[var(--color-text-muted)] leading-snug line-clamp-1"><span class="text-[var(--color-text-faint)]">Busca:</span> {{ r.lookingFor }}</p>
+                <div class="flex items-center gap-3 text-micro text-[var(--color-text-muted)]">
                   <span v-if="kind === 'creator' && r.followers" class="inline-flex items-center gap-1">
                     <Icon name="ph:users-three-fill" class="size-3.5 text-[var(--color-text-faint)]" /> {{ formatCompactNumber(r.followers) }} seguidores
                   </span>
@@ -258,7 +258,7 @@ const liveStatus = computed(() => {
         >
           <Icon name="ph:plus-bold" class="size-5" />
         </button>
-        <p v-if="!canAdvance && !revealing" class="w-20 text-center text-[0.625rem] leading-snug text-[var(--color-text-faint)]">Son todos por ahora</p>
+        <p v-if="!canAdvance && !revealing" class="w-20 text-center text-micro leading-snug text-[var(--color-text-faint)]">Son todos por ahora</p>
       </div>
     </div>
   </div>

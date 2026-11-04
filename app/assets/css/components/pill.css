@@ -1,0 +1,55 @@
+/* ==========================================================================
+   Componentes · Estados (PhaseChip.vue, CollabStatus.vue)
+   Dos sistemas visuales que no se mezclan (propuesta §3.3):
+   - Fase de una publicación: chip rectangular con tinte y texto tinta.
+   - Estado de una colaboración: píldora con contorno, sin relleno.
+   La clave llega en data-status; el color lo decide este archivo, no el TS.
+   ========================================================================== */
+
+@layer components {
+  .phase-chip {
+    --tint: var(--color-phase-idea-tint);
+
+    display: inline-flex;
+    align-items: center;
+    height: 1.75rem;
+    padding-inline: 0.625rem;
+    border-radius: var(--radius-xs);
+    background: var(--tint);
+    color: var(--color-tinta-950);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
+
+    &.phase-chip--compact { height: 1.5rem; padding-inline: 0.5rem; font-size: var(--text-micro); }
+    &[data-status="idea"] { --tint: var(--color-phase-idea-tint); }
+    &[data-status="in_production"] { --tint: var(--color-phase-production-tint); }
+    &[data-status="ready_for_review"] { --tint: var(--color-phase-review-tint); }
+    &[data-status="scheduled"] { --tint: var(--color-phase-scheduled-tint); }
+    &[data-status="published"] { --tint: var(--color-phase-published-tint); }
+    &[data-status="overdue"] { --tint: var(--color-danger-tint); }
+  }
+
+  .collab-status {
+    display: inline-flex;
+    align-items: center;
+    height: 1.75rem;
+    padding-inline: 0.75rem;
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius-pill);
+    color: var(--text-strong);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
+
+    &.collab-status--compact { height: 1.5rem; padding-inline: 0.625rem; font-size: var(--text-micro); }
+    &[data-status="declined"] {
+      color: var(--color-danger);
+      border-color: color-mix(in oklab, var(--color-danger) 40%, transparent);
+    }
+    /* Lo que espera una respuesta se distingue por trazo más marcado, no por color. */
+    &[data-status="requested"] { border-color: var(--color-tinta-950); }
+  }
+}

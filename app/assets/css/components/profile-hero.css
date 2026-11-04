@@ -1,0 +1,60 @@
+/* ==========================================================================
+   Componente · Cabecera de perfil (ProfileHero.vue)
+   El banner llega a los bordes del contenedor (superior y laterales) usando el
+   relleno de la página (--content-pad, ver patterns/shell.css) con márgenes
+   negativos. El avatar mide el doble que antes y se superpone al 50 % sobre el
+   banner: su mitad superior queda sobre la imagen, la inferior sobre la ficha.
+   ========================================================================== */
+
+@layer components {
+  .profile-hero {
+    --avatar-d: 6.5rem;
+
+    margin: calc(-1 * var(--content-pad, 1.25rem)) calc(-1 * var(--content-pad, 1.25rem)) 0;
+    background: var(--surface-raised);
+    border-bottom: 1px solid var(--line);
+    @media (width >= 48rem) { --avatar-d: 9.5rem; }
+  }
+  .profile-hero__cover { position: relative; height: 9rem; overflow: hidden; background: var(--surface-sunken); @media (width >= 48rem) { height: 14rem; } }
+  .profile-hero__img { width: 100%; height: 100%; object-fit: cover; }
+
+  .profile-hero__body { padding: 0 var(--content-pad, 1.25rem) 1.5rem; }
+  .profile-hero__row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 0.75rem 1.25rem;
+  }
+  .profile-hero__avatar {
+    --uploader-size: var(--avatar-d);
+
+    flex-shrink: 0;
+    width: var(--avatar-d);
+    height: var(--avatar-d);
+    margin-top: calc(var(--avatar-d) / -2);   /* 50 % sobre el banner */
+    border: 5px solid var(--surface-raised);
+    border-radius: var(--radius-pill);
+    background: var(--surface-raised);
+    box-sizing: content-box;
+  }
+  .profile-hero__who { flex: 1; min-width: 0; padding-bottom: 0.25rem; }
+  .profile-hero__name {
+    font-family: var(--font-display);
+    font-size: var(--text-headline);
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: -0.03em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .profile-hero__sub { color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .profile-hero__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; padding-bottom: 0.25rem; }
+
+  .profile-hero__meta {
+    display: grid;
+    gap: 1.25rem;
+    margin-top: 1.25rem;
+    @media (width >= 64rem) { grid-template-columns: minmax(0, 1fr) minmax(0, 22rem); align-items: start; }
+  }
+}

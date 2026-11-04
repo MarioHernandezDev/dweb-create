@@ -91,20 +91,20 @@ async function declineWithConfirm() {
   <div v-if="offer && copy" class="w-full max-w-md rounded-[var(--radius-md)] border border-[var(--color-hairline-strong)] bg-[var(--color-paper)] p-4 shadow-sm" data-offer-card :data-status="offer.status">
     <div class="flex items-start justify-between gap-3">
       <div class="min-w-0">
-        <p class="text-[0.6875rem] font-semibold uppercase tracking-wide text-[var(--color-text-faint)]">{{ copy.heading }}</p>
-        <p class="mt-0.5 truncate text-[0.9375rem] font-medium text-[var(--color-text)]">{{ packageTitle ?? 'Paquete' }}</p>
+        <p class="text-sm font-semibold text-[var(--text-muted)]">{{ copy.heading }}</p>
+        <p class="mt-0.5 truncate text-base font-medium text-[var(--color-text)]">{{ packageTitle ?? 'Paquete' }}</p>
       </div>
-      <span class="inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[0.6875rem] font-medium" :style="{ color: statusMeta[offer.status]!.color, backgroundColor: 'color-mix(in oklab, ' + statusMeta[offer.status]!.color + ' 14%, transparent)' }">
+      <span class="inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-micro font-medium" :style="{ color: statusMeta[offer.status]!.color, backgroundColor: 'color-mix(in oklab, ' + statusMeta[offer.status]!.color + ' 14%, transparent)' }">
         <Icon :name="statusMeta[offer.status]!.icon" class="size-3.5" /> {{ statusMeta[offer.status]!.label }}
       </span>
     </div>
 
-    <p v-if="!offer.packageId" class="mt-1 text-[0.75rem] text-[var(--color-text-faint)]" data-package-gone>Este paquete ya no está disponible.</p>
+    <p v-if="!offer.packageId" class="mt-1 text-micro text-[var(--color-text-faint)]" data-package-gone>Este paquete ya no está disponible.</p>
     <p class="mt-2 font-display text-[1.375rem] leading-none text-[var(--color-text)]">{{ formatEuros(offer.proposedPriceCents) }}</p>
-    <p v-if="offer.message" class="mt-2 whitespace-pre-wrap break-words text-[0.8125rem] text-[var(--color-text-muted)]">{{ offer.message }}</p>
+    <p v-if="offer.message" class="mt-2 whitespace-pre-wrap break-words text-sm text-[var(--color-text-muted)]">{{ offer.message }}</p>
 
-    <p class="mt-3 text-[0.8125rem] text-[var(--color-text-muted)]" data-offer-consequence>{{ copy.consequence }}</p>
-    <NuxtLink v-if="offer.status === 'accepted' && collaborationCreated" :to="collaborationId ? `/${myRole}/requests?collaboration=${collaborationId}` : `/${myRole}/requests?tab=active`" class="mt-1.5 inline-flex min-h-8 items-center gap-1 text-[0.8125rem] font-medium text-[var(--color-primary-500)] hover:text-[var(--color-primary-600)]" data-offer-collab>
+    <p class="mt-3 text-sm text-[var(--color-text-muted)]" data-offer-consequence>{{ copy.consequence }}</p>
+    <NuxtLink v-if="offer.status === 'accepted' && collaborationCreated" :to="collaborationId ? `/${myRole}/requests?collaboration=${collaborationId}` : `/${myRole}/requests?tab=active`" class="mt-1.5 inline-flex min-h-8 items-center gap-1 text-sm font-medium text-[var(--color-primary-500)] hover:text-[var(--color-primary-600)]" data-offer-collab>
       Ver colaboración <Icon name="ph:arrow-right-bold" class="size-3.5" />
     </NuxtLink>
 
@@ -112,10 +112,10 @@ async function declineWithConfirm() {
       <BaseButton variant="primary" size="sm" class="flex-1" :icon-spin="responding === offer.id" :disabled="!!responding" data-offer-accept @click="respond(true)">Aceptar</BaseButton>
       <BaseButton variant="secondary" size="sm" class="flex-1" :disabled="!!responding" data-offer-decline @click="declineWithConfirm">Rechazar</BaseButton>
     </div>
-    <p v-if="respondError" class="mt-2 text-[0.75rem] text-[var(--color-status-alert)]" role="alert">{{ respondError }}</p>
+    <p v-if="respondError" class="mt-2 text-micro text-[var(--color-status-alert)]" role="alert">{{ respondError }}</p>
   </div>
 
-  <div v-else-if="loaded" class="w-full max-w-md rounded-[var(--radius-md)] border border-dashed border-[var(--color-hairline-strong)] p-4 text-[0.8125rem] text-[var(--color-text-muted)]" data-offer-unavailable>
+  <div v-else-if="loaded" class="w-full max-w-md rounded-[var(--radius-md)] border border-dashed border-[var(--color-hairline-strong)] p-4 text-sm text-[var(--color-text-muted)]" data-offer-unavailable>
     <p class="inline-flex items-center gap-1.5 font-medium text-[var(--color-text)]"><Icon name="ph:package" class="size-4" /> Esta oferta ya no está disponible</p>
     <p class="mt-1">Puede que el paquete se haya borrado. El resto de la conversación no cambia.</p>
   </div>

@@ -188,7 +188,7 @@ function onRetry() {
         :kind="bannerKind ?? 'temporary'" :message="error || null" :busy="loading"
         @reconnect="$emit('reconnect')" @retry="$emit('reload')"
       />
-      <NuxtLink to="/creator/metrics#conexiones" class="text-[0.8125rem] font-medium text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:underline w-fit">
+      <NuxtLink to="/creator/metrics#conexiones" class="text-sm font-medium text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:underline w-fit">
         Gestionar conexión
       </NuxtLink>
     </template>
@@ -220,15 +220,15 @@ function onRetry() {
       <!-- Fila principal: el canal (protagonista + totales) y, al lado, el periodo elegido en rejilla 4×2 -->
       <div class="grid gap-5 xl:grid-cols-12 items-stretch">
         <section aria-labelledby="yt-totals" class="yt-reveal flex flex-col gap-3" :class="showPeriod ? 'xl:col-span-4' : 'xl:col-span-5'" style="--i: 1">
-          <h2 id="yt-totals" class="text-[0.6875rem] font-semibold uppercase tracking-wide text-[var(--color-text-faint)]">Total del canal</h2>
+          <h2 id="yt-totals" class="text-sm font-semibold text-[var(--text-muted)]">Total del canal</h2>
           <YoutubeKpiCard v-if="hero" :kpi="hero" class="flex-1" />
           <YoutubeTotalsList :kpis="secondary" />
         </section>
 
         <!-- Periodo: solo si las analíticas están disponibles; un fallo no esconde los totales -->
         <section v-if="showPeriod" aria-labelledby="yt-period" class="yt-reveal xl:col-span-8" style="--i: 2" :aria-busy="analyticsLoading">
-          <h2 id="yt-period" class="text-[0.6875rem] font-semibold uppercase tracking-wide text-[var(--color-text-faint)]">{{ periodLabel(days) }}</h2>
-          <p v-if="report" class="mt-0.5 mb-3 text-[0.75rem] text-[var(--color-text-faint)]">
+          <h2 id="yt-period" class="text-sm font-semibold text-[var(--text-muted)]">{{ periodLabel(days) }}</h2>
+          <p v-if="report" class="mt-0.5 mb-3 text-micro text-[var(--color-text-faint)]">
             {{ formatRangeLabel(report.range) }} · YouTube tarda 1-2 días en procesar los datos, por eso el periodo termina hace 2 días
           </p>
           <div v-else class="mb-3 mt-0.5"><SkeletonBlock width="14rem" height="0.75rem" /></div>
@@ -250,7 +250,7 @@ function onRetry() {
         <YoutubeInsights v-if="report" class="yt-reveal 2xl:col-span-4" style="--i: 4" :observations="observations" :loading="analyticsLoading" />
       </div>
 
-      <p v-else-if="channelTooNew" class="text-[0.8125rem] text-[var(--color-text-muted)] rounded-[var(--radius-md)] border border-[var(--color-hairline)] bg-[var(--color-paper)] p-4">
+      <p v-else-if="channelTooNew" class="text-sm text-[var(--color-text-muted)] rounded-[var(--radius-md)] border border-[var(--color-hairline)] bg-[var(--color-paper)] p-4">
         {{ analyticsError?.message }}
       </p>
 

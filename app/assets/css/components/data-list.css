@@ -1,0 +1,28 @@
+/* ==========================================================================
+   Componente · DataList (DataList.vue)
+   Pares etiqueta/valor con <dl> real. Una columna en móvil; con
+   .data-list--columns se reparte en dos desde el ancho de tableta.
+   ========================================================================== */
+
+@layer components {
+  .data-list {
+    display: grid;
+    gap: 0;
+    margin: 0;
+
+    &.data-list--columns {
+      @media (width >= 40rem) { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--gap-loose); }
+    }
+  }
+  .data-list__row {
+    display: grid;
+    grid-template-columns: minmax(7rem, 38%) minmax(0, 1fr);
+    gap: var(--gap);
+    padding-block: 0.75rem;
+    border-bottom: 1px solid var(--line);
+
+    &:last-child { border-bottom: 0; }
+  }
+  .data-list__term { color: var(--text-muted); font-size: var(--text-sm); }
+  .data-list__value { font-weight: 600; overflow-wrap: anywhere; }
+}

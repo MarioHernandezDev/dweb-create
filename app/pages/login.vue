@@ -17,13 +17,10 @@ const isDev = import.meta.dev
 
 // `v-if="isDev"` ya ocultaba el botón en producción, pero el email y la
 // contraseña de las cuentas de demo seguían viajando como texto plano
-// dentro del bundle de cliente de TODAS formas (`demoAccounts`/
-// `demoPassword` se definían sin condición, solo su renderizado era
-// condicional) — confirmado leyendo el bundle real de `.output/` tras
-// `npm run build`. `import.meta.dev` lo sustituye Vite por un booleano
-// literal en tiempo de compilación; con el valor dentro de este `if`, el
-// minificador elimina la rama entera (y las cadenas) en la build de
-// producción, no solo el HTML que la usa.
+// dentro del bundle de cliente (confirmado leyendo el bundle real de
+// `.output/` tras `npm run build`). `import.meta.dev` lo sustituye Vite por
+// un booleano literal en tiempo de compilación; con el valor dentro de este
+// `if`, el minificador elimina la rama entera (y las cadenas) en producción.
 let demoAccounts: { label: string; email: string; icon: string }[] = []
 let demoPassword = ''
 if (import.meta.dev) {
@@ -37,9 +34,8 @@ if (import.meta.dev) {
 async function login(loginEmail: string, loginPassword: string) {
   loading.value = true
   error.value = ''
-  // Las cuentas de demo cambian de rol con un clic, sin pasar por "Cerrar
-  // sesión" — hay que tirar toda la caché de la cuenta anterior aquí
-  // también, o se vería su contenido un instante al entrar con la nueva.
+  // Las cuentas de demo cambian de rol con un clic, sin pasar por «Cerrar
+  // sesión»: hay que tirar toda la caché de la cuenta anterior aquí también.
   resetAccountCaches()
 
   const { data, error: signInError } = await supabase.auth.signInWithPassword({ email: loginEmail, password: loginPassword })
@@ -71,78 +67,39 @@ function loginAsDemo(demoEmail: string) {
 </script>
 
 <template>
-  <div class="min-h-dvh bg-[var(--color-ink)] pt-16 md:pt-[4.5rem] md:flex">
-    <LandingNav />
+  <AuthShell>
+    <h1 class="auth__title">Accede a tu cuenta</h1>
+    <p class="auth__sub">Entra con el email y la contraseña de tu cuenta CIBERAN.</p>
 
-    <!-- Panel de marca: solo en escritorio, el móvil va directo al formulario -->
-    <div class="hidden md:flex md:flex-col md:justify-center md:w-[42%] lg:w-[38%] shrink-0 relative overflow-hidden">
-      <div class="absolute inset-0 bg-[var(--surface-inverse)]" />
-      <div
-        aria-hidden="true"
-        class="absolute -bottom-36 -left-28 size-[28rem] rounded-full blur-[100px] opacity-[0.35] nx-hero-blob"
-        style="background: radial-gradient(circle, var(--color-logo-teal), var(--color-primary-500) 55%, transparent 72%)"
-      />
+    <form class="auth__form" @submit.prevent="submit">
+      <BaseField label="Email" v-slot="f">
+        <BaseInput v-bind="f" v-model="email" type="email" required autocomplete="email" placeholder="tu@email.com" />
+      </BaseField>
+      <BaseField label="Contraseña" :error="error" v-slot="f">
+        <BaseInput v-bind="f" v-model="password" type="password" required autocomplete="current-password" />
+      </BaseField>
 
-      <div class="relative z-10 px-10">
-        <BrandMark tone="light" :size="64" label="" class="mb-6" />
-        <p class="text-white/70 text-[1rem] leading-relaxed max-w-[30ch]">
-          El parte de rodaje de tu contenido: entregas, métricas y predicciones de éxito, todo en un solo sitio.
-        </p>
+      <BaseButton type="submit" variant="primary" size="lg" block :loading="loading">
+        {{ loading ? 'Accediendo…' : 'Acceder' }}
+      </BaseButton>
+    </form>
+
+    <p class="auth__alt">
+      ¿No tienes cuenta todavía? <NuxtLink to="/onboarding">Crea una cuenta</NuxtLink>
+    </p>
+
+    <!-- Solo en desarrollo: en producción esto era una contraseña compartida en
+         texto plano, visible en el bundle, para entrar como demo con un clic. -->
+    <div v-if="isDev" class="mt-10 pt-6 border-t border-[var(--line)]">
+      <p class="text-sm text-[var(--text-muted)] mb-3">Cuentas de prueba (equipo): un clic y dentro.</p>
+      <div class="grid grid-cols-2 gap-2">
+        <BaseButton
+          v-for="demo in demoAccounts" :key="demo.email" variant="outline" :icon="demo.icon"
+          :loading="activeDemo === demo.email && loading" :disabled="loading" @click="loginAsDemo(demo.email)"
+        >
+          {{ demo.label }}
+        </BaseButton>
       </div>
     </div>
-
-    <!-- Formulario -->
-    <div class="flex-1 flex flex-col">
-      <main class="flex-1 flex items-center justify-center px-5 md:px-10">
-        <div class="w-full max-w-sm py-8">
-          <h1 class="font-display text-[1.875rem] text-[var(--color-text)] mb-1.5">Accede a tu cuenta</h1>
-          <p class="text-[0.9375rem] text-[var(--color-text-muted)] mb-7">Entra con el email y la contraseña de tu cuenta CIBERAN.</p>
-
-          <form class="flex flex-col gap-4" @submit.prevent="submit">
-            <div>
-              <label class="block text-[0.8125rem] font-medium text-[var(--color-text-muted)] mb-1.5" for="email">Email</label>
-              <input
-                id="email" v-model="email" type="email" required autocomplete="email" placeholder="tu@email.com"
-                class="w-full h-11 px-3.5 rounded-[var(--radius-sm)] bg-[var(--color-ink-overlay)] border border-[var(--color-hairline)] text-[0.9375rem] text-[var(--color-text)] placeholder:text-[var(--color-text-faint)] focus:outline-none focus:border-[var(--color-primary-500)]/60"
-              >
-            </div>
-            <div>
-              <label class="block text-[0.8125rem] font-medium text-[var(--color-text-muted)] mb-1.5" for="password">Contraseña</label>
-              <input
-                id="password" v-model="password" type="password" required autocomplete="current-password"
-                class="w-full h-11 px-3.5 rounded-[var(--radius-sm)] bg-[var(--color-ink-overlay)] border border-[var(--color-hairline)] text-[0.9375rem] text-[var(--color-text)] focus:outline-none focus:border-[var(--color-primary-500)]/60"
-              >
-            </div>
-
-            <p v-if="error" class="text-[0.8125rem] text-[var(--color-status-alert)]">{{ error }}</p>
-
-            <BaseButton type="submit" variant="primary" size="lg" class="w-full mt-1" :icon-spin="loading" :icon="loading ? 'ph:spinner-gap-bold' : undefined" :disabled="loading">
-              {{ loading ? 'Accediendo…' : 'Acceder' }}
-            </BaseButton>
-          </form>
-
-          <p class="mt-8 text-[0.8125rem] text-[var(--color-text-faint)] text-center">
-            ¿No tienes cuenta todavía? <NuxtLink to="/onboarding" class="text-[var(--color-text-muted)] hover:text-[var(--color-text)] underline underline-offset-2">Crea una cuenta</NuxtLink>
-          </p>
-
-          <!-- Solo en desarrollo: en producción, esto era una contraseña compartida
-               en texto plano, visible en el bundle, que cualquiera podía usar para
-               entrar como creador o partner de demo con un solo clic. -->
-          <div v-if="isDev" class="mt-10 pt-6 border-t border-[var(--color-hairline)]">
-            <p class="text-[0.75rem] text-[var(--color-text-faint)] mb-3">Cuentas de prueba (equipo) — un clic y dentro:</p>
-            <div class="flex gap-2">
-              <button
-                v-for="demo in demoAccounts" :key="demo.email" type="button" :disabled="loading"
-                class="flex-1 flex flex-col items-center gap-1.5 py-3 rounded-[var(--radius-sm)] border border-[var(--color-hairline)] text-[var(--color-text-muted)] hover:border-[var(--color-hairline-strong)] hover:text-[var(--color-text)] disabled:opacity-40 transition-colors"
-                @click="loginAsDemo(demo.email)"
-              >
-                <Icon :name="activeDemo === demo.email && loading ? 'ph:spinner-gap-bold' : demo.icon" class="size-4" :class="activeDemo === demo.email && loading && 'animate-spin'" />
-                <span class="text-[0.6875rem] font-medium">{{ demo.label }}</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </main>
-    </div>
-  </div>
+  </AuthShell>
 </template>

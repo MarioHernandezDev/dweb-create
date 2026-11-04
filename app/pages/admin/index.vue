@@ -246,20 +246,20 @@ function formatDate(iso: string | null) {
         <BaseCard v-for="user in users" :key="user.id" radius="lg" padding="md">
           <div class="flex items-start justify-between gap-3 mb-2">
             <div class="min-w-0">
-              <p class="text-[0.9375rem] font-medium text-[var(--color-text)] truncate">
+              <p class="text-base font-medium text-[var(--color-text)] truncate">
                 {{ user.displayName ?? user.fullName ?? 'Sin nombre' }}
               </p>
-              <p class="text-[0.8125rem] text-[var(--color-text-muted)] truncate">{{ user.email }}</p>
+              <p class="text-sm text-[var(--color-text-muted)] truncate">{{ user.email }}</p>
             </div>
             <span
-              class="shrink-0 text-[0.75rem] font-medium px-2 py-1 rounded-[var(--radius-xs)]"
+              class="shrink-0 text-micro font-medium px-2 py-1 rounded-[var(--radius-xs)]"
               :class="user.role === 'creator' ? 'bg-[var(--color-primary-500)]/15 text-[var(--color-primary-500)]' : 'bg-[var(--color-logo-teal)]/15 text-[var(--color-logo-teal)]'"
             >
               {{ user.role === 'creator' ? 'Creador' : 'Partner' }}
             </span>
           </div>
 
-          <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-[0.75rem] text-[var(--color-text-faint)] mb-3">
+          <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-micro text-[var(--color-text-faint)] mb-3">
             <span>Alta: {{ formatDate(user.createdAt) }}</span>
             <span>Último login: {{ formatDate(user.lastSignInAt) }}</span>
             <span v-if="user.role === 'creator'">
@@ -279,9 +279,9 @@ function formatDate(iso: string | null) {
             <template v-if="user.role === 'creator'">
               <input
                 v-model.number="monthsByUser[user.id]" type="number" min="1" max="24" :placeholder="String(monthsFor(user.id))"
-                class="w-16 h-9 px-2 rounded-[var(--radius-xs)] bg-[var(--color-ink-overlay)] border border-[var(--color-hairline)] text-[0.8125rem] text-[var(--color-text)] text-center"
+                class="input w-16 h-9"
               >
-              <span class="text-[0.75rem] text-[var(--color-text-faint)]">meses</span>
+              <span class="text-micro text-[var(--color-text-faint)]">meses</span>
               <BaseButton variant="secondary" size="sm" :disabled="acting === user.id" :icon-spin="acting === user.id" @click="grantPro(user)">
                 Dar Pro
               </BaseButton>
@@ -297,8 +297,8 @@ function formatDate(iso: string | null) {
             <Icon :name="activityIcons[item.type] ?? 'ph:bell-fill'" class="size-4" />
           </span>
           <div class="min-w-0 flex-1">
-            <p class="text-[0.875rem] text-[var(--color-text)]">{{ item.summary }}</p>
-            <p class="text-[0.75rem] text-[var(--color-text-faint)]">{{ relativeTime(item.createdAt) }}</p>
+            <p class="text-sm text-[var(--color-text)]">{{ item.summary }}</p>
+            <p class="text-micro text-[var(--color-text-faint)]">{{ relativeTime(item.createdAt) }}</p>
           </div>
         </BaseCard>
       </div>
@@ -307,22 +307,22 @@ function formatDate(iso: string | null) {
         <SegmentedTabs v-model="analyticsUnit" :options="[{ value: 'week', label: 'Semanas' }, { value: 'month', label: 'Meses' }]" />
 
         <BaseCard radius="lg" padding="lg">
-          <p class="text-[0.8125rem] font-medium text-[var(--color-text-muted)] mb-4">Nuevos registros</p>
+          <p class="text-sm font-medium text-[var(--color-text-muted)] mb-4">Nuevos registros</p>
           <BarChart v-if="analytics" :labels="analytics.labels" :series="signupsSeries" :format-value="formatIntValue" />
         </BaseCard>
 
         <BaseCard radius="lg" padding="lg">
-          <p class="text-[0.8125rem] font-medium text-[var(--color-text-muted)] mb-4">Colaboraciones nuevas</p>
+          <p class="text-sm font-medium text-[var(--color-text-muted)] mb-4">Colaboraciones nuevas</p>
           <BarChart v-if="analytics" :labels="analytics.labels" :series="collabsSeries" :format-value="formatIntValue" />
         </BaseCard>
 
         <BaseCard radius="lg" padding="lg">
-          <p class="text-[0.8125rem] font-medium text-[var(--color-text-muted)] mb-4">Ingresos cobrados (colaboraciones pagadas)</p>
+          <p class="text-sm font-medium text-[var(--color-text-muted)] mb-4">Ingresos cobrados (colaboraciones pagadas)</p>
           <BarChart v-if="analytics" :labels="analytics.labels" :series="revenueSeries" :format-value="formatEuroValue" />
         </BaseCard>
 
         <BaseCard radius="lg" padding="lg">
-          <p class="text-[0.8125rem] font-medium text-[var(--color-text-muted)] mb-4">Inicios de Pro — pagado vs. regalado</p>
+          <p class="text-sm font-medium text-[var(--color-text-muted)] mb-4">Inicios de Pro — pagado vs. regalado</p>
           <BarChart v-if="analytics" :labels="analytics.labels" :series="proSeries" :format-value="formatIntValue" />
         </BaseCard>
 
@@ -330,52 +330,52 @@ function formatDate(iso: string | null) {
 
         <div v-if="discoveryAnalytics" class="grid grid-cols-2 gap-3">
           <BaseCard radius="lg" padding="md">
-            <p class="text-[0.75rem] text-[var(--color-text-faint)] mb-1">Búsquedas (8 semanas)</p>
+            <p class="text-micro text-[var(--color-text-faint)] mb-1">Búsquedas (8 semanas)</p>
             <p class="font-display text-[1.375rem] text-[var(--color-text)]">{{ discoveryAnalytics.totalSearches }}</p>
           </BaseCard>
           <BaseCard radius="lg" padding="md">
-            <p class="text-[0.75rem] text-[var(--color-text-faint)] mb-1">Sin ningún resultado</p>
+            <p class="text-micro text-[var(--color-text-faint)] mb-1">Sin ningún resultado</p>
             <p class="font-display text-[1.375rem] text-[var(--color-text)]">{{ discoveryAnalytics.zeroResultCount }}</p>
           </BaseCard>
           <BaseCard radius="lg" padding="md">
-            <p class="text-[0.75rem] text-[var(--color-text-faint)] mb-1">Filtros vs. IA</p>
+            <p class="text-micro text-[var(--color-text-faint)] mb-1">Filtros vs. IA</p>
             <p class="font-display text-[1.0625rem] text-[var(--color-text)]">{{ discoveryAnalytics.byMode.filters }} / {{ discoveryAnalytics.byMode.ai }}</p>
           </BaseCard>
           <BaseCard radius="lg" padding="md">
-            <p class="text-[0.75rem] text-[var(--color-text-faint)] mb-1">Creadores vs. partners</p>
+            <p class="text-micro text-[var(--color-text-faint)] mb-1">Creadores vs. partners</p>
             <p class="font-display text-[1.0625rem] text-[var(--color-text)]">{{ discoveryAnalytics.byRole.creator }} / {{ discoveryAnalytics.byRole.partner }}</p>
           </BaseCard>
         </div>
 
         <BaseCard radius="lg" padding="lg">
-          <p class="text-[0.8125rem] font-medium text-[var(--color-text-muted)] mb-4">Volumen de búsquedas por semana</p>
+          <p class="text-sm font-medium text-[var(--color-text-muted)] mb-4">Volumen de búsquedas por semana</p>
           <BarChart v-if="discoveryAnalytics" :labels="discoveryAnalytics.labels" :series="discoveryVolumeSeries" :format-value="formatIntValue" />
         </BaseCard>
 
         <BaseCard radius="lg" padding="lg">
-          <p class="text-[0.8125rem] font-medium text-[var(--color-text-muted)] mb-4">Categorías más pedidas</p>
+          <p class="text-sm font-medium text-[var(--color-text-muted)] mb-4">Categorías más pedidas</p>
           <EmptyState v-if="discoveryAnalytics && !discoveryAnalytics.topCategories.length" icon="ph:tag" title="Sin categorías todavía" />
           <div v-else-if="discoveryAnalytics" class="flex flex-col gap-2">
             <div v-for="c in discoveryAnalytics.topCategories" :key="c.category" class="flex items-center gap-2.5">
-              <span class="w-28 shrink-0 text-[0.8125rem] text-[var(--color-text-muted)] truncate">{{ c.category }}</span>
+              <span class="w-28 shrink-0 text-sm text-[var(--color-text-muted)] truncate">{{ c.category }}</span>
               <div class="flex-1 h-2 rounded-full bg-[var(--color-ink-overlay)] overflow-hidden">
                 <div class="h-full rounded-full bg-[var(--color-primary-500)]" :style="{ width: `${(c.count / maxCategoryCount) * 100}%` }" />
               </div>
-              <span class="w-6 shrink-0 text-right text-[0.75rem] text-[var(--color-text-faint)]">{{ c.count }}</span>
+              <span class="w-6 shrink-0 text-right text-micro text-[var(--color-text-faint)]">{{ c.count }}</span>
             </div>
           </div>
         </BaseCard>
 
         <BaseCard radius="lg" padding="lg">
-          <p class="text-[0.8125rem] font-medium text-[var(--color-text-muted)] mb-4">Búsquedas recientes con IA (texto libre)</p>
+          <p class="text-sm font-medium text-[var(--color-text-muted)] mb-4">Búsquedas recientes con IA (texto libre)</p>
           <EmptyState v-if="discoveryAnalytics && !discoveryAnalytics.recentQueries.length" icon="ph:sparkle" title="Nadie ha usado la búsqueda por IA todavía" />
           <div v-else-if="discoveryAnalytics" class="flex flex-col gap-2">
             <div v-for="(q, i) in discoveryAnalytics.recentQueries" :key="i" class="flex items-start justify-between gap-3 py-2 border-b border-[var(--color-hairline)] last:border-0">
               <div class="min-w-0">
-                <p class="text-[0.8125rem] text-[var(--color-text)]">"{{ q.queryText }}"</p>
-                <p class="text-[0.75rem] text-[var(--color-text-faint)] mt-0.5">{{ q.role === 'creator' ? 'Creador' : 'Partner' }} · {{ relativeTime(q.createdAt) }}</p>
+                <p class="text-sm text-[var(--color-text)]">"{{ q.queryText }}"</p>
+                <p class="text-micro text-[var(--color-text-faint)] mt-0.5">{{ q.role === 'creator' ? 'Creador' : 'Partner' }} · {{ relativeTime(q.createdAt) }}</p>
               </div>
-              <span class="shrink-0 text-[0.75rem] text-[var(--color-text-faint)]">{{ q.resultsCount }} resultado{{ q.resultsCount === 1 ? '' : 's' }}</span>
+              <span class="shrink-0 text-micro text-[var(--color-text-faint)]">{{ q.resultsCount }} resultado{{ q.resultsCount === 1 ? '' : 's' }}</span>
             </div>
           </div>
         </BaseCard>
@@ -385,16 +385,16 @@ function formatDate(iso: string | null) {
         <EmptyState v-if="!loadingReports && !reports.length" icon="ph:flag" title="Sin reportes" description="Cuando alguien reporte una solicitud, aparecerá aquí." />
         <BaseCard v-for="report in reports" :key="report.id" radius="lg" padding="md">
           <div class="flex items-center justify-between gap-3 mb-2">
-            <span class="text-[0.8125rem] font-medium text-[var(--color-status-alert)]">{{ reasonLabels[report.reason] ?? report.reason }}</span>
-            <span class="text-[0.75rem] text-[var(--color-text-faint)]">{{ formatDate(report.createdAt) }}</span>
+            <span class="text-sm font-medium text-[var(--color-status-alert)]">{{ reasonLabels[report.reason] ?? report.reason }}</span>
+            <span class="text-micro text-[var(--color-text-faint)]">{{ formatDate(report.createdAt) }}</span>
           </div>
-          <p class="text-[0.8125rem] text-[var(--color-text-muted)] mb-2">
+          <p class="text-sm text-[var(--color-text-muted)] mb-2">
             Reportado por {{ report.reporterName }} ({{ report.reporterRole === 'creator' ? 'creador' : 'partner' }})
           </p>
-          <p v-if="report.collaborationBrief" class="text-[0.8125rem] text-[var(--color-text)] mb-1">
+          <p v-if="report.collaborationBrief" class="text-sm text-[var(--color-text)] mb-1">
             "{{ report.collaborationBrief }}" — {{ report.creatorName }} / {{ report.partnerName }}
           </p>
-          <p v-if="report.detail" class="text-[0.8125rem] text-[var(--color-text-muted)]">{{ report.detail }}</p>
+          <p v-if="report.detail" class="text-sm text-[var(--color-text-muted)]">{{ report.detail }}</p>
         </BaseCard>
       </div>
     </div>

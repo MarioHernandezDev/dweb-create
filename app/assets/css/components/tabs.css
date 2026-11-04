@@ -1,0 +1,55 @@
+/* ==========================================================================
+   Componente · SegmentedTabs (SegmentedTabs.vue)
+   Pestañas o selector de vista con indicador deslizante. Todas las opciones
+   miden lo mismo (rejilla), así el indicador se calcula solo con CSS a partir
+   de dos variables que pone Vue: --tab-count y --tab-index.
+   ========================================================================== */
+
+@layer components {
+  .tabs {
+    --tab-count: 2;
+    --tab-index: 0;
+    --tab-pad: 0.25rem;
+
+    position: relative;
+    display: inline-grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(max-content, 1fr);
+    padding: var(--tab-pad);
+    background: var(--surface-sunken);
+    border-radius: var(--radius-pill);
+    isolation: isolate;
+    max-width: 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .tabs__indicator {
+    position: absolute;
+    z-index: -1;
+    top: var(--tab-pad);
+    bottom: var(--tab-pad);
+    left: var(--tab-pad);
+    width: calc((100% - 2 * var(--tab-pad)) / var(--tab-count));
+    background: var(--surface-raised);
+    border-radius: var(--radius-pill);
+    box-shadow: var(--shadow-1);
+    transform: translateX(calc(var(--tab-index) * 100%));
+    transition: transform var(--dur-slow) var(--ease-out);
+  }
+
+  .tabs__tab {
+    min-height: 2.25rem;
+    padding-inline: 1rem;
+    border-radius: var(--radius-pill);
+    color: var(--text-muted);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    text-align: center;
+    cursor: pointer;
+    transition: color var(--dur) var(--ease-out);
+
+    &:hover { color: var(--text-strong); }
+    &[aria-selected="true"] { color: var(--text-strong); }
+  }
+}

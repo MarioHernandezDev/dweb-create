@@ -195,11 +195,11 @@ const spoken = computed(() => {
       class="pointer-events-none absolute top-1 -translate-x-1/2 rounded-[var(--radius-xs)] bg-[var(--color-paper)] border border-[var(--color-hairline-strong)] shadow-md px-3 py-2 min-w-[8.5rem]"
       :style="{ left: `${Math.min(84, Math.max(16, (active.x / W) * 100))}%` }"
     >
-      <p class="text-[0.6875rem] text-[var(--color-text-muted)]">{{ active.cur.label }}</p>
+      <p class="text-micro text-[var(--color-text-muted)]">{{ active.cur.label }}</p>
       <p class="font-semibold text-[var(--color-text)] text-sm" style="font-variant-numeric: proportional-nums">{{ valueText(active.cur) }}</p>
       <template v-if="active.prev">
-        <p class="mt-1.5 text-[0.6875rem] text-[var(--color-text-faint)]">{{ active.prev.label }} (anterior)</p>
-        <p class="text-[0.8125rem] text-[var(--color-text-muted)]" style="font-variant-numeric: proportional-nums">{{ valueText(active.prev) }}</p>
+        <p class="mt-1.5 text-micro text-[var(--color-text-faint)]">{{ active.prev.label }} (anterior)</p>
+        <p class="text-sm text-[var(--color-text-muted)]" style="font-variant-numeric: proportional-nums">{{ valueText(active.prev) }}</p>
       </template>
     </div>
 

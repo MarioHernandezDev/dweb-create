@@ -3,6 +3,7 @@ import { roleNav, roleMeta, secondaryNav } from '~/utils/nav'
 import type { Role } from '~/types'
 
 const props = defineProps<{ role: Role }>()
+const { collapsed, toggle: toggleRail } = useRailState()
 const route = useRoute()
 const items = computed(() => roleNav[props.role])
 
@@ -43,51 +44,52 @@ async function confirmLogout() {
 </script>
 
 <template>
-  <aside class="hidden md:flex md:flex-col w-64 shrink-0 h-dvh sticky top-0 px-5 py-7 bg-[var(--color-primary-900)]">
-    <NuxtLink to="/" class="flex items-center gap-2.5 px-1.5 mb-9">
-      <BrandMark tone="light" :size="30" />
-    </NuxtLink>
+  <aside class="rail" id="rail" aria-label="Menú lateral">
+    <div class="rail__head">
+      <NuxtLink to="/" class="rail__brand" aria-label="CIBERAN, inicio">
+        <BrandMark tone="light" :size="34" label="" />
+      </NuxtLink>
+      <button
+        type="button" class="rail__toggle" :aria-expanded="!collapsed" aria-controls="rail"
+        :aria-label="collapsed ? 'Desplegar menú' : 'Plegar menú'" :title="collapsed ? 'Desplegar menú' : 'Plegar menú'"
+        @click="toggleRail"
+      >
+        <Icon name="ph:caret-double-left-bold" class="rail__toggle-icon" />
+      </button>
+    </div>
 
-    <nav class="flex flex-col gap-1" aria-label="Navegación principal">
+    <nav class="rail__nav" aria-label="Navegación principal">
       <NuxtLink
         v-for="item in items" :key="item.to" :to="item.to"
-        class="flex items-center gap-3 px-3.5 h-11 rounded-[var(--radius-sm)] text-[0.9375rem] font-medium transition-[background-color,color] duration-200 ease-[var(--ease-spring)]"
-        :class="isActive(item.to) ? 'bg-white/12 text-white' : 'text-white/65 hover:text-white hover:bg-white/8'"
+        class="rail__link" :class="isActive(item.to) && 'is-active'" :title="collapsed ? item.label : undefined"
+        :aria-current="isActive(item.to) ? 'page' : undefined"
       >
-        <Icon
-          :name="item.icon" class="size-[1.15rem] transition-[color,transform] duration-200 ease-[var(--ease-spring-out)]"
-          :class="isActive(item.to) && 'text-[var(--color-primary-200)] scale-110'"
-        />
-        {{ item.label }}
+        <Icon :name="item.icon" class="rail__link-icon" />
+        <span class="rail__label">{{ item.label }}</span>
       </NuxtLink>
     </nav>
 
-    <div class="mt-auto pt-5 border-t border-white/12">
-      <NuxtLink :to="`/${role}/profile`" class="flex items-center gap-3 px-2 py-2 rounded-[var(--radius-sm)] hover:bg-white/8 transition-colors">
+    <div class="rail__foot">
+      <NuxtLink :to="`/${role}/profile`" class="rail__account" :title="collapsed ? accountName : undefined">
         <BaseAvatar :initials="myInitials" :src="avatarUrl" :hue="myHue" size="sm" />
-        <div class="min-w-0">
-          <p class="text-sm font-medium text-white truncate">{{ accountName }}</p>
-          <p class="text-[0.75rem] text-white/55 truncate">{{ roleMeta[role].label }}</p>
+        <div class="rail__text min-w-0">
+          <p class="rail__account-name truncate">{{ accountName }}</p>
+          <p class="rail__account-role truncate">{{ roleMeta[role].label }}</p>
         </div>
       </NuxtLink>
 
-      <nav class="flex flex-col gap-0.5 mt-2" aria-label="Accesos secundarios">
+      <nav class="rail__secondary" aria-label="Accesos secundarios">
         <NuxtLink
           v-for="item in secondaryItems" :key="item.to" :to="item.to"
-          class="flex items-center gap-3 px-3.5 h-9 rounded-[var(--radius-sm)] text-[0.8125rem] font-medium text-white/55 hover:text-white hover:bg-white/8 transition-colors"
+          class="rail__link rail__link--small" :class="isActive(item.to) && 'is-active'" :title="collapsed ? item.label : undefined"
         >
-          <Icon :name="item.icon" class="size-4" />
-          {{ item.label }}
-          <span v-if="badgeCount(item.to)" class="ml-auto min-w-[1.125rem] h-[1.125rem] px-1 rounded-full bg-[var(--color-status-alert)] text-white text-[0.625rem] font-semibold leading-[1.125rem] text-center">
-            {{ badgeCount(item.to) > 9 ? '9+' : badgeCount(item.to) }}
-          </span>
+          <Icon :name="item.icon" class="size-4 shrink-0" />
+          <span class="rail__label">{{ item.label }}</span>
+          <span v-if="badgeCount(item.to)" class="badge ml-auto">{{ badgeCount(item.to) > 9 ? '9+' : badgeCount(item.to) }}</span>
         </NuxtLink>
-        <button
-          type="button" class="flex items-center gap-3 px-3.5 h-9 rounded-[var(--radius-sm)] text-[0.8125rem] font-medium text-white/55 hover:text-white hover:bg-white/8 transition-colors"
-          @click="confirmLogout"
-        >
-          <Icon name="ph:sign-out-bold" class="size-4" />
-          Cerrar sesión
+        <button type="button" class="rail__link rail__link--small" :title="collapsed ? 'Cerrar sesión' : undefined" @click="confirmLogout">
+          <Icon name="ph:sign-out-bold" class="size-4 shrink-0" />
+          <span class="rail__label">Cerrar sesión</span>
         </button>
       </nav>
     </div>

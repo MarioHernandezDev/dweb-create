@@ -1,0 +1,32 @@
+/* ==========================================================================
+   Componente · Motivo de ondas (WaveMotif.vue)
+   Anillos abiertos con huecos distintos y giro muy lento y contrario. Hereda
+   el color (currentColor) y la opacidad del contenedor.
+   ========================================================================== */
+
+@layer components {
+  .waves {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    pointer-events: none;
+
+    & circle {
+      transform-origin: 300px 300px;
+      animation: waves-turn 90s linear infinite;
+    }
+    & circle:nth-child(1) { stroke-dasharray: 62 38; }
+    & circle:nth-child(2) { stroke-dasharray: 48 52; animation-direction: reverse; animation-duration: 120s; }
+    & circle:nth-child(3) { stroke-dasharray: 70 30; animation-duration: 150s; }
+    & circle:nth-child(4) { stroke-dasharray: 40 60; animation-direction: reverse; animation-duration: 110s; }
+    & circle:nth-child(5) { stroke-dasharray: 56 44; animation-duration: 180s; }
+    & circle:nth-child(6) { stroke-dasharray: 34 66; animation-direction: reverse; animation-duration: 140s; }
+  }
+}
+
+@keyframes waves-turn { to { transform: rotate(360deg); } }

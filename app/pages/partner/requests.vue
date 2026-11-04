@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { formatEuros } from '~/utils/mock-data'
-import { collaborationStatusMeta, relativeTime } from '~/utils/status'
+import { relativeTime } from '~/utils/status'
 import { initialsFromName, hueFromString } from '~/utils/avatar'
 import type { MyCollaboration } from '~/composables/useMyCollaborations'
 
@@ -169,7 +169,7 @@ async function handleMarkCompleted() {
         :name="route.query.payment === 'success' ? 'ph:check-circle-fill' : 'ph:info-fill'" class="size-5 shrink-0"
         :class="route.query.payment === 'success' ? 'text-[var(--color-status-published)]' : 'text-[var(--color-text-muted)]'"
       />
-      <p class="text-[0.875rem] text-[var(--color-text)]">
+      <p class="text-sm text-[var(--color-text)]">
         {{ route.query.payment === 'success' ? 'Pago enviado.' : 'Pago cancelado, no se ha cobrado nada.' }}
       </p>
     </BaseCard>
@@ -192,33 +192,25 @@ async function handleMarkCompleted() {
       description="Las colaboraciones completadas y las solicitudes rechazadas se guardan aquí."
     />
 
-    <div v-else class="flex flex-col gap-2.5 md:max-w-xl">
-      <button v-for="collab in visible" :key="collab.id" type="button" class="text-left" @click="openDetail(collab)">
-        <BaseCard radius="lg" padding="md" interactive>
+    <div v-else class="grid gap-3 lg:grid-cols-2 2xl:grid-cols-3">
+      <button v-for="collab in visible" :key="collab.id" type="button" class="flex text-left" @click="openDetail(collab)">
+        <BaseCard radius="lg" padding="md" interactive class="w-full">
           <div class="flex items-start gap-3 mb-3">
             <BaseAvatar :initials="initialsFromName(collab.creatorName ?? '?')" :hue="hueFromString(collab.creatorName ?? '')" size="sm" />
             <div class="min-w-0 flex-1">
               <div class="flex items-start justify-between gap-2">
-                <p class="text-[0.9375rem] font-medium text-[var(--color-text)] truncate">{{ collab.creatorName ?? 'Sin asignar' }}</p>
-                <span class="text-[0.9375rem] font-medium text-[var(--color-text)] shrink-0">
+                <p class="text-base font-medium text-[var(--color-text)] truncate">{{ collab.creatorName ?? 'Sin asignar' }}</p>
+                <span class="text-base font-medium text-[var(--color-text)] shrink-0">
                   {{ collab.budgetCents ? formatEuros(collab.budgetCents) : 'Sin presupuesto' }}
                 </span>
               </div>
-              <p class="text-[0.75rem] text-[var(--color-text-faint)] mt-0.5">{{ relativeTime(collab.createdAt) }}</p>
+              <p class="text-micro text-[var(--color-text-faint)] mt-0.5">{{ relativeTime(collab.createdAt) }}</p>
             </div>
           </div>
 
-          <p class="text-[0.8125rem] text-[var(--color-text-muted)] leading-relaxed mb-3 line-clamp-2">{{ collab.brief }}</p>
+          <p class="text-sm text-[var(--color-text-muted)] leading-relaxed mb-3 line-clamp-2">{{ collab.brief }}</p>
 
-          <span
-            class="inline-flex items-center px-2.5 py-1 rounded-[var(--radius-xs)] text-[0.75rem] font-medium"
-            :style="{
-              color: collaborationStatusMeta[collab.status].color,
-              background: `color-mix(in oklab, ${collaborationStatusMeta[collab.status].color} 16%, transparent)`
-            }"
-          >
-            {{ collaborationStatusMeta[collab.status].label }}
-          </span>
+          <CollabStatus :status="collab.status" />
         </BaseCard>
       </button>
     </div>
@@ -231,21 +223,13 @@ async function handleMarkCompleted() {
             size="lg"
           />
           <div class="min-w-0 flex-1">
-            <p class="text-[0.9375rem] font-medium text-[var(--color-text)] truncate">{{ detailCollab.creatorName ?? 'Sin asignar' }}</p>
-            <span
-              class="inline-flex items-center px-2.5 py-0.5 rounded-[var(--radius-xs)] text-[0.75rem] font-medium mt-1"
-              :style="{
-                color: collaborationStatusMeta[detailCollab.status].color,
-                background: `color-mix(in oklab, ${collaborationStatusMeta[detailCollab.status].color} 16%, transparent)`
-              }"
-            >
-              {{ collaborationStatusMeta[detailCollab.status].label }}
-            </span>
+            <p class="text-base font-medium text-[var(--color-text)] truncate">{{ detailCollab.creatorName ?? 'Sin asignar' }}</p>
+            <CollabStatus :status="detailCollab.status" class="mt-1" />
           </div>
           <CollaborationChatButton :counterpart-profile-id="detailCollab.creatorProfileId" :counterpart-name="detailCollab.creatorName ?? 'el creador'" />
         </div>
 
-        <p class="text-[0.8125rem] text-[var(--color-text-muted)] line-clamp-1 mb-4">{{ detailCollab.brief }}</p>
+        <p class="text-sm text-[var(--color-text-muted)] line-clamp-1 mb-4">{{ detailCollab.brief }}</p>
 
         <!-- Nivel 1: la acción del momento, siempre visible, nunca dentro de una pestaña. -->
         <div class="mb-5">
@@ -255,7 +239,7 @@ async function handleMarkCompleted() {
             @accept="handleAccept" @decline="handleDecline"
           />
 
-          <p v-if="detailCollab.paidAt" class="inline-flex items-center gap-1.5 text-[0.8125rem] text-[var(--color-status-published)] mt-3">
+          <p v-if="detailCollab.paidAt" class="inline-flex items-center gap-1.5 text-sm text-[var(--color-status-published)] mt-3">
             <Icon name="ph:check-circle-fill" class="size-4" /> Cobrado el {{ relativeTime(detailCollab.paidAt) }}
           </p>
           <BaseButton
@@ -265,7 +249,7 @@ async function handleMarkCompleted() {
           >
             {{ paying === detailCollab.id ? 'Abriendo pago…' : 'Pagar' }}
           </BaseButton>
-          <p v-if="payError && lastPayAttemptId === detailCollab.id" class="text-[0.75rem] text-[var(--color-status-alert)] mt-2">{{ payError }}</p>
+          <p v-if="payError && lastPayAttemptId === detailCollab.id" class="text-micro text-[var(--color-status-alert)] mt-2">{{ payError }}</p>
 
           <BaseButton
             v-if="detailCollab.status === 'accepted' || detailCollab.status === 'in_progress'"
@@ -278,19 +262,19 @@ async function handleMarkCompleted() {
             v-else-if="detailCollab.status === 'completed'"
             :collaboration-id="detailCollab.id" :counterpart-name="detailCollab.creatorName ?? 'el creador'"
           />
-          <p v-if="actionError" class="text-[0.8125rem] text-[var(--color-status-alert)] mt-3">{{ actionError }}</p>
+          <p v-if="actionError" class="text-sm text-[var(--color-status-alert)] mt-3">{{ actionError }}</p>
         </div>
 
         <!-- Nivel 2: consulta ocasional, bajo pestañas — ninguna tarea habitual exige cruzarlas. -->
         <SegmentedTabs v-model="detailTab" :options="detailTabs" class="mb-4" />
 
         <div v-show="detailTab === 'brief'">
-          <p class="text-[0.9375rem] text-[var(--color-text)] leading-relaxed mb-5">{{ detailCollab.brief }}</p>
+          <p class="text-base text-[var(--color-text)] leading-relaxed mb-5">{{ detailCollab.brief }}</p>
           <CollaborationTermsCard :terms="detailCollab" :collaboration-id="detailCollab.id" :status="detailCollab.status"
             :package-info="{ title: detailCollab.packageTitle, description: detailCollab.packageDescription, deliverables: detailCollab.packageDeliverables }"
             :can-complete-brief="detailCollab.status === 'accepted' || detailCollab.status === 'in_progress'"
           />
-          <dl class="flex flex-col gap-3 text-[0.8125rem]">
+          <dl class="flex flex-col gap-3 text-sm">
             <div class="flex items-center justify-between">
               <dt class="text-[var(--color-text-muted)]">Pedida</dt>
               <dd class="text-[var(--color-text)]">{{ relativeTime(detailCollab.createdAt) }}</dd>
@@ -306,13 +290,13 @@ async function handleMarkCompleted() {
                 <img v-if="expandedPost.mediaUrl" :src="expandedPost.mediaUrl" alt="" class="absolute inset-0 size-full object-cover">
               </div>
               <div class="min-w-0 flex-1">
-                <p class="text-[0.875rem] font-medium text-[var(--color-text)] truncate">{{ expandedPost.title }}</p>
+                <p class="text-sm font-medium text-[var(--color-text)] truncate">{{ expandedPost.title }}</p>
                 <StatusPill :status="expandedPost.status" compact />
               </div>
             </div>
-            <p v-if="expandedPost.caption" class="text-[0.8125rem] text-[var(--color-text-muted)] leading-relaxed mb-3">{{ expandedPost.caption }}</p>
+            <p v-if="expandedPost.caption" class="text-sm text-[var(--color-text-muted)] leading-relaxed mb-3">{{ expandedPost.caption }}</p>
             <ul v-if="expandedPostChecklist.length" class="flex flex-col gap-1.5">
-              <li v-for="item in expandedPostChecklist" :key="item.id" class="flex items-center gap-2 text-[0.8125rem]">
+              <li v-for="item in expandedPostChecklist" :key="item.id" class="flex items-center gap-2 text-sm">
                 <Icon :name="item.done ? 'ph:check-square-fill' : 'ph:square-bold'" class="size-4 shrink-0" :class="item.done ? 'text-[var(--color-status-published)]' : 'text-[var(--color-text-faint)]'" />
                 <span :class="item.done ? 'text-[var(--color-text-faint)] line-through' : 'text-[var(--color-text)]'">{{ item.text }}</span>
               </li>

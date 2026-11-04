@@ -1,0 +1,41 @@
+/* ==========================================================================
+   Componentes · Estados vacío y carga (EmptyState.vue, SkeletonBlock.vue)
+   ========================================================================== */
+
+@layer components {
+  .empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 3rem 1.5rem;
+    text-align: center;
+  }
+  .empty__icon {
+    display: grid;
+    place-items: center;
+    width: 3.5rem;
+    height: 3.5rem;
+    border-radius: var(--radius-pill);
+    background: var(--surface-sunken);
+    color: var(--text-muted);
+  }
+  .empty__text { max-width: 34ch; }
+  .empty__title { font-weight: 700; }
+  .empty__desc { margin-top: 0.25rem; font-size: var(--text-sm); color: var(--text-muted); }
+
+  /* Medidas en variables (--sk-w, --sk-h, --sk-r): Vue calcula el tamaño de lo
+     que sustituye, el aspecto es de aquí. */
+  .skeleton {
+    display: block;
+    width: var(--sk-w, 100%);
+    height: var(--sk-h, 1rem);
+    border-radius: var(--sk-r, var(--radius-xs));
+    background: var(--surface-sunken);
+    animation: skeleton-pulse 1.6s var(--ease-in-out) infinite;
+  }
+}
+
+@keyframes skeleton-pulse {
+  50% { opacity: 0.55; }
+}

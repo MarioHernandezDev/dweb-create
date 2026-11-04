@@ -22,7 +22,7 @@ export default defineNuxtConfig({
       htmlAttrs: { lang: 'es' },
       viewport: 'width=device-width, initial-scale=1, viewport-fit=cover',
       link: [
-        { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
+        { rel: 'icon', href: '/favicon.ico', sizes: '16x16 32x32 48x48' },
         { rel: 'icon', type: 'image/png', sizes: '32x32', href: '/img/brand/icon-32.png' },
         { rel: 'apple-touch-icon', href: '/img/brand/apple-touch-icon.png' },
         { rel: 'manifest', href: '/manifest.webmanifest' }
@@ -31,7 +31,7 @@ export default defineNuxtConfig({
         // CIBERAN es de modo único claro: no hay toggle de tema ni script
         // anti-parpadeo que sincronizar, el color de la barra del navegador
         // es siempre este.
-        { name: 'theme-color', content: '#f5f1ea' },
+        { name: 'theme-color', content: '#121019' },
         { name: 'apple-mobile-web-app-capable', content: 'yes' },
         { name: 'apple-mobile-web-app-status-bar-style', content: 'default' }
       ]

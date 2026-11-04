@@ -36,7 +36,7 @@ const options = computed(() =>
     <div class="inline-flex items-center gap-1 rounded-[var(--radius-xs)] bg-[var(--color-ink-overlay)] border border-[var(--color-hairline)] p-1" role="group" aria-label="Periodo">
       <button
         v-for="o in options" :key="o.days" type="button"
-        class="h-8 px-3 rounded-[calc(var(--radius-xs)-4px)] text-[0.8125rem] font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+        class="h-8 px-3 rounded-[calc(var(--radius-xs)-4px)] text-sm font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
         :class="modelValue === o.days ? 'bg-[var(--color-ink-raised)] text-[var(--color-text)] shadow-sm' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text)]'"
         :disabled="!o.available" :title="o.title" :aria-pressed="modelValue === o.days" :aria-label="o.title"
         @click="emit('update:modelValue', o.days)"
@@ -46,7 +46,7 @@ const options = computed(() =>
     </div>
 
     <label
-      class="inline-flex items-center gap-2 text-[0.8125rem]"
+      class="inline-flex items-center gap-2 text-sm"
       :class="comparable ? 'text-[var(--color-text)] cursor-pointer' : 'text-[var(--color-text-faint)] cursor-not-allowed'"
       :title="comparable ? undefined : 'No se puede comparar: el canal no existía durante todo el periodo anterior'"
     >

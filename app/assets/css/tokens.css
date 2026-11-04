@@ -50,6 +50,7 @@
   --color-hueso-300: #ddd5c7;
 
   /* ---- Color: firma y apoyos -------------------------------------------- */
+  --color-voltio-300: #d8f77f;
   --color-voltio-400: #c6f24e;
   --color-voltio-200: #e6fab0;
   --color-voltio-700: #7fa71a; /* solo el punto del símbolo sobre fondo claro */
@@ -84,6 +85,7 @@
   --radius-lg: 1.75rem;  /* 28 px · paneles, hojas */
   --radius-xl: 2.5rem;   /* 40 px · bloques héroe */
   --radius-pill: 999px;  /* botones, pestañas, píldoras */
+  --radius-signal: 1.75rem 1.75rem 1.75rem 0.5rem; /* esquina de señal: solo bloques destacados */
 
   /* ---- Sombras (tinte tinta; las tarjetas en reposo usan borde) ---------- */
   --shadow-1: 0 1px 2px rgb(18 16 25 / 6%);

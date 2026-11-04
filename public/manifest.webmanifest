@@ -4,8 +4,8 @@
   "description": "Creadores y marcas, de la primera oferta a la última métrica.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#f5f1ea",
-  "theme_color": "#f5f1ea",
+  "background_color": "#121019",
+  "theme_color": "#121019",
   "orientation": "portrait-primary",
   "icons": [
     { "src": "/img/brand/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },

@@ -105,13 +105,13 @@ function rangeLabel(profile: PublicProfile) {
     />
     <template v-else>
       <div class="flex items-center justify-between gap-3 mb-4 md:max-w-xl">
-        <p v-if="compareMode" class="text-[0.8125rem] text-[var(--color-text-muted)]">
+        <p v-if="compareMode" class="text-sm text-[var(--color-text-muted)]">
           Elige entre 2 y {{ MAX_COMPARE }} para comparar ({{ selectedIds.length }} seleccionados)
         </p>
         <span v-else />
         <button
           v-if="entries.length > 1"
-          type="button" class="shrink-0 inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-[0.8125rem] font-medium border border-[var(--color-hairline)] text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:border-[var(--color-hairline-strong)]"
+          type="button" class="shrink-0 inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-sm font-medium border border-[var(--color-hairline)] text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:border-[var(--color-hairline-strong)]"
           @click="toggleCompareMode"
         >
           <Icon name="ph:columns-fill" class="size-4" />
@@ -141,11 +141,11 @@ function rangeLabel(profile: PublicProfile) {
               <Icon v-else :name="entry.kind === 'creator' ? 'ph:user-focus' : 'ph:storefront-fill'" class="absolute inset-0 m-auto size-5 text-[var(--color-text)] opacity-30" />
             </span>
             <span class="min-w-0 flex-1 flex flex-col gap-1">
-              <span class="text-[0.9375rem] font-semibold text-[var(--color-text)] truncate">{{ entry.name }}</span>
-              <span v-if="entry.categories.length" class="flex flex-wrap gap-x-2 text-[0.75rem] text-[var(--color-text-muted)]">
+              <span class="text-base font-semibold text-[var(--color-text)] truncate">{{ entry.name }}</span>
+              <span v-if="entry.categories.length" class="flex flex-wrap gap-x-2 text-micro text-[var(--color-text-muted)]">
                 <span v-for="cat in entry.categories.slice(0, 3)" :key="cat">{{ cat }}</span>
               </span>
-              <span v-if="entry.bio" class="text-[0.8125rem] text-[var(--color-text-muted)] leading-snug line-clamp-1">{{ entry.bio }}</span>
+              <span v-if="entry.bio" class="text-sm text-[var(--color-text-muted)] leading-snug line-clamp-1">{{ entry.bio }}</span>
             </span>
           </button>
 
@@ -169,7 +169,7 @@ function rangeLabel(profile: PublicProfile) {
       </BaseButton>
 
       <section v-if="compared.length" aria-label="Comparación de candidatos">
-        <h2 class="text-[0.6875rem] font-semibold uppercase tracking-wide text-[var(--color-text-faint)] mb-3">Comparación</h2>
+        <h2 class="text-sm font-semibold text-[var(--text-muted)] mb-3">Comparación</h2>
         <div class="flex items-stretch gap-4 overflow-x-auto nx-scroll pb-2">
           <div v-for="c in compared" :key="c.entry.savedId" class="shrink-0 w-72 rounded-[var(--radius-md)] border border-[var(--color-hairline)] bg-[var(--color-paper)] p-3.5">
             <ProfileHeaderCard
@@ -181,12 +181,12 @@ function rangeLabel(profile: PublicProfile) {
               :looking-for="null" :verified-socials="c.profile.verifiedSocials"
             />
 
-            <div v-if="rangeLabel(c.profile)" class="flex items-center justify-between text-[0.8125rem] mb-2.5">
+            <div v-if="rangeLabel(c.profile)" class="flex items-center justify-between text-sm mb-2.5">
               <span class="text-[var(--color-text-faint)]">{{ c.entry.kind === 'creator' ? 'Tarifa' : 'Presupuesto' }}</span>
               <span class="font-medium text-[var(--color-text)]">{{ rangeLabel(c.profile) }}</span>
             </div>
 
-            <div class="flex items-center justify-between text-[0.8125rem] mb-3.5">
+            <div class="flex items-center justify-between text-sm mb-3.5">
               <span class="text-[var(--color-text-faint)]">Reputación</span>
               <span v-if="c.rating.ratingCount === 0" class="text-[var(--color-text-muted)]">Sin valoraciones</span>
               <span v-else class="inline-flex items-center gap-1.5">

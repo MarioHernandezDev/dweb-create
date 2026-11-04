@@ -54,10 +54,10 @@ function goToAction() {
       >
         <div class="w-full max-w-md rounded-[var(--radius-lg)] bg-[var(--color-ink-raised)] border border-[var(--color-hairline)] shadow-[var(--shadow-float)] p-6">
           <div class="flex items-center justify-between mb-5">
-            <p class="text-[0.75rem] font-medium text-[var(--color-text-faint)]" aria-live="polite">
+            <p class="text-micro font-medium text-[var(--color-text-faint)]" aria-live="polite">
               Paso {{ stepIndex + 1 }} de {{ steps.length }}
             </p>
-            <button type="button" class="text-[0.8125rem] font-medium text-[var(--color-text-muted)] hover:text-[var(--color-text)]" @click="close">
+            <button type="button" class="text-sm font-medium text-[var(--color-text-muted)] hover:text-[var(--color-text)]" @click="close">
               Saltar
             </button>
           </div>
@@ -66,7 +66,7 @@ function goToAction() {
             <Icon :name="current.icon" class="size-6" />
           </span>
           <h2 id="tour-title" class="font-display text-[1.375rem] leading-tight text-[var(--color-text)] mb-2">{{ current.title }}</h2>
-          <p class="text-[0.9375rem] text-[var(--color-text-muted)] leading-relaxed mb-6">{{ current.body }}</p>
+          <p class="text-base text-[var(--color-text-muted)] leading-relaxed mb-6">{{ current.body }}</p>
 
           <div class="flex items-center gap-1.5 mb-6" aria-hidden="true">
             <span

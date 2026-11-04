@@ -115,7 +115,7 @@ function onKeydown(e: KeyboardEvent) {
       :style="{ left: `${(active.x / width) * 100}%` }"
     >
       <p class="font-sans font-semibold text-[var(--color-text)] text-sm" style="font-variant-numeric: proportional-nums">{{ formatValue(active.value) }}</p>
-      <p class="text-[0.6875rem] text-[var(--color-text-muted)]">{{ active.label }}</p>
+      <p class="text-micro text-[var(--color-text-muted)]">{{ active.label }}</p>
     </div>
   </div>
 </template>

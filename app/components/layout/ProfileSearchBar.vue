@@ -51,7 +51,7 @@ onUnmounted(() => document.removeEventListener('click', onClickOutside))
       <Icon name="ph:magnifying-glass-bold" class="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-[var(--color-text-faint)]" />
       <input
         v-model="query" type="text" placeholder="Buscar perfiles…"
-        class="w-full h-9 pl-9 pr-3 rounded-full bg-[var(--color-ink-overlay)] border border-[var(--color-hairline)] text-[0.8125rem] text-[var(--color-text)] placeholder:text-[var(--color-text-faint)] focus:outline-none focus:border-[var(--color-primary-500)]/60"
+        class="input w-full h-9 pl-9 pr-3"
         @focus="open = true" @keydown.escape="open = false"
       >
     </div>
@@ -64,8 +64,8 @@ onUnmounted(() => document.removeEventListener('click', onClickOutside))
         v-if="open && query.trim()"
         class="absolute left-0 right-0 sm:right-auto sm:w-72 top-11 z-40 bg-[var(--color-ink-raised)] border border-[var(--color-hairline)] rounded-[var(--radius-md)] shadow-[var(--shadow-float)] max-h-80 overflow-y-auto nx-scroll"
       >
-        <div v-if="loading" class="px-4 py-3 text-[0.8125rem] text-[var(--color-text-faint)]">Buscando…</div>
-        <div v-else-if="!results.length" class="px-4 py-3 text-[0.8125rem] text-[var(--color-text-faint)]">Sin resultados.</div>
+        <div v-if="loading" class="px-4 py-3 text-sm text-[var(--color-text-faint)]">Buscando…</div>
+        <div v-else-if="!results.length" class="px-4 py-3 text-sm text-[var(--color-text-faint)]">Sin resultados.</div>
         <button
           v-for="r in results" :key="`${r.role}-${r.id}`" type="button"
           class="w-full flex items-center gap-3 px-3.5 py-2.5 text-left hover:bg-[var(--color-ink-overlay)]"
@@ -73,8 +73,8 @@ onUnmounted(() => document.removeEventListener('click', onClickOutside))
         >
           <BaseAvatar :initials="initialsFromName(r.name)" :hue="hueFromString(r.name)" size="sm" />
           <div class="min-w-0 flex-1">
-            <p class="text-[0.8125rem] font-medium text-[var(--color-text)] truncate">{{ r.name }}</p>
-            <p class="text-[0.75rem] text-[var(--color-text-faint)] truncate">{{ roleMeta[r.role].label }} · {{ r.subtitle }}</p>
+            <p class="text-sm font-medium text-[var(--color-text)] truncate">{{ r.name }}</p>
+            <p class="text-micro text-[var(--color-text-faint)] truncate">{{ roleMeta[r.role].label }} · {{ r.subtitle }}</p>
           </div>
         </button>
       </div>
@@ -94,12 +94,12 @@ onUnmounted(() => document.removeEventListener('click', onClickOutside))
       <Icon name="ph:magnifying-glass-bold" class="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-[var(--color-text-faint)]" />
       <input
         v-model="query" type="text" placeholder="Buscar perfiles…" autofocus
-        class="w-full h-11 pl-10 pr-3.5 rounded-[var(--radius-sm)] bg-[var(--color-ink-overlay)] border border-[var(--color-hairline)] text-[0.9375rem] text-[var(--color-text)] placeholder:text-[var(--color-text-faint)] focus:outline-none focus:border-[var(--color-primary-500)]/60"
+        class="input w-full h-11 pl-10 pr-3.5"
       >
     </div>
     <div v-if="query.trim()" class="flex flex-col -mx-1">
-      <p v-if="loading" class="px-3 py-3 text-[0.8125rem] text-[var(--color-text-faint)]">Buscando…</p>
-      <p v-else-if="!results.length" class="px-3 py-3 text-[0.8125rem] text-[var(--color-text-faint)]">Sin resultados.</p>
+      <p v-if="loading" class="px-3 py-3 text-sm text-[var(--color-text-faint)]">Buscando…</p>
+      <p v-else-if="!results.length" class="px-3 py-3 text-sm text-[var(--color-text-faint)]">Sin resultados.</p>
       <button
         v-for="r in results" :key="`${r.role}-${r.id}`" type="button"
         class="w-full flex items-center gap-3 px-3 py-2.5 rounded-[var(--radius-sm)] text-left hover:bg-[var(--color-ink-overlay)]"
@@ -107,8 +107,8 @@ onUnmounted(() => document.removeEventListener('click', onClickOutside))
       >
         <BaseAvatar :initials="initialsFromName(r.name)" :hue="hueFromString(r.name)" size="sm" />
         <div class="min-w-0 flex-1">
-          <p class="text-[0.9375rem] font-medium text-[var(--color-text)] truncate">{{ r.name }}</p>
-          <p class="text-[0.8125rem] text-[var(--color-text-faint)] truncate">{{ roleMeta[r.role].label }} · {{ r.subtitle }}</p>
+          <p class="text-base font-medium text-[var(--color-text)] truncate">{{ r.name }}</p>
+          <p class="text-sm text-[var(--color-text-faint)] truncate">{{ roleMeta[r.role].label }} · {{ r.subtitle }}</p>
         </div>
       </button>
     </div>

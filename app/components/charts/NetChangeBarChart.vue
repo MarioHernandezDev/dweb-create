@@ -69,7 +69,7 @@ const bars = computed(() =>
       >
         {{ bars[hoveredIndex]!.value > 0 ? '+' : '' }}{{ formatValue(bars[hoveredIndex]!.value) }}
       </p>
-      <p class="text-[0.6875rem] text-[var(--color-text-muted)]">{{ bars[hoveredIndex]!.label }}</p>
+      <p class="text-micro text-[var(--color-text-muted)]">{{ bars[hoveredIndex]!.label }}</p>
     </div>
   </div>
 </template>

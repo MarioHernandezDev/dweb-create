@@ -1,8 +1,7 @@
 <script setup lang="ts">
 /**
  * Bloque de carga con la forma del contenido que sustituye, para que al llegar
- * los datos no haya saltos de maquetación. La pulsación se desactiva sola con
- * `prefers-reduced-motion` (regla global de main.css).
+ * los datos no haya saltos de maquetación. Las medidas viajan como variables CSS.
  */
 withDefaults(defineProps<{ width?: string; height?: string; rounded?: string }>(), {
   width: '100%',
@@ -12,9 +11,5 @@ withDefaults(defineProps<{ width?: string; height?: string; rounded?: string }>(
 </script>
 
 <template>
-  <span
-    class="block animate-pulse bg-[var(--color-ink-overlay)]"
-    :style="{ width, height, borderRadius: rounded }"
-    aria-hidden="true"
-  />
+  <span class="skeleton" :style="{ '--sk-w': width, '--sk-h': height, '--sk-r': rounded }" aria-hidden="true" />
 </template>

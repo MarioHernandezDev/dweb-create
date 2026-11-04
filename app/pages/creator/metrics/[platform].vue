@@ -128,13 +128,13 @@ function formatShortDate(iso: string): string {
         </span>
         <div>
           <p class="font-display text-[1.25rem] text-[var(--color-text)]">{{ account.handle || meta.label }}</p>
-          <p class="text-[0.8125rem] text-[var(--color-text-muted)]">{{ formatCompactNumber(account.followers) }} seguidores</p>
+          <p class="text-sm text-[var(--color-text-muted)]">{{ formatCompactNumber(account.followers) }} seguidores</p>
         </div>
       </BaseCard>
 
       <BaseCard radius="lg" padding="lg" class="md:max-w-xl flex items-start gap-3">
         <Icon name="ph:info-fill" class="size-5 shrink-0 text-[var(--color-text-faint)] mt-0.5" />
-        <p class="text-[0.875rem] text-[var(--color-text-muted)] leading-relaxed">
+        <p class="text-sm text-[var(--color-text-muted)] leading-relaxed">
           Todavía solo tenemos tu número de seguidores — el resto de estadísticas de {{ meta.label }} (alcance,
           interacciones, publicaciones) necesitan el permiso de Insights de Meta, pendiente de verificación.
         </p>

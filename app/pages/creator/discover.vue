@@ -196,7 +196,7 @@ async function send() {
              — nunca se ven los dos a la vez. -->
         <button
           type="button"
-          class="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-[var(--radius-xs)] text-[0.8125rem] font-medium border transition-colors"
+          class="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-[var(--radius-xs)] text-sm font-medium border transition-colors"
           :class="mode === 'ai'
             ? 'border-[var(--color-primary-500)]/50 bg-[var(--color-primary-500)]/12 text-[var(--color-primary-600)]'
             : 'border-[var(--color-hairline)] text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:border-[var(--color-hairline-strong)] hover:bg-[var(--color-ink-overlay)]'"
@@ -207,7 +207,7 @@ async function send() {
         </button>
         <button
           type="button"
-          class="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-[var(--radius-xs)] text-[0.8125rem] font-medium border transition-colors"
+          class="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-[var(--radius-xs)] text-sm font-medium border transition-colors"
           :class="filtersOpen
             ? 'border-[var(--color-primary-500)]/50 bg-[var(--color-primary-500)]/12 text-[var(--color-primary-600)]'
             : 'border-[var(--color-hairline)] text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:border-[var(--color-hairline-strong)] hover:bg-[var(--color-ink-overlay)]'"
@@ -219,11 +219,11 @@ async function send() {
         </button>
         <NuxtLink
           to="/favorites"
-          class="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-[var(--radius-xs)] text-[0.8125rem] font-medium border border-[var(--color-hairline)] text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:border-[var(--color-hairline-strong)] hover:bg-[var(--color-ink-overlay)] transition-colors"
+          class="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-[var(--radius-xs)] text-sm font-medium border border-[var(--color-hairline)] text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:border-[var(--color-hairline-strong)] hover:bg-[var(--color-ink-overlay)] transition-colors"
         >
           <Icon name="ph:bookmark-simple-fill" class="size-4" />
           Guardados
-          <span v-if="savedPartnerIds.size" class="min-w-[1.125rem] h-[1.125rem] px-1 rounded-full bg-[var(--color-primary-500)]/15 text-[var(--color-primary-600)] text-[0.6875rem] font-semibold leading-[1.125rem] text-center">{{ savedPartnerIds.size }}</span>
+          <span v-if="savedPartnerIds.size" class="min-w-[1.125rem] h-[1.125rem] px-1 rounded-full bg-[var(--color-primary-500)]/15 text-[var(--color-primary-600)] text-micro font-semibold leading-[1.125rem] text-center">{{ savedPartnerIds.size }}</span>
         </NuxtLink>
       </div>
 
@@ -231,19 +231,19 @@ async function send() {
       <div v-if="hasActiveFilters" class="flex flex-wrap items-center gap-1.5 mb-3.5">
         <button
           v-for="cat in selectedCategories" :key="cat" type="button"
-          class="inline-flex items-center gap-1 pl-2.5 pr-1.5 h-7 rounded-full text-[0.75rem] font-medium bg-[var(--color-primary-500)]/12 text-[var(--color-primary-600)] hover:bg-[var(--color-primary-500)]/20"
+          class="inline-flex items-center gap-1 pl-2.5 pr-1.5 h-7 rounded-full text-micro font-medium bg-[var(--color-primary-500)]/12 text-[var(--color-primary-600)] hover:bg-[var(--color-primary-500)]/20"
           @click="removeCategory(cat)"
         >
           {{ cat }} <Icon name="ph:x-bold" class="size-3" />
         </button>
         <button
           v-if="minBudgetEuros !== null || maxBudgetEuros !== null" type="button"
-          class="inline-flex items-center gap-1 pl-2.5 pr-1.5 h-7 rounded-full text-[0.75rem] font-medium bg-[var(--color-primary-500)]/12 text-[var(--color-primary-600)] hover:bg-[var(--color-primary-500)]/20"
+          class="inline-flex items-center gap-1 pl-2.5 pr-1.5 h-7 rounded-full text-micro font-medium bg-[var(--color-primary-500)]/12 text-[var(--color-primary-600)] hover:bg-[var(--color-primary-500)]/20"
           @click="clearBudget"
         >
           {{ minBudgetEuros ? formatEuros(minBudgetEuros * 100) : '…' }}–{{ maxBudgetEuros ? formatEuros(maxBudgetEuros * 100) : '…' }} <Icon name="ph:x-bold" class="size-3" />
         </button>
-        <button type="button" class="text-[0.75rem] font-medium text-[var(--color-text-muted)] hover:text-[var(--color-text)] underline underline-offset-2" @click="clearAllFilters">
+        <button type="button" class="text-micro font-medium text-[var(--color-text-muted)] hover:text-[var(--color-text)] underline underline-offset-2" @click="clearAllFilters">
           Limpiar filtros
         </button>
       </div>
@@ -252,7 +252,7 @@ async function send() {
         <textarea
           v-model="queryText" rows="2"
           placeholder="Ej. «busco marcas de fitness o nutrición, con al menos 300€ por pack de contenido»…"
-          class="w-full px-3.5 py-2.5 rounded-[var(--radius-sm)] bg-[var(--color-ink-overlay)] border border-[var(--color-hairline)] text-[0.9375rem] text-[var(--color-text)] placeholder:text-[var(--color-text-faint)] focus:outline-none focus:border-[var(--color-primary-500)]/60 resize-none"
+          class="textarea w-full resize-none"
         />
       </div>
 
@@ -260,7 +260,7 @@ async function send() {
         <div class="flex flex-wrap gap-1.5 mb-3">
           <button
             v-for="cat in DISCOVERY_CATEGORIES" :key="cat" type="button"
-            class="px-3 h-8 rounded-full text-[0.8125rem] font-medium border transition-colors duration-150"
+            class="px-3 h-8 rounded-full text-sm font-medium border transition-colors duration-150"
             :class="selectedCategories.includes(cat)
               ? 'bg-[var(--color-primary-500)]/15 border-[var(--color-primary-500)]/50 text-[var(--color-primary-500)]'
               : 'bg-[var(--color-ink-raised)] border-[var(--color-hairline)] text-[var(--color-text-muted)] hover:border-[var(--color-primary-500)]/40 hover:text-[var(--color-primary-600)]'"
@@ -273,11 +273,11 @@ async function send() {
         <div class="flex items-center gap-2.5">
           <input
             v-model.number="minBudgetEuros" type="number" min="0" step="1" placeholder="Presupuesto desde (€)"
-            class="w-full h-10 px-3 rounded-[var(--radius-sm)] bg-[var(--color-ink-raised)] border border-[var(--color-hairline)] text-[0.8125rem] text-[var(--color-text)] placeholder:text-[var(--color-text-faint)] focus:outline-none focus:border-[var(--color-primary-500)]/60"
+            class="input w-full h-10"
           >
           <input
             v-model.number="maxBudgetEuros" type="number" min="0" step="1" placeholder="hasta (€)"
-            class="w-full h-10 px-3 rounded-[var(--radius-sm)] bg-[var(--color-ink-raised)] border border-[var(--color-hairline)] text-[0.8125rem] text-[var(--color-text)] placeholder:text-[var(--color-text-faint)] focus:outline-none focus:border-[var(--color-primary-500)]/60"
+            class="input w-full h-10"
           >
         </div>
       </div>
@@ -289,7 +289,7 @@ async function send() {
       >
         {{ searching ? 'Buscando…' : mode === 'ai' ? 'Buscar con IA' : 'Buscar' }}
       </BaseButton>
-      <p v-if="error" class="text-[0.8125rem] text-[var(--color-status-alert)] mt-2">{{ error }}</p>
+      <p v-if="error" class="text-sm text-[var(--color-status-alert)] mt-2">{{ error }}</p>
     </section>
 
     <EmptyState
@@ -299,7 +299,7 @@ async function send() {
     />
     <template v-else>
       <!-- Hallazgo #6: antes no había ningún recuento visible de resultados. -->
-      <p v-if="searched" class="text-[0.8125rem] text-[var(--color-text-muted)] mb-3">
+      <p v-if="searched" class="text-sm text-[var(--color-text-muted)] mb-3">
         {{ results.length }} {{ results.length === 1 ? 'marca encontrada' : 'marcas encontradas' }}
       </p>
       <FeaturedDeck
@@ -322,78 +322,78 @@ async function send() {
 
     <BottomSheet v-model="sheetOpen" :title="target ? `Proponer a ${target.name}` : 'Proponer colaboración'">
       <template v-if="sheetStage === 'form'">
-        <label class="block text-[0.8125rem] font-medium text-[var(--color-text-muted)] mb-1.5" for="brief">Cuéntales qué les ofreces</label>
+        <label class="block text-sm font-medium text-[var(--color-text-muted)] mb-1.5" for="brief">Cuéntales qué les ofreces</label>
         <textarea
           id="brief" v-model="message" rows="4" placeholder="Qué puedes hacer por ellos y en qué formato…"
-          class="w-full px-3.5 py-2.5 rounded-[var(--radius-sm)] bg-[var(--color-ink-overlay)] border border-[var(--color-hairline)] text-[0.9375rem] text-[var(--color-text)] placeholder:text-[var(--color-text-faint)] focus:outline-none focus:border-[var(--color-primary-500)]/60 resize-none"
+          class="textarea w-full resize-none"
         />
 
-        <label class="block text-[0.8125rem] font-medium text-[var(--color-text-muted)] mb-1.5 mt-4" for="rate">Tu tarifa (€)</label>
+        <label class="block text-sm font-medium text-[var(--color-text-muted)] mb-1.5 mt-4" for="rate">Tu tarifa (€)</label>
         <input
           id="rate" v-model.number="rateEuros" type="number" min="1" step="1" placeholder="Ej. 300"
-          class="w-full h-11 px-3.5 rounded-[var(--radius-sm)] bg-[var(--color-ink-overlay)] border border-[var(--color-hairline)] text-[0.9375rem] text-[var(--color-text)] placeholder:text-[var(--color-text-faint)] focus:outline-none focus:border-[var(--color-primary-500)]/60"
+          class="input w-full h-11"
         >
-        <p class="text-[0.75rem] text-[var(--color-text-faint)] mt-1.5">Si acepta, cobras desde CIBERAN — el dinero llega directo, descontando la comisión de la plataforma.</p>
+        <p class="text-micro text-[var(--color-text-faint)] mt-1.5">Si acepta, cobras desde CIBERAN — el dinero llega directo, descontando la comisión de la plataforma.</p>
 
         <button
           type="button"
-          class="flex items-center gap-1.5 text-[0.8125rem] font-medium text-[var(--color-text-muted)] hover:text-[var(--color-text)] mt-4"
+          class="flex items-center gap-1.5 text-sm font-medium text-[var(--color-text-muted)] hover:text-[var(--color-text)] mt-4"
           @click="termsOpen = !termsOpen"
         >
           <Icon :name="termsOpen ? 'ph:caret-down-bold' : 'ph:caret-right-bold'" class="size-3.5" />
           Detalles de la propuesta (opcional)
         </button>
         <div v-if="termsOpen" class="flex flex-col gap-3 mt-3 p-3.5 rounded-[var(--radius-md)] bg-[var(--color-ink-overlay)]/60 border border-[var(--color-hairline)]">
-          <p class="text-[0.6875rem] font-semibold uppercase tracking-wide text-[var(--color-text-faint)]">Sobre la campaña</p>
+          <p class="text-sm font-semibold text-[var(--text-muted)]">Sobre la campaña</p>
           <div>
-            <label class="block text-[0.8125rem] font-medium text-[var(--color-text-muted)] mb-1.5" for="campaign-goal">Objetivo</label>
+            <label class="block text-sm font-medium text-[var(--color-text-muted)] mb-1.5" for="campaign-goal">Objetivo</label>
             <textarea
               id="campaign-goal" v-model="campaignGoal" rows="2" placeholder="Qué buscáis conseguir con esta colaboración…"
-              class="w-full px-3.5 py-2.5 rounded-[var(--radius-sm)] bg-[var(--color-ink-raised)] border border-[var(--color-hairline)] text-[0.875rem] text-[var(--color-text)] placeholder:text-[var(--color-text-faint)] focus:outline-none focus:border-[var(--color-primary-500)]/60 resize-none"
+              class="textarea w-full resize-none"
             />
           </div>
           <div>
-            <label class="block text-[0.8125rem] font-medium text-[var(--color-text-muted)] mb-1.5" for="target-audience">Público objetivo</label>
+            <label class="block text-sm font-medium text-[var(--color-text-muted)] mb-1.5" for="target-audience">Público objetivo</label>
             <input
               id="target-audience" v-model="targetAudience" type="text" placeholder="Ej. mujeres 25-35, moda sostenible"
-              class="w-full h-10 px-3.5 rounded-[var(--radius-sm)] bg-[var(--color-ink-raised)] border border-[var(--color-hairline)] text-[0.875rem] text-[var(--color-text)] placeholder:text-[var(--color-text-faint)] focus:outline-none focus:border-[var(--color-primary-500)]/60"
+              class="input w-full h-10"
             >
           </div>
           <div>
-            <label class="block text-[0.8125rem] font-medium text-[var(--color-text-muted)] mb-1.5" for="tone">Tono</label>
+            <label class="block text-sm font-medium text-[var(--color-text-muted)] mb-1.5" for="tone">Tono</label>
             <input
               id="tone" v-model="tone" type="text" placeholder="Ej. cercano y divertido"
-              class="w-full h-10 px-3.5 rounded-[var(--radius-sm)] bg-[var(--color-ink-raised)] border border-[var(--color-hairline)] text-[0.875rem] text-[var(--color-text)] placeholder:text-[var(--color-text-faint)] focus:outline-none focus:border-[var(--color-primary-500)]/60"
+              class="input w-full h-10"
             >
           </div>
 
-          <p class="text-[0.6875rem] font-semibold uppercase tracking-wide text-[var(--color-text-faint)] mt-2">Condiciones</p>
+          <p class="text-sm font-semibold text-[var(--text-muted)] mt-2">Condiciones</p>
           <div>
-            <label class="block text-[0.8125rem] font-medium text-[var(--color-text-muted)] mb-1.5" for="scope-notes">Alcance (entregables concretos)</label>
+            <label class="block text-sm font-medium text-[var(--color-text-muted)] mb-1.5" for="scope-notes">Alcance (entregables concretos)</label>
             <textarea
               id="scope-notes" v-model="scopeNotes" rows="2" placeholder="Ej. 1 reel + 2 stories"
-              class="w-full px-3.5 py-2.5 rounded-[var(--radius-sm)] bg-[var(--color-ink-raised)] border border-[var(--color-hairline)] text-[0.875rem] text-[var(--color-text)] placeholder:text-[var(--color-text-faint)] focus:outline-none focus:border-[var(--color-primary-500)]/60 resize-none"
+              class="textarea w-full resize-none"
             />
           </div>
           <div>
-            <label class="block text-[0.8125rem] font-medium text-[var(--color-text-muted)] mb-1.5" for="revisions">Revisiones incluidas</label>
+            <label class="block text-sm font-medium text-[var(--color-text-muted)] mb-1.5" for="revisions">Revisiones incluidas</label>
             <input
               id="revisions" v-model.number="revisionsIncluded" type="number" min="0" step="1" placeholder="Déjalo en blanco si no hay límite"
-              class="w-full h-10 px-3.5 rounded-[var(--radius-sm)] bg-[var(--color-ink-raised)] border border-[var(--color-hairline)] text-[0.875rem] text-[var(--color-text)] placeholder:text-[var(--color-text-faint)] focus:outline-none focus:border-[var(--color-primary-500)]/60"
+              class="input w-full h-10"
             >
           </div>
-          <label class="flex items-center gap-2 text-[0.8125rem] text-[var(--color-text)]">
+          <label class="flex items-center gap-2 text-sm text-[var(--color-text)]">
             <input v-model="exclusivity" type="checkbox" class="size-4 accent-[var(--color-primary-500)]">
             Exclusividad (no trabajarán con la competencia mientras dure)
           </label>
           <div>
-            <label class="block text-[0.8125rem] font-medium text-[var(--color-text-muted)] mb-1.5" for="usage-rights">Derechos de uso del contenido</label>
+            <label class="block text-sm font-medium text-[var(--color-text-muted)] mb-1.5" for="usage-rights">Derechos de uso del contenido</label>
             <textarea
               id="usage-rights" v-model="usageRights" rows="2" placeholder="Ej. uso en redes propias durante 6 meses"
-              class="w-full px-3.5 py-2.5 rounded-[var(--radius-sm)] bg-[var(--color-ink-raised)] border border-[var(--color-hairline)] text-[0.875rem] text-[var(--color-text)] placeholder:text-[var(--color-text-faint)] focus:outline-none focus:border-[var(--color-primary-500)]/60 resize-none"
+              class="textarea w-full resize-none"
             />
           </div>
-          <p class="text-[0.75rem] text-[var(--color-text-faint)]">Quedan fijadas tal cual al enviar — no se pueden editar después.</p>
+          <p class="text-micro text-[var(--color-text-faint)]">Quedan fijadas tal cual al enviar — no se pueden editar después.</p>
         </div>
 
         <BaseButton
@@ -408,8 +408,8 @@ async function send() {
           <span class="flex items-center justify-center size-12 rounded-full bg-[var(--color-status-published)]/15 text-[var(--color-status-published)]">
             <Icon name="ph:paper-plane-tilt-fill" class="size-5" />
           </span>
-          <p class="text-[0.9375rem] text-[var(--color-text)]">Propuesta enviada a {{ target?.name }}</p>
-          <p class="text-[0.8125rem] text-[var(--color-text-muted)]">Te avisamos en cuanto responda.</p>
+          <p class="text-base text-[var(--color-text)]">Propuesta enviada a {{ target?.name }}</p>
+          <p class="text-sm text-[var(--color-text-muted)]">Te avisamos en cuanto responda.</p>
         </div>
       </template>
     </BottomSheet>

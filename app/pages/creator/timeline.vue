@@ -56,7 +56,7 @@ async function onRemove(post: Post) {
   >
     <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
       <SegmentedTabs :model-value="view" :options="viewOptions" @update:model-value="setView" />
-      <p v-if="activeCollab" class="inline-flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.8125rem] text-[var(--color-text-muted)]" data-project-stats>
+      <p v-if="activeCollab" class="inline-flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-[var(--color-text-muted)]" data-project-stats>
         <span class="font-medium text-[var(--color-text)]">{{ activeCollab.partnerName }}</span>
         <span>{{ stats.total }} entrega{{ stats.total === 1 ? '' : 's' }}</span>
         <span v-if="stats.overdue" class="text-[var(--color-status-alert)]">{{ stats.overdue }} atrasada{{ stats.overdue === 1 ? '' : 's' }}</span>
@@ -71,7 +71,7 @@ async function onRemove(post: Post) {
     <template v-else>
       <PostFilterBar v-if="posts.length" v-model:filters="filters" v-model:sort="sort" :collabs="collabRequests" show-status show-sort class="mb-4">
         <template #end>
-          <button type="button" class="inline-flex items-center gap-1.5 text-[0.8125rem] font-medium text-[var(--color-primary-500)] hover:text-[var(--color-primary-600)]" data-go-board @click="setView('tablero')">
+          <button type="button" class="inline-flex items-center gap-1.5 text-sm font-medium text-[var(--color-primary-500)] hover:text-[var(--color-primary-600)]" data-go-board @click="setView('tablero')">
             <Icon name="ph:kanban-bold" class="size-4" /> Ir al tablero{{ activeCollab ? ` de ${activeCollab.partnerName}` : '' }}
           </button>
         </template>
@@ -84,11 +84,11 @@ async function onRemove(post: Post) {
 
     <!-- Paginación: se traen de 300 en 300 por fecha de entrega; los filtros y el tablero trabajan sobre lo ya cargado. -->
     <div v-if="hasMore" class="mt-6 flex flex-col items-center gap-2" data-load-more>
-      <p class="text-[0.8125rem] text-[var(--color-text-muted)]">Hay más publicaciones sin cargar: los filtros y el tablero solo ven las {{ posts.length }} cargadas.</p>
+      <p class="text-sm text-[var(--color-text-muted)]">Hay más publicaciones sin cargar: los filtros y el tablero solo ven las {{ posts.length }} cargadas.</p>
       <BaseButton variant="secondary" size="sm" icon="ph:arrow-down-bold" :icon-spin="loadingMore" :disabled="loadingMore" @click="loadMore">
         {{ loadingMore ? 'Cargando…' : 'Cargar más publicaciones' }}
       </BaseButton>
-      <p v-if="loadMoreError" class="text-[0.75rem] text-[var(--color-status-alert)]" role="alert">{{ loadMoreError }}</p>
+      <p v-if="loadMoreError" class="text-micro text-[var(--color-status-alert)]" role="alert">{{ loadMoreError }}</p>
     </div>
 
     <Fab :active="composerOpen" @click="composerOpen = true" />

@@ -217,7 +217,7 @@ const roleLabel = computed(() => (conversation.value?.otherRole === 'partner' ? 
 <template>
   <div v-if="notFound" class="flex h-full flex-1 items-center justify-center rounded-[var(--radius-lg)] border border-[var(--color-hairline)]" data-chat-notfound>
     <EmptyState icon="ph:chat-circle-slash" title="Conversación no encontrada" description="No existe o no eres uno de sus participantes.">
-      <NuxtLink to="/chat" class="text-[0.8125rem] font-medium text-[var(--color-primary-500)] underline underline-offset-2">Volver a mis conversaciones</NuxtLink>
+      <NuxtLink to="/chat" class="text-sm font-medium text-[var(--color-primary-500)] underline underline-offset-2">Volver a mis conversaciones</NuxtLink>
     </EmptyState>
   </div>
 
@@ -231,17 +231,17 @@ const roleLabel = computed(() => (conversation.value?.otherRole === 'partner' ? 
         <div class="min-w-0 flex-1">
           <NuxtLink
             v-if="conversation.otherFichaId" :to="`/profile/${conversation.otherRole}/${conversation.otherFichaId}`"
-            class="block truncate text-[0.9375rem] font-medium text-[var(--color-text)] hover:text-[var(--color-primary-500)]" data-thread-name
+            class="block truncate text-base font-medium text-[var(--color-text)] hover:text-[var(--color-primary-500)]" data-thread-name
           >{{ conversation.otherName }}</NuxtLink>
-          <span v-else class="block truncate text-[0.9375rem] font-medium text-[var(--color-text)]" data-thread-name>{{ conversation.otherName }}</span>
-          <p class="text-[0.75rem] text-[var(--color-text-faint)]">
+          <span v-else class="block truncate text-base font-medium text-[var(--color-text)]" data-thread-name>{{ conversation.otherName }}</span>
+          <p class="text-micro text-[var(--color-text-faint)]">
             <span v-if="isOtherTyping" class="font-medium text-[var(--color-primary-500)]">Escribiendo…</span>
             <template v-else>{{ roleLabel }}</template>
           </p>
         </div>
         <NuxtLink
           v-if="conversation.otherFichaId" :to="`/profile/${conversation.otherRole}/${conversation.otherFichaId}`"
-          class="hidden h-9 items-center gap-1.5 rounded-full border border-[var(--color-hairline)] px-3.5 text-[0.8125rem] font-medium text-[var(--color-text-muted)] hover:text-[var(--color-text)] sm:inline-flex"
+          class="hidden h-9 items-center gap-1.5 rounded-full border border-[var(--color-hairline)] px-3.5 text-sm font-medium text-[var(--color-text-muted)] hover:text-[var(--color-text)] sm:inline-flex"
         >
           <Icon name="ph:user-circle" class="size-4" /> Ver perfil
         </NuxtLink>
@@ -249,7 +249,7 @@ const roleLabel = computed(() => (conversation.value?.otherRole === 'partner' ? 
       <SkeletonBlock v-else width="9rem" height="1rem" />
     </header>
 
-    <p v-if="connectionIssue" class="shrink-0 border-b border-[var(--color-status-review)]/30 bg-[var(--color-status-review)]/10 px-4 py-2 text-[0.8125rem] text-[var(--color-text)]" role="status" data-connection-banner>{{ connectionIssue }}</p>
+    <p v-if="connectionIssue" class="shrink-0 border-b border-[var(--color-status-review)]/30 bg-[var(--color-status-review)]/10 px-4 py-2 text-sm text-[var(--color-text)]" role="status" data-connection-banner>{{ connectionIssue }}</p>
 
     <div class="relative min-h-0 flex-1">
       <div ref="scrollEl" class="h-full overflow-y-auto nx-scroll px-3 py-2 md:px-5" role="log" aria-live="polite" aria-label="Mensajes de la conversación" @scroll="onScroll" data-thread-scroll>
@@ -268,15 +268,15 @@ const roleLabel = computed(() => (conversation.value?.otherRole === 'partner' ? 
             <BaseButton variant="secondary" size="sm" icon="ph:arrow-up-bold" :icon-spin="loadingOlder" :disabled="loadingOlder" @click="loadOlder">
               {{ loadingOlder ? 'Cargando…' : 'Cargar mensajes anteriores' }}
             </BaseButton>
-            <p v-if="olderError" class="text-[0.75rem] text-[var(--color-status-alert)]" role="alert">{{ olderError }}</p>
+            <p v-if="olderError" class="text-micro text-[var(--color-status-alert)]" role="alert">{{ olderError }}</p>
           </div>
           <template v-for="item in chatItems" :key="item.key">
             <div v-if="item.type === 'divider'" class="my-3 flex justify-center">
-              <span class="rounded-full bg-[var(--color-ink-overlay)] px-3 py-1 text-[0.6875rem] font-medium text-[var(--color-text-faint)]">{{ item.label }}</span>
+              <span class="rounded-full bg-[var(--color-ink-overlay)] px-3 py-1 text-micro font-medium text-[var(--color-text-faint)]">{{ item.label }}</span>
             </div>
             <div v-else-if="item.type === 'unread'" class="my-3 flex items-center gap-2" data-unread-divider>
               <span class="h-px flex-1 bg-[var(--color-primary-500)]/25" />
-              <span class="rounded-full bg-[var(--color-primary-500)]/10 px-2.5 py-1 text-[0.6875rem] font-medium text-[var(--color-primary-500)]">
+              <span class="rounded-full bg-[var(--color-primary-500)]/10 px-2.5 py-1 text-micro font-medium text-[var(--color-primary-500)]">
                 {{ item.count === 1 ? '1 mensaje nuevo' : `${item.count} mensajes nuevos` }}
               </span>
               <span class="h-px flex-1 bg-[var(--color-primary-500)]/25" />
@@ -296,7 +296,7 @@ const roleLabel = computed(() => (conversation.value?.otherRole === 'partner' ? 
       >
         <button
           v-if="newMessagesBanner" type="button"
-          class="absolute bottom-3 left-1/2 z-10 inline-flex h-9 -translate-x-1/2 items-center gap-1.5 rounded-full bg-[var(--color-primary-500)] px-4 text-[0.8125rem] font-medium text-[var(--color-on-primary)] shadow-[var(--shadow-float)]"
+          class="absolute bottom-3 left-1/2 z-10 inline-flex h-9 -translate-x-1/2 items-center gap-1.5 rounded-full bg-[var(--color-primary-500)] px-4 text-sm font-medium text-[var(--color-on-primary)] shadow-[var(--shadow-float)]"
           @click="jumpToBottom"
         >
           <Icon name="ph:arrow-down-bold" class="size-3.5" /> Nuevos mensajes

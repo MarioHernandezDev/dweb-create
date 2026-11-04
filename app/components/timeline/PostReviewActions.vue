@@ -52,12 +52,12 @@ async function submitChanges() {
 <template>
   <div>
     <template v-if="stage === 'requesting-changes'">
-      <label class="block text-[0.8125rem] font-medium text-[var(--color-text-muted)] mb-1.5" for="review-change-comment">¿Qué hay que cambiar?</label>
+      <label class="block text-sm font-medium text-[var(--color-text-muted)] mb-1.5" for="review-change-comment">¿Qué hay que cambiar?</label>
       <textarea
         id="review-change-comment" v-model="changeComment" rows="3" placeholder="Sé concreto — esto es justo lo que verá el creador…"
-        class="w-full px-3.5 py-2.5 rounded-[var(--radius-sm)] bg-[var(--color-ink-overlay)] border border-[var(--color-hairline)] text-[0.9375rem] text-[var(--color-text)] placeholder:text-[var(--color-text-faint)] focus:outline-none focus:border-[var(--color-primary-500)]/60 resize-none"
+        class="textarea w-full resize-none"
       />
-      <p v-if="changeError" class="text-[0.75rem] text-[var(--color-status-alert)] mt-1.5">{{ changeError }}</p>
+      <p v-if="changeError" class="text-micro text-[var(--color-status-alert)] mt-1.5">{{ changeError }}</p>
       <div class="flex gap-2.5 mt-3">
         <BaseButton variant="secondary" class="flex-1" :disabled="acting" @click="stage = 'idle'">Cancelar</BaseButton>
         <BaseButton variant="primary" class="flex-1" :disabled="acting || !changeComment.trim()" :icon-spin="acting" @click="submitChanges">Enviar</BaseButton>
@@ -66,9 +66,9 @@ async function submitChanges() {
     <template v-else>
       <textarea
         v-if="showApproveComment" v-model="approveComment" rows="2" placeholder="Comentario opcional al aprobar…"
-        class="w-full px-3.5 py-2.5 rounded-[var(--radius-sm)] bg-[var(--color-ink-overlay)] border border-[var(--color-hairline)] text-[0.875rem] text-[var(--color-text)] placeholder:text-[var(--color-text-faint)] focus:outline-none focus:border-[var(--color-primary-500)]/60 resize-none mb-3"
+        class="textarea w-full resize-none mb-3"
       />
-      <button v-else type="button" class="text-[0.75rem] text-[var(--color-text-muted)] hover:text-[var(--color-text)] underline underline-offset-2 mb-3" @click="showApproveComment = true">
+      <button v-else type="button" class="text-micro text-[var(--color-text-muted)] hover:text-[var(--color-text)] underline underline-offset-2 mb-3" @click="showApproveComment = true">
         + Añadir un comentario
       </button>
       <div class="flex gap-2.5">

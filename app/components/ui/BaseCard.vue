@@ -1,36 +1,32 @@
 <script setup lang="ts">
+/**
+ * Tarjeta. Aspecto en assets/css/components/card.css. `tone="overlay"`,
+ * `radius` y `padding` se mantienen con sus valores de siempre; `variant` y
+ * `tint` son las novedades (propuesta §3.6).
+ */
 withDefaults(
   defineProps<{
     tone?: 'raised' | 'overlay'
     radius?: 'sm' | 'md' | 'lg'
     padding?: 'none' | 'sm' | 'md' | 'lg'
+    variant?: 'info' | 'featured'
+    tint?: 'voltio' | 'mantequilla' | 'menta' | 'cielo' | 'rosa'
     interactive?: boolean
   }>(),
-  { tone: 'raised', radius: 'md', padding: 'md', interactive: false }
+  { tone: 'raised', radius: 'md', padding: 'md', variant: 'info', interactive: false }
 )
-
-const radiusClasses: Record<string, string> = {
-  sm: 'rounded-[var(--radius-sm)]',
-  md: 'rounded-[var(--radius-md)]',
-  lg: 'rounded-[var(--radius-lg)]'
-}
-
-const paddingClasses: Record<string, string> = {
-  none: '',
-  sm: 'p-4',
-  md: 'p-5',
-  lg: 'p-7'
-}
 </script>
 
 <template>
   <div
-    class="border border-[var(--color-hairline)]"
+    class="card"
     :class="[
-      tone === 'raised' ? 'bg-[var(--color-ink-raised)]' : 'bg-[var(--color-ink-overlay)]',
-      radiusClasses[radius],
-      paddingClasses[padding],
-      interactive && 'transition-[border-color,transform,box-shadow] duration-200 ease-[var(--ease-spring)] hover:border-[var(--color-hairline-strong)] hover:-translate-y-0.5 hover:shadow-[var(--shadow-float)] active:scale-[0.99] active:translate-y-0 cursor-pointer'
+      tone === 'overlay' && 'card--sunken',
+      radius !== 'md' && `card--r-${radius}`,
+      padding === 'md' ? undefined : `card--pad-${padding}`,
+      variant === 'featured' && 'card--featured',
+      tint && `card--tint-${tint}`,
+      interactive && 'card--interactive'
     ]"
   >
     <slot />

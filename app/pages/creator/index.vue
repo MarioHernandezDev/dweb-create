@@ -4,6 +4,8 @@ import { isFichaIncomplete } from '~/utils/ficha'
 import { relativeTime, isPostOverdue } from '~/utils/status'
 import { publishedThisWeek as countPublishedThisWeek } from '~/utils/post-library'
 
+import { weekDays, overdueCount, phaseShares } from '~/utils/home-charts'
+
 useHead({ title: 'Hoy' })
 
 const { posts, ensureLoaded, loadUntilDue } = useMyPosts()
@@ -131,6 +133,20 @@ const activity = computed<ActivityItem[]>(() => {
   return items.slice(0, 4)
 })
 
+// Gráficas de resumen (datos ya cargados; nada se consulta aparte).
+const chartDays = computed(() => weekDays(posts.value, new Date()))
+const chartOverdue = computed(() => overdueCount(posts.value))
+const chartShares = computed(() => phaseShares(posts.value))
+
+// Frase de estado: solo con lo que de verdad hay (nada inventado).
+const statusLine = computed(() => {
+  const parts: string[] = []
+  if (overdue.value.length) parts.push(`${overdue.value.length} ${overdue.value.length === 1 ? 'entrega fuera de plazo' : 'entregas fuera de plazo'}`)
+  if (pendingRequestList.value.length) parts.push(`${pendingRequestList.value.length} ${pendingRequestList.value.length === 1 ? 'solicitud sin responder' : 'solicitudes sin responder'}`)
+  if (unreadConversations.value.length) parts.push(`${unreadConversations.value.length} ${unreadConversations.value.length === 1 ? 'conversación con mensajes nuevos' : 'conversaciones con mensajes nuevos'}`)
+  return parts.length ? parts.join(' · ') : 'Todo al día por ahora.'
+})
+
 const tips = computed(() => {
   const list: { icon: string; text: string; cta: string; to: string }[] = []
   if (fichaIncomplete.value) {
@@ -147,85 +163,84 @@ const tips = computed(() => {
 
 <template>
   <AppShell role="creator" title="Hoy">
-    <section class="mb-6">
-      <h1 class="font-display text-[1.75rem] md:text-[2.125rem] leading-[1.1] text-[var(--color-text)]">¡Hola! ¿Qué tienes entre manos hoy?</h1>
+    <section class="home-greeting">
+      <h1 class="home-greeting__title">¡Hola! ¿Qué tienes entre manos hoy?</h1>
+      <p class="home-greeting__status">{{ statusLine }}</p>
     </section>
 
-    <section class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
-      <StatTile label="Colaboraciones activas" :value="String(activeCollaborations)" />
-      <StatTile label="Solicitudes pendientes" :value="String(pendingRequests)" />
-      <StatTile label="Entregas próximas" :value="String(nextDeliveries.length)" />
-      <StatTile label="Objetivo semanal" :value="`${publishedThisWeek}/${weeklyTarget}`" />
+    <section class="home-stats">
+      <StatTile label="Colaboraciones activas" :value="String(activeCollaborations)" tint="menta" />
+      <StatTile label="Solicitudes pendientes" :value="String(pendingRequests)" tint="mantequilla" />
+      <StatTile label="Entregas próximas" :value="String(nextDeliveries.length)" tint="cielo" />
+      <StatTile label="Objetivo semanal" :value="`${publishedThisWeek}/${weeklyTarget}`" tint="voltio" />
     </section>
 
-    <div class="grid lg:grid-cols-[1fr_22rem] gap-5 items-start">
-      <div class="flex flex-col gap-5 min-w-0">
+    <section class="home-charts">
+      <PanelCard title="Entregas de los próximos 7 días" description="Pendientes y publicadas, día a día">
+        <WeekColumns :days="chartDays" :overdue="chartOverdue" />
+      </PanelCard>
+      <PanelCard title="Tus publicaciones por fase" description="Dónde está cada una ahora mismo">
+        <PhaseStack :shares="chartShares" empty-text="Aún no hay publicaciones: cuando crees la primera, aquí verás en qué fase está cada una." />
+      </PanelCard>
+    </section>
+
+    <div class="home-grid">
+      <div class="home-col">
         <HomeHeroCard
-          :cover-url="hero.coverUrl" :cover-seed="hero.coverSeed" :icon="hero.icon"
+          :cover-url="hero.coverUrl" :icon="hero.icon"
           :eyebrow="hero.eyebrow" :title="hero.title" :description="hero.description"
           :cta-label="hero.ctaLabel" :cta-to="hero.ctaTo"
         />
 
         <section v-if="discoverLoading || discoverError || suggestedPartners.length">
-          <div class="flex items-center justify-between mb-3">
-            <h2 class="font-display text-[1.125rem] text-[var(--color-text)]">Marcas que podrían interesarte</h2>
-            <NuxtLink to="/creator/discover" class="text-[0.8125rem] font-medium text-[var(--color-text-muted)] hover:text-[var(--color-text)]">Ver todo</NuxtLink>
-          </div>
-          <p v-if="discoverError" class="text-[0.8125rem] text-[var(--color-text-faint)]">No se han podido cargar sugerencias ahora mismo.</p>
+          <SectionTitle title="Marcas que podrían interesarte" class="mb-3">
+            <NuxtLink to="/creator/discover" class="text-sm font-semibold text-[var(--text-muted)] hover:text-[var(--text-strong)]">Ver todo</NuxtLink>
+          </SectionTitle>
+          <p v-if="discoverError" class="text-sm text-[var(--text-muted)]">No se han podido cargar sugerencias ahora mismo.</p>
           <div v-else class="grid sm:grid-cols-3 gap-3">
             <template v-if="discoverLoading">
-              <div v-for="n in 3" :key="`sk-${n}`" class="h-32 rounded-[var(--radius-md)] border border-[var(--color-hairline)] bg-[var(--color-ink-overlay)] animate-pulse" />
+              <SkeletonBlock v-for="n in 3" :key="`sk-${n}`" height="8rem" rounded="var(--radius-md)" />
             </template>
-            <NuxtLink
-              v-else v-for="p in suggestedPartners" :key="p.id" :to="`/profile/partner/${p.id}`"
-              class="rounded-[var(--radius-md)] border border-[var(--color-hairline)] bg-[var(--color-paper)] p-4 hover:border-[var(--color-hairline-strong)] transition-colors"
-            >
-              <p class="text-[0.9375rem] font-semibold text-[var(--color-text)] truncate">{{ p.name }}</p>
-              <p v-if="p.categories.length" class="text-[0.75rem] text-[var(--color-text-muted)] mt-0.5 truncate">{{ p.categories.slice(0, 2).join(' · ') }}</p>
-              <p v-if="p.minCents || p.maxCents" class="text-[0.75rem] text-[var(--color-text-faint)] mt-1.5 inline-flex items-center gap-1">
-                <Icon name="ph:currency-eur" class="size-3" />
-                {{ p.minCents ? formatEuros(p.minCents) : '…' }}–{{ p.maxCents ? formatEuros(p.maxCents) : '…' }}
-              </p>
+            <NuxtLink v-else v-for="p in suggestedPartners" :key="p.id" :to="`/profile/partner/${p.id}`" class="block">
+              <BaseCard interactive class="h-full">
+                <p class="font-semibold truncate">{{ p.name }}</p>
+                <p v-if="p.categories.length" class="text-sm text-[var(--text-muted)] mt-0.5 truncate">{{ p.categories.slice(0, 2).join(' · ') }}</p>
+                <p v-if="p.minCents || p.maxCents" class="text-sm text-[var(--text-muted)] mt-2 inline-flex items-center gap-1">
+                  <Icon name="ph:currency-eur" class="size-4" />
+                  {{ p.minCents ? formatEuros(p.minCents) : '…' }}–{{ p.maxCents ? formatEuros(p.maxCents) : '…' }}
+                </p>
+              </BaseCard>
             </NuxtLink>
           </div>
         </section>
       </div>
 
-      <div class="flex flex-col gap-5 min-w-0">
-        <section v-if="activity.length" class="rounded-[var(--radius-md)] border border-[var(--color-hairline)] bg-[var(--color-paper)] p-4">
-          <h2 class="text-[0.6875rem] font-semibold uppercase tracking-wide text-[var(--color-text-faint)] mb-3">Necesita tu atención</h2>
-          <div class="flex flex-col gap-1">
-            <NuxtLink
-              v-for="(item, i) in activity" :key="i" :to="item.to"
-              class="flex items-center gap-3 py-2 px-1 -mx-1 rounded-[var(--radius-sm)] hover:bg-[var(--color-ink-overlay)] transition-colors"
-            >
-              <span class="flex items-center justify-center size-8 rounded-full bg-[var(--color-ink-overlay)] text-[var(--color-primary-500)] shrink-0">
-                <Icon :name="item.icon" class="size-3.5" />
-              </span>
+      <div class="home-col">
+        <PanelCard v-if="activity.length" title="Necesita tu atención" padding="sm">
+          <div class="activity">
+            <NuxtLink v-for="(item, i) in activity" :key="i" :to="item.to" class="activity__row">
+              <span class="activity__icon"><Icon :name="item.icon" class="size-4" /></span>
               <div class="min-w-0 flex-1">
-                <p class="text-[0.8125rem] font-medium text-[var(--color-text)] truncate">{{ item.title }}</p>
-                <p class="text-[0.75rem] text-[var(--color-text-faint)] truncate">{{ item.subtitle }}</p>
+                <p class="activity__title truncate">{{ item.title }}</p>
+                <p class="activity__sub truncate">{{ item.subtitle }}</p>
               </div>
             </NuxtLink>
           </div>
+        </PanelCard>
+
+        <section v-if="hasConnectedSocials">
+          <StatTile label="Seguidores totales en tus redes" :value="formatCompactNumber(connectedFollowers)" />
         </section>
 
-        <section v-if="hasConnectedSocials" class="rounded-[var(--radius-md)] border border-[var(--color-hairline)] bg-[var(--color-paper)] p-4">
-          <h2 class="text-[0.6875rem] font-semibold uppercase tracking-wide text-[var(--color-text-faint)] mb-3">Tus redes</h2>
-          <StatTile label="Seguidores totales" :value="formatCompactNumber(connectedFollowers)" />
-        </section>
-
-        <section v-if="tips.length" class="rounded-[var(--radius-md)] border border-[var(--color-hairline)] bg-[var(--color-ink-overlay)]/60 p-4">
-          <h2 class="text-[0.6875rem] font-semibold uppercase tracking-wide text-[var(--color-text-faint)] mb-3">Para sacarle más partido</h2>
-          <div class="flex flex-col gap-3">
-            <div v-for="(tip, i) in tips" :key="i" class="flex items-start gap-2.5">
-              <Icon :name="tip.icon" class="size-4 text-[var(--color-primary-500)] shrink-0 mt-0.5" />
-              <p class="min-w-0 flex-1 text-[0.8125rem] text-[var(--color-text)] leading-snug">
-                {{ tip.text }} <NuxtLink :to="tip.to" class="font-medium underline underline-offset-2">{{ tip.cta }}</NuxtLink>
-              </p>
-            </div>
+        <BaseCard v-if="tips.length" tone="overlay" radius="lg">
+          <SectionTitle title="Para sacarle más partido" as="h2" class="mb-3" />
+          <div v-for="(tip, i) in tips" :key="i" class="tip">
+            <Icon :name="tip.icon" class="size-5 shrink-0 mt-0.5" />
+            <p class="min-w-0 flex-1">
+              {{ tip.text }} <NuxtLink :to="tip.to" class="font-semibold underline">{{ tip.cta }}</NuxtLink>
+            </p>
           </div>
-        </section>
+        </BaseCard>
       </div>
     </div>
 

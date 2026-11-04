@@ -1,0 +1,27 @@
+/* ==========================================================================
+   Componente · Icono de red (data-platform)
+   El TS solo da la clave de la red; el color (de terceros, no de CIBERAN)
+   lo decide este archivo.
+   ========================================================================== */
+
+@layer components {
+  .platform-icon {
+    --platform: var(--text-muted);
+
+    display: grid;
+    place-items: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    flex-shrink: 0;
+    border-radius: var(--radius-pill);
+    background: color-mix(in oklab, var(--platform) 14%, var(--surface-raised));
+    color: var(--color-tinta-950);
+
+    &[data-platform="youtube"] { --platform: var(--color-platform-youtube); }
+    &[data-platform="instagram"] { --platform: var(--color-platform-instagram); }
+    &[data-platform="tiktok"] { --platform: var(--color-platform-tiktok); }
+    &[data-platform="x"] { --platform: var(--color-platform-x); }
+    &[data-platform="facebook"] { --platform: var(--color-platform-facebook); }
+    &[data-platform="linkedin"] { --platform: var(--color-platform-linkedin); }
+  }
+}

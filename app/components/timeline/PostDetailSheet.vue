@@ -33,20 +33,20 @@ watch(() => props.post?.id, (postId) => { if (postId) ensureItems(postId) }, { i
 
       <div class="flex items-center gap-2 flex-wrap mb-4">
         <StatusPill :status="post.status" />
-        <span v-if="isPostOverdue(post)" class="inline-flex items-center gap-1 text-[0.8125rem] font-medium text-[var(--color-status-alert)]">
+        <span v-if="isPostOverdue(post)" class="inline-flex items-center gap-1 text-sm font-medium text-[var(--color-status-alert)]">
           <Icon name="ph:warning-fill" class="size-4" />
           {{ overdueLabel(post.dueInDays) }}
         </span>
-        <span v-if="creator" class="text-[0.8125rem] text-[var(--color-text-muted)]">{{ creator.name }}</span>
-        <span class="text-[0.8125rem] text-[var(--color-text-faint)]">· {{ dueLabel(post.dueInDays) }}</span>
+        <span v-if="creator" class="text-sm text-[var(--color-text-muted)]">{{ creator.name }}</span>
+        <span class="text-sm text-[var(--color-text-faint)]">· {{ dueLabel(post.dueInDays) }}</span>
       </div>
 
-      <p class="text-[0.8125rem] text-[var(--color-text-muted)] leading-relaxed mb-4">{{ partnerNextStepHint(post.status) }}</p>
+      <p class="text-sm text-[var(--color-text-muted)] leading-relaxed mb-4">{{ partnerNextStepHint(post.status) }}</p>
 
-      <p v-if="post.caption" class="text-[0.9375rem] text-[var(--color-text)] leading-relaxed mb-4">{{ post.caption }}</p>
-      <p v-else class="text-[0.9375rem] text-[var(--color-text-faint)] italic mb-4">Sin caption todavía.</p>
+      <p v-if="post.caption" class="text-base text-[var(--color-text)] leading-relaxed mb-4">{{ post.caption }}</p>
+      <p v-else class="text-base text-[var(--color-text-faint)] italic mb-4">Sin caption todavía.</p>
 
-      <div class="flex items-center gap-4 text-[0.8125rem] text-[var(--color-text-muted)] mb-4">
+      <div class="flex items-center gap-4 text-sm text-[var(--color-text-muted)] mb-4">
         <span class="inline-flex items-center gap-1.5">
           <Icon :name="platformMeta[post.platform].icon" class="size-4" :style="{ color: platformMeta[post.platform].colorVar }" />
           {{ platformMeta[post.platform].label }}
@@ -55,13 +55,13 @@ watch(() => props.post?.id, (postId) => { if (postId) ensureItems(postId) }, { i
       </div>
 
       <p v-if="post.hashtags.length" class="flex flex-wrap gap-1.5">
-        <span v-for="tag in post.hashtags" :key="tag" class="text-[0.8125rem] text-[var(--color-text-faint)]">{{ tag }}</span>
+        <span v-for="tag in post.hashtags" :key="tag" class="text-sm text-[var(--color-text-faint)]">{{ tag }}</span>
       </p>
 
       <div v-if="checklistItems.length" class="mt-4">
-        <h3 class="text-[0.6875rem] font-semibold uppercase tracking-wide text-[var(--color-text-faint)] mb-2">Checklist</h3>
+        <h3 class="text-sm font-semibold text-[var(--text-muted)] mb-2">Checklist</h3>
         <ul class="flex flex-col gap-1.5">
-          <li v-for="item in checklistItems" :key="item.id" class="flex items-center gap-2 text-[0.8125rem]">
+          <li v-for="item in checklistItems" :key="item.id" class="flex items-center gap-2 text-sm">
             <Icon
               :name="item.done ? 'ph:check-square-fill' : 'ph:square-bold'"
               class="size-4 shrink-0" :class="item.done ? 'text-[var(--color-status-published)]' : 'text-[var(--color-text-faint)]'"

@@ -63,19 +63,19 @@ const roleLabel = (r: string) => (r === 'partner' ? 'Empresa' : 'Creador')
         <label class="sr-only" for="chat-search">Buscar conversaciones por nombre</label>
         <input
           id="chat-search" v-model="query" type="search" placeholder="Buscar por nombre…"
-          class="w-full h-10 pl-8 pr-3 rounded-full bg-[var(--color-ink-overlay)] border border-[var(--color-hairline)] text-[0.875rem] text-[var(--color-text)] placeholder:text-[var(--color-text-faint)] focus:outline-none focus:border-[var(--color-primary-500)]/60"
+          class="input w-full h-10 pl-8 pr-3"
         >
       </div>
       <div class="flex gap-1.5" role="group" aria-label="Filtrar conversaciones">
         <button
           v-for="f in filters" :key="f.value" type="button" :aria-pressed="filter === f.value" :data-filter="f.value"
-          class="inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-[0.8125rem] font-medium border transition-colors"
+          class="inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-sm font-medium border transition-colors"
           :class="filter === f.value ? 'bg-[var(--color-primary-500)]/12 border-[var(--color-primary-500)]/40 text-[var(--color-primary-500)]' : 'border-[var(--color-hairline)] text-[var(--color-text-muted)] hover:text-[var(--color-text)]'"
           @click="filter = f.value"
         >
           {{ f.label }}
-          <span v-if="f.value === 'unread' && unreadTotal" class="text-[0.6875rem] font-semibold">{{ unreadTotal }}</span>
-          <span v-if="f.value === 'offers' && pendingTotal" class="text-[0.6875rem] font-semibold">{{ pendingTotal }}</span>
+          <span v-if="f.value === 'unread' && unreadTotal" class="text-micro font-semibold">{{ unreadTotal }}</span>
+          <span v-if="f.value === 'offers' && pendingTotal" class="text-micro font-semibold">{{ pendingTotal }}</span>
         </button>
       </div>
     </div>
@@ -93,7 +93,7 @@ const roleLabel = (r: string) => (r === 'partner' ? 'Empresa' : 'Creador')
         icon="ph:chat-circle" title="Sin conversaciones todavía"
         description="Inicia un chat desde el perfil de alguien en Descubrir, o hazle una oferta sobre uno de sus paquetes."
       >
-        <NuxtLink :to="`/${$route.path.startsWith('/partner') ? 'partner' : 'creator'}/discover`" class="text-[0.8125rem] font-medium text-[var(--color-primary-500)] underline underline-offset-2">Ir a Descubrir</NuxtLink>
+        <NuxtLink :to="`/${$route.path.startsWith('/partner') ? 'partner' : 'creator'}/discover`" class="text-sm font-medium text-[var(--color-primary-500)] underline underline-offset-2">Ir a Descubrir</NuxtLink>
       </EmptyState>
 
       <EmptyState
@@ -115,19 +115,19 @@ const roleLabel = (r: string) => (r === 'partner' ? 'Empresa' : 'Creador')
             <span class="min-w-0 flex-1">
               <span class="flex items-center justify-between gap-2">
                 <span class="flex min-w-0 items-center gap-1.5">
-                  <span class="truncate text-[0.9375rem]" :class="c.unread ? 'font-semibold text-[var(--color-text)]' : 'font-medium text-[var(--color-text)]'">{{ c.otherName }}</span>
-                  <span class="shrink-0 rounded-full bg-[var(--color-ink-overlay)] px-1.5 text-[0.625rem] font-medium text-[var(--color-text-faint)]">{{ roleLabel(c.otherRole) }}</span>
+                  <span class="truncate text-base" :class="c.unread ? 'font-semibold text-[var(--color-text)]' : 'font-medium text-[var(--color-text)]'">{{ c.otherName }}</span>
+                  <span class="shrink-0 rounded-full bg-[var(--color-ink-overlay)] px-1.5 text-micro font-medium text-[var(--color-text-faint)]">{{ roleLabel(c.otherRole) }}</span>
                 </span>
-                <span v-if="c.lastMessageAt" class="shrink-0 text-[0.6875rem] text-[var(--color-text-faint)]">{{ relativeTime(c.lastMessageAt) }}</span>
+                <span v-if="c.lastMessageAt" class="shrink-0 text-micro text-[var(--color-text-faint)]">{{ relativeTime(c.lastMessageAt) }}</span>
               </span>
               <span class="mt-0.5 flex items-center justify-between gap-2">
-                <span v-if="typingByConversation[c.id]" class="truncate text-[0.8125rem] font-medium text-[var(--color-primary-500)]">Escribiendo…</span>
-                <span v-else class="truncate text-[0.8125rem]" :class="c.unread ? 'text-[var(--color-text)]' : 'text-[var(--color-text-muted)]'">
+                <span v-if="typingByConversation[c.id]" class="truncate text-sm font-medium text-[var(--color-primary-500)]">Escribiendo…</span>
+                <span v-else class="truncate text-sm" :class="c.unread ? 'text-[var(--color-text)]' : 'text-[var(--color-text-muted)]'">
                   {{ previewText({ kind: c.lastMessageKind, body: c.lastMessagePreview, mine: c.lastMessageMine }) }}
                 </span>
                 <span class="flex shrink-0 items-center gap-1.5">
-                  <span v-if="(pendingIncomingByConversation[c.id] ?? 0) > 0" class="rounded-full bg-[var(--color-status-review)]/15 px-2 text-[0.6875rem] font-semibold text-[var(--color-status-review)]" data-pending-offer>Responder</span>
-                  <span v-if="c.unreadCount > 0" class="flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--color-primary-500)] px-1.5 text-[0.6875rem] font-semibold text-[var(--color-on-primary)]" data-unread-badge>{{ c.unreadCount > 99 ? '99+' : c.unreadCount }}</span>
+                  <span v-if="(pendingIncomingByConversation[c.id] ?? 0) > 0" class="rounded-full bg-[var(--color-status-review)]/15 px-2 text-micro font-semibold text-[var(--color-status-review)]" data-pending-offer>Responder</span>
+                  <span v-if="c.unreadCount > 0" class="flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--color-primary-500)] px-1.5 text-micro font-semibold text-[var(--color-on-primary)]" data-unread-badge>{{ c.unreadCount > 99 ? '99+' : c.unreadCount }}</span>
                 </span>
               </span>
             </span>
