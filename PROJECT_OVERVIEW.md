@@ -1,4 +1,4 @@
-# FEEDMA — resumen técnico del proyecto
+# CIBERAN — resumen técnico del proyecto
 
 > Documento generado para dar contexto a otra IA (o a un nuevo colaborador) que vaya a
 > proponer mejoras sobre este proyecto. No contiene credenciales, claves, URLs de
@@ -6,10 +6,10 @@
 
 ## 1. Qué es
 
-FEEDMA es un marketplace de dos lados que conecta **creadores de contenido**
+CIBERAN es un marketplace de dos lados que conecta **creadores de contenido**
 (influencers que publican en redes sociales) con **partners** (marcas/empresas que
 quieren colaborar con ellos). Dentro de cada rol también resuelve la gestión diaria:
-un creador usa FEEDMA como su "parte de rodaje" (tablero de publicaciones, métricas de
+un creador usa CIBERAN como su "parte de rodaje" (tablero de publicaciones, métricas de
 sus redes, predicción de éxito de un borrador antes de publicar); un partner lo usa
 para encontrar creadores, negociar y pagarles.
 
@@ -71,7 +71,7 @@ paquete ajeno **desde el chat** (nunca se puede inventar una oferta sobre algo q
 existe — se valida en el servidor). Si el dueño del paquete acepta **y** las dos partes
 son, de verdad, un creador y un partner, se crea automáticamente una `collaboration`
 cobrable con el importe negociado. Si ambos son del mismo rol, queda como un acuerdo
-de chat sin camino de cobro (FEEDMA no sabe cobrar entre dos perfiles del mismo rol).
+de chat sin camino de cobro (CIBERAN no sabe cobrar entre dos perfiles del mismo rol).
 
 ### 4.3 Solicitud directa + negociación (el otro camino a una colaboración)
 Desde Descubrir, cualquiera puede contactar directo y proponer un presupuesto inicial
@@ -81,7 +81,7 @@ contraofertas (`collaboration_offers`) hasta que una parte acepta o rechaza.
 ### 4.4 Pago
 Solo el partner paga, solo sobre una `collaboration` ya aceptada, solo si el creador
 tiene su cuenta de Stripe Connect verificada. El importe que se cobra es el que hay en
-la base de datos (nunca uno que mande el cliente). FEEDMA se queda una comisión fija
+la base de datos (nunca uno que mande el cliente). CIBERAN se queda una comisión fija
 sobre cada cobro. Un webhook de Stripe es la única fuente de verdad de "esto se pagó" —
 nunca se marca como pagado desde el cliente.
 

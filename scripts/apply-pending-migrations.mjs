@@ -1,4 +1,4 @@
-// FEEDMA — aplica archivos de supabase/migrations/ conectando directamente
+// CIBERAN — aplica archivos de supabase/migrations/ conectando directamente
 // a Postgres, sin pasar por el SQL Editor del dashboard de Supabase (útil
 // cuando esa parte del dashboard falla, pero la base de datos en sí sigue
 // funcionando — son dos cosas distintas).

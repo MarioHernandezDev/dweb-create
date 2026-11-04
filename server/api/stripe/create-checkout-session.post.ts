@@ -1,7 +1,7 @@
 import { serverSupabaseServiceRole, serverSupabaseUser } from '#supabase/server'
 
 /**
- * POST /api/stripe/create-checkout-session — suscripción de FEEDMA (Fase 3,
+ * POST /api/stripe/create-checkout-session — suscripción de CIBERAN (Fase 3,
  * ver docs/1-ARCHITECTURE.md §1.5 y docs/7-STRIPE-SETUP.md). El creador paga
  * aquí la cuota mensual del panel; esto NO es Connect (eso es la cuenta que
  * recibe el pago de un partner, ver connect/account-link).

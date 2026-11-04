@@ -1,0 +1,58 @@
+name: Sincronizar redes sociales
+
+# Llama a POST /api/social/sync-all (A-R5) cada 6 horas para refrescar seguidores,
+# renovar el token de Instagram antes de que caduque y actualizar las métricas de
+# las publicaciones vinculadas. Es independiente del hosting: solo necesita la URL
+# pública de la app.
+#
+# DESACTIVADO por defecto. Para activarlo, tras desplegar:
+#   1. Settings > Secrets and variables > Actions > Variables:
+#        SYNC_ENABLED = true
+#        APP_URL      = https://tu-dominio   (sin barra final; HTTPS)
+#   2. Secrets:
+#        SYNC_CRON_SECRET = el mismo valor que SYNC_CRON_SECRET del servidor
+# El secreto nunca se imprime. El endpoint solo devuelve recuentos.
+on:
+  schedule:
+    - cron: '17 */6 * * *'
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  sync:
+    if: ${{ vars.SYNC_ENABLED == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Llamar a sync-all hasta no tener cuentas pendientes
+        env:
+          APP_URL: ${{ vars.APP_URL }}
+          SYNC_CRON_SECRET: ${{ secrets.SYNC_CRON_SECRET }}
+        run: |
+          set -euo pipefail
+          if [ -z "${APP_URL}" ] || [ -z "${SYNC_CRON_SECRET}" ]; then
+            echo "::error::Falta la variable APP_URL o el secreto SYNC_CRON_SECRET."
+            exit 1
+          fi
+          case "${APP_URL}" in https://*) ;; *) echo "::error::APP_URL debe empezar por https://"; exit 1 ;; esac
+          # El endpoint procesa un lote (25 cuentas) por llamada y admite una por minuto.
+          for i in 1 2 3 4 5 6; do
+            status=$(curl -sS -o response.json -w '%{http_code}' --max-time 120 \
+              -X POST "${APP_URL%/}/api/social/sync-all" \
+              -H "Authorization: Bearer ${SYNC_CRON_SECRET}")
+            if [ "$status" != "200" ]; then
+              echo "::error::sync-all respondió HTTP ${status}"
+              exit 1
+            fi
+            processed=$(jq -r '.processed // 0' response.json)
+            ok=$(jq -r '.ok // 0' response.json)
+            failed=$(jq -r '.failed // 0' response.json)
+            skipped=$(jq -r '.skipped // 0' response.json)
+            echo "Tanda ${i}: procesadas=${processed} correctas=${ok} fallidas=${failed} omitidas=${skipped}"
+            if [ "${failed}" != "0" ]; then
+              echo "::warning::${failed} cuenta(s) no se pudieron sincronizar (token caducado, permisos o error temporal)."
+            fi
+            [ "${processed}" = "0" ] && break
+            sleep 65
+          done

@@ -6,7 +6,7 @@ import type Stripe from 'stripe'
  *
  * Por qué existe: desde la API 2025-03-31 la factura ya no trae `subscription`
  * en la raíz; el id está en `parent.subscription_details.subscription`. La cuenta
- * de FEEDMA genera sus eventos con la API 2026-09-30.endive (comprobado en modo
+ * de CIBERAN genera sus eventos con la API 2026-09-30.endive (comprobado en modo
  * test el 2026-11-03), así que `invoice.subscription` era siempre `undefined` y
  * `invoice.paid` no concedía nunca los créditos de Pro. Se acepta también la forma
  * antigua por si un endpoint de webhook se creara con una versión anterior.

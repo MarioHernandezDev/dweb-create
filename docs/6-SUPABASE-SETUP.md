@@ -16,7 +16,7 @@ No es teoría: se ejecutó y se verificó. Lo único que falta es crear **tu** p
 ## 1. Crear el proyecto en Supabase
 
 1. Entra en [supabase.com](https://supabase.com) y crea una cuenta (o inicia sesión) — **esto lo tiene que hacer una de las dos personas del equipo**, con su cuenta, porque Claude Code no puede crear cuentas ni proyectos por vosotros.
-2. "New Project" → ponle nombre `feedma` → elige una contraseña de base de datos fuerte y **guárdala en un gestor de contraseñas**, no en el chat ni en un commit.
+2. "New Project" → ponle nombre `ciberan` → elige una contraseña de base de datos fuerte y **guárdala en un gestor de contraseñas**, no en el chat ni en un commit.
 3. Espera a que termine de aprovisionarse (1-2 minutos).
 4. Ve a **Project Settings → API** y copia:
    - `Project URL` → es tu `SUPABASE_URL`

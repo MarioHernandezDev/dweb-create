@@ -32,7 +32,7 @@ const { avatarUrl, initials: myInitials, hue: myHue } = useMyAvatar()
     >
       <Icon name="ph:arrow-left-bold" class="size-5" />
     </button>
-    <NuxtImg v-else src="/img/logo-svg.png" alt="" width="28" height="28" class="md:hidden size-7 shrink-0" />
+    <BrandMark v-else :wordmark="false" :size="28" class="md:hidden" />
 
     <div class="min-w-0 flex-1">
       <h1 class="font-display text-[1.1875rem] md:text-[1.75rem] text-[var(--color-text)] truncate">{{ title }}</h1>

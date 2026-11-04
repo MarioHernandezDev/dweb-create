@@ -40,7 +40,7 @@ export function useSocialAccountActions() {
       case 'unconfirmed':
         return { tone: 'warn' as const, text: `${label} desconectado, pero NO se pudo confirmar la revocación en Google. Quita el acceso a mano en myaccount.google.com/permissions.` }
       case 'not_supported':
-        return { tone: 'warn' as const, text: `${label} desconectado de FEEDMA. FEEDMA no puede retirar el acceso en Instagram: para quitarlo del todo, hazlo desde los ajustes de tu cuenta de Instagram.` }
+        return { tone: 'warn' as const, text: `${label} desconectado de CIBERAN. CIBERAN no puede retirar el acceso en Instagram: para quitarlo del todo, hazlo desde los ajustes de tu cuenta de Instagram.` }
       default: return { tone: 'ok' as const, text: `${label} desconectado.` }
     }
   }
@@ -50,8 +50,8 @@ export function useSocialAccountActions() {
     const ok = await confirm({
       title: `¿Desconectar ${platformMeta[acc.platform].label}?`,
       message: isYoutube
-        ? 'Dejarás de ver sus métricas y de poder usarla para predicciones hasta que la vuelvas a conectar. Revocaremos también el acceso de FEEDMA en tu cuenta de Google.'
-        : 'Dejarás de ver sus métricas y de poder usarla para predicciones hasta que la vuelvas a conectar. Instagram no permite que FEEDMA retire el acceso: para quitarlo del todo tendrás que hacerlo desde los ajustes de tu cuenta de Instagram.',
+        ? 'Dejarás de ver sus métricas y de poder usarla para predicciones hasta que la vuelvas a conectar. Revocaremos también el acceso de CIBERAN en tu cuenta de Google.'
+        : 'Dejarás de ver sus métricas y de poder usarla para predicciones hasta que la vuelvas a conectar. Instagram no permite que CIBERAN retire el acceso: para quitarlo del todo tendrás que hacerlo desde los ajustes de tu cuenta de Instagram.',
       confirmLabel: 'Desconectar', tone: 'danger', icon: 'ph:plugs-fill'
     })
     if (!ok) return

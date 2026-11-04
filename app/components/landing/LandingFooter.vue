@@ -32,8 +32,7 @@ const year = new Date().getFullYear()
       <div class="grid grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-10">
         <div class="col-span-2 md:col-span-1 pr-6">
           <div class="flex items-center gap-2.5 mb-3.5">
-            <NuxtImg src="/img/logo-svg.png" alt="" width="24" height="24" class="size-6" />
-            <span class="font-brand text-[1.0625rem] text-white">FEEDMA</span>
+            <BrandMark tone="light" :size="26" />
           </div>
           <p class="text-[0.8125rem] leading-relaxed max-w-[26ch] text-white/50">
             El parte de rodaje de tu contenido — entregas, métricas y predicciones en un solo sitio.
@@ -67,7 +66,7 @@ const year = new Date().getFullYear()
       </div>
 
       <div class="mt-12 pt-6 border-t border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-        <p class="text-[0.75rem] text-white/35">© {{ year }} FEEDMA. Hecho para equipos de contenido.</p>
+        <p class="text-[0.75rem] text-white/35">© {{ year }} CIBERAN. Hecho para equipos de contenido.</p>
         <div class="flex flex-wrap items-center gap-x-5 gap-y-1.5 text-[0.75rem] text-white/35">
           <NuxtLink to="/privacidad" class="hover:text-white transition-colors">Privacidad</NuxtLink>
           <NuxtLink to="/terminos" class="hover:text-white transition-colors">Términos</NuxtLink>

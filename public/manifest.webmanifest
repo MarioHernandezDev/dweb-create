@@ -1,13 +1,15 @@
 {
-  "name": "FEEDMA — Estudio de contenido",
-  "short_name": "FEEDMA",
-  "description": "Gestiona entregas, métricas y predicciones de contenido en un solo lugar.",
+  "name": "CIBERAN",
+  "short_name": "CIBERAN",
+  "description": "Creadores y marcas, de la primera oferta a la última métrica.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#fbfaff",
-  "theme_color": "#fbfaff",
+  "background_color": "#f5f1ea",
+  "theme_color": "#f5f1ea",
   "orientation": "portrait-primary",
   "icons": [
-    { "src": "/img/logo-svg.png", "sizes": "500x500", "type": "image/png", "purpose": "any" }
+    { "src": "/img/brand/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/img/brand/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/img/brand/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ]
 }

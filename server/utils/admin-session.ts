@@ -19,7 +19,7 @@ export function adminSession(event: H3Event) {
   }
   return useSession<AdminSessionData>(event, {
     password: config.adminSessionSecret,
-    name: 'feedma-admin-session',
+    name: 'ciberan-admin-session',
     maxAge: 60 * 60 * 8,
     cookie: { httpOnly: true, sameSite: 'strict', secure: !import.meta.dev }
   })

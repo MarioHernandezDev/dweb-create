@@ -30,8 +30,7 @@ const isActive = (to: string) => !to.includes('#') && route.path === to
   >
     <div class="mx-auto flex h-16 max-w-7xl items-center justify-between px-5 md:h-[4.5rem] md:px-10">
       <NuxtLink to="/" class="flex shrink-0 items-center gap-2.5" @click="open = false">
-        <NuxtImg src="/img/logo-svg.png" alt="" width="26" height="26" class="size-6 md:size-7" />
-        <span class="font-brand text-[1.0625rem] font-light tracking-[0.04em] text-[var(--color-text)] md:text-[1.1875rem]">FEEDMA</span>
+        <BrandMark :size="28" />
       </NuxtLink>
 
       <nav class="hidden h-full items-center md:flex" aria-label="Principal">

@@ -10,7 +10,7 @@
 |---|---|---|
 | Suscripción Pro (creador) | `POST /api/stripe/create-checkout-session` | Checkout en modo `subscription`. Reutiliza o crea el `customer` con `metadata.supabase_user_id`. Vuelve a `/creator/profile?checkout=success\|cancelled`. |
 | Cuenta de cobro del creador | `POST /api/stripe/connect/account-link` | Crea una cuenta Connect *Standard* (con `service_role`) y devuelve el enlace de alta de Stripe. |
-| Pago de una colaboración (marca) | `POST /api/stripe/pay-collaboration` | Checkout en modo `payment` con `application_fee_amount` (comisión de FEEDMA) y `transfer_data.destination` (cuenta del creador). Exige: colaboración aceptada, en curso o completada; sin pagar; con presupuesto; y creador con Connect verificado. Clave de idempotencia por colaboración y ventana de 5 minutos. |
+| Pago de una colaboración (marca) | `POST /api/stripe/pay-collaboration` | Checkout en modo `payment` con `application_fee_amount` (comisión de CIBERAN) y `transfer_data.destination` (cuenta del creador). Exige: colaboración aceptada, en curso o completada; sin pagar; con presupuesto; y creador con Connect verificado. Clave de idempotencia por colaboración y ventana de 5 minutos. |
 | Webhook | `POST /api/stripe/webhook` | Firma verificada. Eventos: `checkout.session.completed` (alta de suscripción o colaboración pagada), `customer.subscription.updated/deleted`, `invoice.paid` (créditos) y `account.updated` (Connect verificado). |
 
 ### 1.2 Estado frente a lo que pide el encargo

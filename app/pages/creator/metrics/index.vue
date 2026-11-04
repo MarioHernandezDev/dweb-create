@@ -97,7 +97,7 @@ const shownTotal = useCountUp(
             </p>
             <p class="mt-3 text-[0.8125rem] text-[var(--color-text-muted)]">
               Suma de {{ verifiedConnected.length }} {{ verifiedConnected.length === 1 ? 'red verificada' : 'redes verificadas' }} de {{ VERIFIED_SOCIAL_PLATFORMS.length }} disponibles.
-              Dato de cada red; el total es un cálculo de FEEDMA.
+              Dato de cada red; el total es un cálculo de CIBERAN.
             </p>
             <p v-if="reconnectCount" class="mt-2 text-[0.8125rem] font-medium text-[var(--color-status-alert)]">
               {{ reconnectCount === 1 ? '1 red necesita' : `${reconnectCount} redes necesitan` }} reconexión: su cifra es el último dato guardado.

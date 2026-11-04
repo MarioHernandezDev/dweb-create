@@ -3,7 +3,7 @@
 import { readFileSync } from 'node:fs'
 const rows = JSON.parse(readFileSync(process.argv[2], 'utf8'))
 const META = {
-  'card-intro': ['Tarjeta de inicio', '—', 'Presentar qué es FEEDMA y avisar de que todo es ficticio', 'Logo y título sobre fondo animado'],
+  'card-intro': ['Tarjeta de inicio', '—', 'Presentar qué es CIBERAN y avisar de que todo es ficticio', 'Logo y título sobre fondo animado'],
   'card-m1': ['Tarjeta de módulo', '—', 'Abrir el bloque del creador', '«Conoce a AREZZ»'],
   'arezz-hoy': ['/creator (Hoy)', 'AREZZ', 'El creador ve su día de un vistazo', 'Resaltado de indicadores y «Necesita tu atención»'],
   'arezz-metricas': ['/creator/metrics', 'AREZZ', 'Métricas por red, sin inflar lo que no existe', 'Distintivo «Cifras ficticias»; «Próximamente» en las redes no conectables'],
@@ -16,7 +16,7 @@ const META = {
   'nova-contraoferta': ['/chat/:id', 'NOVA', 'Responder a la contraoferta', 'Resaltado del mensaje; nueva oferta'],
   'arezz-acepta': ['/chat/:id → /creator/requests', 'AREZZ', 'Aceptar crea la colaboración sola', 'Oferta «Aceptada»; colaboración en curso con 1.050 €'],
   'card-m4': ['Tarjeta de módulo', '—', 'Pasar a la producción', '«Gestiona tus proyectos»'],
-  'arezz-studio': ['/creator/timeline', 'AREZZ', 'FEEDMA Studio: crear la entrega vinculada', 'Compositor; predicción con su aviso «sin IA»'],
+  'arezz-studio': ['/creator/timeline', 'AREZZ', 'CIBERAN Studio: crear la entrega vinculada', 'Compositor; predicción con su aviso «sin IA»'],
   'arezz-entrega': ['/creator/post/:id', 'AREZZ', 'Subir la pieza y mandarla a revisión', 'Subida de imagen; cambio de fase'],
   'card-m5': ['Tarjeta de módulo', '—', 'Abrir el ciclo de revisión', '«Revisa y aprueba»'],
   'nova-pide-cambios': ['/partner', 'NOVA', 'La marca revisa antes de publicar', 'Hoja de revisión; comentario obligatorio'],

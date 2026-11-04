@@ -85,7 +85,7 @@ onUnmounted(() => mm?.revert())
       <div ref="heading" class="px-5 md:px-10 lg:px-16 max-w-7xl mx-auto w-full mb-8 md:mb-10 overflow-hidden">
         <p data-reveal class="text-[0.8125rem] font-medium text-[var(--color-logo-teal)] mb-2">Una entrega, cuatro miradas</p>
         <h3 class="font-display font-light text-[clamp(1.5rem,3.6vw,2.5rem)] text-white max-w-[30ch]">
-          <span data-reveal class="block">Lo mismo se ve distinto según quién lo mira — FEEDMA lo enseña todo a la vez.</span>
+          <span data-reveal class="block">Lo mismo se ve distinto según quién lo mira — CIBERAN lo enseña todo a la vez.</span>
         </h3>
       </div>
 

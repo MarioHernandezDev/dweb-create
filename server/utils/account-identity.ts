@@ -8,7 +8,7 @@ export interface PayerIdentity {
 /**
  * Quién paga/recibe en Stripe para el usuario logueado: solo los creadores
  * tienen suscripción y cuenta de Connect (ver README Fase 3 — los partners
- * no pagan una cuota a FEEDMA, pagan a través de una colaboración). Lanza
+ * no pagan una cuota a CIBERAN, pagan a través de una colaboración). Lanza
  * 403 si el usuario no es un creador.
  */
 export async function resolvePayerIdentity(client: SupabaseClient, userId: string): Promise<PayerIdentity> {

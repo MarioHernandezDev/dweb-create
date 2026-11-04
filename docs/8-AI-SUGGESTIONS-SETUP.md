@@ -15,7 +15,7 @@ Si no configuras nada de esto, la app sigue funcionando exactamente igual que ah
 Igual que con Supabase y Stripe: esto no lo puede hacer Claude Code por vosotros.
 
 1. Entra en [openrouter.ai](https://openrouter.ai) y crea una cuenta (con Google/GitHub es lo más rápido). No hace falta añadir ningún método de pago para usar los modelos gratuitos.
-2. Ve a [openrouter.ai/keys](https://openrouter.ai/keys) → **Create Key**. Dale un nombre (p. ej. `feedma-dev`) y cópiala — empieza por `sk-or-v1-...`.
+2. Ve a [openrouter.ai/keys](https://openrouter.ai/keys) → **Create Key**. Dale un nombre (p. ej. `ciberan-dev`) y cópiala — empieza por `sk-or-v1-...`.
 
 ## 2. Copiar la clave a `.env`
 

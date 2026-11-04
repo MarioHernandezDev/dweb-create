@@ -1,6 +1,6 @@
 # Fase 7 — Plan de datos y entorno de la demostración
 
-> Escenario ficticio **AREZZ (creador) × NOVA STUDIO (marca)** para el vídeo guiado de FEEDMA.
+> Escenario ficticio **AREZZ (creador) × NOVA STUDIO (marca)** para el vídeo guiado de CIBERAN.
 > Fecha: 2026-11-03. Estado: **preparado, sembrado y ensayado de principio a fin** en el entorno aislado.
 
 ## 1. Aislamiento: dónde vive la demo
@@ -9,7 +9,7 @@ La demo **no toca el proyecto compartido de Supabase ni Stripe**.
 
 | Pieza | Dónde | Cómo se garantiza el aislamiento |
 |---|---|---|
-| Base de datos | Supabase **local** (`npx supabase@2 start`, Docker), proyecto `feedma-demo`, `http://127.0.0.1:54321` | Las 43 migraciones de `supabase/migrations/` se aplican desde cero con `supabase db reset --local`. |
+| Base de datos | Supabase **local** (`npx supabase@2 start`, Docker), proyecto `ciberan-demo`, `http://127.0.0.1:54321` | Las 43 migraciones de `supabase/migrations/` se aplican desde cero con `supabase db reset --local`. |
 | App | Copia de `HEAD` sacada con `git archive`, compilada (`nuxt build`) y servida en `http://localhost:3300` | Su `.env` solo contiene claves del Supabase local. Comprobado: el build no contiene el identificador del proyecto compartido ni claves `sk_` de Stripe. |
 | Siembra | [`scripts/seed-demo-video.mjs`](../../scripts/seed-demo-video.mjs) | **Aborta** si `SUPABASE_URL` no es `http://127.0.0.1:<puerto>` o `localhost`, y si la base ya tiene usuarios (exige partir de `db reset`). |
 | Integraciones externas | — | Sin claves de Stripe, OpenRouter, Instagram ni YouTube en el `.env` de la demo. La predicción de éxito usa la heurística local, que la propia app etiqueta como «sin IA». |
@@ -23,7 +23,7 @@ npx supabase@2 db reset --local
 
 # 2. Copia de la app con .env local (SUPABASE_URL=http://127.0.0.1:54321, SUPABASE_ANON_KEY,
 #    SUPABASE_SERVICE_ROLE_KEY del `supabase status`, DEMO_PASSWORD aleatoria)
-git archive HEAD | tar -x -C ../feedma-demo && cd ../feedma-demo && npm ci && npx nuxt build
+git archive HEAD | tar -x -C ../ciberan-demo && cd ../ciberan-demo && npm ci && npx nuxt build
 
 # 3. Siembra (las imágenes PNG son ilustraciones generadas para la demo)
 node --env-file=.env scripts/seed-demo-video.mjs <carpeta-con-las-imagenes>
@@ -34,7 +34,7 @@ PORT=3300 node .output/server/index.mjs
 
 ## 2. Personajes (todos ficticios)
 
-Cuentas con el dominio reservado `.test` (`@demo.feedma.test`). La contraseña es aleatoria, solo vive en el `.env` de la demo y **no aparece en el vídeo**: las sesiones se abren antes de grabar.
+Cuentas con el dominio reservado `.test` (`@demo.ciberan.test`). La contraseña es aleatoria, solo vive en el `.env` de la demo y **no aparece en el vídeo**: las sesiones se abren antes de grabar.
 
 ### Protagonistas
 
@@ -66,7 +66,7 @@ Todas las imágenes son **monogramas o ilustraciones generadas** para la demo. N
 | Historial de AREZZ | 3 colaboraciones completadas con sus condiciones (Atelier Brisa 800 €, Lúcuma Café 450 €, Pulso Fitwear 600 €) | Reputación |
 | Valoraciones | AREZZ recibe 5, 5 y 4 estrellas (**4,7 · 3 valoraciones**); también valora a cada marca | Perfil público |
 | Historial de NOVA | 1 colaboración completada con Sofía Lagos (valoración mutua de 5) · 1 solicitud abierta a Iker Sanz · Sofía en «Guardados» | Contexto de la marca |
-| Tablero de AREZZ (Studio) | 6 publicaciones: 2 ideas, 1 en producción (con checklist 2/4), 1 programada, 2 publicadas vinculadas a sus colaboraciones · etiquetas «Colaboración» y «Orgánico» | FEEDMA Studio |
+| Tablero de AREZZ (Studio) | 6 publicaciones: 2 ideas, 1 en producción (con checklist 2/4), 1 programada, 2 publicadas vinculadas a sus colaboraciones · etiquetas «Colaboración» y «Orgánico» | CIBERAN Studio |
 | Chat | Una conversación antigua AREZZ ↔ Atelier Brisa | Lista de chats |
 | Avisos | Solo los de bienvenida, leídos (se borran los que generan los triggers al sembrar) | Bandeja limpia |
 
@@ -74,7 +74,7 @@ Todas las imágenes son **monogramas o ilustraciones generadas** para la demo. N
 
 Los 17 pasos del escenario de la auditoría se ejecutan **de verdad** en la interfaz, con las funciones reales de la base:
 
-| # | Paso del escenario | Cómo ocurre en FEEDMA |
+| # | Paso del escenario | Cómo ocurre en CIBERAN |
 |---|---|---|
 | 1-2 | NOVA busca y descubre a AREZZ | Descubrir → Filtros → «Moda» |
 | 3-4 | Visita su perfil y consulta sus estadísticas | Perfil público: redes, datos clave, reputación, catálogo |
@@ -82,7 +82,7 @@ Los 17 pasos del escenario de la auditoría se ejecutan **de verdad** en la inte
 | 6 | Envía una oferta | «Oferta» → paquete «Campaña completa» → 900 € → `create_offer` |
 | 7-8 | AREZZ la recibe y negocian | Mensaje con su precio + «Rechazar» (`respond_offer(false)`); NOVA envía otra de 1.050 € |
 | 9-10 | AREZZ acepta y se crea la colaboración | «Aceptar» → `respond_offer(true)` crea la colaboración con el precio acordado |
-| 11-12 | Se gestiona en FEEDMA Studio y se crea una publicación | Tablero → «Nueva publicación» vinculada a NOVA STUDIO → foto → fases |
+| 11-12 | Se gestiona en CIBERAN Studio y se crea una publicación | Tablero → «Nueva publicación» vinculada a NOVA STUDIO → foto → fases |
 | 13 | Se envía a revisión | «Mover a "Para revisar"» |
 | 14 | NOVA solicita cambios | «Revisar» → «Pedir cambios» con comentario → `request_post_changes` |
 | 15 | AREZZ modifica el contenido | Aviso en la bandeja → nueva foto y texto → reenvío a revisión |

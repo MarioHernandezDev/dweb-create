@@ -5,7 +5,7 @@ import type { Platform } from '~/types'
 
 /**
  * Métricas de la publicación vinculada (A-R8b). Cada cifra dice de dónde sale:
- * dato de la red (visualizaciones, me gusta…) o cálculo de FEEDMA (interacción,
+ * dato de la red (visualizaciones, me gusta…) o cálculo de CIBERAN (interacción,
  * variación). Un dato ausente es "—" con su motivo, nunca 0. "Actualizar"
  * lee la red ahora y guarda la medición del día.
  */
@@ -41,9 +41,9 @@ const dayText = (iso: string) => new Date(`${iso}T00:00:00Z`).toLocaleDateString
         </div>
       </dl>
       <p v-if="summary.engagement !== null" class="text-[0.8125rem] text-[var(--color-text)]" :title="ENGAGEMENT_NOTE" data-engagement>
-        Interacción {{ new Intl.NumberFormat('es-ES', { maximumFractionDigits: 1 }).format(summary.engagement) }} % <span class="text-[var(--color-text-faint)]">· cálculo de FEEDMA</span>
+        Interacción {{ new Intl.NumberFormat('es-ES', { maximumFractionDigits: 1 }).format(summary.engagement) }} % <span class="text-[var(--color-text-faint)]">· cálculo de CIBERAN</span>
       </p>
-      <p class="text-[0.6875rem] text-[var(--color-text-faint)]">Medido el {{ dayText(summary.measuredOn) }} · dato de {{ label }}{{ summary.previousOn ? ' · la variación es un cálculo de FEEDMA' : '' }}</p>
+      <p class="text-[0.6875rem] text-[var(--color-text-faint)]">Medido el {{ dayText(summary.measuredOn) }} · dato de {{ label }}{{ summary.previousOn ? ' · la variación es un cálculo de CIBERAN' : '' }}</p>
     </template>
 
     <p v-else-if="!error" class="text-[0.8125rem] text-[var(--color-text-muted)]" data-metrics-empty>

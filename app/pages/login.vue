@@ -76,7 +76,7 @@ function loginAsDemo(demoEmail: string) {
 
     <!-- Panel de marca: solo en escritorio, el móvil va directo al formulario -->
     <div class="hidden md:flex md:flex-col md:justify-center md:w-[42%] lg:w-[38%] shrink-0 relative overflow-hidden">
-      <div class="absolute inset-0 bg-gradient-to-br from-[var(--color-primary-900)] via-[#150c34] to-[#0a0812]" />
+      <div class="absolute inset-0 bg-[var(--surface-inverse)]" />
       <div
         aria-hidden="true"
         class="absolute -bottom-36 -left-28 size-[28rem] rounded-full blur-[100px] opacity-[0.35] nx-hero-blob"
@@ -84,9 +84,7 @@ function loginAsDemo(demoEmail: string) {
       />
 
       <div class="relative z-10 px-10">
-        <p aria-hidden="true" class="nx-feedma-shimmer font-brand font-light leading-[0.82] tracking-tight text-[clamp(3rem,6.5vw,5rem)] mb-5">
-          FEEDMA
-        </p>
+        <BrandMark tone="light" :size="64" label="" class="mb-6" />
         <p class="text-white/70 text-[1rem] leading-relaxed max-w-[30ch]">
           El parte de rodaje de tu contenido: entregas, métricas y predicciones de éxito, todo en un solo sitio.
         </p>
@@ -98,7 +96,7 @@ function loginAsDemo(demoEmail: string) {
       <main class="flex-1 flex items-center justify-center px-5 md:px-10">
         <div class="w-full max-w-sm py-8">
           <h1 class="font-display text-[1.875rem] text-[var(--color-text)] mb-1.5">Accede a tu cuenta</h1>
-          <p class="text-[0.9375rem] text-[var(--color-text-muted)] mb-7">Entra con el email y la contraseña de tu cuenta FEEDMA.</p>
+          <p class="text-[0.9375rem] text-[var(--color-text-muted)] mb-7">Entra con el email y la contraseña de tu cuenta CIBERAN.</p>
 
           <form class="flex flex-col gap-4" @submit.prevent="submit">
             <div>

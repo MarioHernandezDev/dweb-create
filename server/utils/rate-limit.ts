@@ -6,7 +6,7 @@ interface Bucket {
 
 /**
  * Límite de intentos en memoria, por clave (normalmente IP) — pensado para
- * un único proceso Nitro (el despliegue actual de FEEDMA), no para varias
+ * un único proceso Nitro (el despliegue actual de CIBERAN), no para varias
  * instancias detrás de un balanceador. Si eso cambiara, esto tendría que
  * pasar a un store compartido (Redis/Upstash) en vez de un Map local.
  *

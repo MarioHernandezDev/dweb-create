@@ -1,11 +1,11 @@
-PIPELINE DE IMPLEMENTACIÓN — FEEDMA
+PIPELINE DE IMPLEMENTACIÓN — CIBERAN
 Rama de Alex: feature/publicaciones-ux
 Objetivo: organizar el trabajo de redes sociales y publicaciones en fases pequeñas, verificables y seguras. Este documento define cómo debe planificar y ejecutar Claude Code el trabajo; no afirma que ninguna tarea esté implementada ni probada.
 
-Fuente de alcance: TRABAJO_ALEX actualizado el 2026-10-28. Antes de actuar, contrasta este pipeline con el estado real del repositorio, docs/CHANGELOG.md, docs/CONTEXTO_PROYECTO_FEEDMA.md, docs/PENDIENTES.md y las ramas actuales.
+Fuente de alcance: TRABAJO_ALEX actualizado el 2026-10-28. Antes de actuar, contrasta este pipeline con el estado real del repositorio, docs/CHANGELOG.md, docs/CONTEXTO_PROYECTO_CIBERAN.md, docs/PENDIENTES.md y las ramas actuales.
 
 1. Instrucciones principales para Claude Code
-Actúa como responsable técnico de la implementación del trabajo asignado a Alex en FEEDMA. No intentes resolver todo el inventario en una única sesión ni empieces a programar sin revisar el estado real.
+Actúa como responsable técnico de la implementación del trabajo asignado a Alex en CIBERAN. No intentes resolver todo el inventario en una única sesión ni empieces a programar sin revisar el estado real.
 
 Debes trabajar con estas reglas:
 1. Auditar antes de cambiar. Inspecciona rama, git status, commits recientes, diferencias con main, documentación relevante, código implicado y pruebas existentes. No des por cierto que el documento refleja al 100 % el repositorio actual.
@@ -46,7 +46,7 @@ Pasos
 - Ejecutar git status --short y conservar cualquier cambio local del usuario.
 - Revisar commits recientes y diferencias con main.
 - Sincronizar con main solo después de inspeccionar cambios locales y confirmar que es seguro; no sobrescribir trabajo.
-- Revisar docs/CHANGELOG.md, docs/CONTEXTO_PROYECTO_FEEDMA.md, docs/PENDIENTES.md, TRABAJO_ALEX y la documentación OAuth.
+- Revisar docs/CHANGELOG.md, docs/CONTEXTO_PROYECTO_CIBERAN.md, docs/PENDIENTES.md, TRABAJO_ALEX y la documentación OAuth.
 - Inspeccionar el estado actual de las tareas A-R1–A-R15 y A-P1–A-P2 en el código.
 - Identificar cambios de Mario que puedan afectar a archivos compartidos.
 - No ejecutar pruebas de integración que escriban en la base de datos compartida sin coordinar el momento.
@@ -130,7 +130,7 @@ Antes de escribir la migración, presentar una propuesta de esquema y responder:
 - Qué roles pueden leer cada registro.
 - Cómo se mantiene compatibilidad con el código actual y con la rama de Mario.
 Implementar solo después de aprobar el diseño. La escritura debe ser idempotente y la lectura debe respetar RLS.
-A-R7 — Vincular publicaciones FEEDMA con publicaciones externas
+A-R7 — Vincular publicaciones CIBERAN con publicaciones externas
 - Inspeccionar el esquema actual de posts, social_accounts, metrics y posts.metadata.
 - Comparar opciones: columnas dedicadas o metadata; explicar ventajas, restricciones e impacto en consultas.
 - Solicitar aprobación del esquema antes de migrar.

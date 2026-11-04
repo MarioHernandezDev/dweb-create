@@ -7,7 +7,7 @@ import { serverSupabaseServiceRole, serverSupabaseUser } from '#supabase/server'
  * "standard": por defecto, sin más propiedades de `controller`, Stripe ya
  * se comporta como una cuenta Standard (ver docs/7-STRIPE-SETUP.md) — el
  * dashboard completo de Stripe y la verificación las lleva Stripe, no
- * FEEDMA.
+ * CIBERAN.
  */
 export default defineEventHandler(async (event) => {
   const user = await serverSupabaseUser(event)

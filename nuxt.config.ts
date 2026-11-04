@@ -22,14 +22,16 @@ export default defineNuxtConfig({
       htmlAttrs: { lang: 'es' },
       viewport: 'width=device-width, initial-scale=1, viewport-fit=cover',
       link: [
-        { rel: 'icon', type: 'image/png', href: '/img/logo-svg.png' },
+        { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
+        { rel: 'icon', type: 'image/png', sizes: '32x32', href: '/img/brand/icon-32.png' },
+        { rel: 'apple-touch-icon', href: '/img/brand/apple-touch-icon.png' },
         { rel: 'manifest', href: '/manifest.webmanifest' }
       ],
       meta: [
-        // FEEDMA es de modo único claro: no hay toggle de tema ni script
+        // CIBERAN es de modo único claro: no hay toggle de tema ni script
         // anti-parpadeo que sincronizar, el color de la barra del navegador
         // es siempre este.
-        { name: 'theme-color', content: '#fbfaff' },
+        { name: 'theme-color', content: '#f5f1ea' },
         { name: 'apple-mobile-web-app-capable', content: 'yes' },
         { name: 'apple-mobile-web-app-status-bar-style', content: 'default' }
       ]
@@ -38,14 +40,10 @@ export default defineNuxtConfig({
 
   fonts: {
     families: [
-      { name: 'Hanken Grotesk', provider: 'google', weights: [400, 500, 600, 700, 800] },
-      // Sora: fuente de los títulos (h1/h2 y el resto de texto en "modo
-      // display") desde la Fase 3 de la auditoría de usabilidad — Snasm
-      // quedaba demasiado ancha para títulos largos y se reserva ahora solo
-      // para el logotipo ("FEEDMA" como marca, ver --font-brand en main.css).
-      { name: 'Sora', provider: 'google', weights: [400, 500, 600, 700] },
-      // Snasm es una fuente local del equipo (ver app/assets/fonts) — @font-face manual en main.css.
-      { name: 'Snasm', provider: 'none' }
+      // Sistema «Señal» (docs/design/01_DESIGN_SYSTEM.md): Hanken Grotesk para
+      // leer y Bricolage Grotesque para títulos, cifras y el logotipo.
+      { name: 'Hanken Grotesk', provider: 'google', weights: [400, 500, 600, 700] },
+      { name: 'Bricolage Grotesque', provider: 'google', weights: [500, 600, 700, 800] }
     ]
   },
 

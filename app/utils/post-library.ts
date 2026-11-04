@@ -5,7 +5,7 @@
  * filtros enseñan las mismas publicaciones.
  *
  * `project`: '' = todos · 'own' = contenido propio (sin colaboración) ·
- * cualquier otro valor = id de una colaboración (el «proyecto» en FEEDMA).
+ * cualquier otro valor = id de una colaboración (el «proyecto» en CIBERAN).
  */
 import type { Platform, Post, PostStatus } from '~/types'
 

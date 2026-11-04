@@ -1,10 +1,10 @@
 /**
  * Histórico propio de acumulados de una cuenta (A-R8a / A-R16e), a partir de
  * las filas de `social_account_snapshots`. Pura y sin Vue. Reglas:
- *  - Solo hay registros de los días en que FEEDMA leyó la cuenta: los días sin
+ *  - Solo hay registros de los días en que CIBERAN leyó la cuenta: los días sin
  *    registro son HUECOS en la gráfica, nunca se rellenan ni se interpolan.
  *  - Un acumulado que el proveedor no dio es `null` y no cuenta como punto.
- *  - La variación es un cálculo de FEEDMA entre el primer y el último registro;
+ *  - La variación es un cálculo de CIBERAN entre el primer y el último registro;
  *    el % solo existe si el primer valor es mayor que 0.
  *  - Con menos de 2 puntos no hay evolución que dibujar.
  */

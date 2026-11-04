@@ -1,6 +1,6 @@
 # Vídeo de demostración guiada (Playwright + FFmpeg)
 
-Graba la demo de FEEDMA sobre la **app real** en un **entorno aislado** (Supabase local) y la monta sin voz ni música. Lleva tarjetas de título entre módulos, rótulos de paso y subtítulos `.srt`. El resultado y su documentación están en [`docs/demo/`](../../docs/demo/).
+Graba la demo de CIBERAN sobre la **app real** en un **entorno aislado** (Supabase local) y la monta sin voz ni música. Lleva tarjetas de título entre módulos, rótulos de paso y subtítulos `.srt`. El resultado y su documentación están en [`docs/demo/`](../../docs/demo/).
 
 ## Requisitos
 

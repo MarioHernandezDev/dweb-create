@@ -19,7 +19,7 @@ const { isLoading } = useLoadingIndicator()
       class="fixed inset-0 z-[60] flex items-center justify-center bg-white/70 backdrop-blur-sm"
     >
       <!-- La hormiga de marca: recorre una órbita alrededor del propio icono
-           de FEEDMA, como si lo inspeccionara — mismo lenguaje visual (trazo
+           de CIBERAN, como si lo inspeccionara — mismo lenguaje visual (trazo
            fino, tono primary-600) que la hormiga que ya camina por el hero
            de la landing (LandingHero.vue), no una animación genérica aparte. -->
       <div class="relative size-28">
@@ -41,7 +41,7 @@ const { isLoading } = useLoadingIndicator()
           <use href="#nx-preloader-ant" width="22" height="13.2" class="nx-preloader-ant-walk" transform="translate(-11 -6.6)" />
         </svg>
 
-        <img src="/img/logo-svg.png" alt="" width="52" height="52" class="absolute inset-0 m-auto size-[3.25rem] drop-shadow-[0_6px_14px_rgb(112,64,232,0.25)]">
+        <BrandMark :wordmark="false" :size="52" label="" class="absolute inset-0 m-auto" />
       </div>
     </div>
   </Transition>

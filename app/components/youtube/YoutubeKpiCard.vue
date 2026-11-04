@@ -5,7 +5,7 @@ import type { KpiDelta } from '~/utils/youtube-period-view'
 /**
  * Tarjeta de una métrica del canal. La protagonista (`hero`) es más grande. Si
  * no hay valor se muestra "—" y el MOTIVO (no un 0). Todas las tarjetas dicen
- * de dónde sale la cifra ("Dato de YouTube" o "Cálculo de FEEDMA") en la misma
+ * de dónde sale la cifra ("Dato de YouTube" o "Cálculo de CIBERAN") en la misma
  * línea, para que los valores queden alineados. `scope` es opcional: se usa
  * cuando el grupo no lo dice ya en su título (p. ej. "Últimos 28 días").
  * El detalle ("qué es esto") va en un `title`: accesible por teclado con el
@@ -16,7 +16,7 @@ const accent = 'var(--color-platform-youtube)'
 
 const shownValue = useCountUp(() => props.kpi.count, () => props.kpi.value)
 
-const provenance = computed(() => [props.scope, props.kpi.source === 'youtube' ? 'Dato de YouTube' : 'Cálculo de FEEDMA'].filter(Boolean).join(' · '))
+const provenance = computed(() => [props.scope, props.kpi.source === 'youtube' ? 'Dato de YouTube' : 'Cálculo de CIBERAN'].filter(Boolean).join(' · '))
 
 const deltaColor = computed(() =>
   props.kpi.delta?.tone === 'good' ? 'var(--color-status-published)' : props.kpi.delta?.tone === 'bad' ? 'var(--color-status-alert)' : 'var(--color-text-faint)'

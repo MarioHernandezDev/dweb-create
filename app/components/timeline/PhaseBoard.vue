@@ -225,7 +225,7 @@ async function bulkDelete() {
     <EmptyState
       v-if="!posts.length"
       icon="ph:kanban-bold" title="Aquí irán todas tus publicaciones"
-      description="Una publicación es cualquier pieza de contenido que gestionas en FEEDMA: puede ser propia (solo tú la ves) o el entregable de una colaboración (el partner la ve y la aprueba). Crea la primera con el botón + de abajo — luego la vas moviendo de columna a medida que avanza: de Idea a En producción, Para revisar, Programado y Publicado."
+      description="Una publicación es cualquier pieza de contenido que gestionas en CIBERAN: puede ser propia (solo tú la ves) o el entregable de una colaboración (el partner la ve y la aprueba). Crea la primera con el botón + de abajo — luego la vas moviendo de columna a medida que avanza: de Idea a En producción, Para revisar, Programado y Publicado."
     />
     <EmptyState
       v-else-if="hasFilters && !filteredPosts.length"

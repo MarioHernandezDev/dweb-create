@@ -148,7 +148,7 @@ const isReconnect = computed(() => props.error?.code === 'reconnect_required')
                 {{ row.videoText }} frente a {{ row.referenceText }} ({{ row.referenceLabel }})
               </p>
               <p class="mt-1 text-[0.6875rem] leading-relaxed text-[var(--color-text-faint)]">Criterio: {{ row.criterion }}</p>
-              <p class="text-[0.6875rem] text-[var(--color-text-faint)]">Cálculo de FEEDMA sobre datos de YouTube</p>
+              <p class="text-[0.6875rem] text-[var(--color-text-faint)]">Cálculo de CIBERAN sobre datos de YouTube</p>
             </li>
           </ul>
           <p v-else class="mt-2 text-[0.8125rem] text-[var(--color-text-muted)]">

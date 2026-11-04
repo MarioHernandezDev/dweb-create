@@ -41,7 +41,7 @@ const scoreWord = computed(() => (props.score < 45 ? 'bajo' : props.score < 72 ?
       Tus {{ history.sampleSize }} publicaciones medidas en esta plataforma tienen una mediana de
       {{ history.medianViews.toLocaleString('es-ES', { useGrouping: 'always' }) }} visualizaciones
       (entre {{ history.minViews.toLocaleString('es-ES', { useGrouping: 'always' }) }} y {{ history.maxViews.toLocaleString('es-ES', { useGrouping: 'always' }) }}).
-      Cálculo de FEEDMA con tus datos; el potencial de arriba no se basa en ellos.
+      Cálculo de CIBERAN con tus datos; el potencial de arriba no se basa en ellos.
     </p>
 
     <p v-if="genericSuggestions" class="relative mt-6 inline-flex items-center gap-1.5 text-[0.75rem] font-medium text-[var(--color-text-faint)]">

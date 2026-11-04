@@ -1,4 +1,4 @@
-// Tarjetas de título (intro, módulos, cierre) con la identidad de FEEDMA: logo, Snasm
+// Tarjetas de título (intro, módulos, cierre) con la identidad de CIBERAN: logo, Snasm
 // para la marca, Sora para títulos, Hanken Grotesk para texto y los colores del logo.
 import { writeFileSync, mkdirSync } from 'node:fs'
 import { fileURLToPath, pathToFileURL } from 'node:url'
@@ -41,9 +41,9 @@ html,body{width:1280px;height:720px;overflow:hidden;background:#120a33}
 body:not(.go) *{animation-play-state:paused!important}
 </style></head><body>
 <div class="bg"></div><div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div><div class="blob b4"></div>
-${big ? '' : `<div class="brand"><img src="${LOGO}"><span>FEEDMA</span></div>`}
+${big ? '' : `<div class="brand"><img src="${LOGO}"><span>CIBERAN</span></div>`}
 <div class="wrap">
-  ${big ? `<div class="hero"><img src="${LOGO}"><span>FEEDMA</span></div>` : ''}
+  ${big ? `<div class="hero"><img src="${LOGO}"><span>CIBERAN</span></div>` : ''}
   ${kicker ? `<div class="kicker" style="${big ? 'margin-top:40px' : ''}">${kicker}</div>` : ''}
   <div class="title">${title}</div>
   ${subtitle ? `<div class="sub">${subtitle}</div>` : ''}

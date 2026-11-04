@@ -1,14 +1,14 @@
-# FEEDMA — Evolución del producto: de marketplace funcional a aplicación imprescindible
+# CIBERAN — Evolución del producto: de marketplace funcional a aplicación imprescindible
 
-Quiero que trabajes sobre el proyecto existente FEEDMA para convertirlo en un producto excelente, útil, atractivo y capaz de generar usuarios recurrentes.
+Quiero que trabajes sobre el proyecto existente CIBERAN para convertirlo en un producto excelente, útil, atractivo y capaz de generar usuarios recurrentes.
 
-No quiero simplemente añadir funciones porque sí. Quiero que analices el producto desde la perspectiva de sus usuarios, identifiques las oportunidades con más valor y mejores la experiencia completa para que los creadores de contenido y las marcas quieran utilizar FEEDMA de forma habitual.
+No quiero simplemente añadir funciones porque sí. Quiero que analices el producto desde la perspectiva de sus usuarios, identifiques las oportunidades con más valor y mejores la experiencia completa para que los creadores de contenido y las marcas quieran utilizar CIBERAN de forma habitual.
 
-Te proporcionaré el documento técnico `FEEDMA — resumen técnico del proyecto.md`, que describe la arquitectura, las funcionalidades, el modelo de datos, la seguridad y las limitaciones conocidas. Úsalo como contexto inicial, pero contrasta siempre sus afirmaciones con el código actual.
+Te proporcionaré el documento técnico `CIBERAN — resumen técnico del proyecto.md`, que describe la arquitectura, las funcionalidades, el modelo de datos, la seguridad y las limitaciones conocidas. Úsalo como contexto inicial, pero contrasta siempre sus afirmaciones con el código actual.
 
 ## 1. OBJETIVO PRINCIPAL
 
-FEEDMA es un marketplace de dos lados que conecta creadores de contenido con marcas y empresas.
+CIBERAN es un marketplace de dos lados que conecta creadores de contenido con marcas y empresas.
 
 Actualmente incluye:
 - Directorios de creadores y partners con filtros y búsqueda con IA.
@@ -20,7 +20,7 @@ Actualmente incluye:
 - Predicción orientativa de la calidad y el éxito de borradores mediante heurísticas y un LLM.
 - Suscripciones, créditos y herramientas administrativas.
 
-La visión es que FEEDMA cubra el ciclo completo de una colaboración:
+La visión es que CIBERAN cubra el ciclo completo de una colaboración:
 
 1. Encontrar a la persona adecuada.
 2. Llegar a un acuerdo claro y seguro.
@@ -29,7 +29,7 @@ La visión es que FEEDMA cubra el ciclo completo de una colaboración:
 5. Completar el pago con transparencia.
 6. Valorar la experiencia y volver a colaborar.
 
-Quiero que FEEDMA no sea únicamente un lugar donde encontrar contactos, sino una herramienta que facilite el trabajo real entre marcas y creadores.
+Quiero que CIBERAN no sea únicamente un lugar donde encontrar contactos, sino una herramienta que facilite el trabajo real entre marcas y creadores.
 
 ## 2. REGLAS ANTES DE EMPEZAR
 
@@ -45,7 +45,7 @@ Antes de implementar nada:
 8. Mantén las reglas de RLS, las funciones SQL seguras y las validaciones del servidor. Ninguna mejora de UX debe debilitar la seguridad.
 9. No alteres datos reales ni credenciales de producción sin autorización.
 10. No conectes ni modifiques los flujos OAuth de redes sociales en esta fase. Esa área permanece expresamente fuera del alcance.
-11. Mantén la identidad visual propia de FEEDMA, basada en la metáfora de la producción audiovisual, las fichas de rodaje, la claqueta y los tickets de precio. No conviertas la aplicación en otra plantilla SaaS genérica.
+11. Mantén la identidad visual propia de CIBERAN, basada en la metáfora de la producción audiovisual, las fichas de rodaje, la claqueta y los tickets de precio. No conviertas la aplicación en otra plantilla SaaS genérica.
 12. No declares terminada una función hasta haberla probado.
 
 No quiero que te limites a darme una lista de ideas. Quiero un análisis serio, una estrategia priorizada y una implementación progresiva de las mejoras que tengan más sentido.
@@ -65,7 +65,7 @@ Investiga si pueden:
 - Gestionar sus colaboraciones y entregables.
 - Entender los pagos, sus estados y las cantidades que recibirán.
 - Demostrar su profesionalidad y construir reputación.
-- Encontrar motivos reales para volver a FEEDMA aunque no estén buscando una colaboración en ese momento.
+- Encontrar motivos reales para volver a CIBERAN aunque no estén buscando una colaboración en ese momento.
 
 ### Para las marcas y partners
 
@@ -117,7 +117,7 @@ No muestres porcentajes o puntuaciones sin datos suficientes. Explica qué signi
 
 Diseña un MVP útil y mantenible, sin construir un sistema de moderación excesivamente complejo para la etapa actual del producto.
 
-## 5. FEEDMA STUDIO: ESPACIO DE TRABAJO COMPARTIDO
+## 5. CIBERAN STUDIO: ESPACIO DE TRABAJO COMPARTIDO
 
 Esta es una de las mejoras estratégicas más importantes.
 
@@ -137,13 +137,13 @@ Evalúa la incorporación de:
 - Seguimiento del progreso de la colaboración.
 - Registro de incidencias y cambios acordados.
 
-La experiencia debe ser sencilla para ambas partes. No quiero convertir FEEDMA en un gestor de proyectos complejo ni duplicar innecesariamente el tablero editorial del creador.
+La experiencia debe ser sencilla para ambas partes. No quiero convertir CIBERAN en un gestor de proyectos complejo ni duplicar innecesariamente el tablero editorial del creador.
 
 Antes de diseñar la solución, determina qué datos deben pertenecer a la colaboración y cuáles deben seguir perteneciendo a las publicaciones, las ofertas o los mensajes.
 
 Implementa un modelo coherente que evite inconsistencias, duplicados y modificaciones no autorizadas.
 
-## 6. FEEDMA MATCH: MEJORAR EL DESCUBRIMIENTO
+## 6. CIBERAN MATCH: MEJORAR EL DESCUBRIMIENTO
 
 Ya existe búsqueda normal y búsqueda con IA. No quiero otra interfaz de búsqueda sin valor añadido: quiero mejorar la calidad de los matches.
 
@@ -174,7 +174,7 @@ Mejora la experiencia de pago existente sin reescribir innecesariamente la integ
 
 Evalúa:
 - Desglose del importe de la colaboración.
-- Comisión de FEEDMA y cantidad que recibirá el creador.
+- Comisión de CIBERAN y cantidad que recibirá el creador.
 - Estados claros del pago.
 - Historial de pagos y colaboraciones.
 - Recibos o justificantes disponibles cuando corresponda.
@@ -188,9 +188,9 @@ No anuncies pagos instantáneos, custodia de fondos, protección de pagos ni gar
 
 Comprueba también qué mecanismos de resolución de conflictos son viables y qué condiciones requerirían revisión legal antes de presentarlas como una garantía.
 
-## 8. FEEDMA CREATOR: AUMENTAR EL VALOR DE USO RECURRENTE
+## 8. CIBERAN CREATOR: AUMENTAR EL VALOR DE USO RECURRENTE
 
-Quiero que el creador encuentre utilidad en FEEDMA incluso cuando no está negociando una colaboración.
+Quiero que el creador encuentre utilidad en CIBERAN incluso cuando no está negociando una colaboración.
 
 Evalúa mejoras en:
 - Resumen diario con tareas y plazos próximos.
@@ -234,7 +234,7 @@ Si esta función tiene un coste elevado o necesita resolver antes el problema de
 
 ## 10. RELACIONES RECURRENTES Y CRECIMIENTO
 
-Quiero que FEEDMA facilite la repetición de colaboraciones satisfactorias.
+Quiero que CIBERAN facilite la repetición de colaboraciones satisfactorias.
 
 Evalúa:
 - Repetir una colaboración anterior.
@@ -271,7 +271,7 @@ Analiza cómo ayudar a cada rol a:
 - Completar los datos esenciales del perfil.
 - Crear un primer paquete o una primera oferta de servicios.
 - Definir presupuesto, nicho y preferencias.
-- Entender cómo funciona FEEDMA.
+- Entender cómo funciona CIBERAN.
 - Encontrar perfiles adecuados.
 - Enviar la primera propuesta o candidatura.
 - Identificar el siguiente paso cuando todavía no hay resultados.
@@ -282,7 +282,7 @@ No obligues a completar información innecesaria ni conviertas el onboarding en 
 
 ## 13. ANALÍTICA DE PRODUCTO Y DECISIONES BASADAS EN DATOS
 
-Quiero poder saber si FEEDMA está aportando valor y dónde se pierden los usuarios.
+Quiero poder saber si CIBERAN está aportando valor y dónde se pierden los usuarios.
 
 Evalúa cómo medir de forma respetuosa con la privacidad:
 
@@ -305,7 +305,7 @@ Propón un dashboard administrativo que permita comprender el comportamiento gen
 
 ## 14. IDENTIDAD VISUAL Y CALIDAD DE EXPERIENCIA
 
-La identidad de FEEDMA debe mantenerse reconocible y extenderse de forma consistente por toda la aplicación.
+La identidad de CIBERAN debe mantenerse reconocible y extenderse de forma consistente por toda la aplicación.
 
 Revisa:
 - Jerarquía visual.
@@ -340,7 +340,7 @@ Comprueba el estado actual de:
 - Pruebas de integración y regresión.
 - Autorización en RLS, SQL y rutas Nitro.
 
-Estas tareas deben considerarse dependencias importantes para un lanzamiento seguro. Si alguna sigue pendiente, inclúyela explícitamente en la hoja de ruta y no afirmes que FEEDMA está lista para producción.
+Estas tareas deben considerarse dependencias importantes para un lanzamiento seguro. Si alguna sigue pendiente, inclúyela explícitamente en la hoja de ruta y no afirmes que CIBERAN está lista para producción.
 
 Mantén las pruebas existentes y añade cobertura cuando haya un riesgo o un comportamiento importante que actualmente no se esté comprobando.
 
@@ -394,7 +394,7 @@ Prepara una pequeña guía de entrevistas para cinco creadores y cinco marcas, c
 - Qué les hace desconfiar.
 - Qué partes del proceso consumen más tiempo.
 - Qué problemas aparecen durante la negociación y la ejecución.
-- Qué les haría volver a FEEDMA.
+- Qué les haría volver a CIBERAN.
 - Qué alternativa utilizan hoy y qué no quieren perder de ella.
 
 No afirmes haber entrevistado a usuarios si no se ha hecho.
@@ -427,7 +427,7 @@ Empieza con una auditoría del código y del producto actual.
 
 Después, entrega:
 
-1. Un diagnóstico de lo que FEEDMA hace bien y de sus principales puntos débiles.
+1. Un diagnóstico de lo que CIBERAN hace bien y de sus principales puntos débiles.
 2. Una lista de mejoras ordenadas por prioridad, impacto y esfuerzo.
 3. Una separación clara entre funcionalidades existentes, mejoras propuestas e hipótesis que requieren validación.
 4. Un plan por fases con dependencias y criterios de aceptación.
@@ -438,7 +438,7 @@ Al terminar cada incremento, resume los cambios y las pruebas realizadas. Manté
 
 ## 20. CRITERIO FINAL DE ÉXITO
 
-El objetivo no es que FEEDMA tenga el máximo número de funciones.
+El objetivo no es que CIBERAN tenga el máximo número de funciones.
 
 El objetivo es que:
 - Un creador pueda encontrar oportunidades relevantes y gestionar su trabajo con menos esfuerzo.

@@ -1,4 +1,4 @@
-// Graba la demo guiada de FEEDMA en la app de DEMO (localhost:3300, Supabase local).
+// Graba la demo guiada de CIBERAN en la app de DEMO (localhost:3300, Supabase local).
 // Uso: node rec-run.mjs <depsVideoDir> <demoAppDir> <outDir> <carpetaImagenes>
 // Requiere una base recién sembrada (reseed.sh). Escribe <outDir>/timeline.json y los fotogramas.
 import { createRequire } from 'node:module'
@@ -30,8 +30,8 @@ async function login(email, label) {
   return page
 }
 const rec = new Recorder(`${outDir}/frames`)
-const N = new Actor(await login('nova@demo.feedma.test', 'NOVA'), 'nova', rec)
-const A = new Actor(await login('arezz@demo.feedma.test', 'AREZZ'), 'arezz', rec)
+const N = new Actor(await login('nova@demo.ciberan.test', 'NOVA'), 'nova', rec)
+const A = new Actor(await login('arezz@demo.ciberan.test', 'AREZZ'), 'arezz', rec)
 const cardsPage = await (await browser.newContext(ctxOpts)).newPage()
 const card = (c, ms = 3600) => recordCard(cardsPage, rec, `${outDir}/cards`, c, ms)
 const dlg = (p) => p.getByRole('dialog').last()
@@ -53,10 +53,10 @@ try {
   // ------------------------------------------------------------------ Intro
   await card({ id: 'intro', kind: 'intro', kicker: 'Cómo funciona, paso a paso', title: 'Encuentra, negocia y gestiona <em>colaboraciones</em>',
     subtitle: 'Un recorrido por la app con un creador y una marca de ejemplo.', note: 'Demostración con cuentas, imágenes y cifras ficticias · AREZZ (creador) y NOVA STUDIO (marca)',
-    srt: 'FEEDMA — Cómo funciona, paso a paso' }, 5200)
+    srt: 'CIBERAN — Cómo funciona, paso a paso' }, 5200)
 
   // ------------------------------------------------------------------ Módulo 1
-  await card({ id: 'm1', kicker: 'Módulo 1 de 6', title: 'Conoce a <em>AREZZ</em>', subtitle: 'El día a día de un creador en FEEDMA: su panel y sus métricas.' })
+  await card({ id: 'm1', kicker: 'Módulo 1 de 6', title: 'Conoce a <em>AREZZ</em>', subtitle: 'El día a día de un creador en CIBERAN: su panel y sus métricas.' })
   await scene(A, 'arezz-hoy', `${BASE}/creator`, async (a, p) => {
     await a.caption('Este es «Hoy», el panel de AREZZ', { n: 'Paso 1', wait: 1700 })
     await a.caption('De un vistazo: colaboraciones, solicitudes, entregas y objetivo semanal', { n: 'Paso 1' })
@@ -78,7 +78,7 @@ try {
   // ------------------------------------------------------------------ Módulo 2
   await card({ id: 'm2', kicker: 'Módulo 2 de 6', title: '<em>Descubre</em> creadores', subtitle: 'NOVA STUDIO busca a quién confiar el lanzamiento de su cápsula de otoño.' })
   await scene(N, 'nova-descubre', `${BASE}/partner`, async (a, p) => {
-    await a.caption('NOVA STUDIO, una marca de moda sostenible, entra en FEEDMA', { n: 'Paso 3', wait: 2200 })
+    await a.caption('NOVA STUDIO, una marca de moda sostenible, entra en CIBERAN', { n: 'Paso 3', wait: 2200 })
     await a.caption('Va a Descubrir…', { n: 'Paso 3' })
     await a.click(p.getByRole('link', { name: 'Descubrir' }).first(), { after: 1200 })
     await a.caption('…y filtra por la categoría que le interesa: Moda', { n: 'Paso 3' })
@@ -151,10 +151,10 @@ try {
   })
 
   // ------------------------------------------------------------------ Módulo 4
-  await card({ id: 'm4', kicker: 'Módulo 4 de 6', title: '<em>Gestiona</em> tus proyectos', subtitle: 'FEEDMA Studio: cada publicación, de la idea a la entrega.' })
+  await card({ id: 'm4', kicker: 'Módulo 4 de 6', title: '<em>Gestiona</em> tus proyectos', subtitle: 'CIBERAN Studio: cada publicación, de la idea a la entrega.' })
   let postUrl = ''
   await scene(A, 'arezz-studio', `${BASE}/creator/timeline`, async (a, p) => {
-    await a.caption('FEEDMA Studio: el tablero de publicaciones de AREZZ, por fases', { n: 'Paso 13', wait: 2600 })
+    await a.caption('CIBERAN Studio: el tablero de publicaciones de AREZZ, por fases', { n: 'Paso 13', wait: 2600 })
     await a.caption('Crea la publicación de la colaboración', { n: 'Paso 13' })
     await a.click(p.getByRole('button', { name: 'Nueva publicación' }).first(), { after: 900 })
     await a.type(p.locator('#post-title'), 'Cápsula Otoño · NOVA × AREZZ', { delay: 30 })
@@ -212,7 +212,7 @@ try {
     await a.highlightBlock(p.getByText('Tu calendario').first(), { minW: 800, minH: 200, ms: 2600 })
   })
   await scene(A, 'arezz-publica', () => postUrl, async (a, p) => {
-    await a.caption('Aprobada: AREZZ la publica y lo marca en FEEDMA', { n: 'Paso 19' })
+    await a.caption('Aprobada: AREZZ la publica y lo marca en CIBERAN', { n: 'Paso 19' })
     await a.click(p.getByRole('button', { name: /^Mover a/ }), { after: 1600 })
     // Publicada = ya no hay fase siguiente. Si aparece un diálogo o sigue el botón, la escena no vale.
     await p.getByRole('button', { name: /^Mover a/ }).waitFor({ state: 'detached', timeout: 5000 })
@@ -245,7 +245,7 @@ try {
 
   // ------------------------------------------------------------------ Cierre
   await card({ id: 'outro', kind: 'outro', kicker: 'Descubre · Negocia · Gestiona', title: 'Del primer mensaje a la <em>publicación aprobada</em>',
-    note: 'Vídeo de demostración grabado en un entorno aislado · cuentas, imágenes y cifras ficticias', srt: 'FEEDMA — Del primer mensaje a la publicación aprobada' }, 5600)
+    note: 'Vídeo de demostración grabado en un entorno aislado · cuentas, imágenes y cifras ficticias', srt: 'CIBERAN — Del primer mensaje a la publicación aprobada' }, 5600)
 } catch (e) {
   console.log('FALLO:', e.message.split('\n').slice(0, 5).join('\n'))
   await N.page.screenshot({ path: `${outDir}/fallo-nova.png` }).catch(() => {})

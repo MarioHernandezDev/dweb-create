@@ -133,7 +133,7 @@ async function fetchAiRanking(
     .map((c, i) => `${i + 1}. id=${c.id} | nombre="${c.name}" | categorías=${c.categories.join(', ') || 'sin especificar'} | bio="${c.bio ?? ''}" | busca="${c.lookingFor ?? ''}"`)
     .join('\n')
 
-  const prompt = `Eres el motor de "Descubrir" de FEEDMA, un marketplace donde creadores de contenido y marcas (partners) se encuentran. Un ${viewerRole === 'creator' ? 'creador de contenido' : 'partner'} ha escrito esta búsqueda en lenguaje natural:
+  const prompt = `Eres el motor de "Descubrir" de CIBERAN, un marketplace donde creadores de contenido y marcas (partners) se encuentran. Un ${viewerRole === 'creator' ? 'creador de contenido' : 'partner'} ha escrito esta búsqueda en lenguaje natural:
 
 "${queryText}"
 

@@ -74,7 +74,7 @@ export default defineEventHandler(async (event) => {
     // pasaría con `prompt=consent` ausente en una segunda autorización de la
     // MISMA cuenta de Google que ya autorizó antes antes de ese cambio.
     if (!tokens.refresh_token) {
-      return redirectWithError('Google no ha concedido permiso de acceso continuado. Revoca el acceso de FEEDMA en myaccount.google.com/permissions y vuelve a intentarlo.')
+      return redirectWithError('Google no ha concedido permiso de acceso continuado. Revoca el acceso de CIBERAN en myaccount.google.com/permissions y vuelve a intentarlo.')
     }
 
     const channels = await $fetch<YoutubeChannelsResponse>('https://www.googleapis.com/youtube/v3/channels', {
@@ -116,7 +116,7 @@ export default defineEventHandler(async (event) => {
         ...successPatch()
       } as never, { onConflict: 'creator_id,platform' })
     // 23505 = el mismo canal de YouTube ya está conectado a otro creador.
-    if (error?.code === '23505') return redirectWithError('Ese canal de YouTube ya está conectado a otro usuario de FEEDMA.')
+    if (error?.code === '23505') return redirectWithError('Ese canal de YouTube ya está conectado a otro usuario de CIBERAN.')
     if (error) throw error
 
     return sendRedirect(event, appRedirectUrl(config.appUrl, '/creator/metrics?youtube=connected'))

@@ -44,10 +44,10 @@
     </svg>
 
     <h1
-      class="nx-stagger-in font-brand font-light leading-[0.85] text-black text-[clamp(3.5rem,16vw,15rem)]"
+      class="nx-stagger-in wordmark leading-[0.85] text-[var(--color-text)] text-[clamp(3.5rem,16vw,15rem)]"
       style="--stagger-i: 1"
     >
-      FEEDMA
+      CIBERAN
     </h1>
 
     <h2

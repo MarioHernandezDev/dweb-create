@@ -2,8 +2,8 @@
 
 > Fecha: 2026-11-03.
 > **Entregables:**
-> - `docs/demo/video/FEEDMA_demo_guiada.mp4` (25,4 MB, no versionado: se regenera con [`scripts/demo-video`](../../scripts/demo-video/README.md)).
-> - [`FEEDMA_demo_guiada.srt`](video/FEEDMA_demo_guiada.srt) y [`montaje.json`](video/montaje.json).
+> - `docs/demo/video/CIBERAN_demo_guiada.mp4` (25,4 MB, no versionado: se regenera con [`scripts/demo-video`](../../scripts/demo-video/README.md)).
+> - [`CIBERAN_demo_guiada.srt`](video/CIBERAN_demo_guiada.srt) y [`montaje.json`](video/montaje.json).
 > - [Capturas de apoyo](video/capturas/), una por escena.
 > - [Storyboard](STORYBOARD.md) y [plan de datos](DEMO_DATA_PLAN.md).
 
@@ -21,12 +21,12 @@
 
 | # | Comprobación | Resultado | Cómo se comprobó |
 |---|---|---|---|
-| 1 | El vídeo existe | ✅ | `FEEDMA_demo_guiada.mp4`, 25,4 MB |
+| 1 | El vídeo existe | ✅ | `CIBERAN_demo_guiada.mp4`, 25,4 MB |
 | 2 | Reproducción completa | ✅ | Decodificación completa con FFmpeg sin errores. Revisión de 32 fotogramas (uno cada 10 s) en dos mosaicos, más la tarjeta de cierre: todas las escenas en orden y sin pantallas en negro ni congeladas |
 | 3 | Audio sincronizado | N/A | No hay pista de audio, a propósito |
 | 4 | Subtítulos | ✅ | 51 entradas en orden, sin solapes (se recortan al inicio de la siguiente en los fundidos), la más corta de 1,6 s y la última acaba en 322,87 s, dentro del vídeo |
 | 5 | No aparecen credenciales | ✅ | Las sesiones se abren **antes** de grabar; ninguna escena pasa por `/login` ni escribe contraseñas. No aparecen correos: el único sitio que los muestra (la ficha privada del creador) no sale. El `.env` de demo solo contiene claves del Supabase local |
-| 6 | Datos ficticios | ✅ | Cuentas `@demo.feedma.test`, imágenes ilustradas generadas para la demo (sin caras ni marcas reales) y cifras inventadas. Las pantallas de estadísticas llevan el distintivo «Cifras ficticias de demostración» y las tarjetas de inicio y cierre lo avisan |
+| 6 | Datos ficticios | ✅ | Cuentas `@demo.ciberan.test`, imágenes ilustradas generadas para la demo (sin caras ni marcas reales) y cifras inventadas. Las pantallas de estadísticas llevan el distintivo «Cifras ficticias de demostración» y las tarjetas de inicio y cierre lo avisan |
 | 7 | Flujos coherentes | ✅ | Tras grabar, la base local coincide con lo que cuenta el vídeo: oferta de 900 € **rechazada**, de 1.050 € **aceptada**; colaboración **completada** por 1.050 € y nacida de la oferta; publicación **publicada**; notas de revisión «cambios pedidos» y «aprobada»; 2 valoraciones de 5 ★ |
 | 8 | No se muestran errores como éxitos | ✅ | El guion registra los errores de página, las respuestas HTTP ≥ 400 y las escenas que terminan con un diálogo abierto: **0 en la toma final**. Comprueba los estados clave (p. ej. que la publicación queda publicada). Las funciones no verificadas no aparecen (§4) |
 | 9 | Calidad visual | ✅ | Fotogramas nativos de 1920×1080 a escala 1,5, con el texto nítido. Rótulos legibles (19 px a escala 1,5), resaltados y cursor visibles, fundidos suaves |

@@ -335,7 +335,7 @@ async function send() {
           id="budget" v-model.number="budgetEuros" type="number" min="1" step="1" placeholder="Ej. 300"
           class="w-full h-11 px-3.5 rounded-[var(--radius-sm)] bg-[var(--color-ink-overlay)] border border-[var(--color-hairline)] text-[0.9375rem] text-[var(--color-text)] placeholder:text-[var(--color-text-faint)] focus:outline-none focus:border-[var(--color-primary-500)]/60"
         >
-        <p class="text-[0.75rem] text-[var(--color-text-faint)] mt-1.5">Lo pagas desde FEEDMA cuando acordéis los detalles — el dinero llega directo, descontando la comisión de la plataforma.</p>
+        <p class="text-[0.75rem] text-[var(--color-text-faint)] mt-1.5">Lo pagas desde CIBERAN cuando acordéis los detalles — el dinero llega directo, descontando la comisión de la plataforma.</p>
 
         <button
           type="button"

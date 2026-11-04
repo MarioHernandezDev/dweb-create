@@ -1,12 +1,12 @@
-# FEEDMA — Rediseño funcional y visual de Descubrir
+# CIBERAN — Rediseño funcional y visual de Descubrir
 
-Quiero rediseñar la sección Descubrir de FEEDMA tomando como referencia la captura que adjunto.
+Quiero rediseñar la sección Descubrir de CIBERAN tomando como referencia la captura que adjunto.
 
 La captura es una referencia visual, no una especificación exacta del comportamiento actual. En particular, no debes asumir que la barra lateral se desplaza como parece en la imagen: inspecciona el comportamiento real de la página y de su layout antes de hacer cambios.
 
-FEEDMA conecta creadores de contenido con marcas y empresas para facilitar el descubrimiento mutuo y las colaboraciones.
+CIBERAN conecta creadores de contenido con marcas y empresas para facilitar el descubrimiento mutuo y las colaboraciones.
 
-El objetivo es convertir Descubrir en una sección visualmente atractiva, profesional, intuitiva y funcional, manteniendo la identidad visual de FEEDMA y utilizando los datos y operaciones reales que ya existen.
+El objetivo es convertir Descubrir en una sección visualmente atractiva, profesional, intuitiva y funcional, manteniendo la identidad visual de CIBERAN y utilizando los datos y operaciones reales que ya existen.
 
 ## 1. Auditoría antes de implementar
 
@@ -33,7 +33,7 @@ Antes de empezar a programar, presenta un resumen breve de lo que vas a conserva
 
 Quiero conservar los aspectos positivos de la referencia:
 
-- Navegación lateral oscura e identidad reconocible de FEEDMA.
+- Navegación lateral oscura e identidad reconocible de CIBERAN.
 - Fondo claro, con tonos neutros y acentos morados.
 - Tarjetas con bordes sutiles, radios amplios y espaciado consistente.
 - Tipografía legible y jerarquía visual clara.
@@ -44,7 +44,7 @@ Pero no quiero copiar literalmente la distribución actual.
 
 Aprovecha el ancho útil de la página, evita que todo el contenido quede concentrado a la izquierda con un gran vacío a la derecha y crea una composición equilibrada que se adapte al espacio disponible.
 
-Utiliza los tokens y componentes visuales existentes de FEEDMA. No introduzcas otra identidad visual ni sombras, colores o radios arbitrarios.
+Utiliza los tokens y componentes visuales existentes de CIBERAN. No introduzcas otra identidad visual ni sombras, colores o radios arbitrarios.
 
 ## 3. Estructura de la página
 
@@ -224,7 +224,7 @@ No afirmes haber probado interacciones o responsive visualmente si no has podido
 
 ## 9. Resultado esperado
 
-Implementa el rediseño en el proyecto real de FEEDMA.
+Implementa el rediseño en el proyecto real de CIBERAN.
 
 Al finalizar, resume:
 
@@ -258,7 +258,7 @@ Inspecciona cómo se obtienen actualmente los perfiles que aparecen en «Destaca
 - Si las imágenes, categorías, descripciones y presupuestos mostrados corresponden realmente a cada perfil.
 - Qué ocurre cuando hay pocos perfiles disponibles o no hay ninguno.
 
-Si la selección actual es arbitraria, repetitiva o poco relevante, mejora el criterio utilizando los datos reales que ya existen en FEEDMA.
+Si la selección actual es arbitraria, repetitiva o poco relevante, mejora el criterio utilizando los datos reales que ya existen en CIBERAN.
 
 Prioriza criterios sencillos, explicables y fiables. Por ejemplo, puedes aprovechar las categorías y preferencias disponibles, la información del perfil y los filtros existentes, siempre que esos datos estén realmente disponibles.
 

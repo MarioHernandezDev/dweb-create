@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { platformFeeCents, plans, MARKETPLACE_FEE_RATE } from '../../server/utils/stripe-plans'
 
 /**
- * `platformFeeCents` decide cuánto se queda FEEDMA de cada cobro entre un
+ * `platformFeeCents` decide cuánto se queda CIBERAN de cada cobro entre un
  * partner y un creador (server/api/stripe/pay-collaboration.post.ts) — un
  * error de redondeo aquí es, literalmente, dinero mal calculado en cada pago.
  */

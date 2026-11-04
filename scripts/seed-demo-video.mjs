@@ -1,8 +1,8 @@
-// FEEDMA — escenario de la demo en vídeo (AREZZ × NOVA STUDIO) para un Supabase LOCAL.
+// CIBERAN — escenario de la demo en vídeo (AREZZ × NOVA STUDIO) para un Supabase LOCAL.
 //
 // SOLO ENTORNO AISLADO: aborta si SUPABASE_URL no apunta a 127.0.0.1/localhost y
 // si la base ya tiene usuarios (hay que partir de `supabase db reset` local).
-// Todos los datos son ficticios: cuentas @demo.feedma.test, imágenes ilustradas
+// Todos los datos son ficticios: cuentas @demo.ciberan.test, imágenes ilustradas
 // generadas para la demo y estadísticas inventadas (ver docs/demo/DEMO_DATA_PLAN.md).
 //
 // Deja preparado el contexto (perfiles, paquetes, redes, historial, tablero). El
@@ -65,30 +65,30 @@ async function createUser({ email, role, name, detail }) {
 // ---------------------------------------------------------------------------
 const CREATORS = [
   {
-    key: 'arezz', email: 'arezz@demo.feedma.test', name: 'AREZZ', niche: 'Moda urbana y lifestyle', avatar: 'arezz-avatar', cover: 'arezz-cover',
+    key: 'arezz', email: 'arezz@demo.ciberan.test', name: 'AREZZ', niche: 'Moda urbana y lifestyle', avatar: 'arezz-avatar', cover: 'arezz-cover',
     bio: 'Creo contenido de moda urbana, looks reales y escapadas de fin de semana. Me importa que cada colaboración encaje con lo que de verdad uso.',
     categories: ['Moda', 'Lifestyle', 'Viajes'], rate: [30_000, 150_000], weekly: 4,
     lookingFor: 'Marcas de moda y lifestyle con producto propio, mejor si es sostenible.',
     // Solo redes que la app sabe conectar (Instagram y YouTube; TikTok sale como "Próximamente").
     socials: [['instagram', '@arezz.demo', 48_200], ['youtube', 'AREZZ (demo)', 12_600]]
   },
-  { key: 'sofia', email: 'sofia.lagos@demo.feedma.test', name: 'Sofía Lagos', niche: 'Viajes y moda', avatar: 'c-sofia', cover: 'c-sofia-cover', bio: 'Viajes con maleta pequeña y looks para cada ciudad.', categories: ['Viajes', 'Moda', 'Lifestyle'], rate: [30_000, 100_000], socials: [['instagram', '@sofialagos.demo', 36_700]] },
-  { key: 'iker', email: 'iker.sanz@demo.feedma.test', name: 'Iker Sanz', niche: 'Cuidado personal', avatar: 'c-iker', cover: 'c-iker-cover', bio: 'Rutinas de cuidado personal sin complicaciones.', categories: ['Belleza', 'Moda'], rate: [25_000, 80_000], socials: [['instagram', '@ikersanz.demo', 15_300]] },
-  { key: 'lia', email: 'lia.montes@demo.feedma.test', name: 'Lía Montes', niche: 'Fitness y nutrición', avatar: 'c-lia', cover: 'c-lia-cover', bio: 'Entrenamientos cortos para gente con poco tiempo.', categories: ['Fitness', 'Nutrición'], rate: [25_000, 90_000], socials: [['instagram', '@liamontes.demo', 22_400]] },
-  { key: 'dani', email: 'dani.ortega@demo.feedma.test', name: 'Dani Ortega', niche: 'Tecnología', avatar: 'c-dani', cover: 'c-dani-cover', bio: 'Reseñas de tecnología explicadas sin jerga.', categories: ['Tecnología', 'Gaming'], rate: [30_000, 120_000], socials: [['youtube', 'Dani Ortega (demo)', 54_000]] },
-  { key: 'marta', email: 'marta.vidal@demo.feedma.test', name: 'Marta Vidal', niche: 'Gastronomía', avatar: 'c-marta', cover: 'c-marta-cover', bio: 'Recetas de temporada y sitios donde comer bien.', categories: ['Gastronomía', 'Viajes'], rate: [20_000, 70_000], socials: [['instagram', '@martavidal.demo', 18_900]] },
-  { key: 'kenji', email: 'kenji.ruiz@demo.feedma.test', name: 'Kenji Ruiz', niche: 'Gaming', avatar: 'c-kenji', cover: 'c-kenji-cover', bio: 'Directos y análisis de videojuegos independientes.', categories: ['Gaming', 'Tecnología'], rate: [35_000, 150_000], socials: [['youtube', 'Kenji Ruiz (demo)', 88_000]] }
+  { key: 'sofia', email: 'sofia.lagos@demo.ciberan.test', name: 'Sofía Lagos', niche: 'Viajes y moda', avatar: 'c-sofia', cover: 'c-sofia-cover', bio: 'Viajes con maleta pequeña y looks para cada ciudad.', categories: ['Viajes', 'Moda', 'Lifestyle'], rate: [30_000, 100_000], socials: [['instagram', '@sofialagos.demo', 36_700]] },
+  { key: 'iker', email: 'iker.sanz@demo.ciberan.test', name: 'Iker Sanz', niche: 'Cuidado personal', avatar: 'c-iker', cover: 'c-iker-cover', bio: 'Rutinas de cuidado personal sin complicaciones.', categories: ['Belleza', 'Moda'], rate: [25_000, 80_000], socials: [['instagram', '@ikersanz.demo', 15_300]] },
+  { key: 'lia', email: 'lia.montes@demo.ciberan.test', name: 'Lía Montes', niche: 'Fitness y nutrición', avatar: 'c-lia', cover: 'c-lia-cover', bio: 'Entrenamientos cortos para gente con poco tiempo.', categories: ['Fitness', 'Nutrición'], rate: [25_000, 90_000], socials: [['instagram', '@liamontes.demo', 22_400]] },
+  { key: 'dani', email: 'dani.ortega@demo.ciberan.test', name: 'Dani Ortega', niche: 'Tecnología', avatar: 'c-dani', cover: 'c-dani-cover', bio: 'Reseñas de tecnología explicadas sin jerga.', categories: ['Tecnología', 'Gaming'], rate: [30_000, 120_000], socials: [['youtube', 'Dani Ortega (demo)', 54_000]] },
+  { key: 'marta', email: 'marta.vidal@demo.ciberan.test', name: 'Marta Vidal', niche: 'Gastronomía', avatar: 'c-marta', cover: 'c-marta-cover', bio: 'Recetas de temporada y sitios donde comer bien.', categories: ['Gastronomía', 'Viajes'], rate: [20_000, 70_000], socials: [['instagram', '@martavidal.demo', 18_900]] },
+  { key: 'kenji', email: 'kenji.ruiz@demo.ciberan.test', name: 'Kenji Ruiz', niche: 'Gaming', avatar: 'c-kenji', cover: 'c-kenji-cover', bio: 'Directos y análisis de videojuegos independientes.', categories: ['Gaming', 'Tecnología'], rate: [35_000, 150_000], socials: [['youtube', 'Kenji Ruiz (demo)', 88_000]] }
 ]
 const PARTNERS = [
   {
-    key: 'nova', email: 'nova@demo.feedma.test', name: 'NOVA STUDIO', industry: 'Moda sostenible', avatar: 'nova-logo', cover: 'nova-cover',
+    key: 'nova', email: 'nova@demo.ciberan.test', name: 'NOVA STUDIO', industry: 'Moda sostenible', avatar: 'nova-logo', cover: 'nova-cover',
     bio: 'Estudio de diseño que lanza colecciones cápsula de ropa urbana con tejidos reciclados. Producción local y tiradas cortas.',
     categories: ['Moda', 'Sostenibilidad', 'Lifestyle'], budget: [50_000, 250_000],
     lookingFor: 'Creadores de moda urbana y lifestyle para lanzar nuestra cápsula de otoño en Instagram y TikTok.'
   },
-  { key: 'brisa', email: 'atelier.brisa@demo.feedma.test', name: 'Atelier Brisa', industry: 'Moda y complementos', avatar: 'p-brisa', cover: 'p-brisa-cover', bio: 'Bolsos y complementos de piel vegetal.', categories: ['Moda', 'Sostenibilidad'], budget: [40_000, 150_000] },
-  { key: 'lucuma', email: 'lucuma.cafe@demo.feedma.test', name: 'Lúcuma Café', industry: 'Hostelería', avatar: 'p-lucuma', cover: 'p-lucuma-cover', bio: 'Cafetería de especialidad y brunch.', categories: ['Gastronomía', 'Lifestyle'], budget: [20_000, 60_000] },
-  { key: 'pulso', email: 'pulso.fitwear@demo.feedma.test', name: 'Pulso Fitwear', industry: 'Ropa deportiva', avatar: 'p-pulso', cover: 'p-pulso-cover', bio: 'Ropa técnica para entrenar en la ciudad.', categories: ['Deporte', 'Fitness', 'Moda'], budget: [30_000, 120_000] }
+  { key: 'brisa', email: 'atelier.brisa@demo.ciberan.test', name: 'Atelier Brisa', industry: 'Moda y complementos', avatar: 'p-brisa', cover: 'p-brisa-cover', bio: 'Bolsos y complementos de piel vegetal.', categories: ['Moda', 'Sostenibilidad'], budget: [40_000, 150_000] },
+  { key: 'lucuma', email: 'lucuma.cafe@demo.ciberan.test', name: 'Lúcuma Café', industry: 'Hostelería', avatar: 'p-lucuma', cover: 'p-lucuma-cover', bio: 'Cafetería de especialidad y brunch.', categories: ['Gastronomía', 'Lifestyle'], budget: [20_000, 60_000] },
+  { key: 'pulso', email: 'pulso.fitwear@demo.ciberan.test', name: 'Pulso Fitwear', industry: 'Ropa deportiva', avatar: 'p-pulso', cover: 'p-pulso-cover', bio: 'Ropa técnica para entrenar en la ciudad.', categories: ['Deporte', 'Fitness', 'Moda'], budget: [30_000, 120_000] }
 ]
 
 // Hay que partir de una base local recién reiniciada.
@@ -216,7 +216,7 @@ await insert('collaborations', {
 await insert('saved_profiles', { owner_profile_id: P.nova.profileId, target_creator_id: P.sofia.roleId, created_at: at(-31) })
 
 // ---------------------------------------------------------------------------
-// 5. Tablero de AREZZ (FEEDMA Studio): publicaciones en varias fases.
+// 5. Tablero de AREZZ (CIBERAN Studio): publicaciones en varias fases.
 // ---------------------------------------------------------------------------
 async function post({ title, caption, type, platform, status, due, published = null, collab = null, image = null, hashtags = [] }) {
   const id = await insertOne('posts', {

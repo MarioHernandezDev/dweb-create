@@ -5,7 +5,7 @@ import type { AnalyticsReportDto } from './youtube-period-view'
  * fecha de publicación, orden e interacción. Pura y sin Vue, para probar las
  * reglas:
  *  - Un recuento ausente (`null`) NUNCA es 0: se muestra "—" con el motivo.
- *  - La interacción es un cálculo de FEEDMA: (me gusta + comentarios) ÷
+ *  - La interacción es un cálculo de CIBERAN: (me gusta + comentarios) ÷
  *    visualizaciones; si falta cualquiera de los tres datos, no se calcula.
  *  - Ordenar por un dato que falta deja esos vídeos al final, no los mezcla.
  */
@@ -63,7 +63,7 @@ export const VIDEO_RANGES: { value: VideoRange; label: string }[] = [
   { value: '365', label: 'Último año' }
 ]
 
-export const ENGAGEMENT_HINT = 'Interacción = (me gusta + comentarios) ÷ visualizaciones. Es un cálculo de FEEDMA, no una cifra de YouTube; no se calcula si el vídeo oculta los me gusta o tiene los comentarios desactivados.'
+export const ENGAGEMENT_HINT = 'Interacción = (me gusta + comentarios) ÷ visualizaciones. Es un cálculo de CIBERAN, no una cifra de YouTube; no se calcula si el vídeo oculta los me gusta o tiene los comentarios desactivados.'
 
 /** Sin tildes y en minúsculas, para que "video" encuentre "Vídeo". */
 export function normalizeText(text: string): string {

@@ -55,7 +55,7 @@ Código revisado: `app/pages/creator/metrics/index.vue`, `[platform].vue`, `app/
 - **Tablet (768–1279 px):** 2 columnas; el héroe ocupa una fila, la gráfica ancho completo y las observaciones debajo de ella.
 - **Móvil (< 768 px):** una columna como ahora, con la barra de periodo fija y las tarjetas en 2 columnas.
 - Diferencias de tamaño con sentido: un héroe, ocho tarjetas pequeñas, una gráfica grande, una columna lateral de texto y una rejilla de vídeos; no una sucesión de tarjetas iguales.
-- Identidad: tokens ya existentes de FEEDMA (`--color-platform-youtube`, `--color-chart-primary`, `font-display`), sin dependencias nuevas.
+- Identidad: tokens ya existentes de CIBERAN (`--color-platform-youtube`, `--color-chart-primary`, `font-display`), sin dependencias nuevas.
 
 ## 3. Mejoras de usabilidad
 

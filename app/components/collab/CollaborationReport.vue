@@ -8,7 +8,7 @@ import type { Platform } from '~/types'
  * Cada entrega aparece tal como está: sin vincular, vinculada sin medir o
  * medida. Un dato ausente es "—" con su motivo, nunca 0; los totales solo
  * suman las entregas que aportan ese dato y lo dicen. Las cifras de la red
- * se rotulan como tales y las sumas como cálculo de FEEDMA.
+ * se rotulan como tales y las sumas como cálculo de CIBERAN.
  */
 const props = defineProps<{ collaborationId: string }>()
 
@@ -50,7 +50,7 @@ const dayText = (iso: string) => new Date(`${iso}T00:00:00Z`).toLocaleDateString
           </p>
         </div>
       </dl>
-      <p v-if="report.measured" class="text-[0.6875rem] text-[var(--color-text-faint)]">Los totales son un cálculo de FEEDMA sumando las últimas mediciones guardadas; cada cifra individual es dato de la red.</p>
+      <p v-if="report.measured" class="text-[0.6875rem] text-[var(--color-text-faint)]">Los totales son un cálculo de CIBERAN sumando las últimas mediciones guardadas; cada cifra individual es dato de la red.</p>
 
       <ul class="flex flex-col gap-2.5">
         <li v-for="e in report.entries" :key="e.post.id" class="rounded-[var(--radius-sm)] border border-[var(--color-hairline)] p-3" data-report-entry :data-state="e.state">

@@ -54,9 +54,9 @@ describe('channelKpis', () => {
     })
   })
 
-  it('distingue lo que da YouTube de lo que calcula FEEDMA', () => {
-    expect(kpi(base, 'avgViews').source).toBe('feedma')
-    expect(kpi(base, 'avgViews').hint).toMatch(/cálculo de FEEDMA/)
+  it('distingue lo que da YouTube de lo que calcula CIBERAN', () => {
+    expect(kpi(base, 'avgViews').source).toBe('ciberan')
+    expect(kpi(base, 'avgViews').hint).toMatch(/cálculo de CIBERAN/)
     for (const key of ['subscribers', 'views', 'videos']) expect(kpi(base, key).source).toBe('youtube')
   })
 

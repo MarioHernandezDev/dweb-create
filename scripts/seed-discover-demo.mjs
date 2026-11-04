@@ -1,4 +1,4 @@
-// FEEDMA — seed de datos más ricos para probar "Descubrir" (filtros, IA y
+// CIBERAN — seed de datos más ricos para probar "Descubrir" (filtros, IA y
 // analíticas de admin) con algo más que 1 creador + 1 partner. Crea 9
 // creadores y 9 partners nuevos (más allá de los 2 de `seed-demo-users.mjs`,
 // que no toca), repartidos por varias categorías de `app/utils/categories.ts`

@@ -1,0 +1,21 @@
+/* ==========================================================================
+   CIBERAN · Utilidades propias
+   Lo que Tailwind no trae. Cada una hace una sola cosa.
+   ========================================================================== */
+
+@layer utilities {
+  /* Barras de desplazamiento finas para tableros y carruseles. */
+  .nx-scroll {
+    &::-webkit-scrollbar { height: 6px; width: 6px; }
+    &::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: var(--radius-pill); }
+    &::-webkit-scrollbar-track { background: transparent; }
+  }
+
+  /* Bloquea el desplazamiento de la página mientras hay una hoja abierta.
+     Lo pone Vue como clase en <html>, nunca escribiendo estilos desde JS. */
+  .is-scroll-locked { overflow: hidden; }
+
+  /* Wordmark de texto (login y portada) mientras esas pantallas no usen
+     <BrandMark>. Antes era un degradado sobre el texto; ahora, color liso. */
+  .nx-ciberan-shimmer { color: var(--text-on-inverse); }
+}

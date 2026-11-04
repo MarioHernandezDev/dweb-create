@@ -1,4 +1,4 @@
-# FEEDMA
+# CIBERAN
 
 **El marketplace + panel de gestión para creadores de contenido y los partners que los contratan.**
 
@@ -69,7 +69,7 @@ Somos 2 personas. Para no pisarnos y no perdernos, el proyecto se hace **en este
 
 - [x] Crear cuenta de Stripe en modo de pruebas (test mode), con Connect activado — pasos en [`docs/7-STRIPE-SETUP.md`](./docs/7-STRIPE-SETUP.md). Claves `STRIPE_SECRET_KEY`/`STRIPE_PUBLISHABLE_KEY` ya en `.env`.
 - [ ] **Suscripciones** (código hecho, falta verificar en vivo): el creador de contenido ya puede pulsar "Mejorar a Pro" en su perfil → Stripe Checkout → `server/api/stripe/webhook.post.ts` guarda la suscripción real. Falta: aplicar `supabase/migrations/20261020090000_stripe_connect_accounts.sql` (`npx supabase db push`), rellenar `STRIPE_WEBHOOK_SECRET` (`stripe listen`, ver guía) y probar el pago completo con una tarjeta de prueba.
-- [ ] **Stripe Connect, cobro de colaboraciones** (código hecho, falta verificar en vivo): un creador ya puede conectar su cuenta de Stripe desde su perfil (`server/api/stripe/connect/account-link.post.ts`), queda marcada como "verificada" vía webhook, y un partner ya puede pagar el presupuesto de una colaboración concreta desde `partner/profile.vue` (`server/api/stripe/pay-collaboration.post.ts`): Checkout de pago único con `application_fee_amount` (comisión de FEEDMA) y el resto va directo a la cuenta Connect del creador (`transfer_data.destination`). Falta probarlo en vivo con una tarjeta de prueba — mismo paso de `STRIPE_WEBHOOK_SECRET` de arriba.
+- [ ] **Stripe Connect, cobro de colaboraciones** (código hecho, falta verificar en vivo): un creador ya puede conectar su cuenta de Stripe desde su perfil (`server/api/stripe/connect/account-link.post.ts`), queda marcada como "verificada" vía webhook, y un partner ya puede pagar el presupuesto de una colaboración concreta desde `partner/profile.vue` (`server/api/stripe/pay-collaboration.post.ts`): Checkout de pago único con `application_fee_amount` (comisión de CIBERAN) y el resto va directo a la cuenta Connect del creador (`transfer_data.destination`). Falta probarlo en vivo con una tarjeta de prueba — mismo paso de `STRIPE_WEBHOOK_SECRET` de arriba.
 - [x] Webhooks de Stripe (`server/api/stripe/webhook.post.ts`, firma verificada) — falta el mismo paso de `STRIPE_WEBHOOK_SECRET` de arriba para probarlos en vivo.
 
 ### FASE 4 — Apagar los "mocks": funciones de verdad

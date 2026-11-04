@@ -1,8 +1,8 @@
-# FEEDMA — AUDITORÍA INTEGRAL, QA Y PRODUCCIÓN DE DEMOSTRACIÓN AUDIOVISUAL
+# CIBERAN — AUDITORÍA INTEGRAL, QA Y PRODUCCIÓN DE DEMOSTRACIÓN AUDIOVISUAL
 
 ## CONTEXTO
 
-FEEDMA es una plataforma marketplace de dos lados que conecta creadores de contenido con marcas y empresas interesadas en colaborar con ellos.
+CIBERAN es una plataforma marketplace de dos lados que conecta creadores de contenido con marcas y empresas interesadas en colaborar con ellos.
 
 La aplicación está desarrollada con:
 
@@ -25,7 +25,7 @@ La plataforma dispone de dos experiencias diferenciadas:
 - Chat.
 - Recepción y negociación de ofertas.
 - Gestión de colaboraciones.
-- FEEDMA Studio.
+- CIBERAN Studio.
 
 **PARTNER**
 - Dashboard.
@@ -37,7 +37,7 @@ La plataforma dispone de dos experiencias diferenciadas:
 - Gestión de colaboraciones.
 - Seguimiento de campañas.
 
-El objetivo es llevar FEEDMA a una fase de estabilización, validación y preparación para una futura presentación pública.
+El objetivo es llevar CIBERAN a una fase de estabilización, validación y preparación para una futura presentación pública.
 
 Este proyecto requiere una auditoría exhaustiva y la creación de una demostración audiovisual profesional de la aplicación.
 
@@ -208,7 +208,7 @@ Comprueba:
 16. Calendario.
 17. Métricas.
 18. Integraciones sociales.
-19. FEEDMA Studio.
+19. CIBERAN Studio.
 20. Solicitudes de revisión.
 21. Aprobaciones.
 22. Notificaciones.
@@ -268,7 +268,7 @@ Comprueba las páginas en diferentes resoluciones.
 
 No propongas rediseñar toda la aplicación por preferencias personales. Identifica problemas reales y oportunidades concretas.
 
-El objetivo es que FEEDMA transmita la sensación de un producto SaaS profesional y cohesionado.
+El objetivo es que CIBERAN transmita la sensación de un producto SaaS profesional y cohesionado.
 
 ### Entregable
 
@@ -421,7 +421,7 @@ Prepara un escenario narrativo:
 8. Negocian.
 9. AREZZ acepta.
 10. Se crea una colaboración.
-11. Se gestiona mediante FEEDMA Studio.
+11. Se gestiona mediante CIBERAN Studio.
 12. Se crea una publicación.
 13. Se envía a revisión.
 14. NOVA STUDIO solicita cambios.
@@ -448,7 +448,7 @@ IMPORTANTE:
 
 # FASE 8 — GUION AUDIOVISUAL
 
-Diseña una demostración profesional de FEEDMA.
+Diseña una demostración profesional de CIBERAN.
 
 No debe parecer un tutorial improvisado.
 
@@ -477,7 +477,7 @@ El recorrido debe incluir:
 7. Chat.
 8. Ofertas.
 9. Colaboraciones.
-10. FEEDMA Studio.
+10. CIBERAN Studio.
 11. Publicaciones.
 12. Revisiones.
 13. Calendario.
@@ -496,7 +496,7 @@ No muestres funcionalidades rotas como si funcionaran.
 - Música ambiental discreta.
 - Narración en español.
 - Subtítulos sincronizados.
-- Tipografía coherente con FEEDMA.
+- Tipografía coherente con CIBERAN.
 - Identidad visual de la aplicación.
 - Pantalla inicial y final.
 
@@ -564,7 +564,7 @@ Antes de dar el trabajo por terminado:
 
 Al terminar, crea:
 
-`docs/audit/FEEDMA_FINAL_AUDIT.md`
+`docs/audit/CIBERAN_FINAL_AUDIT.md`
 
 Debe ofrecer una visión ejecutiva de:
 
@@ -589,13 +589,13 @@ Incluye una puntuación orientativa por categorías, explicando los criterios ut
 
 Actúa con el máximo rigor.
 
-No queremos simplemente que FEEDMA compile.
+No queremos simplemente que CIBERAN compile.
 
-Queremos saber si FEEDMA funciona realmente, si es segura, si sus flujos tienen sentido y si está preparada para que otras personas la utilicen.
+Queremos saber si CIBERAN funciona realmente, si es segura, si sus flujos tienen sentido y si está preparada para que otras personas la utilicen.
 
 El vídeo debe ser una demostración fiel del producto real, no una presentación ficticia.
 
-La prioridad es obtener una visión completa, honesta y verificable del estado de FEEDMA.
+La prioridad es obtener una visión completa, honesta y verificable del estado de CIBERAN.
 
 Empieza exclusivamente por la FASE 0.
 

@@ -68,7 +68,7 @@ const eyebrow = 'text-[0.6875rem] font-semibold uppercase tracking-wide text-[va
     </NuxtLink>
 
     <div v-if="isOwnProfile" class="flex flex-wrap items-center justify-between gap-3 rounded-[var(--radius-md)] border border-[var(--color-hairline-strong)] bg-[var(--color-ink-overlay)] px-4 py-3" data-own-banner>
-      <p class="text-[0.8125rem] text-[var(--color-text-muted)]">Así ven tu perfil el resto de usuarios de FEEDMA.</p>
+      <p class="text-[0.8125rem] text-[var(--color-text-muted)]">Así ven tu perfil el resto de usuarios de CIBERAN.</p>
       <NuxtLink :to="editHref" class="inline-flex items-center gap-1.5 min-h-11 text-[0.8125rem] font-medium text-[var(--color-primary-500)] hover:text-[var(--color-primary-600)]">
         <Icon name="ph:pencil-simple-bold" class="size-3.5" /> Editar mi ficha
       </NuxtLink>
@@ -184,7 +184,7 @@ const eyebrow = 'text-[0.6875rem] font-semibold uppercase tracking-wide text-[va
             <div class="flex items-start gap-3" data-fact-row="member">
               <span class="shrink-0 size-9 rounded-full bg-[var(--color-ink-overlay)] flex items-center justify-center"><Icon name="ph:calendar-check-fill" class="size-4 text-[var(--color-text-muted)]" /></span>
               <div>
-                <dt class="text-[0.75rem] text-[var(--color-text-faint)]">En FEEDMA</dt>
+                <dt class="text-[0.75rem] text-[var(--color-text-faint)]">En CIBERAN</dt>
                 <dd class="text-[1rem] font-medium text-[var(--color-text)]">Desde {{ memberSince }}</dd>
               </div>
             </div>
@@ -198,7 +198,7 @@ const eyebrow = 'text-[0.6875rem] font-semibold uppercase tracking-wide text-[va
               <RatingStars v-if="hasEnoughRatingsToShowAverage(ratingSummary.ratingCount)" :model-value="Math.round(ratingSummary.avgStars)" readonly size="sm" />
               <span class="text-[0.875rem] text-[var(--color-text)]">{{ formatRatingSummary(ratingSummary) }}</span>
             </div>
-            <p class="mt-2 text-[0.75rem] text-[var(--color-text-faint)]">Valoraciones de colaboraciones completadas en FEEDMA.</p>
+            <p class="mt-2 text-[0.75rem] text-[var(--color-text-faint)]">Valoraciones de colaboraciones completadas en CIBERAN.</p>
           </template>
           <p v-else class="text-[0.8125rem] text-[var(--color-text-muted)]" data-no-ratings>Todavía sin valoraciones: aún no tiene colaboraciones completadas valoradas.</p>
         </section>

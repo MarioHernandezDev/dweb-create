@@ -1,11 +1,11 @@
-FEEDMA --- Propuesta de mejora del flujo de colaboraciones
+CIBERAN --- Propuesta de mejora del flujo de colaboraciones
 Documento de análisis y planificación para Claude Code
 Alcance: experiencia de colaboración entre creadores y partners,
 desde la negociación hasta el cierre operativo.
 Modo de trabajo inicial: auditoría y propuesta. No implementar hasta
 recibir aprobación.
 1. Contexto y objetivo
-FEEDMA es un marketplace que conecta creadores de contenido con marcas y
+CIBERAN es un marketplace que conecta creadores de contenido con marcas y
 empresas (partners). El flujo actual permite descubrir perfiles,
 iniciar conversaciones, negociar ofertas y contraofertas, aceptar una
 propuesta, generar una colaboración y vincular publicaciones para
@@ -195,7 +195,7 @@ Comportamiento esperado
   apruebe uno de sus entregables.
 - Hay que contemplar cancelaciones, entregables retirados o cambios de
   alcance sin perder el historial.
-Integración con FEEDMA Studio
+Integración con CIBERAN Studio
 
 Aprovecha el sistema de publicaciones y el tablero existente. No crees
 un segundo gestor de tareas paralelo si el modelo actual puede ampliarse
@@ -304,7 +304,7 @@ UX
 - Mantén la navegación sencilla entre colaboración, publicación y
   chat.
 No copies un dashboard genérico. La interfaz debe responder a las
-necesidades específicas de FEEDMA.
+necesidades específicas de CIBERAN.
 4.5. Historial de actividad y trazabilidad
 Objetivo
 
@@ -492,7 +492,7 @@ No afirmes que algo está probado si no has ejecutado la prueba
 correspondiente. Distingue entre tests escritos, tests ejecutados y
 verificaciones manuales.
 6. Diseño y experiencia de usuario
-La evolución visual debe mantener la identidad de FEEDMA y aprovechar el
+La evolución visual debe mantener la identidad de CIBERAN y aprovechar el
 espacio disponible.
 
 Criterios:

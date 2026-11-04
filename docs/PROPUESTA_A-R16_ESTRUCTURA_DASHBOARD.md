@@ -106,7 +106,7 @@ Entrada escalonada de los bloques al cargar, contadores animados en las tarjetas
 - **Impresiones y CTR** de miniaturas: no figuran en la documentación consultada.
 - **Banner del canal**: sin confirmar que se pueda leer con el permiso actual. La cabecera funciona bien sin él; si se confirma, se añade.
 - **Histórico propio de acumulados** (suscriptores totales por día pasado): depende de la tabla de la migración M3. Hasta entonces la gráfica de suscriptores muestra el **neto** (ganados menos perdidos), que Google sí da por fecha.
-- **Vista del partner, informes de colaboración e IA**: otras tareas (A-R15, FEEDMA Studio).
+- **Vista del partner, informes de colaboración e IA**: otras tareas (A-R15, CIBERAN Studio).
 
 ## 9. Qué necesito de ti
 

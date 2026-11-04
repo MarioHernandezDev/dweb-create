@@ -61,7 +61,7 @@ const {
   load: loadPerformance, reload: reloadPerformance
 } = useYoutubeVideoPerformance(days)
 
-// Histórico propio de acumulados (snapshots diarios de FEEDMA).
+// Histórico propio de acumulados (snapshots diarios de CIBERAN).
 const { rows: historyRows, loading: historyLoading, loaded: historyLoaded, error: historyError, load: loadHistory } = useAccountSnapshots()
 
 // Detalle de un vídeo (hoja modal); se pide solo al abrirlo.

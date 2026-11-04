@@ -4,7 +4,7 @@
  *  - Una métrica ausente (`null`) NUNCA es 0: se muestra "—" con su motivo.
  *  - Solo se enseñan las métricas que existen en esa plataforma (YouTube no da
  *    compartidos, guardados ni alcance de un vídeo: no se llenan de "—").
- *  - La variación es un cálculo de FEEDMA entre las dos últimas mediciones de
+ *  - La variación es un cálculo de CIBERAN entre las dos últimas mediciones de
  *    días distintos; sin dos mediciones o con un dato ausente, no hay variación.
  */
 import { formatCompactNumber } from './mock-data'
@@ -101,4 +101,4 @@ export function metricsSummary(rows: MetricRow[], platform: string): MetricsSumm
   return { measuredOn: latest.measured_on!, previousOn: previous?.measured_on ?? null, items, engagement: latest.engagement_rate }
 }
 
-export const ENGAGEMENT_NOTE = 'Interacción = (me gusta + comentarios) ÷ visualizaciones. Es un cálculo de FEEDMA, no una cifra de la red.'
+export const ENGAGEMENT_NOTE = 'Interacción = (me gusta + comentarios) ÷ visualizaciones. Es un cálculo de CIBERAN, no una cifra de la red.'

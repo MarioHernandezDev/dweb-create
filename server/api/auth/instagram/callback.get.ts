@@ -115,7 +115,7 @@ export default defineEventHandler(async (event) => {
         ...successPatch()
       } as never, { onConflict: 'creator_id,platform' })
     // 23505 = la misma cuenta de Instagram ya está conectada a otro creador.
-    if (error?.code === '23505') return redirectWithError('Esa cuenta de Instagram ya está conectada a otro usuario de FEEDMA.')
+    if (error?.code === '23505') return redirectWithError('Esa cuenta de Instagram ya está conectada a otro usuario de CIBERAN.')
     if (error) throw error
 
     return sendRedirect(event, appRedirectUrl(config.appUrl, '/creator/metrics?instagram=connected'))

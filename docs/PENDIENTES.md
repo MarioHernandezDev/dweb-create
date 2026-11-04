@@ -1,4 +1,4 @@
-# Pendientes de FEEDMA
+# Pendientes de CIBERAN
 
 Informe de qué queda por hacer o por verificar, a fecha 2026-10-24 (commit `675acc8`, rama `main`). No es una lista de bugs conocidos — el plan de usabilidad original (`CONTEXT.md`, fases 0 a 5) está completo y documentado en `docs/CHANGELOG.md`. Esto es lo que queda *después* de eso, para retomar cuando haya tiempo.
 
@@ -8,9 +8,9 @@ Cada punto dice qué falta y por qué importa, no solo "hacer X". Antes de tocar
 
 ## 1. Dinero — nada de esto se ha probado nunca con un pago real
 
-- **Ningún pago de Stripe se ha probado de principio a fin**, ni siquiera en modo test. Hay dos flujos: la suscripción de FEEDMA Pro (`create-checkout-session`) y el pago de una colaboración vía Stripe Connect (`pay-collaboration`). Las claves de `.env` ya están en modo test (`sk_test_...`), así que probarlo no mueve dinero real.
+- **Ningún pago de Stripe se ha probado de principio a fin**, ni siquiera en modo test. Hay dos flujos: la suscripción de CIBERAN Pro (`create-checkout-session`) y el pago de una colaboración vía Stripe Connect (`pay-collaboration`). Las claves de `.env` ya están en modo test (`sk_test_...`), así que probarlo no mueve dinero real.
   - Para probarlo hace falta instalar Stripe CLI (`stripe listen --forward-to localhost:3000/api/stripe/webhook`, sin él los webhooks no llegan a local) y completar el onboarding de Stripe Connect de una cuenta de creador (ahora mismo ninguna cuenta demo lo tiene hecho — es un flujo propio de Stripe, con datos de empresa de prueba).
-- **No hay portal de gestión de suscripción.** Un creador con FEEDMA Pro no tiene ninguna forma de cancelarla o cambiar el método de pago desde la app (`useMyBilling.ts` solo tiene `subscribe()` y `connectPayouts()`, nada de `createPortalSession`). Tendría que escribir directamente para que alguien lo gestione a mano.
+- **No hay portal de gestión de suscripción.** Un creador con CIBERAN Pro no tiene ninguna forma de cancelarla o cambiar el método de pago desde la app (`useMyBilling.ts` solo tiene `subscribe()` y `connectPayouts()`, nada de `createPortalSession`). Tendría que escribir directamente para que alguien lo gestione a mano.
 
 ## 2. El producto mide menos de lo que promete
 

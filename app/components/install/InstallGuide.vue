@@ -6,7 +6,7 @@ const platforms: { value: string; label: string; steps: Step[] }[] = [
     value: 'ios',
     label: 'iPhone',
     steps: [
-      { icon: 'ph:compass-bold', text: 'Abre feedma.app en Safari.' },
+      { icon: 'ph:compass-bold', text: 'Abre ciberan.app en Safari.' },
       { icon: 'ph:export-bold', text: 'Toca el icono de Compartir, en la barra inferior.' },
       { icon: 'ph:plus-square-bold', text: 'Elige "Añadir a pantalla de inicio" y confirma.' }
     ]
@@ -15,7 +15,7 @@ const platforms: { value: string; label: string; steps: Step[] }[] = [
     value: 'android',
     label: 'Android',
     steps: [
-      { icon: 'ph:compass-bold', text: 'Abre feedma.app en Chrome.' },
+      { icon: 'ph:compass-bold', text: 'Abre ciberan.app en Chrome.' },
       { icon: 'ph:dots-three-vertical-bold', text: 'Toca el menú de los tres puntos, arriba a la derecha.' },
       { icon: 'ph:download-simple-bold', text: 'Elige "Instalar aplicación" y confirma.' }
     ]
@@ -24,9 +24,9 @@ const platforms: { value: string; label: string; steps: Step[] }[] = [
     value: 'desktop',
     label: 'Escritorio',
     steps: [
-      { icon: 'ph:compass-bold', text: 'Abre feedma.app en Chrome o Edge.' },
+      { icon: 'ph:compass-bold', text: 'Abre ciberan.app en Chrome o Edge.' },
       { icon: 'ph:monitor-arrow-up-bold', text: 'Pulsa el icono de instalar en la barra de direcciones.' },
-      { icon: 'ph:check-circle-bold', text: 'Confirma — FEEDMA se abre en su propia ventana.' }
+      { icon: 'ph:check-circle-bold', text: 'Confirma — CIBERAN se abre en su propia ventana.' }
     ]
   }
 ]
@@ -41,7 +41,7 @@ const current = computed(() => platforms.find((p) => p.value === active.value)!)
       <div>
         <p class="text-[0.8125rem] font-medium text-[var(--color-primary-500)] mb-2">Llévatela al móvil</p>
         <h3 class="font-display font-light text-[clamp(1.5rem,3.2vw,2.25rem)] text-[var(--color-text)] max-w-[30ch] mb-3">
-          Instala FEEDMA como una app, sin pasar por ninguna tienda.
+          Instala CIBERAN como una app, sin pasar por ninguna tienda.
         </h3>
         <p class="text-[0.9375rem] text-[var(--color-text-muted)] leading-relaxed max-w-[48ch] mb-8">
           Es una web que se instala: ocupa poco, abre en su propia ventana y el icono queda en tu pantalla de inicio.
@@ -79,12 +79,12 @@ const current = computed(() => platforms.find((p) => p.value === active.value)!)
             <div class="w-16 h-3.5 rounded-full bg-[var(--color-primary-900)]" />
           </div>
           <NuxtImg
-            src="/img/panel-preview.png" alt="El panel de FEEDMA abierto como app en un móvil" width="390" height="780"
+            src="/img/panel-preview.png" alt="El panel de CIBERAN abierto como app en un móvil" width="390" height="780"
             fit="cover" class="absolute inset-0 size-full object-cover object-top"
           />
           <div class="absolute bottom-4 inset-x-4 flex items-center gap-2 bg-[var(--color-ink-raised)] rounded-[var(--radius-xs)] px-3 py-2 shadow-[var(--shadow-float)]">
             <Icon name="ph:check-circle-fill" class="size-4 text-[var(--color-status-published)] shrink-0" />
-            <span class="text-[0.6875rem] text-[var(--color-text)]">FEEDMA añadida a inicio</span>
+            <span class="text-[0.6875rem] text-[var(--color-text)]">CIBERAN añadida a inicio</span>
           </div>
         </div>
       </div>

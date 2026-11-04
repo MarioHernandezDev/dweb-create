@@ -1,4 +1,4 @@
-# FEEDMA — Validación de hallazgos críticos
+# CIBERAN — Validación de hallazgos críticos
 
 | | |
 |---|---|
@@ -19,7 +19,7 @@
 >
 > - **H0-03, verificado contra la base real para `anon`.** Repitiendo la sonda sin escritura, las **18 funciones revocadas dan `42501`**, y `current_creator_id`/`current_partner_id` siguen accesibles (las necesitan las políticas RLS).
 > - **H0-02.** La columna `credit_ledger.stripe_invoice_id` existe en la base real. Como va en la misma transacción que el CHECK nuevo, la migración se aplicó entera.
-> - **N-05.** Las 3 suscripciones de Stripe test del 20/10 están **canceladas** (autorizado por Alex; `livemode=false`; no tenían fila en FEEDMA). En Stripe test ya solo quedan `canceled: 3`.
+> - **N-05.** Las 3 suscripciones de Stripe test del 20/10 están **canceladas** (autorizado por Alex; `livemode=false`; no tenían fila en CIBERAN). En Stripe test ya solo quedan `canceled: 3`.
 > - ~~Pendiente de comprobar contra la base real: la parte `authenticated` de H0-03 y H0-08.~~ **Hecho con la auditoría de catálogo** (ver la segunda actualización).
 >
 > **Segunda actualización (2026-11-03, auditoría de catálogo por el Session pooler, transacción `READ ONLY`).** Ya funciona la conexión (N-03 resuelto: cadena del pooler en `.env`). Resultados:
@@ -55,7 +55,7 @@
 ## 1. Resumen ejecutivo
 
 - **H0-01, confirmado y corregido.** El typecheck no revisaba nada desde siempre. El real encontró 30 errores: 29 de solo tipos (corregidos) y 1 fallo real, que es H0-02. Ahora la CI falla si hay un error de tipos.
-- **H0-02, confirmado; corregido en código y con migración preparada.** FEEDMA Pro nunca habría concedido créditos. Al revisarlo salieron tres fallos más del webhook: respondía 200 aunque fallara la base, no era idempotente y la tabla rechaza 3 de los 8 estados de Stripe. Nunca ha causado daño en datos porque el circuito no se ha ejecutado nunca: no hay webhook registrado.
+- **H0-02, confirmado; corregido en código y con migración preparada.** CIBERAN Pro nunca habría concedido créditos. Al revisarlo salieron tres fallos más del webhook: respondía 200 aunque fallara la base, no era idempotente y la tabla rechaza 3 de los 8 estados de Stripe. Nunca ha causado daño en datos porque el circuito no se ha ejecutado nunca: no hay webhook registrado.
 - **H0-03, confirmado con permisos efectivos; migración preparada.** Cualquiera con la clave pública del navegador, **sin cuenta**, puede ejecutar `notify()`: crear avisos para cualquier usuario con texto y enlace libres. También puede crear conversaciones entre terceros. Es el hallazgo de seguridad más grave de los cuatro.
 - **H0-08, confirmado; migración preparada.** Impacto bajo (solo afecta a la propia cuenta), pero el permiso ya no tiene uso.
 - **Nuevo, confirmado y corregido.** El límite de uso de Descubrir y de la predicción era **un único cupo para todos los usuarios** (`user.id` no existe en los claims del JWT).
@@ -122,8 +122,8 @@
    - Script `typecheck` (`vue-tsc -b --noEmit`) en `package.json`.
    - La CI usa `npm run typecheck`, con un comentario que explica el porqué del `-b`.
    - Los 29 errores de solo tipos se han corregido con el cambio mínimo y equivalente en ejecución (guardas, anotaciones, `Readonly<Ref<number>>`).
-   - El comando se ha actualizado en `PIPELINE_IMPLEMENTACION_FEEDMA_ALEX.md` y `docs/TRABAJO_ALEX.md`.
-   - `docs/TRABAJO_MARIO.md`, `CONTEXTO_PROYECTO_FEEDMA.md` y `DESIGN.md` **siguen citando el comando antiguo**; los dos primeros son de Mario o históricos y no los he tocado.
+   - El comando se ha actualizado en `PIPELINE_IMPLEMENTACION_CIBERAN_ALEX.md` y `docs/TRABAJO_ALEX.md`.
+   - `docs/TRABAJO_MARIO.md`, `CONTEXTO_PROYECTO_CIBERAN.md` y `DESIGN.md` **siguen citando el comando antiguo**; los dos primeros son de Mario o históricos y no los he tocado.
 6. **Pruebas.**
    - `npm run typecheck` → limpio, exit 0. La prueba del error a propósito está descrita arriba.
    - `npm test -- --run` → 36 archivos, **609 tests OK**.
@@ -164,7 +164,7 @@
 7. **Dependencias externas.**
    - Stripe CLI (no instalada) y autorización para aplicar la migración.
    - Coordinar con Mario, porque Stripe es su zona (`TRABAJO_MARIO` M-D1).
-   - Decidir qué hacer con las **3 suscripciones de test activas del 20/10**: siguen renovándose en modo test sin contrapartida en FEEDMA. Recomiendo cancelarlas en el dashboard de test; no lo he hecho.
+   - Decidir qué hacer con las **3 suscripciones de test activas del 20/10**: siguen renovándose en modo test sin contrapartida en CIBERAN. Recomiendo cancelarlas en el dashboard de test; no lo he hecho.
 
 #### 4.2.6 Plan de prueba completa en Stripe Test Mode
 
@@ -334,7 +334,7 @@ Recomendación: **A ya**, para la CI de migraciones; **B** para la Fase 3 (QA fu
 - **N-02 (BAJO).** `creators_insert_own` y `partners_insert_own` no comprueban `profiles.role`: un partner puede crearse una ficha de creador (aparecería en Descubrir como creador). Solución: añadir `and exists (select 1 from profiles where id = auth.uid() and role = 'creator')`. Necesita una migración.
 - **N-03 (bloqueo).** El host directo de Postgres solo tiene IPv6 y este equipo no tiene salida IPv6 (`ENETUNREACH`). `scripts/apply-pending-migrations.mjs` tampoco funcionaría aquí, además de que le falta el paquete `pg`. Para la auditoría del catálogo hace falta la cadena del *Session pooler* de Supabase en `.env`. El script `db-readonly-audit.mjs` está listo y solo lee: funciones, cuerpos frente a migraciones, políticas, grants, triggers, FKs con `set null` sobre `NOT NULL` y estado de las migraciones.
 - **N-04 (informativo).** `/creator/metrics?instagram=error&reason=<texto>` muestra el texto de la URL como aviso. Vue lo escapa (no hay XSS), pero permite enlaces con mensajes falsos. Es de bajo riesgo.
-- **N-05 (informativo, resuelto).** Había 3 suscripciones de Stripe test activas desde el 20/10 sin contrapartida en FEEDMA (§4.2). **Canceladas el 2026-11-03** con autorización de Alex.
+- **N-05 (informativo, resuelto).** Había 3 suscripciones de Stripe test activas desde el 20/10 sin contrapartida en CIBERAN (§4.2). **Canceladas el 2026-11-03** con autorización de Alex.
 
 ---
 

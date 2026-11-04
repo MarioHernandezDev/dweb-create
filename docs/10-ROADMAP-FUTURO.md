@@ -2,7 +2,7 @@
 
 Conversación de planificación del 2026-10-21 entre el usuario (Mario) y Claude, sin código de por medio — solo para dejar claro el rumbo antes de seguir. Si retomas esto "en frío", empieza por aquí antes que por el `CHANGELOG.md` (ese es el detalle técnico de lo ya hecho; este documento es hacia dónde vamos).
 
-## 0. Qué es FEEDMA, de verdad
+## 0. Qué es CIBERAN, de verdad
 
 Un proyecto de dos amigos desarrolladores, construido con Claude Code, por diversión y aprendizaje — **no** el negocio de sus vidas, pero sí con la esperanza de que genere algo de dinero de forma casi pasiva si cuaja.
 

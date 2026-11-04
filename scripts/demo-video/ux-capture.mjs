@@ -8,7 +8,7 @@ const password = readFileSync(`${demoAppDir}/.env`, 'utf8').match(/^DEMO_PASSWOR
 const BASE = 'http://localhost:3300'
 const AXE = 'https://cdnjs.cloudflare.com/ajax/libs/axe-core/4.10.2/axe.min.js'
 mkdirSync(outDir, { recursive: true })
-const SIZES = { movil: { width: 390, height: 844, dsf: 2 }, tableta: { width: 768, height: 1024, dsf: 2 }, escritorio: { width: 1440, height: 900, dsf: 1 } }
+const SIZES = { movil: { width: 390, height: 844, dsf: 2 }, tableta: { width: 768, height: 1024, dsf: 2 }, portatil: { width: 1024, height: 768, dsf: 1 }, escritorio: { width: 1440, height: 900, dsf: 1 } }
 const PAGES = {
   publico: ['/', '/login', '/onboarding'],
   creador: ['/creator', '/creator/timeline', '/creator/metrics', '/creator/profile', '/creator/requests', '/chat', '/inbox'],
@@ -23,12 +23,12 @@ for (const [sizeName, s] of Object.entries(SIZES)) {
     const ctx = await browser.newContext({ viewport: { width: s.width, height: s.height }, deviceScaleFactor: s.dsf, locale: 'es-ES', timezoneId: 'Europe/Madrid', isMobile: sizeName === 'movil', hasTouch: sizeName === 'movil' })
     await ctx.addInitScript(() => {
       const get = Storage.prototype.getItem
-      Storage.prototype.getItem = function (k) { return String(k).startsWith('feedma:tour:v1:') ? '2026-01-01T00:00:00.000Z' : get.call(this, k) }
+      Storage.prototype.getItem = function (k) { return String(k).startsWith('ciberan:tour:v1:') ? '2026-01-01T00:00:00.000Z' : get.call(this, k) }
     })
     const page = await ctx.newPage()
     if (who !== 'publico') {
       await page.goto(`${BASE}/login`, { waitUntil: 'networkidle' })
-      await page.fill('input[type=email]', who === 'creador' ? 'arezz@demo.feedma.test' : 'nova@demo.feedma.test')
+      await page.fill('input[type=email]', who === 'creador' ? 'arezz@demo.ciberan.test' : 'nova@demo.ciberan.test')
       await page.fill('input[type=password]', password)
       await page.locator('button[type=submit]').first().click()
       await page.waitForURL((u) => !u.pathname.startsWith('/login'), { timeout: 20000 })

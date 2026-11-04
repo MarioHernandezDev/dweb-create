@@ -144,7 +144,7 @@ const chatPrivacyOptions: { value: ChatPrivacy; label: string; description: stri
 
 const planLabel = computed(() => {
   if (!subscription.value) return 'Plan gratuito'
-  const name = subscription.value.planId === 'pro' ? 'FEEDMA Pro' : subscription.value.planId
+  const name = subscription.value.planId === 'pro' ? 'CIBERAN Pro' : subscription.value.planId
   return subscription.value.status === 'active' || subscription.value.status === 'trialing' ? name : `${name} (${subscription.value.status})`
 })
 
@@ -388,7 +388,7 @@ const cardTitle = 'text-[0.6875rem] font-semibold uppercase tracking-wide text-[
                 </div>
                 <!-- Ver grant_welcome_credits() y stripe-plans.ts (plan "pro") para las cifras reales. -->
                 <p class="mt-1 text-[0.75rem] text-[var(--color-text-faint)]">
-                  Cada predicción gasta 1 crédito. Recibiste 3 gratis al crear tu cuenta; con FEEDMA Pro (19,99 €/mes) se renuevan 20 más cada mes.
+                  Cada predicción gasta 1 crédito. Recibiste 3 gratis al crear tu cuenta; con CIBERAN Pro (19,99 €/mes) se renuevan 20 más cada mes.
                 </p>
               </div>
               <p class="mt-4 text-[0.8125rem] text-[var(--color-text-muted)]" data-activity-packages>

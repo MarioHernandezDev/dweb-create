@@ -5,7 +5,7 @@ import { formatCompactNumber } from './mock-data'
  * Vue para probar las reglas de "no confundir ausencia con cero":
  *  - Suscriptores ocultos por el canal -> sin valor y con motivo, no 0.
  *  - Media de vistas por vídeo sin vídeos -> sin valor y con motivo, no 0.
- *  - Cada cifra dice de dónde sale: dato de YouTube o cálculo de FEEDMA.
+ *  - Cada cifra dice de dónde sale: dato de YouTube o cálculo de CIBERAN.
  */
 export interface ChannelStatsInput {
   subscriberCount: number | null
@@ -27,8 +27,8 @@ export interface Kpi {
   hero: boolean
   icon: string
   hint: string
-  /** `youtube` = dato que da YouTube; `feedma` = cálculo nuestro, no una cifra oficial. */
-  source: 'youtube' | 'feedma'
+  /** `youtube` = dato que da YouTube; `ciberan` = cálculo nuestro, no una cifra oficial. */
+  source: 'youtube' | 'ciberan'
   /** Valor numérico y su formato, para el contador animado. El texto final es SIEMPRE `value`; sin esto no se anima. */
   count?: { to: number; format: (n: number) => string }
 }
@@ -81,8 +81,8 @@ export function channelKpis(stats: ChannelStatsInput): Kpi[] {
       reason: noVideos ? 'Aún no hay vídeos publicados' : null,
       hero: false,
       icon: 'ph:chart-bar-fill',
-      hint: 'Visualizaciones totales entre vídeos publicados. Es un cálculo de FEEDMA, no una cifra de YouTube.',
-      source: 'feedma'
+      hint: 'Visualizaciones totales entre vídeos publicados. Es un cálculo de CIBERAN, no una cifra de YouTube.',
+      source: 'ciberan'
     }
   ]
 

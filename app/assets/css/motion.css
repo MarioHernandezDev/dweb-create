@@ -1,0 +1,96 @@
+/* ==========================================================================
+   CIBERAN · Movimiento
+   Transiciones de Vue y animaciones de entrada. Solo transform y opacity, y
+   siempre terminan en el estado final: ningún dato depende de una animación.
+   Duraciones y curvas: tokens --dur-* y --ease-* (tokens.css).
+   ========================================================================== */
+
+@layer components {
+  /* ---- Cambio de página: fundido y leve desplazamiento ------------------ */
+  .page-enter-active,
+  .page-leave-active {
+    transition: opacity var(--dur) var(--ease-out), transform var(--dur) var(--ease-out);
+  }
+  .page-enter-from { opacity: 0; transform: translateY(8px); }
+  .page-leave-to { opacity: 0; transform: translateY(-4px); }
+  /* La saliente sale del flujo para que la entrante no salte. */
+  .page-leave-active { position: absolute; inset: 0; width: 100%; }
+
+  /* ---- Mazo de destacados (FeaturedDeck.vue) ----------------------------
+     Avanzar: entra por la derecha y sale por la izquierda. Retroceder
+     (`nx-deck-back`): al revés, para que el movimiento siga al botón. */
+  .nx-deck-move,
+  .nx-deck-back-move { transition: transform 0.45s var(--ease-out); }
+  .nx-deck-enter-active,
+  .nx-deck-back-enter-active { transition: opacity 0.4s var(--ease-out), transform 0.4s var(--ease-out); }
+  .nx-deck-leave-active,
+  .nx-deck-back-leave-active {
+    position: absolute;
+    transition: opacity var(--dur-slow) var(--ease-out), transform var(--dur-slow) var(--ease-out);
+  }
+  .nx-deck-enter-from,
+  .nx-deck-back-leave-to { opacity: 0; transform: translateX(48px) scale(0.96); }
+  .nx-deck-leave-to,
+  .nx-deck-back-enter-from { opacity: 0; transform: translateX(-48px) scale(0.96); }
+
+  /* ---- Contenido que cambia dentro de una hoja o panel ------------------ */
+  .nx-fade-slide-enter-active,
+  .nx-fade-slide-leave-active { transition: opacity var(--dur) var(--ease-out), transform var(--dur) var(--ease-out); }
+  .nx-fade-slide-enter-from { opacity: 0; transform: translateY(6px); }
+  .nx-fade-slide-leave-to { opacity: 0; transform: translateY(-6px); }
+  .nx-fade-slide-leave-active { position: absolute; inset: 0; }
+
+  /* ---- Perfiles: cambio de pestaña y barra de guardado ------------------ */
+  .profile-tab-enter-active { transition: opacity 180ms var(--ease-out), transform 180ms var(--ease-out); }
+  .profile-tab-enter-from { opacity: 0; transform: translateY(6px); }
+  .profile-savebar-enter-active,
+  .profile-savebar-leave-active { transition: opacity var(--dur) var(--ease-out), transform var(--dur) var(--ease-out); }
+  .profile-savebar-enter-from,
+  .profile-savebar-leave-to { opacity: 0; transform: translateY(10px); }
+
+  /* ---- Entrada escalonada de listas y bloques ----------------------------
+     `--stagger-i` / `--i` los pone la plantilla (índice del elemento). */
+  .nx-stagger-in {
+    animation: rise-in 0.42s var(--ease-out) backwards;
+    animation-delay: calc(var(--stagger-i, 0) * 45ms);
+  }
+  .yt-reveal {
+    animation: rise-in 0.42s var(--ease-out) backwards;
+    animation-delay: calc(min(var(--i, 0), 5) * 60ms);
+  }
+
+  /* ---- Gráficas: la línea se dibuja y el área aparece ------------------- */
+  .yt-draw {
+    stroke-dasharray: 1;
+    animation: draw-line 0.9s var(--ease-out) backwards;
+  }
+  .yt-fade { animation: fade-in 0.9s var(--ease-out) backwards; }
+
+  /* ---- Fondo de la portada: deriva muy lenta ---------------------------- */
+  .nx-hero-blob { animation: drift 16s var(--ease-in-out) infinite; }
+}
+
+@keyframes rise-in {
+  from { opacity: 0; transform: translateY(10px); }
+}
+@keyframes fade-in {
+  from { opacity: 0; }
+}
+@keyframes draw-line {
+  from { stroke-dashoffset: 1; }
+}
+@keyframes drift {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(-4%, 3%) scale(1.08); }
+}
+
+/* ---- Preferencia de movimiento reducido --------------------------------
+   Todo se reduce a un cambio instantáneo; el estado final no cambia. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+    scroll-behavior: auto !important;
+  }
+}

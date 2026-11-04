@@ -18,7 +18,7 @@
 | 8 | Oferta sobre un paquete (elegir paquete, precio distinto al de catálogo, mensaje) | ✅ | `create_offer` |
 | 9 | Rechazar una oferta (con confirmación) | ✅ | `respond_offer(false)` |
 | 10 | Aceptar una oferta → colaboración creada sola | ✅ | Aparece en «En curso» con el precio acordado (1.050 €) |
-| 11 | FEEDMA Studio: tablero por fases, nueva publicación vinculada a la colaboración | ✅ | Título, texto, colaboración, formato, red, fecha y hashtags |
+| 11 | CIBERAN Studio: tablero por fases, nueva publicación vinculada a la colaboración | ✅ | Título, texto, colaboración, formato, red, fecha y hashtags |
 | 12 | Predicción de éxito | ✅ con observación | Sin IA calcula una heurística y lo dice; consume 1 crédito (F-06) |
 | 13 | Subir foto, avanzar fases, enviar a revisión | ✅ | |
 | 14 | Marca: «Por revisar» → pedir cambios (comentario obligatorio) | ✅ | `request_post_changes` |

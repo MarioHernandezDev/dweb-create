@@ -1,11 +1,11 @@
-# FEEDMA — Informe maestro de la auditoría
+# CIBERAN — Informe maestro de la auditoría
 
 > Fecha: 2026-11-03 · Alcance: fases 0 a 10 de `auditoria-completa.md`.
 > Documentos: [00 Mapa](00_PROJECT_MAP.md) · [01 Técnica](01_TECHNICAL_AUDIT.md) · [02 Seguridad](02_SECURITY_AUDIT.md) · [03 QA funcional](03_FUNCTIONAL_QA.md) · [04 UX](04_UX_AUDIT.md) · [05 Pendientes](05_PENDING_WORK.md) · [06 Plan de correcciones](06_REMEDIATION_ROADMAP.md) · [07 Validación de críticos](07_CRITICAL_FINDINGS_VALIDATION.md) · [Plan de datos de demo](../demo/DEMO_DATA_PLAN.md) · [Storyboard](../demo/STORYBOARD.md) · [Informe del vídeo](../demo/FINAL_DEMO_REPORT.md)
 
 ## 1. Estado general
 
-**FEEDMA funciona de verdad de punta a punta.** El recorrido completo, de «una marca encuentra a un creador» a «colaboración completada y valorada», se ha ejecutado en un ensayo y cuatro tomas de grabación en un entorno aislado. Pasa por 17 pasos y unas diez funciones de la base, sin un solo error de página en la toma final. Lo que se ve en el vídeo es la app real, sin montajes.
+**CIBERAN funciona de verdad de punta a punta.** El recorrido completo, de «una marca encuentra a un creador» a «colaboración completada y valorada», se ha ejecutado en un ensayo y cuatro tomas de grabación en un entorno aislado. Pasa por 17 pasos y unas diez funciones de la base, sin un solo error de página en la toma final. Lo que se ve en el vídeo es la app real, sin montajes.
 
 La auditoría encontró **un fallo crítico y cuatro altos de seguridad e integridad**. Los cinco están **corregidos y verificados en la base compartida**:
 - Las altas nuevas quedaban sin ficha.

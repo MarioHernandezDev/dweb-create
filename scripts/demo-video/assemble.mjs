@@ -61,7 +61,7 @@ for (let k = 1; k < encoded.length; k++) {
   filter += `${prev}[${k}:v]xfade=transition=fade:duration=${XF}:offset=${offset.toFixed(3)}${outLabel};`
   prev = outLabel; acc = offset + encoded[k].dur
 }
-const finalFile = `${destDir}/FEEDMA_demo_guiada.mp4`
+const finalFile = `${destDir}/CIBERAN_demo_guiada.mp4`
 run([...inputs, '-filter_complex', filter.replace(/;$/, ''), '-map', '[vout]', '-c:v', 'libx264', '-preset', 'slow', '-crf', '20', '-pix_fmt', 'yuv420p', '-r', '30', '-movflags', '+faststart', finalFile])
 
 // Subtítulos: cada rótulo, desplazado al inicio de su clip en el vídeo final.
@@ -75,7 +75,7 @@ encoded.forEach((c, k) => {
 })
 cues.sort((x, y) => x.a - y.a)
 for (let i = 0; i + 1 < cues.length; i++) if (cues[i].b > cues[i + 1].a - 0.05) cues[i].b = cues[i + 1].a - 0.05
-writeFileSync(`${destDir}/FEEDMA_demo_guiada.srt`, cues.map((q, i) => `${i + 1}\n${ts(q.a)} --> ${ts(q.b)}\n${q.text}\n`).join('\n'))
+writeFileSync(`${destDir}/CIBERAN_demo_guiada.srt`, cues.map((q, i) => `${i + 1}\n${ts(q.a)} --> ${ts(q.b)}\n${q.text}\n`).join('\n'))
 writeFileSync(`${destDir}/montaje.json`, JSON.stringify(encoded.map((c, k) => ({ escena: c.name, inicio: Number(starts[k].toFixed(2)), duracion: Number(c.dur.toFixed(2)), rotulos: c.captions.map((x) => x.text) })), null, 1))
 console.log(`Vídeo: ${finalFile} (${acc.toFixed(1)} s) · ${cues.length} subtítulos · ${encoded.length} clips`)
 if (!existsSync(finalFile)) process.exit(1)

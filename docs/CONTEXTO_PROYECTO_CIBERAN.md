@@ -1,4 +1,4 @@
-# Contexto completo del proyecto FEEDMA
+# Contexto completo del proyecto CIBERAN
 
 > Documento de análisis puro — no se ha modificado ningún archivo de código al generarlo. Fecha del análisis: 2026-10-23. Rama activa en el momento del análisis: `fase0-usabilidad-prep` (árbol de trabajo limpio, sin cambios sin commitear). Commit más reciente: `e519195`.
 >
@@ -8,17 +8,17 @@
 
 ## 1. Resumen general del proyecto
 
-### 1.1 Qué es FEEDMA y qué problema resuelve
+### 1.1 Qué es CIBERAN y qué problema resuelve
 
-FEEDMA es un **marketplace de dos roles** entre **creadores de contenido** y **partners** (marcas/empresas que los contratan). Un partner contrata directamente a un creador para una colaboración de contenido (reels, posts, stories…); FEEDMA es el intermediario que:
+CIBERAN es un **marketplace de dos roles** entre **creadores de contenido** y **partners** (marcas/empresas que los contratan). Un partner contrata directamente a un creador para una colaboración de contenido (reels, posts, stories…); CIBERAN es el intermediario que:
 
 - Pone en contacto a las dos partes (Descubrir, con filtros estructurados o búsqueda en lenguaje natural con IA).
 - Gestiona la negociación (ofertas/contraofertas por chat) y la aceptación formal de una colaboración.
 - Da seguimiento a las entregas (tablero tipo Kanban, calendario, checklist, revisiones).
 - Cobra el pago del partner al creador a través de la plataforma, quedándose una comisión (Stripe Connect).
-- Ofrece un plan de pago (FEEDMA Pro) al creador con créditos de predicción de éxito de contenido vía IA.
+- Ofrece un plan de pago (CIBERAN Pro) al creador con créditos de predicción de éxito de contenido vía IA.
 
-No es una red social: nada de lo que se "publica" en FEEDMA sale a Instagram/TikTok por sí mismo — es una herramienta de gestión del trabajo y el cobro entre las dos partes. Ver también la explicación dada al usuario durante esta sesión sobre "para qué sirve una publicación como creador" (es el entregable de una colaboración, no un post social).
+No es una red social: nada de lo que se "publica" en CIBERAN sale a Instagram/TikTok por sí mismo — es una herramienta de gestión del trabajo y el cobro entre las dos partes. Ver también la explicación dada al usuario durante esta sesión sobre "para qué sirve una publicación como creador" (es el entregable de una colaboración, no un post social).
 
 ### 1.2 Tecnologías, arquitectura y servicios externos
 
@@ -28,9 +28,9 @@ No es una red social: nada de lo que se "publica" en FEEDMA sale a Instagram/Tik
 | Estilos | **Tailwind CSS v4** (`@tailwindcss/vite`) | CSS-first (`@theme` en `app/assets/css/main.css`), sin `tailwind.config.js` tradicional. |
 | Estado | `useState` de Nuxt (no Pinia, aunque `@pinia/nuxt` está instalado) | Cada composable `useXxx()` gestiona su propio `useState` con clave única; `resetAccountCaches()` centraliza el vaciado al cambiar de cuenta. |
 | Backend | **Supabase** (`@nuxtjs/supabase ^2.1.0`, `@supabase/supabase-js ^2.118.0`) | Postgres + Auth + Storage + RLS. Un único proyecto en la nube (ver §4.3 sobre el entorno de pruebas). |
-| Pagos | **Stripe** (`stripe ^23.0.0`) | Dos flujos distintos: suscripción (FEEDMA Pro) y pago marketplace vía Stripe Connect — ver §3.5. |
+| Pagos | **Stripe** (`stripe ^23.0.0`) | Dos flujos distintos: suscripción (CIBERAN Pro) y pago marketplace vía Stripe Connect — ver §3.5. |
 | IA | **OpenRouter** (modelo gratuito, configurable por `OPENROUTER_MODEL`, actualmente `nvidia/nemotron-3.5-lightning:free`) | Usado en `/api/discover/search` (ranking de "Buscar con IA") y `/api/ml/predict` (predicción de éxito de contenido). Llamado directo por HTTP desde el servidor, sin servicio Python/FastAPI independiente (a diferencia de lo que describe `docs/1-ARCHITECTURE.md`, que es un documento de planificación inicial, no el estado real — ver §1.4). |
-| Fuentes | `@nuxt/fonts` | Hanken Grotesk (texto), Sora (títulos, desde esta sesión), Snasm (solo el logotipo/wordmark "FEEDMA", fuente local en `app/assets/fonts`). |
+| Fuentes | `@nuxt/fonts` | Hanken Grotesk (texto), Sora (títulos, desde esta sesión), Snasm (solo el logotipo/wordmark "CIBERAN", fuente local en `app/assets/fonts`). |
 | Imágenes | `@nuxt/image` (proveedores unsplash, ipx, imgix) | |
 | Animación | GSAP + ScrollTrigger | Landing/instalaciones. |
 | Drag & drop | `vuedraggable` | Tablero Kanban (`PhaseBoard.vue`). |
@@ -108,7 +108,7 @@ Variables de entorno necesarias en `.env` (nombres, sin valores — ver §3.6 pa
 | Valorar mutuamente al partner tras completar | ✅ Verificado |
 | Solicitar revisiones a su propio contenido (recibir "cambios pedidos" con nota) | ✅ Verificado |
 | Bandeja de notificaciones (Importantes/Actividad, desde esta sesión) | ✅ Verificado el código y la consulta contra datos reales; aspecto visual no confirmado |
-| Suscripción FEEDMA Pro (créditos de predicción) | ⚠️ Implementado (checkout, webhook, créditos), **no probado con un cobro real** |
+| Suscripción CIBERAN Pro (créditos de predicción) | ⚠️ Implementado (checkout, webhook, créditos), **no probado con un cobro real** |
 | Predicción de éxito de contenido (IA) | ⚠️ Implementado, consume créditos — no verificado en esta sesión si el score es razonable en casos reales |
 | Cerrar sesión desde Más/SideRail en 1-2 toques | ✅ Verificado (código), añadido esta sesión |
 
@@ -121,7 +121,7 @@ Simétrico al creador en casi todo, con estas particularidades:
 | Ficha pública (bio, categorías que busca, presupuesto, tipo de creador) | ✅ Verificado |
 | Descubrir creadores (filtros o IA), contactar | ✅ Verificado (mismo fix de IA que el lado creador) |
 | Iniciar una solicitud de colaboración con presupuesto, condiciones y brief estructurado | ✅ Verificado |
-| Pagar una colaboración aceptada (Stripe Connect, comisión del 10% para FEEDMA) | ⚠️ Implementado, nunca probado con un pago real |
+| Pagar una colaboración aceptada (Stripe Connect, comisión del 10% para CIBERAN) | ⚠️ Implementado, nunca probado con un pago real |
 | Aprobar o pedir cambios a una entrega del creador | ✅ Verificado por tests (`approve_post`/`request_post_changes`, con nota de revisión) |
 | Ver el checklist de progreso de un entregable (solo lectura) | ✅ Verificado |
 | Marcar colaboración como completada, valorar al creador | ✅ Verificado |
@@ -204,8 +204,8 @@ Tablas principales (consultar las migraciones citadas para el DDL exacto y las p
 |---|---|
 | `POST /api/discover/search` | Motor único de Descubrir (filtros y/o IA), usado por ambos roles — la dirección se decide por la ficha de quien llama, nunca por un parámetro del cliente |
 | `POST /api/ml/predict`, `GET /api/ml/trends` | Predicción de éxito de contenido (heurística + LLM) y tendencias |
-| `POST /api/stripe/create-checkout-session` | Suscripción FEEDMA Pro |
-| `POST /api/stripe/pay-collaboration` | Pago marketplace (Stripe Connect, destino al creador, comisión para FEEDMA) |
+| `POST /api/stripe/create-checkout-session` | Suscripción CIBERAN Pro |
+| `POST /api/stripe/pay-collaboration` | Pago marketplace (Stripe Connect, destino al creador, comisión para CIBERAN) |
 | `POST /api/stripe/webhook` | Único sitio que escribe `subscriptions`/`paid_at`/`stripe_connect_onboarded` — firma verificada, idempotente |
 | `POST /api/stripe/connect/account-link` | Onboarding de Stripe Connect para el creador |
 | `GET/POST /api/auth/instagram/*`, `/api/auth/youtube/*` | OAuth de redes sociales |
@@ -214,7 +214,7 @@ Tablas principales (consultar las migraciones citadas para el DDL exacto y las p
 
 ### 3.5 Pagos — dos flujos distintos, no confundir
 
-1. **Suscripción (FEEDMA Pro, 19,99 €/mes, 20 créditos/mes)**: `create-checkout-session` → Stripe Checkout en modo `subscription` → webhook `checkout.session.completed` guarda la suscripción → `invoice.paid` concede créditos (incluida la primera vez, para que alta y renovaciones comparta un único camino de código).
+1. **Suscripción (CIBERAN Pro, 19,99 €/mes, 20 créditos/mes)**: `create-checkout-session` → Stripe Checkout en modo `subscription` → webhook `checkout.session.completed` guarda la suscripción → `invoice.paid` concede créditos (incluida la primera vez, para que alta y renovaciones comparta un único camino de código).
 2. **Pago marketplace (partner paga al creador)**: `pay-collaboration` → Checkout en modo `payment` con `application_fee_amount` (10%, `MARKETPLACE_FEE_RATE` en `server/utils/stripe-plans.ts`) y `transfer_data.destination` a la cuenta Stripe Connect del creador → webhook marca `paid_at` de forma idempotente (`.is('paid_at', null)` como guarda) y notifica al creador. Requiere que el creador tenga `stripe_connect_onboarded = true`; si no, el endpoint rechaza el pago con un mensaje explícito.
 
 Ninguno de los dos flujos se ha probado con un pago real en esta sesión ni, hasta donde se puede verificar, en sesiones anteriores — solo con el script manual `tests/integration/webhook-idempotency.mjs` (idempotencia del webhook, firmando un evento de verdad pero sin pasar por el Checkout real de Stripe).
@@ -318,7 +318,7 @@ El informe original preguntaba si el entorno de pruebas debía ser un segundo pr
 
 - No tocar Stripe, las políticas de RLS de Supabase ni el esquema de datos salvo que una tarea lo exija explícitamente — y si lo exige, parar y confirmar antes de aplicar.
 - No tocar el login/OAuth social existente.
-- Preservar la identidad visual de FEEDMA (paleta morada de marca, Snasm solo para el logotipo, Hanken Grotesk para texto, Sora para títulos desde esta sesión).
+- Preservar la identidad visual de CIBERAN (paleta morada de marca, Snasm solo para el logotipo, Hanken Grotesk para texto, Sora para títulos desde esta sesión).
 - El entorno de pruebas sigue siendo el mismo proyecto de Supabase que el uso manual, por ahora (ver §4.4) — no crear un segundo proyecto sin que el usuario lo pida.
 - Los accesos demo (`creator@feedma.test`/`partner@feedma.test`) son solo de desarrollo (`import.meta.dev`), nunca en producción.
 - Las condiciones pactadas y el brief estructurado de una colaboración se fijan una vez y quedan congelados — no se renegocian ni se editan después de creados.
@@ -448,10 +448,10 @@ La auditoría de usabilidad original (`CONTEXT.md`) sí se hizo con un navegador
 Copia esta sección entera en una conversación nueva para continuar sin perder contexto.
 
 ```
-Estoy continuando el trabajo sobre FEEDMA, un marketplace Nuxt 4 + Supabase + Stripe
+Estoy continuando el trabajo sobre CIBERAN, un marketplace Nuxt 4 + Supabase + Stripe
 entre creadores de contenido y partners (marcas). Antes de cambiar nada:
 
-1. Lee docs/CONTEXTO_PROYECTO_FEEDMA.md completo — es un análisis detallado del estado
+1. Lee docs/CONTEXTO_PROYECTO_CIBERAN.md completo — es un análisis detallado del estado
    del proyecto a fecha 2026-10-23, commit e519195, rama fase0-usabilidad-prep.
    Es un snapshot: antes de fiarte de cualquier dato concreto (contadores, números de
    filas, resultados de tests), vuelve a comprobarlo contra el código/datos reales.
@@ -534,4 +534,4 @@ Pregunta al usuario, no asumas, si:
 
 ### Cómo usar la sección 8
 
-Copia el bloque de código que empieza en "Estoy continuando el trabajo sobre FEEDMA..." (dentro de la sección **8. CONTEXTO PARA EL SIGUIENTE CHAT DE CLAUDE**) y pégalo como primer mensaje en una conversación nueva de Claude Code en este mismo repositorio. Te recomiendo pegarlo tal cual, sin resumirlo más — está escrito para que la siguiente sesión sepa exactamente qué leer primero y qué reglas no romper, no para que lo interprete por ti.
+Copia el bloque de código que empieza en "Estoy continuando el trabajo sobre CIBERAN..." (dentro de la sección **8. CONTEXTO PARA EL SIGUIENTE CHAT DE CLAUDE**) y pégalo como primer mensaje en una conversación nueva de Claude Code en este mismo repositorio. Te recomiendo pegarlo tal cual, sin resumirlo más — está escrito para que la siguiente sesión sepa exactamente qué leer primero y qué reglas no romper, no para que lo interprete por ti.

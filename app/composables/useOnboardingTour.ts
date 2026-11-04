@@ -2,7 +2,7 @@ import type { Role } from '~/types'
 import { tourSteps } from '~/utils/onboarding-steps'
 
 // Versión en la clave: si el recorrido cambia mucho, subirla lo vuelve a mostrar.
-const storageKey = (userId: string) => `feedma:tour:v1:${userId}`
+const storageKey = (userId: string) => `ciberan:tour:v1:${userId}`
 
 /**
  * Recorrido de bienvenida (M-O1). El progreso se guarda en `localStorage`

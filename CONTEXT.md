@@ -1,6 +1,6 @@
-Traspaso técnico FEEDMA a Claude Code
+Traspaso técnico CIBERAN a Claude Code
 23 oct 2026 · @Alex
-Este documento resume la auditoría de usabilidad de FEEDMA del 23 de octubre de 2026 para continuar en Claude Code sin repetirla; en el código del proyecto no se ha cambiado ningún archivo todavía.
+Este documento resume la auditoría de usabilidad de CIBERAN del 23 de octubre de 2026 para continuar en Claude Code sin repetirla; en el código del proyecto no se ha cambiado ningún archivo todavía.
 Estado actual
 La auditoría está terminada y documentada, pero no se ha implementado ninguna mejora: todo lo que aparece como hallazgo o recomendación sigue pendiente.
 Elemento
@@ -14,13 +14,13 @@ Hallazgos
 Recomendaciones
 Propuestas; el desarrollador no ha aprobado ninguna una por una
 Decisión cerrada
-La fuente de los títulos no debe ser la del título FEEDMA (interpretado como los títulos de pantalla; el alcance exacto está por confirmar)
+La fuente de los títulos no debe ser la del título CIBERAN (interpretado como los títulos de pantalla; el alcance exacto está por confirmar)
 Decisiones abiertas
 Fuente concreta y alcance del cambio, entorno de pruebas, definición de los contadores y futuro de las cuentas demo (ver Decisiones y preguntas abiertas)
 Informe de referencia
-"Informe de usabilidad FEEDMA", con la misma numeración #1 a #21
+"Informe de usabilidad CIBERAN", con la misma numeración #1 a #21
 Contexto técnico
-FEEDMA es una app Nuxt con Supabase en la nube y dos roles, creador y partner. Todo lo siguiente sale de inspeccionar el navegador y las peticiones de red; el código fuente no se ha leído.
+CIBERAN es una app Nuxt con Supabase en la nube y dos roles, creador y partner. Todo lo siguiente sale de inspeccionar el navegador y las peticiones de red; el código fuente no se ha leído.
 Aspecto
 Dato
 Origen
@@ -92,7 +92,7 @@ No se observó ninguna oferta ni solicitud nuevas; el botón de enviar estaba de
 Visita a una URL inventada (/partner/post/<id>)
 Dejó un 404 en la consola
 Documentos
-Se crearon "Informe de usabilidad FEEDMA" y este traspaso, que viven en Claude y no en el repositorio
+Se crearon "Informe de usabilidad CIBERAN" y este traspaso, que viven en Claude y no en el repositorio
 Borrados
 Ninguno. No se eliminó ningún dato
 Hallazgos de prioridad alta
@@ -192,7 +192,7 @@ Público
 Pantalla
 Resultado
 Landing /
-Cargó sin errores de consola. Hero "FEEDMA — El parte de rodaje de tu contenido" con "Crear cuenta" y "Ya tengo cuenta". Secciones: las cinco fases, "Una entrega, cuatro miradas" (TOMA 01/04 a 04/04), "Para quién es", cierre con llamada a la acción, y pie con las seis redes y crédito de Unsplash
+Cargó sin errores de consola. Hero "CIBERAN — El parte de rodaje de tu contenido" con "Crear cuenta" y "Ya tengo cuenta". Secciones: las cinco fases, "Una entrega, cuatro miradas" (TOMA 01/04 a 04/04), "Para quién es", cierre con llamada a la acción, y pie con las seis redes y crédito de Unsplash
 Onboarding /onboarding
 Paso 1 "¿Quién eres?" con Creador de contenido y Partner. Paso 2 del creador: nombre, nicho opcional, email y contraseña (mínimo 8 caracteres). Un alta con email .test devolvió el error crudo del #19
 Login /login
@@ -234,7 +234,7 @@ Lista con Nora Blake (5 sin leer) y Alejandro Suárez Durán ("alma marcela gozo
 Oferta desde el chat
 El botón "+" abre "Elige un paquete" con dos paquetes y luego "Ofertar", con precio editable (450 € por defecto) y mensaje opcional. No se envió
 Contactar
-Formulario con "Cuéntales tu campaña", "Presupuesto (€)", la nota de que el pago se hace desde FEEDMA con comisión de la plataforma y "Detalles de la propuesta (opcional)". "Enviar solicitud" estuvo desactivado hasta rellenar. No se envió
+Formulario con "Cuéntales tu campaña", "Presupuesto (€)", la nota de que el pago se hace desde CIBERAN con comisión de la plataforma y "Detalles de la propuesta (opcional)". "Enviar solicitud" estuvo desactivado hasta rellenar. No se envió
 Consola y red
 • Durante la navegación normal no hubo errores propios de la app en la consola. Los únicos fueron un 400 del intento de alta y un 404 de la URL inventada.
 • La landing cargó unas 314 peticiones, casi todas módulos de Vite en modo desarrollo; no se midió el rendimiento en producción.
@@ -258,8 +258,8 @@ Descubrir
 Decisiones, recomendaciones y preguntas abiertas
 Las decisiones cerradas son pocas y de proceso o tipografía; todo lo demás son recomendaciones que el desarrollador aún no ha aprobado una por una.
 Decisiones cerradas
-• El feedback de la auditoría se usará para mejorar FEEDMA, y el informe junto con este traspaso son la referencia: no hay que repetir la auditoría.
-• La fuente de los títulos no debe ser la misma que la del título FEEDMA. Se interpreta como los títulos de pantalla; el alcance exacto está por confirmar (ver preguntas abiertas).
+• El feedback de la auditoría se usará para mejorar CIBERAN, y el informe junto con este traspaso son la referencia: no hay que repetir la auditoría.
+• La fuente de los títulos no debe ser la misma que la del título CIBERAN. Se interpreta como los títulos de pantalla; el alcance exacto está por confirmar (ver preguntas abiertas).
 • Para las pruebas, el desarrollador autorizó probar las funciones, cerrar sesión y entrar como partner con el acceso demo.
 Recomendaciones de enfoque (no aprobadas)
 • Empezar por el entorno y los datos: sin eso, los contadores y las pruebas posteriores no son fiables.
@@ -315,7 +315,7 @@ Ninguna de las mejoras propuestas pide tocar pagos ni permisos, y conviene que s
 Qué se sabe
 Precaución
 Pagos
-Hay stripePublishableKey en la configuración pública. El formulario Contactar dice que el pago se hace desde FEEDMA con comisión de la plataforma. El perfil del creador tiene la pestaña "Privacidad y pagos". El mensaje "test webhook" sugiere que hay webhooks. No se probó ningún pago
+Hay stripePublishableKey en la configuración pública. El formulario Contactar dice que el pago se hace desde CIBERAN con comisión de la plataforma. El perfil del creador tiene la pestaña "Privacidad y pagos". El mensaje "test webhook" sugiere que hay webhooks. No se probó ningún pago
 No modificar claves, webhooks, comisiones ni los textos de pago salvo petición expresa. Usar solo claves de prueba y no ejecutar pagos reales. Al separar entornos, apuntar los webhooks de pruebas a su propio endpoint y no al de producción. Cualquier cambio en el texto de Contactar debe seguir reflejando el flujo real de cobro
 Permisos
 Hay dos árboles de rutas, /creator/* y /partner/*, y Supabase como backend. No se probó el acceso cruzado (por ejemplo, un creador abriendo /partner) ni se revisaron las políticas de seguridad de filas

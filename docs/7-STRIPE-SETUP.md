@@ -4,10 +4,10 @@ Versión "para tontos" de la Fase 3 del [`README`](../README.md), igual que [`6-
 
 ## 0. Por qué hacen falta DOS cosas de Stripe, no una
 
-FEEDMA cobra de dos formas distintas (ver [`README`](../README.md) y [`1-ARCHITECTURE.md`](./1-ARCHITECTURE.md) §1.5):
+CIBERAN cobra de dos formas distintas (ver [`README`](../README.md) y [`1-ARCHITECTURE.md`](./1-ARCHITECTURE.md) §1.5):
 
-1. **Suscripción normal**: el creador de contenido paga una cuota mensual a FEEDMA por usar el panel. Esto es un Stripe Checkout + Billing normal, como el de cualquier SaaS.
-2. **Stripe Connect**: cuando un partner contrata a un creador *a través de la plataforma*, el dinero tiene que llegar al creador, no a FEEDMA — y FEEDMA se queda automáticamente con una comisión de esa transacción. Eso **no se puede hacer con un Checkout normal**: hace falta Connect, que es la pieza de Stripe pensada justo para marketplaces (Uber, Airbnb, Etsy… todos lo usan para pagar a terceros desde su plataforma).
+1. **Suscripción normal**: el creador de contenido paga una cuota mensual a CIBERAN por usar el panel. Esto es un Stripe Checkout + Billing normal, como el de cualquier SaaS.
+2. **Stripe Connect**: cuando un partner contrata a un creador *a través de la plataforma*, el dinero tiene que llegar al creador, no a CIBERAN — y CIBERAN se queda automáticamente con una comisión de esa transacción. Eso **no se puede hacer con un Checkout normal**: hace falta Connect, que es la pieza de Stripe pensada justo para marketplaces (Uber, Airbnb, Etsy… todos lo usan para pagar a terceros desde su plataforma).
 
 Así que sí: **se crea con Connect activado**, desde el principio. No es una cuenta de Stripe "normal" a la que luego se le añade Connect — se configura así desde el primer paso.
 
@@ -22,13 +22,13 @@ Igual que con Supabase: Claude Code no puede crear cuentas externas ni aceptar l
 
 ### Por qué Standard y no Express o Custom
 
-Stripe Connect tiene 3 tipos de cuenta conectada (la cuenta que recibe el dinero — en FEEDMA, la del creador de contenido):
+Stripe Connect tiene 3 tipos de cuenta conectada (la cuenta que recibe el dinero — en CIBERAN, la del creador de contenido):
 
-| Tipo | Qué significa | Para FEEDMA |
+| Tipo | Qué significa | Para CIBERAN |
 |---|---|---|
-| **Standard** ✅ | El creador tiene su propio Dashboard de Stripe completo. Stripe se encarga de todo el papeleo (verificación de identidad, cumplimiento legal, soporte). FEEDMA solo pide el pago y se queda su comisión. | **Recomendado**: es el más simple de programar y el que menos responsabilidad legal asume FEEDMA (Stripe es quien verifica la identidad de cada creador, no vosotros). |
-| Express | A medio camino: onboarding más rápido y con la marca de FEEDMA, pero FEEDMA ya asume algo más de responsabilidad. | De más adelante, si el producto crece y queréis una experiencia más integrada. |
-| Custom | FEEDMA construye toda la experiencia, incluida la verificación de identidad. Máximo control, máxima responsabilidad legal y de cumplimiento. | No para un proyecto de estudiantes en pruebas — es básicamente operar como una entidad financiera. |
+| **Standard** ✅ | El creador tiene su propio Dashboard de Stripe completo. Stripe se encarga de todo el papeleo (verificación de identidad, cumplimiento legal, soporte). CIBERAN solo pide el pago y se queda su comisión. | **Recomendado**: es el más simple de programar y el que menos responsabilidad legal asume CIBERAN (Stripe es quien verifica la identidad de cada creador, no vosotros). |
+| Express | A medio camino: onboarding más rápido y con la marca de CIBERAN, pero CIBERAN ya asume algo más de responsabilidad. | De más adelante, si el producto crece y queréis una experiencia más integrada. |
+| Custom | CIBERAN construye toda la experiencia, incluida la verificación de identidad. Máximo control, máxima responsabilidad legal y de cumplimiento. | No para un proyecto de estudiantes en pruebas — es básicamente operar como una entidad financiera. |
 
 ## 2. Copiar las claves de prueba a `.env`
 
@@ -78,7 +78,7 @@ El comando `stripe listen` imprime un `whsec_...` — eso es tu `STRIPE_WEBHOOK_
 
 1. Entra como `creator@feedma.test`, perfil → "Mejorar a Pro" → te lleva a Stripe Checkout.
 2. Usa la [tarjeta de pruebas de Stripe](https://docs.stripe.com/testing#cards) `4242 4242 4242 4242`, cualquier fecha futura, cualquier CVC.
-3. Al volver a FEEDMA deberías ver "Suscripción activada" y el plan ya no pone "Plan gratuito".
+3. Al volver a CIBERAN deberías ver "Suscripción activada" y el plan ya no pone "Plan gratuito".
 4. En el mismo perfil, "Conectar" en Cuenta de pagos → onboarding de Stripe (puedes rellenarlo con datos de prueba, Stripe te guía) → al volver debería verse "Verificada".
 
 ## Próximos pasos relacionados

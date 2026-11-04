@@ -18,7 +18,7 @@ export const tourSteps: Record<Role, TourStep[]> = {
   creator: [
     {
       icon: 'ph:hand-waving-fill',
-      title: 'Te damos la bienvenida a FEEDMA',
+      title: 'Te damos la bienvenida a CIBERAN',
       body: 'Aquí gestionas tus publicaciones, tus redes y tus colaboraciones con marcas en un solo sitio. Te enseñamos lo esencial en un minuto.'
     },
     {
@@ -46,7 +46,7 @@ export const tourSteps: Record<Role, TourStep[]> = {
   partner: [
     {
       icon: 'ph:hand-waving-fill',
-      title: 'Te damos la bienvenida a FEEDMA',
+      title: 'Te damos la bienvenida a CIBERAN',
       body: 'Aquí encuentras creadores, acuerdas colaboraciones y revisas su contenido antes de que se publique. Te enseñamos lo esencial en un minuto.'
     },
     {

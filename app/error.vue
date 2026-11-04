@@ -20,7 +20,7 @@ function goHome() {
 
 <template>
   <div class="min-h-dvh bg-[var(--color-ink)] flex flex-col items-center justify-center px-5 text-center">
-    <p aria-hidden="true" class="font-brand font-light text-[2.5rem] text-[var(--color-text)] mb-8 tracking-tight">FEEDMA</p>
+    <BrandMark :size="44" class="mb-8" />
     <p class="font-display text-[1.75rem] md:text-[2.125rem] text-[var(--color-text)] mb-2.5">
       {{ isNotFound ? 'Página no encontrada' : 'Algo ha ido mal' }}
     </p>

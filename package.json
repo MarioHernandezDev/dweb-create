@@ -1,5 +1,5 @@
 {
-  "name": "feedma",
+  "name": "ciberan",
   "type": "module",
   "private": true,
   "scripts": {
@@ -12,6 +12,7 @@
     "db:seed-discover": "node --env-file=.env scripts/seed-discover-demo.mjs",
     "db:cleanup-discover-demo": "node --env-file=.env scripts/cleanup-discover-demo.mjs",
     "typecheck": "vue-tsc -b --noEmit",
+    "check:social": "node scripts/check-social-config.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:integration": "vitest run --config vitest.integration.config.ts"

@@ -38,7 +38,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <section ref="section" class="relative bg-gradient-to-b from-[#0a0812] to-[var(--color-primary-900)] px-5 md:px-10 py-24 md:py-32 overflow-hidden">
+  <section ref="section" class="relative bg-[var(--surface-inverse)] px-5 md:px-10 py-24 md:py-32 overflow-hidden">
     <div aria-hidden="true" class="absolute -bottom-32 left-1/2 -translate-x-1/2 size-[36rem] rounded-full blur-[120px] opacity-20" style="background: radial-gradient(circle, var(--color-primary-500), transparent 70%)" />
 
     <div class="relative max-w-lg mx-auto flex flex-col items-center text-center">

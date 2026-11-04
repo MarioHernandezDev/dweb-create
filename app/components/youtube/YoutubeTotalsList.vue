@@ -5,7 +5,7 @@ import type { Kpi } from '~/utils/youtube-kpi'
  * Totales secundarios del canal (visualizaciones totales, vídeos, media por
  * vídeo) en filas compactas bajo el indicador principal. Mismas reglas que las
  * tarjetas: un valor ausente es "—" con su motivo (nunca 0) y cada fila dice si
- * es dato de YouTube o cálculo de FEEDMA. Cada fila es un grupo con el valor
+ * es dato de YouTube o cálculo de CIBERAN. Cada fila es un grupo con el valor
  * exacto en su etiqueta accesible.
  */
 defineProps<{ kpis: Kpi[] }>()
@@ -22,7 +22,7 @@ defineProps<{ kpis: Kpi[] }>()
           <Icon :name="k.icon" class="size-4 shrink-0 text-[var(--color-platform-youtube)]" />
           <span class="truncate" :title="k.hint">{{ k.label }}</span>
         </span>
-        <span class="block text-[0.625rem] uppercase tracking-wide text-[var(--color-text-faint)]">{{ k.source === 'youtube' ? 'Dato de YouTube' : 'Cálculo de FEEDMA' }}</span>
+        <span class="block text-[0.625rem] uppercase tracking-wide text-[var(--color-text-faint)]">{{ k.source === 'youtube' ? 'Dato de YouTube' : 'Cálculo de CIBERAN' }}</span>
       </dt>
       <dd class="shrink-0 text-right">
         <span v-if="k.value !== null" class="font-display text-[1.375rem] leading-none text-[var(--color-text)]" :title="k.exact ?? undefined" style="font-variant-numeric: proportional-nums">{{ k.value }}</span>

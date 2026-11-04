@@ -1,4 +1,4 @@
-# FEEDMA — Fase 0: mapa del proyecto
+# CIBERAN — Fase 0: mapa del proyecto
 
 | | |
 |---|---|
@@ -16,7 +16,7 @@
 
 ## 1. Resumen
 
-FEEDMA es un marketplace de dos roles: **creador** (`creator`) y **partner** (marca). Es una sola aplicación Nuxt 4 con SSR. El servidor Nitro hace de backend propio (`server/api`) y se apoya en un único proyecto de Supabase (Postgres, Auth, Storage y Realtime), en Stripe (suscripción y Connect), en OpenRouter (IA) y en las API de YouTube e Instagram.
+CIBERAN es un marketplace de dos roles: **creador** (`creator`) y **partner** (marca). Es una sola aplicación Nuxt 4 con SSR. El servidor Nitro hace de backend propio (`server/api`) y se apoya en un único proyecto de Supabase (Postgres, Auth, Storage y Realtime), en Stripe (suscripción y Connect), en OpenRouter (IA) y en las API de YouTube e Instagram.
 
 | Pieza | Cantidad | Comentario |
 |---|---|---|
@@ -61,13 +61,13 @@ Regla del encargo: si el código y la documentación se contradicen, manda el c�
 | Documento | Uso | Fiabilidad |
 |---|---|---|
 | `docs/CHANGELOG.md` (2 902 líneas, entradas 1–58 y Alex-1–48) | Registro cronológico con "Verificado / Sin verificar" | **Alta** como historial. Ojo: todas sus menciones a "`vue-tsc` limpio" quedan en entredicho (H0-01) |
-| `PIPELINE_IMPLEMENTACION_FEEDMA_ALEX.md` (+ anexo del 28/10 y estados hasta el 03/11) | Plan y estado de las tareas A-R/A-P de Alex | Alta, actualizado el 03/11 |
+| `PIPELINE_IMPLEMENTACION_CIBERAN_ALEX.md` (+ anexo del 28/10 y estados hasta el 03/11) | Plan y estado de las tareas A-R/A-P de Alex | Alta, actualizado el 03/11 |
 | `docs/TRABAJO_ALEX.md` | Tareas de Alex y **registro de migraciones aplicadas** | Alta. Es la única fuente del estado de aplicación de las migraciones del 28/10 en adelante |
 | `docs/TRABAJO_MARIO.md` | Tareas de Mario (M-*) y decisiones Q1–Q13 | Alta a 28/10. Registro de migraciones de Mario vacío |
 | `docs/PENDIENTES.md` | Pendientes a 24/10 | Media: parte ya resuelta (CI, páginas legales, límite del login de admin) |
-| `docs/CONTEXTO_PROYECTO_FEEDMA.md` | Análisis del 23/10 | Media: foto antigua (dice que no hay CI, 29 migraciones, 30 tests unitarios) |
+| `docs/CONTEXTO_PROYECTO_CIBERAN.md` | Análisis del 23/10 | Media: foto antigua (dice que no hay CI, 29 migraciones, 30 tests unitarios) |
 | `docs/PROPUESTA_*.md`, `REQUISITO_A-R16`, `AUDITORIA_A-R9` | Diseño de cada tarea | Alta para la decisión que documentan |
-| `FEEDMA_PRODUCT_ROADMAP.md` | Visión de producto (en forma de encargo) | Es un plan, no un estado |
+| `CIBERAN_PRODUCT_ROADMAP.md` | Visión de producto (en forma de encargo) | Es un plan, no un estado |
 | `CONTEXT.md` | Auditoría de usabilidad del 23/10 (21 hallazgos) | Histórica; sus fases 0–5 constan como hechas en el CHANGELOG |
 | `PROJECT_OVERVIEW.md` | Resumen técnico del 23/10 | Media |
 | `README.md` | Presentación | **Desactualizado** (lo dicen TRABAJO_ALEX y TRABAJO_MARIO) |
@@ -242,7 +242,7 @@ No hay `server/middleware`, `server/plugins` ni `server/routes`. Cada endpoint s
 | `post_external_links` | Vínculo publicación ↔ vídeo o post real | Servidor |
 | `metrics` | Métricas por publicación, una fila por día, nulables | Servidor |
 | `ml_predictions`, `trends` | Predicción y tendencias | Servidor |
-| `subscriptions`, `credit_ledger` | FEEDMA Pro y créditos | Webhook, triggers y admin |
+| `subscriptions`, `credit_ledger` | CIBERAN Pro y créditos | Webhook, triggers y admin |
 | `saved_profiles` | Favoritos | El dueño |
 | `reports` | Reportes confidenciales para el admin | Las partes insertan; nadie lee salvo service_role |
 | `discovery_searches` | Registro de búsquedas | Solo service_role |
@@ -319,7 +319,7 @@ Todas las funciones `SECURITY DEFINER` fijan `set search_path = public` (verific
 
 | Flujo | Archivos | Camino |
 |---|---|---|
-| Suscripción FEEDMA Pro (solo creadores) | `create-checkout-session.post.ts`, `useMyBilling.ts`, `stripe-plans.ts` | Checkout `subscription` con `price_data` en línea → webhook `checkout.session.completed` (guarda `subscriptions`) → `invoice.paid` (concede 20 créditos) → `customer.subscription.updated/deleted` |
+| Suscripción CIBERAN Pro (solo creadores) | `create-checkout-session.post.ts`, `useMyBilling.ts`, `stripe-plans.ts` | Checkout `subscription` con `price_data` en línea → webhook `checkout.session.completed` (guarda `subscriptions`) → `invoice.paid` (concede 20 créditos) → `customer.subscription.updated/deleted` |
 | Pago de colaboración (partner → creador) | `pay-collaboration.post.ts`, `useMyCollaborations.ts`, botón en `partner/requests.vue` | Checkout `payment` con `application_fee_amount` 10 % y `transfer_data.destination` → webhook marca `paid_at` (idempotente con `.is('paid_at', null)`) y avisa al creador |
 | Onboarding de Connect (creador) | `connect/account-link.post.ts` | Account Link → webhook `account.updated` actualiza `stripe_connect_onboarded` |
 
@@ -397,7 +397,7 @@ El encargo enumera módulos. Esta es su correspondencia real, para no auditar ni
 | Chat | `/chat` |
 | Recepción y negociación de ofertas | Ofertas sobre paquetes en el chat + contraofertas (`NegotiationPanel`) en Colaboraciones |
 | Gestión de colaboraciones | `/creator/requests` |
-| **FEEDMA Studio** | **No es una pantalla ni un módulo.** Es un concepto del roadmap (§5, "Fase C") que se ha construido por piezas dentro del detalle de colaboración: brief estructurado, condiciones pactadas, Calendario, checklist visible para el partner, revisiones con nota y Registro. No aparece con ese nombre en ninguna parte de la interfaz |
+| **CIBERAN Studio** | **No es una pantalla ni un módulo.** Es un concepto del roadmap (§5, "Fase C") que se ha construido por piezas dentro del detalle de colaboración: brief estructurado, condiciones pactadas, Calendario, checklist visible para el partner, revisiones con nota y Registro. No aparece con ese nombre en ninguna parte de la interfaz |
 | PARTNER · Dashboard | `/partner` ("Inicio") |
 | Perfil de empresa | `/partner/profile` |
 | Descubrimiento, búsqueda y filtros | `/partner/discover` (filtros o IA) |
@@ -407,7 +407,7 @@ El encargo enumera módulos. Esta es su correspondencia real, para no auditar ni
 | Solicitudes de revisión / aprobaciones | `ready_for_review` → RPC `approve_post` / `request_post_changes` con nota; la aprobación es un aviso, no un bloqueo (Q6) |
 | Notificaciones | `/inbox` + triggers |
 | Configuración | Pestañas de `/{rol}/profile`; no hay página de ajustes aparte |
-| (No listado en el encargo) | Panel `/admin`, FEEDMA Pro y créditos, predicción de éxito, favoritos y comparación, valoraciones, reportes, recorrido de bienvenida |
+| (No listado en el encargo) | Panel `/admin`, CIBERAN Pro y créditos, predicción de éxito, favoritos y comparación, valoraciones, reportes, recorrido de bienvenida |
 
 ---
 
@@ -418,7 +418,7 @@ Son señales encontradas al hacer el mapa. **No sustituyen** a las auditorías d
 | ID | Hallazgo | Estado | Fase |
 |---|---|---|---|
 | **H0-01** | `npx vue-tsc --noEmit`, el comando de CI y de todas las entradas del CHANGELOG, **no comprueba ningún archivo**: `--listFiles` devuelve 0 líneas. El `tsconfig.json` raíz es de tipo "solution" (`files: []` + `references`), y sin `-b` no compila las referencias. Por tanto, **ningún "vue-tsc limpio" registrado hasta hoy garantiza nada**. Encaja con lo que dice Alex-48 ("error 500 que `vue-tsc` no detectó"). Lo que no se sabe es cuántos errores aparecerán al hacer el typecheck real (`vue-tsc -b --noEmit` o `nuxi typecheck`) | **Verificado (comando)** | 1 |
-| **H0-02** | `webhook.post.ts` lee `invoice.subscription`. En la API que fija `stripe@23` (`2026-09-30.endive`), la interfaz `Invoice` **ya no tiene ese campo** (está en `invoice.parent.subscription_details.subscription`). Si es así, `handleInvoicePaid` sale al principio y **FEEDMA Pro nunca concede créditos**. El typecheck lo habría detectado si funcionara (H0-01) | Tipos verificados; comportamiento **hipótesis fuerte** (hay que probarlo en Stripe Test Mode) | 5 |
+| **H0-02** | `webhook.post.ts` lee `invoice.subscription`. En la API que fija `stripe@23` (`2026-09-30.endive`), la interfaz `Invoice` **ya no tiene ese campo** (está en `invoice.parent.subscription_details.subscription`). Si es así, `handleInvoicePaid` sale al principio y **CIBERAN Pro nunca concede créditos**. El typecheck lo habría detectado si funcionara (H0-01) | Tipos verificados; comportamiento **hipótesis fuerte** (hay que probarlo en Stripe Test Mode) | 5 |
 | **H0-03** | `notify(p_profile_id, …)` es `SECURITY DEFINER`, no comprueba quién la llama y no tiene `revoke execute`. Si los privilegios por defecto siguen activos, cualquier cliente (incluso `anon`) podría crear avisos para cualquier usuario con el enlace que quiera, justo lo contrario de lo que dice el comentario de la migración. Lo mismo podría pasar con `_get_or_create_conversation(a,b)` (crear conversaciones entre terceros, saltándose la privacidad del chat) y con las funciones de lectura auxiliares | **Hipótesis**: hay que consultar los privilegios (`has_function_privilege`) en la base, **sin llamar a las funciones** | 2 (prioritaria) |
 | **H0-04** | No hay ningún entorno aislado: desarrollo, tests de integración y cuentas demo comparten un solo proyecto de Supabase (decisión del 23/10). Esto condiciona las fases 3, 5 y 7 (datos de demo sin contaminar). Docker está disponible para un Supabase local | Verificado (documentación + entorno) | 3, 7 |
 | **H0-05** | `scripts/apply-pending-migrations.mjs` importa `pg`, que no está en `package.json` ni en `node_modules`: fallaría al ejecutarse. Aplicar migraciones depende de copiarlas a mano en el SQL Editor | Verificado (código + `node_modules`) | 1 |
@@ -431,7 +431,7 @@ Son señales encontradas al hacer el mapa. **No sustituyen** a las auditorías d
 | **H0-12** | Código muerto: 3 componentes sin uso, `WeeklyEngagementChart` y `engagementSeries` (datos fijos) sin pantalla, `/api/ml/trends` y `useMyTrends` solo para la página desactivada, y Pinia instalado sin ningún store | Verificado (búsqueda) | 1 |
 | **H0-13** | No hay lint ni tests de componentes o endpoints. Los scripts de navegador de las verificaciones del CHANGELOG no están en el repositorio | Verificado | 1 |
 | **H0-14** | Solo 8 de las 39 migraciones tienen registro formal de aplicación | Verificado (documentación) | 2 |
-| **H0-15** | Discrepancias entre documentación y código: el CHANGELOG Alex-47 habla de colaboraciones "canceladas", pero ese estado no existe (`requested/accepted/in_progress/completed/declined`). El anexo del pipeline dice que las credenciales de Instagram están vacías y ahora están definidas. `CONTEXTO_PROYECTO_FEEDMA.md` dice que no hay CI y ya existe. "FEEDMA Studio" y "campañas" aparecen en el encargo como módulos y no lo son (§16) | Verificado | Documentar |
+| **H0-15** | Discrepancias entre documentación y código: el CHANGELOG Alex-47 habla de colaboraciones "canceladas", pero ese estado no existe (`requested/accepted/in_progress/completed/declined`). El anexo del pipeline dice que las credenciales de Instagram están vacías y ahora están definidas. `CONTEXTO_PROYECTO_CIBERAN.md` dice que no hay CI y ya existe. "CIBERAN Studio" y "campañas" aparecen en el encargo como módulos y no lo son (§16) | Verificado | Documentar |
 | **H0-16** | El encargo (`auditoria-completa.md`) está dentro de `supabase/migrations/`, que debería contener solo SQL. No rompe nada hoy, pero conviene moverlo a `docs/audit/`. **No se ha movido** (es un archivo tuyo) | Verificado | — |
 
 ---

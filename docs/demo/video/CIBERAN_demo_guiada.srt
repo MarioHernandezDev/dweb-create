@@ -1,6 +1,6 @@
 1
 00:00:00,167 --> 00:00:04,989
-FEEDMA — Cómo funciona, paso a paso
+CIBERAN — Cómo funciona, paso a paso
 
 2
 00:00:05,039 --> 00:00:08,267
@@ -36,7 +36,7 @@ Módulo 2 de 6 — Descubre creadores
 
 10
 00:00:31,211 --> 00:00:33,278
-Paso 3 · NOVA STUDIO, una marca de moda sostenible, entra en FEEDMA
+Paso 3 · NOVA STUDIO, una marca de moda sostenible, entra en CIBERAN
 
 11
 00:00:33,428 --> 00:00:36,255
@@ -112,7 +112,7 @@ Módulo 4 de 6 — Gestiona tus proyectos
 
 29
 00:02:31,107 --> 00:02:33,567
-Paso 13 · FEEDMA Studio: el tablero de publicaciones de AREZZ, por fases
+Paso 13 · CIBERAN Studio: el tablero de publicaciones de AREZZ, por fases
 
 30
 00:02:33,717 --> 00:02:45,826
@@ -176,7 +176,7 @@ Paso 18 · Queda programada en su calendario
 
 45
 00:04:21,965 --> 00:04:33,705
-Paso 19 · Aprobada: AREZZ la publica y lo marca en FEEDMA
+Paso 19 · Aprobada: AREZZ la publica y lo marca en CIBERAN
 
 46
 00:04:33,995 --> 00:04:37,218
@@ -200,4 +200,4 @@ Paso 21 · Las valoraciones construyen la reputación de cada perfil
 
 51
 00:05:17,161 --> 00:05:22,872
-FEEDMA — Del primer mensaje a la publicación aprobada
+CIBERAN — Del primer mensaje a la publicación aprobada

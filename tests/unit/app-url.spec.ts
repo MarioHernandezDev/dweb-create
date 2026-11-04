@@ -17,7 +17,7 @@ describe('appRedirectUrl', () => {
 
   it('mantiene el mensaje de error codificado', () => {
     const path = `/creator/socials?instagram=error&reason=${encodeURIComponent('Algo falló: reintenta')}`
-    expect(appRedirectUrl('https://feedma.example', path)).toBe(`https://feedma.example${path}`)
+    expect(appRedirectUrl('https://ciberan.example', path)).toBe(`https://ciberan.example${path}`)
   })
 
   it.each(['no es una url', 'javascript:alert(1)', 'ftp://servidor.example', 'data:text/html,hola'])('un valor no válido o con otro protocolo (%s) se ignora', (bad) => {

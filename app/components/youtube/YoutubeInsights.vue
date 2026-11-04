@@ -13,7 +13,7 @@ defineProps<{ observations: Observation[]; loading: boolean }>()
   <section aria-labelledby="yt-insights" class="flex flex-col">
     <h2 id="yt-insights" class="font-display text-[1.25rem] text-[var(--color-text)]">Observaciones</h2>
     <p class="mt-0.5 mb-3 text-[0.75rem] text-[var(--color-text-faint)]">
-      Cálculos de FEEDMA con reglas fijas sobre tus datos de YouTube. Describen lo que pasó, no por qué.
+      Cálculos de CIBERAN con reglas fijas sobre tus datos de YouTube. Describen lo que pasó, no por qué.
     </p>
 
     <BaseCard radius="lg" padding="lg" class="flex-1" :aria-busy="loading">

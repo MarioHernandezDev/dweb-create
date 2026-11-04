@@ -32,7 +32,7 @@ export function unavailableOf(values: PostMetricValues): MetricKey[] {
 }
 
 /**
- * Interacción en % = (me gusta + comentarios) ÷ visualizaciones, cálculo de FEEDMA.
+ * Interacción en % = (me gusta + comentarios) ÷ visualizaciones, cálculo de CIBERAN.
  * `null` si falta cualquiera de los tres datos o no hay visualizaciones que dividir.
  * La columna admite hasta 999,999: un valor fuera de rango (datos incoherentes) no se guarda.
  */

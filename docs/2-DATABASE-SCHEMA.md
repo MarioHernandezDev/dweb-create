@@ -4,7 +4,7 @@
 
 ## 2.1 Modelo Conceptual: un marketplace de 2 roles
 
-FEEDMA es un **marketplace**: un partner contrata directamente a un creador de contenido. (Hasta la migración `20261021120000_remove_manager_rename_creator_partner.sql` existía un tercer rol, Manager/agencia, que repartía el trabajo entre varios influencers — se eliminó: en la práctica un manager es un partner más, categorizarlo aparte no aportaba nada.)
+CIBERAN es un **marketplace**: un partner contrata directamente a un creador de contenido. (Hasta la migración `20261021120000_remove_manager_rename_creator_partner.sql` existía un tercer rol, Manager/agencia, que repartía el trabajo entre varios influencers — se eliminó: en la práctica un manager es un partner más, categorizarlo aparte no aportaba nada.)
 
 - **`creators`** — un creador de contenido.
 - **`partners`** — la empresa/marca que contrata. No administra nada de otro: contrata, revisa y aprueba.

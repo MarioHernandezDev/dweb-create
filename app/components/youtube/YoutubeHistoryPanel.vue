@@ -5,9 +5,9 @@ import {
 import { formatCompactNumber } from '~/utils/mock-data'
 
 /**
- * Histórico propio de FEEDMA (A-R16e): suscriptores y visualizaciones TOTALES
+ * Histórico propio de CIBERAN (A-R16e): suscriptores y visualizaciones TOTALES
  * del canal a lo largo del tiempo, a partir de los registros diarios que
- * FEEDMA guarda al leer la cuenta (`social_account_snapshots`). Google no da
+ * CIBERAN guarda al leer la cuenta (`social_account_snapshots`). Google no da
  * esos acumulados con histórico, por eso empiezan el día del primer registro.
  *
  * Reglas: solo hay puntos los días en que se leyó el canal (los demás son
@@ -44,7 +44,7 @@ const unit = computed(() => HISTORY_METRICS.find((m) => m.value === metric.value
       <div>
         <h2 id="yt-history" class="font-display text-[1.25rem] text-[var(--color-text)]">Histórico propio</h2>
         <p class="mt-0.5 text-[0.75rem] text-[var(--color-text-faint)]">
-          Totales del canal que FEEDMA guarda cada día que lee tu cuenta: YouTube solo da el valor actual, por eso este histórico empieza el día del primer registro.
+          Totales del canal que CIBERAN guarda cada día que lee tu cuenta: YouTube solo da el valor actual, por eso este histórico empieza el día del primer registro.
         </p>
       </div>
       <SegmentedTabs v-if="options.length > 1" :options="options" :model-value="metric" @update:model-value="metric = $event as HistoryMetric" />
@@ -83,7 +83,7 @@ const unit = computed(() => HISTORY_METRICS.find((m) => m.value === metric.value
             {{ summary?.recordedDays }} días con registro
             <template v-if="series.gaps > 0"> · {{ series.gaps }} {{ series.gaps === 1 ? 'día sin registro' : 'días sin registro' }} (sin dato, no se inventan)</template>
           </li>
-          <li class="text-[var(--color-text-faint)]">Dato de YouTube guardado por FEEDMA · la variación es un cálculo de FEEDMA</li>
+          <li class="text-[var(--color-text-faint)]">Dato de YouTube guardado por CIBERAN · la variación es un cálculo de CIBERAN</li>
           <li class="text-[var(--color-text-faint)]">Cada punto es un día con registro; la línea solo los une. El eje no empieza en 0 para que se vea el cambio.</li>
         </ul>
       </div>

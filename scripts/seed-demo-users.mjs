@@ -1,4 +1,4 @@
-// FEEDMA — crea 2 cuentas de prueba (creador de contenido, partner) ya
+// CIBERAN — crea 2 cuentas de prueba (creador de contenido, partner) ya
 // relacionadas entre sí (varias colaboraciones repartidas entre pendientes
 // e historial, y varios posts repartidos por las 5 fases del tablero, uno
 // de ellos fuera de plazo a propósito), para probar la app con datos

@@ -4,6 +4,52 @@ Registro de qué se hizo, por qué, y qué queda pendiente de verificar — pens
 
 ---
 
+## 2026-11-04 (Alex-61) — [Alex] Rediseño «Señal», Fase 1: fundamentos, identidad y estructura del CSS
+
+Encargo: `diseño-nuevo.md`. Propuesta aprobada: `docs/design/00_PROPUESTA_FASE0.md` (y lienzo visual). Sin cambios en datos, rutas, Supabase ni Stripe.
+
+- **`main.css` pasa a ser un índice** que importa `tokens.css`, `base.css`, `motion.css`, `utilities.css` y `components/brand-mark.css`, con capas y anidación nativa. Comprobado que Tailwind 4 (Lightning CSS) aplana la anidación al compilar.
+- **Tokens nuevos:** paleta tinta/hueso/voltio con apoyos, fases de publicación con color fuerte y tinte, escala tipográfica (`text-micro` … `text-hero`, 16 px de lectura), radios con jerarquía, tres sombras, duraciones y curvas.
+- **Alias de transición:** los nombres antiguos (`--color-primary-500`, `--color-ink`, `--color-status-*`, `--shadow-float`…) apuntan a los nuevos, así que toda la app adopta la identidad sin tocar sus 27 páginas. Se borran al terminar la Fase 4.
+- **Fuentes:** entra Bricolage Grotesque (títulos, cifras, logotipo); se mantiene Hanken Grotesk; salen Sora y Snasm (los `.otf` de Snasm siguen en `app/assets/fonts/` sin usarse; se borrarán en la limpieza final).
+- **Marca:** componente `BrandMark` (símbolo + wordmark) en la barra lateral, la cabecera móvil, el login, el alta, la portada, el pie, la pantalla de carga y la de error. `favicon.svg`, `favicon.ico`, iconos de instalación 192/512/maskable y `apple-touch-icon` generados desde SVG (`scripts/design/render-brand-icons.mjs`); manifiesto y `theme-color` actualizados.
+- **Degradados índigo escritos a mano** (login, instalación, llamada final de la portada) pasan al token de superficie oscura.
+- **Herramientas:** `scripts/design/check-contrast.mjs` (31 combinaciones, todas ≥ mínimo WCAG) y tamaño 1 024 px añadido a `ux-capture`.
+- **Documentación:** `docs/design/01_DESIGN_SYSTEM.md`.
+- **Verificado:** typecheck limpio; unitarios 621/621; `nuxt build` correcto (solo los avisos previos de auto-imports duplicados, T-07); capturas a 390, 768, 1 024 y 1 440 px de 14 páginas con la app compilada contra el Supabase local. axe: en los mismos tamaños que la Fase 0, los nodos con contraste insuficiente bajan de 33 a 21 y no aparece ninguna página nueva con fallos; el resto de incidencias de axe son las conocidas (U-05 a U-08).
+- **Sin verificar / pendiente:** los componentes y pantallas siguen con su maquetación antigua (Fases 2 a 4): tarjetas con borde izquierdo grueso, franjas y puntos de estado redundantes en el tablero, portadas generadas con el arco antiguo, etiquetas en mayúsculas y las hormigas decorativas de la portada y de la pantalla de carga. Safari y Firefox no probados.
+
+---
+
+## 2026-11-04 (Alex-60) — [Alex] Cambio de marca: FEEDMA → CIBERAN
+
+Decisión de Alex: el dominio de FEEDMA es inviable, la marca pasa a llamarse CIBERAN.
+
+- **Código, textos, comentarios y documentación:** sustituidas todas las apariciones (107 ficheros), respetando mayúsculas (`FEEDMA`→`CIBERAN`, `Feedma`→`Ciberan`, `feedma`→`ciberan`). Renombrados 5 ficheros (`CIBERAN_PRODUCT_ROADMAP.md`, `PIPELINE_IMPLEMENTACION_CIBERAN_ALEX.md`, `docs/CONTEXTO_PROYECTO_CIBERAN.md`, `docs/audit/CIBERAN_FINAL_AUDIT.md`, `docs/demo/video/CIBERAN_demo_guiada.srt`) y el vídeo local. Incluye `package.json`, el manifiesto, el título del login, la clave `ciberan:tour:v1:` del recorrido de bienvenida (se mostrará una vez más) y la cookie de sesión del admin (cierra las sesiones de admin abiertas).
+- **Migración `20261104120000_rename_brand_ciberan.sql`** (**preparada, NO aplicada en la base compartida**): redefine `handle_new_user()` y `notify_user_login()` solo para cambiar el texto de los avisos («Bienvenido a CIBERAN», «Nuevo acceso a tu cuenta de CIBERAN»). Lógica y permisos idénticos a los vigentes. Los avisos ya guardados siguen diciendo FEEDMA.
+- **Deliberadamente NO cambiado:**
+  - Las migraciones anteriores (registro de lo aplicado).
+  - `@feedma.test`: son las cuentas demo y de prueba que **ya existen** en el Supabase compartido (`creator@feedma.test`, `partner@feedma.test`, etc.) y los tests de integración inician sesión con ellas; cambiar el texto sin renombrar las cuentas rompería el acceso.
+  - La contraseña de las cuentas demo, que no es marca.
+  - Las cuentas locales de la demo (`@demo.feedma.test`) sí cambian a `@demo.ciberan.test`: se crean de cero en el Supabase local.
+- **Verificado:** typecheck limpio; unitarios 621/621; las 52 migraciones se aplican de cero en el Supabase local y las dos funciones quedan con el texto nuevo; `signup-trigger.spec.ts` 2/2 contra esa base.
+- **Sin hacer (no es texto):** el logotipo (`public/img/logo-svg.png` es una «F», `logo-fondoblanco.png` y `favicon.ico`), la captura `panel-preview.png`, las capturas y el vídeo de la demo (muestran «FEEDMA»), el dominio `ciberan.app` que aparece en la guía de instalación (no está comprado) y los nombres en servicios externos: proyecto de Supabase y sus plantillas de correo, Stripe, app de Meta y proyecto de Google Cloud, repositorio de GitHub.
+
+---
+
+## 2026-11-04 (Alex-59) — [Alex] Redes sociales y métricas listas para desplegar: borrado de datos de Meta, sincronización programada y guía de producción
+
+Objetivo: que la conexión de Instagram y YouTube y sus métricas funcionen al desplegar. Revisado el estado real: la conexión, el cifrado, la renovación del token de Instagram, la sincronización (`sync-all`), la desconexión y las métricas por publicación ya existían; faltaban las URL que Meta exige, quien llame a la sincronización y una guía de producción.
+
+- **A-R4 (nuevo):** `POST /api/auth/instagram/deauthorize` y `/data-deletion` (más `data-deletion-status`). Solo actúan con un `signed_request` válido (HMAC-SHA256 con el secreto de la app, comparación en tiempo constante; sin firma → 400 sin tocar nada). Borran la cuenta de Instagram conectada y, en cascada, vínculos, snapshots y métricas. Idempotentes; límite de 30/min por IP. `server/utils/meta-signed-request.ts`, `meta-data-deletion.ts`.
+- **A-R5 (nuevo):** `.github/workflows/sync-social.yml`, cada 6 h, **desactivado** hasta definir `SYNC_ENABLED=true`, `APP_URL` y el secreto `SYNC_CRON_SECRET`. Repite hasta vaciar la cola, avisa de cuentas fallidas y no imprime el secreto.
+- **`npm run check:social`:** comprueba HTTPS, que las redirect URI coincidan con `APP_URL`, la clave de cifrado de 32 bytes y el secreto de sincronización, sin red ni mostrar secretos; imprime las URL que hay que pegar en Meta y Google.
+- **Documentación (A-R14):** nueva `docs/11-DESPLIEGUE-REDES-SOCIALES.md` (orden de despliegue, paneles de Meta y Google, revisiones de las apps, programador, comprobación final) y avisos en los documentos 9 y 10, que estaban desfasados. Incluye un riesgo que no estaba escrito: con la app de Google en estado «Prueba», el refresh token caduca a los 7 días.
+- **Verificado:** 8 tests nuevos de la firma (válida, otro secreto, carga manipulada, algoritmo, sin `user_id`, formatos rotos, sin secreto); unitarios 621/621; typecheck limpio; con el servidor de desarrollo, las rutas nuevas responden **sin sesión** (`deauthorize` y `data-deletion` → 400 sin firma, página de estado → HTML), y el script de configuración falla bien sin variables.
+- **Sin verificar:** los endpoints con Meta real; que el `user_id` del `signed_request` coincida con el `external_account_id` guardado (si no, borrarían 0 filas: comprobarlo con una cuenta de prueba antes de pasar a Live); el borrado con una firma válida contra una base (no se ejecutó para no tocar la base compartida); el workflow en GitHub; todo en un dominio real; sincronización, insights y panel de YouTube con datos reales.
+
+---
+
 ## 2026-11-04 (Alex-58) — [Alex] Flujo de colaboraciones, Fase 2: acuerdo y brief («rellenar una vez»)
 
 Decisiones aprobadas por Alex (todas las recomendaciones de `docs/audit/08_COLLABORATION_FLOW_AUDIT.md` §12). Sin tocar pagos: `budget_cents`, `paid_at` y `stripe_*` quedan igual.
@@ -49,7 +95,7 @@ Decisiones aprobadas por Alex (todas las recomendaciones de `docs/audit/08_COLLA
   - La toma final no tiene errores de página.
   - El montaje recorta 37 min de tiempo muerto por una suspensión del equipo, sin tocar el contenido ([docs/demo/FINAL_DEMO_REPORT.md](demo/FINAL_DEMO_REPORT.md)).
   - El MP4 no se versiona (`.gitignore`).
-- **Documentos:** `docs/audit/01` a `06`, `FEEDMA_FINAL_AUDIT.md` y `docs/demo/` (plan de datos, storyboard e informe final).
+- **Documentos:** `docs/audit/01` a `06`, `CIBERAN_FINAL_AUDIT.md` y `docs/demo/` (plan de datos, storyboard e informe final).
 - **Verificado:**
   - 613/613 tests unitarios y typecheck limpio.
   - Los 17 pasos del escenario en el navegador.
@@ -129,7 +175,7 @@ Decisiones aprobadas por Alex (todas las recomendaciones de `docs/audit/08_COLLA
 
 - Alex aplicó `20261103130000_social_accounts_server_only_delete.sql`, `20261103140000_function_execute_privileges.sql` y `20261103150000_billing_webhook_idempotency.sql` (registro en `docs/TRABAJO_ALEX.md`).
 - **Verificado contra la base real (sin sesión ni escritura):** con la clave anon, las 18 funciones revocadas responden `42501`, y `current_creator_id`/`current_partner_id` siguen accesibles. La columna `credit_ledger.stripe_invoice_id` existe.
-- **Stripe (modo test, autorizado por Alex):** canceladas las 3 suscripciones del 20/10, que no tenían fila en FEEDMA. Ya solo quedan `canceled: 3`. No había webhook registrado, así que la app no recibió eventos.
+- **Stripe (modo test, autorizado por Alex):** canceladas las 3 suscripciones del 20/10, que no tenían fila en CIBERAN. Ya solo quedan `canceled: 3`. No había webhook registrado, así que la app no recibió eventos.
 - **Sin verificar:** la parte `authenticated` de H0-03 y que el navegador ya no pueda borrar `social_accounts` (H0-08) contra la base real. Falta la auditoría de catálogo (necesita la cadena del Session pooler) o los tests de integración `function-privileges` y `social-accounts-rls`.
 
 ---
@@ -372,7 +418,7 @@ Detalle completo, con evidencia y estado de cada punto: `docs/audit/07_CRITICAL_
 
 - Nueva pestaña **Rendimiento** en el detalle de cada colaboración del partner (`/partner/requests`), con `CollaborationReport`, `useCollaborationReport` y `app/utils/collaboration-report.ts` (lógica pura).
 - Por cada entrega de la colaboración: plataforma, fecha, estado y enlace al contenido (solo http/https), y uno de tres estados explícitos: **sin vincular**, **vinculada sin métricas** o **medida** (visualizaciones, me gusta, comentarios… de la última medición; ausente = '—' con su motivo, nunca 0).
-- Cabecera con 'N entregas · N vinculadas · N con métricas' y **totales** (visualizaciones, me gusta, comentarios) que suman solo las entregas con ese dato e indican cuántas lo aportan; sin ninguna, '—'. Rotulados como cálculo de FEEDMA; las cifras de cada entrega, como dato de la red.
+- Cabecera con 'N entregas · N vinculadas · N con métricas' y **totales** (visualizaciones, me gusta, comentarios) que suman solo las entregas con ese dato e indican cuántas lo aportan; sin ninguna, '—'. Rotulados como cálculo de CIBERAN; las cifras de cada entrega, como dato de la red.
 - **Sin migración ni cambios de permisos.** La autorización es la RLS ya existente de `posts`, `post_external_links` y `metrics` (el partner solo ve las entregas de sus colaboraciones); no hay filtro de cliente que la sustituya.
 
 ### Verificado de verdad
@@ -397,7 +443,7 @@ Detalle completo, con evidencia y estado de cada punto: `docs/audit/07_CRITICAL_
 ### Qué se cambió
 
 - Nuevo `GET /api/ml/history-context?postId=`: mediana, mínimo y máximo de visualizaciones de las **demás publicaciones medidas del mismo creador en la misma plataforma** (última medición de cada una; `null` y 0 real se distinguen). **Solo si hay 3 o más**; con menos devuelve `history: null`. Solo el dueño (404 si no); solo YouTube e Instagram. No modifica el score.
-- `SuccessScoreCard` enseña, solo con muestra suficiente, 'Tus N publicaciones medidas… mediana de X visualizaciones (entre A y B). Cálculo de FEEDMA; el potencial de arriba no se basa en ellos.'
+- `SuccessScoreCard` enseña, solo con muestra suficiente, 'Tus N publicaciones medidas… mediana de X visualizaciones (entre A y B). Cálculo de CIBERAN; el potencial de arriba no se basa en ellos.'
 
 ### Verificado de verdad
 
@@ -426,9 +472,9 @@ Detalle completo, con evidencia y estado de cada punto: `docs/audit/07_CRITICAL_
 - **Lectura de métricas** de cada publicación vinculada (A-R7), guardadas en `metrics` (M3) con **una fila por publicación y día UTC** (repetir el mismo día actualiza la misma fila; los días anteriores se conservan como histórico).
   - **YouTube** (Data API `videos.statistics`): visualizaciones, me gusta y comentarios. YouTube **omite** `likeCount` si el canal oculta los me gusta y `commentCount` si desactiva los comentarios: eso se guarda como **`null` y anotado en `unavailable_metrics`, nunca como 0**. Compartidos, guardados y alcance no existen en esa API y quedan anotados.
   - **Instagram** (Instagram Login): me gusta y comentarios de los campos básicos y visualizaciones, alcance, guardados y compartidos de los insights, **cada insight pedido por separado**: si uno no existe para ese tipo de publicación (carruseles, stories…) solo esa métrica queda `null`. **Sin verificar con una cuenta real** (nombres según la documentación de Meta).
-  - La **interacción** (me gusta + comentarios) ÷ visualizaciones se guarda solo si están los tres datos y hay visualizaciones; se etiqueta como cálculo de FEEDMA.
+  - La **interacción** (me gusta + comentarios) ÷ visualizaciones se guarda solo si están los tres datos y hay visualizaciones; se etiqueta como cálculo de CIBERAN.
 - **Cuándo se leen:** (1) **al vincular** la publicación (primera lectura; si falla, el vínculo queda guardado y se puede actualizar después); (2) **en cada sincronización de la cuenta**, para todas sus publicaciones vinculadas (YouTube en lotes de 50 vídeos por llamada, Instagram hasta 25 publicaciones por lectura), como efecto secundario que **nunca hace fallar la sincronización**; (3) con el botón **"Actualizar"** de la publicación (`POST /api/social/post-metrics-refresh`: solo el dueño, 10 por minuto, sin llamar al proveedor si la cuenta consta como caducada/revocada). Un contenido que el proveedor ya no devuelve (borrado o privado) se avisa y **no genera ninguna fila**; lo guardado se conserva.
-- **Panel de métricas** en la tarjeta de la publicación (`PostMetricsPanel`): solo las métricas que existen en esa plataforma (YouTube: 3; Instagram: 6); cada una con su valor o "—" **con el motivo** ("El canal oculta los me gusta de este vídeo", "Los comentarios están desactivados"…); variación frente a la medición anterior de otro día ("+200 desde el 29 oct", rotulada como cálculo de FEEDMA); "Medido el 30 oct · dato de YouTube"; estados sin métricas guardadas, error con Reconectar y contenido que falta.
+- **Panel de métricas** en la tarjeta de la publicación (`PostMetricsPanel`): solo las métricas que existen en esa plataforma (YouTube: 3; Instagram: 6); cada una con su valor o "—" **con el motivo** ("El canal oculta los me gusta de este vídeo", "Los comentarios están desactivados"…); variación frente a la medición anterior de otro día ("+200 desde el 29 oct", rotulada como cálculo de CIBERAN); "Medido el 30 oct · dato de YouTube"; estados sin métricas guardadas, error con Reconectar y contenido que falta.
 
 ### Verificado de verdad
 
@@ -483,7 +529,7 @@ Detalle completo, con evidencia y estado de cada punto: `docs/audit/07_CRITICAL_
   - **Idempotente:** `upsert` por (cuenta, día): repetirlo el mismo día actualiza la misma fila.
   - **Nunca 0 inventado:** un dato que el proveedor no da (suscriptores ocultos, visualizaciones en Instagram) se guarda `null`; un snapshot sin ningún dato no se escribe. Si el canal oculta los suscriptores, se guardan igualmente las visualizaciones y los vídeos antes de devolver el aviso de siempre.
   - **Efecto secundario seguro:** si guardar el snapshot falla, la sincronización **no falla** (se anota en el log y continúa).
-- **Panel "Histórico propio"** en el dashboard de YouTube (`YoutubeHistoryPanel`, lectura directa de la tabla con la sesión del usuario: la RLS solo deja ver las cuentas propias y el navegador no puede escribir). Suscriptores y visualizaciones totales a lo largo del tiempo, con la variación entre el primer y el último registro (cálculo de FEEDMA; % solo si el primer valor es > 0). Estados diseñados: cargando, error con Reintentar, **sin registros** ("empezamos a guardar tu histórico…"), **un solo registro** ("el histórico acaba de empezar", sin gráfica) y solo las métricas que tienen datos.
+- **Panel "Histórico propio"** en el dashboard de YouTube (`YoutubeHistoryPanel`, lectura directa de la tabla con la sesión del usuario: la RLS solo deja ver las cuentas propias y el navegador no puede escribir). Suscriptores y visualizaciones totales a lo largo del tiempo, con la variación entre el primer y el último registro (cálculo de CIBERAN; % solo si el primer valor es > 0). Estados diseñados: cargando, error con Reintentar, **sin registros** ("empezamos a guardar tu histórico…"), **un solo registro** ("el histórico acaba de empezar", sin gráfica) y solo las métricas que tienen datos.
 - **Gráfica** (`YoutubeEvolutionChart`): dos opciones nuevas, solo para este panel — `zeroBased=false` (el eje se ajusta al rango y **no hay área rellena**, porque un eje recortado con relleno exageraría el cambio; el panel lo dice) y `connectPoints` (cada día con registro es un punto y la línea solo los une; los días intermedios siguen sin dato y el tooltip lo dice). El resto de gráficas no cambia.
 - **Defecto de diseño que encontré al mirar la captura y corregí en la misma fase:** con el eje en 0, una subida de 12.100 a 12.408 se veía como una línea plana, y los huecos rompían la línea en trozos sueltos.
 
@@ -574,7 +620,7 @@ En A-R17a solo se había cambiado la página de cada red (`/creator/metrics/yout
 ### Qué se cambió
 
 - **Ancho completo** (`full-width` en esa página).
-- **Resumen grande arriba:** "Seguidores totales" con contador animado (A-R16f) y una **barra de reparto por red** con leyenda (red · cifra · %). Aclara que la suma es un cálculo de FEEDMA y que la cifra de cada red es dato de la red. Texto accesible del reparto escrito con palabras.
+- **Resumen grande arriba:** "Seguidores totales" con contador animado (A-R16f) y una **barra de reparto por red** con leyenda (red · cifra · %). Aclara que la suma es un cálculo de CIBERAN y que la cifra de cada red es dato de la red. Texto accesible del reparto escrito con palabras.
 - **Tarjeta grande por red conectada** (`PlatformStatCard`): handle, **estado** ("Conectada" / "Reconectar"), seguidores o suscriptores, parte del total, **"Actualizado hace…"** (o "Aún sin sincronizar") y acceso a sus estadísticas. Si la conexión ya no sirve, la tarjeta lo dice y presenta la cifra como **"último dato guardado"**; el resumen cuenta cuántas redes necesitan reconexión.
 - **Conexiones** (nuevo componente `MetricsConnections`, mismas acciones que antes): en pantallas muy anchas (≥ 1536 px) van **a la derecha** de "Tus redes"; en escritorio normal, tablet y móvil, debajo.
 - **Estado vacío** a ancho completo: mensaje, ejemplo claramente marcado "(ejemplo)" con números falsos y la lista de conexiones a su lado.
@@ -633,7 +679,7 @@ Datos **FICTICIOS** interceptados en mi script de navegador (cuentas demo sin ca
   - **Métricas (`/creator/metrics`) tiene ahora la sección "Conexiones"** con las seis redes, sus botones y todos los avisos (vuelta de OAuth correcta o con error, desconexión, sincronización).
   - "Redes" desaparece del menú lateral; los enlaces de Hoy, Perfil, el panel de YouTube, la tarjeta de red y las pantallas vacías apuntan a `/creator/metrics#conexiones`.
   - Los callbacks de YouTube e Instagram redirigen ahora a `/creator/metrics?…`; el enlace antiguo `/creator/socials` se conserva como **redirección a Métricas** (marcadores).
-- **Propuesta A-R17** (`docs/PROPUESTA_A-R17_METRICAS_FULL_WIDTH.md`), **solo auditoría y diseño, sin implementar**: qué existe ya de lo pedido (casi todo lo funcional lo cubre A-R16), qué limita el ancho (opción `fullWidth` de `AppShell` sin usar y `max-w-4xl` en cada bloque; no son contenedores compartidos), distribución de 12 columnas para escritorio/tablet/móvil, mejoras de usabilidad, qué funcionalidades son viables y cuáles dependen de datos reales o de esquema (impresiones/CTR por confirmar; histórico y métricas por publicación ligados a A-R8a/A-R7/A-R8b), fases A-R17a–f y su sitio en el pipeline (anotado en `PIPELINE_IMPLEMENTACION_FEEDMA_ALEX.md`).
+- **Propuesta A-R17** (`docs/PROPUESTA_A-R17_METRICAS_FULL_WIDTH.md`), **solo auditoría y diseño, sin implementar**: qué existe ya de lo pedido (casi todo lo funcional lo cubre A-R16), qué limita el ancho (opción `fullWidth` de `AppShell` sin usar y `max-w-4xl` en cada bloque; no son contenedores compartidos), distribución de 12 columnas para escritorio/tablet/móvil, mejoras de usabilidad, qué funcionalidades son viables y cuáles dependen de datos reales o de esquema (impresiones/CTR por confirmar; histórico y métricas por publicación ligados a A-R8a/A-R7/A-R8b), fases A-R17a–f y su sitio en el pipeline (anotado en `PIPELINE_IMPLEMENTACION_CIBERAN_ALEX.md`).
 
 ### Verificado de verdad
 
@@ -643,7 +689,7 @@ Datos **FICTICIOS** interceptados en mi script de navegador (cuentas demo sin ca
 ### Sin verificar
 
 - **No he probado conectar ni desconectar una cuenta REAL** (el flujo de OAuth completo con tu cuenta): el código de la lógica es el mismo que había, pero la vuelta real desde Google/Instagram a la nueva URL (`/creator/metrics?…`) la ves tú en tu próxima conexión.
-- Si tienes la URL de retorno de Meta/Google registrada con `/creator/socials`: no hace falta cambiarla (los redirect URI de OAuth apuntan a `/api/auth/.../callback`, no a la página); solo cambia a dónde te devuelve FEEDMA después.
+- Si tienes la URL de retorno de Meta/Google registrada con `/creator/socials`: no hace falta cambiarla (los redirect URI de OAuth apuntan a `/api/auth/.../callback`, no a la página); solo cambia a dónde te devuelve CIBERAN después.
 - `CONTEXT.md` (auditoría histórica del 2026-10-2x) sigue nombrando la página Redes porque es un registro de lo que había entonces.
 - A-R17 es una propuesta: **no se ha cambiado el ancho ni el diseño de Métricas todavía.**
 
@@ -710,7 +756,7 @@ Las cuentas demo no tienen canal. **Todos los datos son FICTICIOS** (títulos co
 ### Sin verificar
 
 - **Con el canal real:** que Analytics acepte `filters=video==ID` con estas métricas (se pidió **sin `subscribersLost`** por no estar confirmado en informes de un solo vídeo; por eso no hay "suscriptores netos" en el detalle). Si Google rechaza alguna otra métrica, el detalle fallará con el mensaje y Reintentar, sin afectar al resto.
-- La **mediana de "lo habitual"** solo cubre vídeos con actividad en el periodo (no los que no tuvieron vistas) y un canal con pocos vídeos no tendrá esa fila. "Lo habitual" es un criterio de FEEDMA, no una cifra de YouTube.
+- La **mediana de "lo habitual"** solo cubre vídeos con actividad en el periodo (no los que no tuvieron vistas) y un canal con pocos vídeos no tendrá esa fila. "Lo habitual" es un criterio de CIBERAN, no una cifra de YouTube.
 - Cuota: el detalle son 5 llamadas por apertura (canal, vídeo y 3 informes), solo bajo demanda y con caché; sin medir.
 - Lectura de pantalla y táctil real: no probados.
 - **A-R16e (histórico propio con snapshots) no se hace:** exige una tabla nueva en Supabase (propuesta M3) y tu aprobación/coordinación con Mario antes de cualquier migración.
@@ -759,7 +805,7 @@ Las cuentas demo no tienen canal. **Todos los datos de vídeos y de rendimiento 
 
 - **Endpoint nuevo `GET /api/social/youtube-videos[?pageToken=…]`:** vídeos subidos del canal **de 24 en 24** (antes solo 8), con `nextPageToken` y el total. El `pageToken` que llega del navegador se valida (solo caracteres de un token real, máximo 200) antes de usarlo en la URL de Google. Mismo patrón de seguridad que el resto: solo datos del propio usuario, tokens solo en servidor, sin llamar a Google si la cuenta ya consta como caducada/revocada, errores clasificados y guardados.
 - **Corrige el fallo "ausente = 0":** hasta ahora `Number(likeCount ?? 0)` convertía en 0 un me gusta oculto o un comentario desactivado (la API omite el campo). Ahora son `null` y se muestran como "—" con su motivo ("El canal oculta los me gusta de este vídeo" / "Los comentarios están desactivados en este vídeo"). Los ceros reales siguen siendo 0. Una duración inexistente ya no sale como 0:00 (es `null` y no se pinta la insignia).
-- **Panel de vídeos** (`YoutubeVideosPanel`): miniatura, duración, fecha relativa, visualizaciones, me gusta, comentarios e **interacción** = (me gusta + comentarios) ÷ visualizaciones (cálculo de FEEDMA, rotulado como tal; no se calcula si falta cualquiera de los datos). **Búsqueda** por título sin distinguir tildes ni mayúsculas, **orden** (más recientes / más vistos / mayor interacción) y **filtro por fecha de publicación** (30 / 90 días / último año). Los vídeos sin el dato por el que se ordena van **al final**, no se tratan como 0. El contador es honesto ("Mostrando 6 de los 6 vídeos cargados (8 en total)") porque búsqueda y orden solo ven los vídeos cargados. Botón "Cargar más vídeos".
+- **Panel de vídeos** (`YoutubeVideosPanel`): miniatura, duración, fecha relativa, visualizaciones, me gusta, comentarios e **interacción** = (me gusta + comentarios) ÷ visualizaciones (cálculo de CIBERAN, rotulado como tal; no se calcula si falta cualquiera de los datos). **Búsqueda** por título sin distinguir tildes ni mayúsculas, **orden** (más recientes / más vistos / mayor interacción) y **filtro por fecha de publicación** (30 / 90 días / último año). Los vídeos sin el dato por el que se ordena van **al final**, no se tratan como 0. El contador es honesto ("Mostrando 6 de los 6 vídeos cargados (8 en total)") porque búsqueda y orden solo ven los vídeos cargados. Botón "Cargar más vídeos".
 - Estados: cargando (skeletons), sin vídeos, filtros sin resultado (con "Quitar filtros"), reconectar, fallo pasajero con Reintentar y **fallo al cargar más** (aviso en línea; los ya cargados se conservan y Reintentar pide solo esa página).
 - **Servidor:** `youtube-channel-stats` ya no pide los vídeos (**dos llamadas menos por visita**); se retiran `recentVideos`, `fetchRecentUploadIds` y la sección antigua de la página. `Actualizar` recarga también los vídeos. Sin dependencias nuevas.
 
@@ -797,7 +843,7 @@ Las cuentas demo no tienen canal. **Todos los datos de vídeos son FICTICIOS** (
 - **Gráfica nueva** (`YoutubeEvolutionChart`, SVG propio): eje Y con valores, periodo anterior en discontinuo alineado día a día, **huecos reales donde YouTube no da dato** (la línea y el área se cortan; la leyenda dice "N días sin dato… no se rellenan con ceros"), tooltip con fecha y valor de los dos periodos, teclado (←/→/Esc) con región `aria-live`, y **se dibuja al ancho real del contenedor** (no se encoge un lienzo fijo). Pestañas Vistas / Suscriptores / Tiempo (`YoutubeEvolutionPanel`).
 - `useYoutubeAnalytics` (composable): caché por periodo en memoria (volver a un periodo ya visto **no llama a Google**), cancela la petición anterior al cambiar (una respuesta lenta no pisa a la nueva), y si el periodo pedido no es válido para el canal pasa solo al mayor que sí lo es.
 - `YoutubeDashboard` reescrito: orquesta todo; un fallo de las analíticas **no esconde los totales del canal**; sin permiso -> aviso + Reconectar; fallo pasajero -> "no hace falta reconectar" + Reintentar; canal demasiado reciente -> mensaje propio; no se piden analíticas si la cuenta ya consta como caducada/revocada.
-- **Servidor:** `youtube-channel-stats` ya no pide la evolución a Google (la da `youtube-analytics`): **una llamada menos por visita**; se retiran `evolution`/`evolutionIssue` y la función antigua `fetchYoutubeAnalytics`. **Se retira la "proyección a 30 días"** de la pantalla antigua (era una extrapolación de FEEDMA presentada como dato; si se quiere volver a ofrecer irá rotulada como estimación).
+- **Servidor:** `youtube-channel-stats` ya no pide la evolución a Google (la da `youtube-analytics`): **una llamada menos por visita**; se retiran `evolution`/`evolutionIssue` y la función antigua `fetchYoutubeAnalytics`. **Se retira la "proyección a 30 días"** de la pantalla antigua (era una extrapolación de CIBERAN presentada como dato; si se quiere volver a ofrecer irá rotulada como estimación).
 - Sin dependencias nuevas (`@vueuse/core` ya estaba).
 
 ### Verificado de verdad
@@ -833,7 +879,7 @@ Mi selector `svg[role=img]` también coincidía con los iconos (7 falsos fallos)
 - **Componentes nuevos** (`app/components/youtube/`): `YoutubeDashboard` (orquesta, presentacional), `YoutubeChannelHeader`, `YoutubeStateBanner`, `YoutubeKpiCard`; y `ui/SkeletonBlock` (no existía ningún skeleton). Lógica pura en `app/utils/youtube-kpi.ts`.
 - **Cabecera:** avatar, nombre, estado de la conexión (Conectada / Conectada · analíticas no disponibles / Necesita reconexión / Error), "actualizado hace…" (solo si hay una sincronización correcta registrada: no se inventa una hora), "miembro desde", "Ver en YouTube" (enlace al canal, pestaña nueva con `noopener`), "Gestionar conexión" y botón Actualizar. El estado sale de lo que guarda el servidor, no de que exista una fila.
 - **Banner de estado** con su acción: reconectar (caducado/revocado/sin permiso), fallo pasajero ("no hace falta reconectar"), analíticas sin permiso y analíticas con fallo temporal (los totales del canal se siguen viendo).
-- **Totales del canal:** Suscriptores como tarjeta protagonista, más visualizaciones totales, vídeos publicados y media de vistas por vídeo. **Cada tarjeta indica su origen** ("Dato de YouTube" o "Cálculo de FEEDMA"), para no presentar un cálculo nuestro como cifra oficial. Suscriptores ocultos por el canal y media sin vídeos se muestran como "—" **con su motivo, nunca como 0**.
+- **Totales del canal:** Suscriptores como tarjeta protagonista, más visualizaciones totales, vídeos publicados y media de vistas por vídeo. **Cada tarjeta indica su origen** ("Dato de YouTube" o "Cálculo de CIBERAN"), para no presentar un cálculo nuestro como cifra oficial. Suscriptores ocultos por el canal y media sin vídeos se muestran como "—" **con su motivo, nunca como 0**.
 - **Carga:** skeletons con la forma exacta de lo que llega (sin saltos de maquetación); al recargar con datos ya cargados se conserva el contenido.
 - `GET /api/social/youtube-channel-stats` devuelve ahora `channelId` (para el enlace).
 - **Sin regresión:** la evolución de 28 días y los vídeos recientes que ya existían se conservan tal cual, dentro del hueco (slot) del dashboard, hasta que las fases siguientes los sustituyan. Sin dependencias nuevas.
@@ -843,7 +889,7 @@ Mi selector `svg[role=img]` también coincidía con los iconos (7 falsos fallos)
 - `youtube-kpi.spec.ts` (9 tests, reglas de "no mostrar 0 cuando no se sabe"). Suite completa **258/258**, `npx vue-tsc --noEmit` limpio, `npm run build` completado (en una copia temporal con git worktree, para no tumbar el servidor de desarrollo; la copia se eliminó y `node_modules` quedó intacto).
 - **Navegador real (Chrome por CDP), 17 comprobaciones OK** y capturas revisadas a ojo:
   - carga con skeletons y paso al contenido; cabecera, enlaces y atributos del enlace externo;
-  - 4 tarjetas con su origen (3 de YouTube y 1 cálculo de FEEDMA); sin banner con datos normales;
+  - 4 tarjetas con su origen (3 de YouTube y 1 cálculo de CIBERAN); sin banner con datos normales;
   - lo que ya existía sigue ahí; sin desbordamiento horizontal a 1280 y a 390 px;
   - analíticas sin permiso (banner + Reconectar + totales visibles) y con fallo temporal (dice que no hace falta reconectar);
   - suscriptores ocultos y canal sin vídeos ("—" con motivo);
@@ -1013,15 +1059,15 @@ Antes, "desconectar" solo borraba la fila desde el navegador: el permiso seguía
 
 - Tests unitarios nuevos `token-revoke.spec.ts` (12) + caso nuevo en `social-api-error.spec.ts`. Suite completa, `npx vue-tsc --noEmit` limpio (resultados abajo).
 - **Navegador real (Chrome por CDP) en el servidor de desarrollo de Alex, con tokens falsos en la cuenta demo (creadas y borradas) y llamada REAL a Google:**
-  - el diálogo de YouTube avisa de que se revocará el acceso en Google; el de Instagram, de que FEEDMA no puede retirarlo allí;
+  - el diálogo de YouTube avisa de que se revocará el acceso en Google; el de Instagram, de que CIBERAN no puede retirarlo allí;
   - Google respondió **`400 invalid_token`** a la revocación del token falso (confirma el código de error que la documentación consultada no nombraba) y el aviso fue "YouTube desconectado. El acceso ya no era válido en Google.";
-  - Instagram: "Instagram desconectado de FEEDMA. FEEDMA no puede retirar el acceso en Instagram…";
+  - Instagram: "Instagram desconectado de CIBERAN. CIBERAN no puede retirar el acceso en Instagram…";
   - las filas desaparecieron de la BD (0 restantes; 16 filas en total, como antes). Sin errores de consola.
 - Documentación de Google consultada: `POST https://oauth2.googleapis.com/revoke`, parámetro `token` (access o refresh), 200 si se revoca, 400 con código de error si no; la revocación quita los permisos concedidos al proyecto.
 
 ### Sin verificar / pendiente
 
-- **Revocación real con un token válido (200):** necesita un canal real. Prueba manual para Alex: desconectar YouTube en Redes (debe decir "acceso revocado en Google"), comprobar que FEEDMA ya no aparece en myaccount.google.com/permissions y volver a conectar.
+- **Revocación real con un token válido (200):** necesita un canal real. Prueba manual para Alex: desconectar YouTube en Redes (debe decir "acceso revocado en Google"), comprobar que CIBERAN ya no aparece en myaccount.google.com/permissions y volver a conectar.
 - **Rama `unconfirmed`:** solo cubierta por tests unitarios con respuestas simuladas; no se ha provocado un fallo real de Google ni de red en el servidor. El segundo diálogo ("Desconectar igualmente") no se ha visto en navegador.
 - **`npm run build` NO ejecutado** en esta entrada: el servidor de desarrollo de Alex estaba en marcha y el build lo tumba (comparten carpeta). Pendiente de lanzarlo con el servidor parado.
 - El navegador **aún puede borrar su propia fila** (A-R11 mantuvo el permiso de borrado). Para que la desconexión pase siempre por el servidor habría que retirar ese permiso: es otro cambio de permisos de BD, **sin hacer, necesita aprobación**.
@@ -1194,13 +1240,13 @@ Cada inicio de sesión de las pruebas generó una notificación "Has iniciado se
 Solo documentación; **sin código, esquema ni permisos**:
 - `docs/REQUISITO_A-R16_DASHBOARD_YOUTUBE.md` (nuevo): encaje en el pipeline (A-R16a–f), auditoría de lo que existe frente al requisito, catálogo de métricas viables, qué depende de qué y riesgos.
 - `docs/PROPUESTA_ESQUEMA_A-R2_A-R7_A-R8.md`: `social_account_snapshots` guarda ahora también `views_total` y `videos_count` (nulables) y `followers_count` pasa a nulable.
-- `PIPELINE_IMPLEMENTACION_FEEDMA_ALEX.md`: nota sobre A-R16 en el anexo.
+- `PIPELINE_IMPLEMENTACION_CIBERAN_ALEX.md`: nota sobre A-R16 en el anexo.
 
 ### Hallazgos (de leer el código y la documentación de YouTube)
 
 - Los periodos de 7, 28, 90 y 365 días y la comparación con el periodo anterior se pueden pedir **en vivo** a la YouTube Analytics API (conserva el histórico por fecha): **no requieren migración**. Solo el histórico de acumulados (suscriptores/vistas totales por día) necesita almacenamiento propio.
 - Hoy un `likeCount`/`commentCount` ausente (likes ocultos, comentarios desactivados) se muestra como **0** (`?? 0` en `youtube-channel-stats.get.ts`): contradice el principio del requisito de no tratar lo desconocido como cero. Sin corregir todavía.
-- La proyección a 30 días de la pantalla actual es una extrapolación de FEEDMA, no un dato de YouTube; debe etiquetarse como estimación o retirarse.
+- La proyección a 30 días de la pantalla actual es una extrapolación de CIBERAN, no un dato de YouTube; debe etiquetarse como estimación o retirarse.
 - Impresiones y CTR de miniaturas **no figuran** en la documentación de métricas consultada: no se prometen.
 
 ### Verificado de verdad
@@ -1525,7 +1571,7 @@ Métricas y Redes ya usan el mismo criterio de tres estados (`socialAccountState
 
 ### #13 — Créditos de predicción explicados
 
-`creator/profile.vue`, pestaña Cuenta: bajo el saldo, una frase con las cifras reales del sistema (`grant_welcome_credits()` en la base de datos, `stripe-plans.ts` en el servidor): "Cada predicción gasta 1 crédito. Recibiste 3 gratis al crear tu cuenta; con FEEDMA Pro (19,99 €/mes) se renuevan 20 más cada mes."
+`creator/profile.vue`, pestaña Cuenta: bajo el saldo, una frase con las cifras reales del sistema (`grant_welcome_credits()` en la base de datos, `stripe-plans.ts` en el servidor): "Cada predicción gasta 1 crédito. Recibiste 3 gratis al crear tu cuenta; con CIBERAN Pro (19,99 €/mes) se renuevan 20 más cada mes."
 
 ### #14 — Barra de ficha con detalle de lo que falta
 
@@ -1549,19 +1595,19 @@ Nuevo `app/utils/auth-errors.ts` (`translateAuthError`), centraliza la traducci�
 
 ### #20 — Página de error propia
 
-`app/error.vue` nuevo — antes cualquier ruta sin capturar caía en el 404 por defecto de Nuxt (inglés, estética distinta al resto de la app). Cubre tanto 404 como otros códigos de error, con el wordmark FEEDMA y "Volver al inicio" (`clearError({ redirect: '/' })`). **Nota real sobre su alcance**: una ruta inventada visitada sin sesión iniciada nunca llega a mostrar esta pantalla — el middleware de autenticación redirige antes a `/login` (comportamiento ya existente, no tocado). Donde sí se dispara siempre, verificado de verdad: cualquier `createError({statusCode: 404, ...})` ya existente en el código (publicación/perfil/conversación no encontrada) y cualquier ruta rota dentro del área ya autenticada.
+`app/error.vue` nuevo — antes cualquier ruta sin capturar caía en el 404 por defecto de Nuxt (inglés, estética distinta al resto de la app). Cubre tanto 404 como otros códigos de error, con el wordmark CIBERAN y "Volver al inicio" (`clearError({ redirect: '/' })`). **Nota real sobre su alcance**: una ruta inventada visitada sin sesión iniciada nunca llega a mostrar esta pantalla — el middleware de autenticación redirige antes a `/login` (comportamiento ya existente, no tocado). Donde sí se dispara siempre, verificado de verdad: cualquier `createError({statusCode: 404, ...})` ya existente en el código (publicación/perfil/conversación no encontrada) y cualquier ruta rota dentro del área ya autenticada.
 
 ### #21 — Landing: nombre corregido, línea decorativa menos intrusiva, captura real del panel
 
 - "Instalaciones" → "Integraciones" en nav, pie de página y la propia página (`/instalaciones`, la URL no cambia) — el contenido real de esa página es conectar redes sociales, no instalaciones; "Instalaciones" era, literalmente, la palabra equivocada.
 - Línea decorativa punteada del hero principal: opacidad de 0.55 a 0.2 (`LandingHero.vue`). La de la página de Integraciones: de 20% a 10% (`InstallHero.vue`).
-- El mockup de móvil de "Llévate FEEDMA contigo" mostraba una cuadrícula de iconos genérica, no el producto — ahora muestra una captura real de la pantalla "Hoy" del creador (`public/img/panel-preview.png`, generada contra la cuenta demo y verificada visualmente antes de usarla).
+- El mockup de móvil de "Llévate CIBERAN contigo" mostraba una cuadrícula de iconos genérica, no el producto — ahora muestra una captura real de la pantalla "Hoy" del creador (`public/img/panel-preview.png`, generada contra la cuenta demo y verificada visualmente antes de usarla).
 
 ### Verificado de verdad
 
 - `npx vue-tsc --noEmit`: limpio. `npm test -- --run`: 30/30. `npm run build`: limpio.
 - Recorrido completo en navegador real (Playwright, instalado y desinstalado al terminar — mismo criterio que entradas anteriores) de los 9 cambios de arriba, con capturas revisadas una a una: landing, Integraciones, 404 (anónimo y logueado), Métricas vacío, ficha de creador y partner con el desglose, créditos, chat en móvil (antes y después del arreglo), y el aviso de precio vacío en la oferta.
-- Dos fallos reales encontrados solo por verificar en navegador, ninguno visible en tipos/tests: el campo de chat tapado (#16, arriba) y el wordmark "FEEDMA" de `error.vue` en blanco sobre fondo claro (`--color-ink` es un tono casi blanco, `#fbfaff` — no oscuro; confundido con el panel de marca de `login.vue`, que sí es oscuro pero por un degradado explícito aparte, no por `--color-ink`). Corregido a `text-[var(--color-text)]`.
+- Dos fallos reales encontrados solo por verificar en navegador, ninguno visible en tipos/tests: el campo de chat tapado (#16, arriba) y el wordmark "CIBERAN" de `error.vue` en blanco sobre fondo claro (`--color-ink` es un tono casi blanco, `#fbfaff` — no oscuro; confundido con el panel de marca de `login.vue`, que sí es oscuro pero por un degradado explícito aparte, no por `--color-ink`). Corregido a `text-[var(--color-text)]`.
 - Un "error" que no lo era: durante la edición de `InstallGuide.vue`, Vite en caliente (HMR) se quedó con una referencia a un bloque `<style>` ya borrado y lanzaba `CssSyntaxError` en consola — un `npm run build` limpio y un reinicio del servidor de desarrollo confirmaron que no era un fallo real, solo caché de HMR desactualizada.
 
 ### Sin verificar
@@ -1572,13 +1618,13 @@ Nuevo `app/utils/auth-errors.ts` (`translateAuthError`), centraliza la traducci�
 
 ### Con esto, la Fase 5 de `CONTEXT.md` queda cerrada — el plan original (Fases 0 a 5) está completo
 
-Quedan del roadmap (`docs/CONTEXTO_PROYECTO_FEEDMA.md` §7): probar un pago real (modo test) de los dos flujos de Stripe — pendiente a propósito, pedido explícitamente para después de esta fase — y la Fase 2 de la conversación actual (onboarding guiado), todavía sin empezar a petición expresa del usuario.
+Quedan del roadmap (`docs/CONTEXTO_PROYECTO_CIBERAN.md` §7): probar un pago real (modo test) de los dos flujos de Stripe — pendiente a propósito, pedido explícitamente para después de esta fase — y la Fase 2 de la conversación actual (onboarding guiado), todavía sin empezar a petición expresa del usuario.
 
 ---
 
 ## 2026-10-24 (53) — Dos decisiones pendientes del roadmap: datos ambiguos borrados (con confirmación) y definición de "activa"/"pendiente" cerrada
 
-Antes de seguir con la Fase 5, se resolvieron dos de los pendientes "críticos" del roadmap (`docs/CONTEXTO_PROYECTO_FEEDMA.md` §7.1), ambos con confirmación explícita del usuario antes de actuar.
+Antes de seguir con la Fase 5, se resolvieron dos de los pendientes "críticos" del roadmap (`docs/CONTEXTO_PROYECTO_CIBERAN.md` §7.1), ambos con confirmación explícita del usuario antes de actuar.
 
 ### Borrado el grupo ambiguo de colaboraciones de prueba
 
@@ -1649,7 +1695,7 @@ Las 8 capturas eran legibles salvo dos con parte de la transición de apertura d
 
 ### Nota aparte, sin relación con esta tarea
 
-Al buscar datos de demo para el recorrido, apareció una colaboración real en la base de datos con el brief literal `"nigga"` (id visible en los logs de esta sesión, no repetido aquí). No se tocó — es exactamente el tipo de dato ambiguo que el usuario ya pidió no borrar sin confirmar antes (ver `docs/CONTEXTO_PROYECTO_FEEDMA.md` §4.3) — pero se deja constancia explícita por si se quiere revisar o borrar con un criterio claro.
+Al buscar datos de demo para el recorrido, apareció una colaboración real en la base de datos con el brief literal `"nigga"` (id visible en los logs de esta sesión, no repetido aquí). No se tocó — es exactamente el tipo de dato ambiguo que el usuario ya pidió no borrar sin confirmar antes (ver `docs/CONTEXTO_PROYECTO_CIBERAN.md` §4.3) — pero se deja constancia explícita por si se quiere revisar o borrar con un criterio claro.
 
 ---
 
@@ -1858,13 +1904,13 @@ Cierra la Fase 3. Pregunta abierta 1 de `CONTEXT.md` resuelta con el usuario: So
 
 ### Lo que había que entender antes de tocar nada
 
-`font-display` (clase de Tailwind generada desde la variable `--font-display`) no se usaba solo en `<h1>`/`<h2>` — son 44 sitios en 31 archivos: títulos de página, pero también precios, números de estadística, títulos de tarjeta, de diálogo, y **el propio wordmark "FEEDMA"** en 6 sitios (hero de la landing, login, footer, nav, SideRail, onboarding). Si se cambiaba solo la variable, el logotipo literal "FEEDMA" también habría cambiado de Snasm a Sora — justo lo contrario de la decisión cerrada del informe ("Snasm solo para el logo").
+`font-display` (clase de Tailwind generada desde la variable `--font-display`) no se usaba solo en `<h1>`/`<h2>` — son 44 sitios en 31 archivos: títulos de página, pero también precios, números de estadística, títulos de tarjeta, de diálogo, y **el propio wordmark "CIBERAN"** en 6 sitios (hero de la landing, login, footer, nav, SideRail, onboarding). Si se cambiaba solo la variable, el logotipo literal "CIBERAN" también habría cambiado de Snasm a Sora — justo lo contrario de la decisión cerrada del informe ("Snasm solo para el logo").
 
 ### Arreglado
 
 - **`nuxt.config.ts`**: añadida la familia `Sora` (google, pesos 400/500/600/700) junto a Hanken Grotesk y Snasm.
 - **`main.css`**: nueva variable `--font-brand` (= lo que antes era `--font-display`: Snasm) para el logotipo; `--font-display` pasa a apuntar a Sora. Tailwind v4 genera la clase `font-brand` sola, a partir del nombre de la variable — sin tocar ningún config de JS.
-- Los 6 sitios donde "FEEDMA" se renderiza como texto (no la imagen del logo) cambian su clase de `font-display` a `font-brand`, para seguir en Snasm: `LandingHero.vue` (hero), `login.vue` (panel de marca), `LandingFooter.vue`, `LandingNav.vue`, `SideRail.vue`, `onboarding.vue`.
+- Los 6 sitios donde "CIBERAN" se renderiza como texto (no la imagen del logo) cambian su clase de `font-display` a `font-brand`, para seguir en Snasm: `LandingHero.vue` (hero), `login.vue` (panel de marca), `LandingFooter.vue`, `LandingNav.vue`, `SideRail.vue`, `onboarding.vue`.
 - Los otros 38 usos de `font-display` (títulos de página, precios, estadísticas, diálogos...) no se tocan — heredan Sora automáticamente al cambiar la variable, sin editar esos archivos uno a uno.
 
 ### Verificado de verdad, de principio a fin
@@ -2028,7 +2074,7 @@ Siguiente pieza del plan de `CONTEXT.md`, la única de la Fase 1 que no dependí
 
 ### Lo encontrado
 
-`login.vue` ya ocultaba el botón de acceso demo en producción con `v-if="isDev"` (protección ya existente). Pero `demoAccounts`/`demoPassword` se definían sin ninguna condición en el `<script setup>` — confirmado leyendo el bundle real tras `npm run build`: el email (`feedma.test`) y la contraseña de demo estaban en texto plano en el JS de cliente que se sirve a cualquiera, aunque el botón nunca se renderizara.
+`login.vue` ya ocultaba el botón de acceso demo en producción con `v-if="isDev"` (protección ya existente). Pero `demoAccounts`/`demoPassword` se definían sin ninguna condición en el `<script setup>` — confirmado leyendo el bundle real tras `npm run build`: el email (`ciberan.test`) y la contraseña de demo estaban en texto plano en el JS de cliente que se sirve a cualquiera, aunque el botón nunca se renderizara.
 
 ### Arreglado
 
@@ -2037,7 +2083,7 @@ Las asignaciones se movieron dentro de `if (import.meta.dev) { ... }`. Vite sust
 ### Verificado de verdad
 
 - `npx vue-tsc --noEmit` y `npm test -- --run` (30/30): limpios.
-- Build de producción limpio desde cero (`rm -rf .output && npm run build`) y confirmado por `grep` que ni la contraseña de demo ni `feedma.test` aparecen en ningún archivo de `.output/public` ni `.output/server`.
+- Build de producción limpio desde cero (`rm -rf .output && npm run build`) y confirmado por `grep` que ni la contraseña de demo ni `ciberan.test` aparecen en ningún archivo de `.output/public` ni `.output/server`.
 - Sin verificar en vivo en modo desarrollo (el servidor de `npm run dev` no estaba corriendo en este momento) — el comportamiento en dev no cambia de todas formas, ya que `import.meta.dev` sigue siendo `true` ahí.
 
 ## 2026-10-23 (35) — Fase 0 del traspaso CONTEXT.md: commit del backlog, rama nueva, dos bugs verificados y corregidos
@@ -2152,7 +2198,7 @@ Fase 2 (reorganizar el detalle de una colaboración en dos niveles con pestañas
 
 ## 2026-10-23 (31) — Brief estructurado + calendario compartido (coherencia visual, cero componentes nuevos)
 
-Cierra los dos últimos huecos de Fase C. Instrucción explícita del usuario: priorizar la cohesión visual de FEEDMA sobre todo — reutilizar lo que ya existe, no crear nada que parezca de otra aplicación. Auditoría previa: no existe ningún calendario-cuadrícula en FEEDMA — la única vista "por fecha" es `WeekBoard.vue`+`DeliverableCard.vue`, y la propia app **ya la llama "Tu calendario"** en el dashboard del partner. El creador no tenía esa vista (solo su Kanban, que el roadmap pide no duplicar), y ninguna de las dos estaba acotada a una colaboración concreta.
+Cierra los dos últimos huecos de Fase C. Instrucción explícita del usuario: priorizar la cohesión visual de CIBERAN sobre todo — reutilizar lo que ya existe, no crear nada que parezca de otra aplicación. Auditoría previa: no existe ningún calendario-cuadrícula en CIBERAN — la única vista "por fecha" es `WeekBoard.vue`+`DeliverableCard.vue`, y la propia app **ya la llama "Tu calendario"** en el dashboard del partner. El creador no tenía esa vista (solo su Kanban, que el roadmap pide no duplicar), y ninguna de las dos estaba acotada a una colaboración concreta.
 
 ### Qué se construyó
 
@@ -2236,9 +2282,9 @@ Siguiente hueco concreto de Fase C. El roadmap pide explícitamente "condiciones
 
 - La interacción real en navegador: abrir "Condiciones (opcional)" en el formulario de contacto, rellenarla, y ver el bloque `CollaborationTermsCard` pintado de verdad en el detalle — no hay herramienta de navegador en esta sesión.
 
-## 2026-10-23 (27) — Revisiones con comentarios reales (primer corte de Fase C / "FEEDMA Studio")
+## 2026-10-23 (27) — Revisiones con comentarios reales (primer corte de Fase C / "CIBERAN Studio")
 
-Siguiente fase del roadmap tras Fase B. En vez de abordar todo "FEEDMA Studio" de golpe (el propio roadmap pide no construir un gestor de proyectos complejo), se auditó el código real y se encontró el hueco más concreto y demostrable: **"Pedir cambios" en una publicación no capturaba ningún motivo** — `request_post_changes()` solo movía el estado, sin texto ni historial; el creador se encontraba su publicación devuelta sin ninguna pista de qué cambiar.
+Siguiente fase del roadmap tras Fase B. En vez de abordar todo "CIBERAN Studio" de golpe (el propio roadmap pide no construir un gestor de proyectos complejo), se auditó el código real y se encontró el hueco más concreto y demostrable: **"Pedir cambios" en una publicación no capturaba ningún motivo** — `request_post_changes()` solo movía el estado, sin texto ni historial; el creador se encontraba su publicación devuelta sin ninguna pista de qué cambiar.
 
 ### Qué se construyó
 
@@ -2385,9 +2431,9 @@ Siguiente incremento tras las valoraciones: el roadmap señala "guardado de favo
 - **Probado contra el servidor de desarrollo real con sesión real** (mismo mecanismo de cookie SSR a mano que en la entrada anterior, sin herramienta de navegador disponible en esta sesión): `/favorites`, `/creator/discover`, `/partner/discover` responden `200`, sin ningún "does not exist" ni error 500 filtrado al HTML aunque la migración todavía no estaba aplicada (el composable degrada con un `console.error` en vez de romper la página) — confirma que desplegar el código antes de aplicar la migración no rompe nada, aunque los favoritos no funcionen todavía hasta aplicarla. El enlace "Guardados" y el estado vacío de `/favorites` aparecen en el HTML real.
 - **Sin aplicar la migración al proyecto real** y **sin probar el camino feliz en navegador con interacción de verdad** (guardar desde una card, verlo aparecer en `/favorites`, quitarlo) — pendiente de que alguien del equipo la aplique y lo recorra a mano, igual que con las valoraciones.
 
-## 2026-10-23 (21) — Auditoría contra `FEEDMA_PRODUCT_ROADMAP.md` + MVP de valoraciones y reputación
+## 2026-10-23 (21) — Auditoría contra `CIBERAN_PRODUCT_ROADMAP.md` + MVP de valoraciones y reputación
 
-Sesión pedida para contrastar el roadmap de producto (`FEEDMA_PRODUCT_ROADMAP.md`, nuevo en el repo) con el estado real del código, priorizar lo que falta y construir la primera mejora de alto impacto. Dos cosas antes de empezar, para que quede constancia:
+Sesión pedida para contrastar el roadmap de producto (`CIBERAN_PRODUCT_ROADMAP.md`, nuevo en el repo) con el estado real del código, priorizar lo que falta y construir la primera mejora de alto impacto. Dos cosas antes de empezar, para que quede constancia:
 
 ### Nota: el commit `9928bd2` ("Mejoras de seguridad, test, prueba de negociación de paquetes, animación.") no tenía entrada aquí
 
@@ -2395,9 +2441,9 @@ Ese commit (de una sesión anterior, no documentada en este changelog) ya estaba
 
 ### Diagnóstico frente al roadmap
 
-Ya resuelto o en buen estado: seguridad/integridad de pagos (Fase A), rate-limit de login de admin (documentado como limitado a un solo proceso, no resuelto del todo), tablero con etiquetas/checklist/WIP, objetivo semanal real. Sin empezar todavía: reputación/confianza (Fase B, hasta esta sesión), FEEDMA Studio (brief/entregables/revisiones por colaboración, Fase C), favoritos/comparación de perfiles, campañas abiertas, repetir colaboración, analítica de activación/retención, paginación del listado de usuarios de admin (deliberadamente aplazada, documentado en el propio endpoint como aceptable para un equipo pequeño).
+Ya resuelto o en buen estado: seguridad/integridad de pagos (Fase A), rate-limit de login de admin (documentado como limitado a un solo proceso, no resuelto del todo), tablero con etiquetas/checklist/WIP, objetivo semanal real. Sin empezar todavía: reputación/confianza (Fase B, hasta esta sesión), CIBERAN Studio (brief/entregables/revisiones por colaboración, Fase C), favoritos/comparación de perfiles, campañas abiertas, repetir colaboración, analítica de activación/retención, paginación del listado de usuarios de admin (deliberadamente aplazada, documentado en el propio endpoint como aceptable para un equipo pequeño).
 
-Prioridad elegida para el primer incremento: **reputación vinculada a colaboraciones completadas** — es lo más desbloqueado justo ahora (`mark_collaboration_completed`, de la sesión anterior, es la primera señal fiable de "esto se completó de verdad" sobre la que anclar una valoración sin arriesgarse a reseñas sin colaboración real detrás) y es la pieza que el propio roadmap señala como base de confianza antes de construir nada más grande (FEEDMA Studio, campañas).
+Prioridad elegida para el primer incremento: **reputación vinculada a colaboraciones completadas** — es lo más desbloqueado justo ahora (`mark_collaboration_completed`, de la sesión anterior, es la primera señal fiable de "esto se completó de verdad" sobre la que anclar una valoración sin arriesgarse a reseñas sin colaboración real detrás) y es la pieza que el propio roadmap señala como base de confianza antes de construir nada más grande (CIBERAN Studio, campañas).
 
 ### Qué se construyó — valoraciones mutuas (MVP, sección 4 del roadmap)
 
@@ -2415,7 +2461,7 @@ Prioridad elegida para el primer incremento: **reputación vinculada a colaborac
 
 - Sin flujo de reportar una valoración abusiva ni de resolución de conflictos — el roadmap pide evaluarlo, no construirlo ya; la mitigación de esta primera versión es solo "una por colaboración real, inmutable".
 - Sin lista de comentarios recientes en el perfil público, solo el agregado (media + recuento) — si hace falta mostrar los comentarios de verdad, es una ampliación pequeña sobre lo ya construido (la tabla y la policy de lectura ya lo permiten).
-- El resto del roadmap (FEEDMA Studio, favoritos, campañas abiertas, repetir colaboración, analítica de producto) sigue sin empezar — ver diagnóstico arriba.
+- El resto del roadmap (CIBERAN Studio, favoritos, campañas abiertas, repetir colaboración, analítica de producto) sigue sin empezar — ver diagnóstico arriba.
 
 ### Verificado / sin verificar
 
@@ -2499,7 +2545,7 @@ Sesión larga con el usuario (Mario), con varias piezas grandes. La mayoría ya 
 ### Métricas — primer paso real (seguidores de Instagram)
 
 - Decisión de producto importante, aclarada con el usuario tras confusión inicial: **crear la app en Meta/developers.facebook.com es trabajo del equipo, una sola vez — nunca de cada creador.** Para un creador final, "Conectar" siempre ha sido (y sigue siendo) un simple botón → login de Instagram → autorizar. Lo que de verdad hace falta una sola vez por parte del equipo es: app de Meta creada + (más adelante, para abrir la puerta a desconocidos) App Review/verificación de empresa — para probarlo con cuentas propias/de amigos, con modo Desarrollo + "tester" ya sobra, sin ninguna revisión.
-- También decisión de producto: **no se va a construir publicar contenido desde la app** — el tablero de FEEDMA es seguimiento interno, nunca ha subido nada a redes vía API y no es el plan. Queda documentado para que no se intente sin querer más adelante.
+- También decisión de producto: **no se va a construir publicar contenido desde la app** — el tablero de CIBERAN es seguimiento interno, nunca ha subido nada a redes vía API y no es el plan. Queda documentado para que no se intente sin querer más adelante.
 - `server/api/auth/instagram/start.get.ts`: scope ahora `instagram_business_basic,instagram_business_manage_insights` (antes solo el básico) — es lo que de verdad trae seguidores.
 - `server/api/auth/instagram/callback.get.ts`: guarda `followers_count` real al conectar (mismo `/me`, un campo más, sin llamada aparte).
 - `server/api/social/instagram-sync.post.ts` (nuevo) + botón ↻ en `SocialAccountRow.vue`/`creator/socials.vue`: refresco manual de seguidores — no hay cron todavía.
@@ -2599,7 +2645,7 @@ Petición directa: un icono de bandeja al lado del avatar de perfil, con avisos 
 
 ### Qué queda fuera (a propósito, lo dijo el propio usuario: "más adelante pensaremos")
 
-- Sin chat entre usuarios, sin puente a email/push — solo en la base de datos de FEEDMA.
+- Sin chat entre usuarios, sin puente a email/push — solo en la base de datos de CIBERAN.
 - Sin Realtime: no llega sola sin recargar/navegar (se refresca al visitar cualquier pantalla, no con websocket). Si se quiere instantáneo, es una ampliación sobre esta misma tabla con `supabase.channel(...).on('postgres_changes', ...)`.
 
 ### Verificado / sin verificar
@@ -2898,11 +2944,11 @@ Como con el resto de este proyecto, sin navegador disponible en esta sesión no 
 1. **Aplicar la migración nueva**: `npx supabase db push` (necesita tu sesión de `supabase login`, no la tengo yo).
 2. **Rellenar `STRIPE_WEBHOOK_SECRET`**: correr `stripe listen --forward-to localhost:3000/api/stripe/webhook` y pegar el `whsec_...` que imprime, en `.env`.
 
-Con esos dos pasos, probar: entrar como `influencer@feedma.test`, perfil → "Mejorar a Pro" → tarjeta de pruebas `4242 4242 4242 4242` → confirmar que vuelve a FEEDMA con "Suscripción activada" y que el plan ya no pone "Plan gratuito" (recargando la página, para confirmar que quedó guardado y no es solo estado local). Repetir con "Conectar" en Cuenta de pagos.
+Con esos dos pasos, probar: entrar como `influencer@feedma.test`, perfil → "Mejorar a Pro" → tarjeta de pruebas `4242 4242 4242 4242` → confirmar que vuelve a CIBERAN con "Suscripción activada" y que el plan ya no pone "Plan gratuito" (recargando la página, para confirmar que quedó guardado y no es solo estado local). Repetir con "Conectar" en Cuenta de pagos.
 
 ### Lo que esto NO es todavía: el cobro real de una colaboración
 
-Importante no confundirlo: lo de hoy deja a managers/influencers listos para *recibir* dinero (cuenta Connect verificada) y a FEEDMA cobrando su cuota de suscripción — pero **no existe todavía ningún sitio en la app donde una marca pague por una colaboración concreta**. `collaborations.budget_cents` existe en el esquema pero no se captura en ningún formulario, y no hay ninguna llamada a `stripe.paymentIntents.create` con `application_fee_amount` (que es como Connect cobra la comisión de FEEDMA sobre un pago de un tercero). Eso es trabajo nuevo — probablemente lo siguiente después de verificar que suscripciones + onboarding de Connect funcionan de verdad.
+Importante no confundirlo: lo de hoy deja a managers/influencers listos para *recibir* dinero (cuenta Connect verificada) y a CIBERAN cobrando su cuota de suscripción — pero **no existe todavía ningún sitio en la app donde una marca pague por una colaboración concreta**. `collaborations.budget_cents` existe en el esquema pero no se captura en ningún formulario, y no hay ninguna llamada a `stripe.paymentIntents.create` con `application_fee_amount` (que es como Connect cobra la comisión de CIBERAN sobre un pago de un tercero). Eso es trabajo nuevo — probablemente lo siguiente después de verificar que suscripciones + onboarding de Connect funcionan de verdad.
 
 Typecheck limpio (`npx nuxi typecheck`, 0 errores) al cerrar esta sesión.
 

@@ -1,4 +1,4 @@
-# Pendiente para terminar FEEDMA (lo que le toca a Mario)
+# Pendiente para terminar CIBERAN (lo que le toca a Mario)
 
 > Escrito el 2026-11-04. Sustituye a `TRABAJO_ALEX.md` y `TRABAJO_MARIO.md` (borrados; siguen en el historial de git).
 > **Fuera de este documento:** todo lo de métricas y redes sociales (OAuth, tokens, `metrics`, sincronización, Meta, rendimiento por publicación). Lo lleva Alex.
@@ -11,6 +11,10 @@
 - Zonas protegidas (explicar impacto y confirmar antes de tocar): Stripe, RLS, esquema, RPC de seguridad (`respond_offer`, `accept_collaboration_request`, `approve_post`, `mark_collaboration_completed`…).
 - No pegar secretos en comandos, commits ni documentos.
 - Cada tarea termina con: typecheck (`npm run typecheck`), `npm test`, `npm run build`, interfaz vista en navegador a 390 px y escritorio, y entrada en el CHANGELOG con «Qué se cambió / Verificado / Sin verificar».
+
+## 0. Cambio de marca (FEEDMA → CIBERAN)
+
+El código y los documentos ya usan CIBERAN. Pendiente: logotipo y favicon nuevos, `panel-preview.png`, dominio real (la guía de instalación dice `ciberan.app`), y renombrar en servicios externos (Supabase y sus plantillas de correo, Stripe, apps de Meta y Google, repositorio). Las cuentas demo y de prueba siguen siendo `@feedma.test` porque existen en el Supabase compartido. Detalle en CHANGELOG Alex-60.
 
 ## 1. Antes de lanzar (bloqueantes)
 
@@ -107,7 +111,7 @@ El aviso «Entrega para revisar» solo está probado por integración, no en nav
 ## 8. Estado de las migraciones (resumen)
 
 Aplicadas en la base compartida hasta `20261104100000_collaboration_flow_phase1.sql`.
-**Pendiente de aplicar:** `20261104110000_collaboration_agreement_phase2.sql` (probada en el Supabase local, 207/207 de integración). El detalle de cada migración está en `docs/CHANGELOG.md`.
+**Pendiente de aplicar:** `20261104110000_collaboration_agreement_phase2.sql` (probada en el Supabase local, 207/207 de integración) y `20261104120000_rename_brand_ciberan.sql` (cambio de marca: solo el texto de dos avisos). El detalle de cada migración está en `docs/CHANGELOG.md`.
 
 ## 9. Orden sugerido
 

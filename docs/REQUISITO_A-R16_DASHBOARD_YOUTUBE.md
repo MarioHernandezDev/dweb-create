@@ -1,7 +1,7 @@
 # Requisito A-R16: dashboard de analítica de YouTube
 
 > Estado: **requisito incorporado al plan; NO implementado.** Este documento hace la auditoría de lo que existe, el catálogo de métricas viables, el encaje en el pipeline y las dependencias. No se ha cambiado código, esquema ni permisos. El diseño de la estructura de pantalla (componentes concretos) se propondrá **antes de la fase de interfaz**, como pide el requisito.
-> Fecha: 2026-10-28. Requisito de producto original: el texto "FEEDMA — Mejora del dashboard de métricas de YouTube" recibido de Alex (no se duplica aquí).
+> Fecha: 2026-10-28. Requisito de producto original: el texto "CIBERAN — Mejora del dashboard de métricas de YouTube" recibido de Alex (no se duplica aquí).
 
 ## 1. Decisión de encaje
 
@@ -38,7 +38,7 @@ Código leído: `server/api/social/youtube-channel-stats.get.ts`, `server/utils/
 
 1. **El dato desconocido se convierte en cero.** `likeCount` y `commentCount` salen de `Number(v.statistics?.likeCount ?? 0)`: si el creador oculta los likes o desactiva los comentarios, la API omite el campo y hoy se muestra **0**. Choca con el principio de "no confundir ausencia con cero".
 2. **Cada visita llama a Google en vivo** (cuatro o cinco llamadas encadenadas, sin caché) y además **escribe** en `social_accounts` (token y seguidores).
-3. **La proyección a 30 días** es una extrapolación simple, no una cifra de YouTube. Debe etiquetarse siempre como estimación de FEEDMA, o retirarse.
+3. **La proyección a 30 días** es una extrapolación simple, no una cifra de YouTube. Debe etiquetarse siempre como estimación de CIBERAN, o retirarse.
 4. **La ausencia de histórico se detecta por un `catch` genérico:** cualquier fallo (red, cuota, permiso) acaba como "reconecta". No distingue permiso ausente de error temporal. Lo resuelve A-R2 (estados explícitos).
 5. El endpoint solo devuelve datos del usuario autenticado y ningún token llega al navegador: la privacidad actual es correcta y debe conservarse.
 
@@ -94,7 +94,7 @@ Notas:
 | Evolución histórica de suscriptores/vistas acumulados anterior a empezar a guardarlos | **No existe** en Google; empieza a acumularse al activar A-R16e |
 | Banner, impresiones/CTR | Banner pendiente de confirmar; **impresiones/CTR no confirmados** |
 | Resumen interpretativo y vídeos destacados | **Viable con reglas transparentes** sobre datos reales (p. ej. "supera la media de vistas de tus últimos N vídeos"); sin IA ni causalidad |
-| Recomendaciones con IA, vista del partner, informes de colaboración | **Fuera** (futuro: A-R15 y FEEDMA Studio) |
+| Recomendaciones con IA, vista del partner, informes de colaboración | **Fuera** (futuro: A-R15 y CIBERAN Studio) |
 
 ## 6. Riesgos y coordinación
 

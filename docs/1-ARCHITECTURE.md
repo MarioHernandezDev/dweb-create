@@ -2,7 +2,7 @@
 
 ## 1.1 Visión General
 
-**FEEDMA** es una plataforma SaaS/PWA para creadores de contenido y los partners que los contratan, que permite:
+**CIBERAN** es una plataforma SaaS/PWA para creadores de contenido y los partners que los contratan, que permite:
 
 1. Gestionar en una línea de tiempo las entregas de contenido pendientes por cliente (vídeos, posts, stories).
 2. Consolidar métricas de redes sociales (vistas, engagement, alcance) de múltiples plataformas.

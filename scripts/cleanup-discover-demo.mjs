@@ -1,4 +1,4 @@
-// FEEDMA — borra las 18 cuentas de prueba que creó `seed-discover-demo.mjs`
+// CIBERAN — borra las 18 cuentas de prueba que creó `seed-discover-demo.mjs`
 // (9 creadores + 9 partners, listados abajo letra por letra para que quede
 // claro qué se toca), junto con sus colaboraciones, redes sociales y
 // búsquedas de ejemplo registradas. NUNCA toca `creator@feedma.test` ni

@@ -4,9 +4,9 @@ import { serverSupabaseServiceRole, serverSupabaseUser } from '#supabase/server'
  * POST /api/stripe/pay-collaboration — el cobro real del marketplace (ver
  * README Fase 3): el partner paga el presupuesto acordado y el dinero llega
  * directo al creador (su cuenta de Stripe Connect), menos la comisión de
- * FEEDMA (`application_fee_amount`). Esto es un Checkout de pago único
- * (`mode: 'payment'`), distinto del de suscripción — ahí FEEDMA es quien
- * cobra; aquí FEEDMA solo se queda una comisión de un pago entre otros dos.
+ * CIBERAN (`application_fee_amount`). Esto es un Checkout de pago único
+ * (`mode: 'payment'`), distinto del de suscripción — ahí CIBERAN es quien
+ * cobra; aquí CIBERAN solo se queda una comisión de un pago entre otros dos.
  */
 
 interface Body {
@@ -80,7 +80,7 @@ export default defineEventHandler(async (event) => {
         price_data: {
           currency: 'eur',
           unit_amount: budgetCents,
-          product_data: { name: 'Colaboración FEEDMA', description: `Presupuesto acordado para la colaboración ${collaboration.id}` }
+          product_data: { name: 'Colaboración CIBERAN', description: `Presupuesto acordado para la colaboración ${collaboration.id}` }
         },
         quantity: 1
       }],

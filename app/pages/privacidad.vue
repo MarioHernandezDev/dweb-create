@@ -7,7 +7,7 @@ useHead({ title: 'Política de privacidad' })
 <template>
   <LegalDocument
     title="Política de privacidad"
-    intro="Qué datos tratamos en FEEDMA, para qué, con quién los compartimos y cómo puedes ejercer tus derechos."
+    intro="Qué datos tratamos en CIBERAN, para qué, con quién los compartimos y cómo puedes ejercer tus derechos."
   >
     <h2>1. Responsable del tratamiento</h2>
     <ul>
@@ -23,7 +23,7 @@ useHead({ title: 'Política de privacidad' })
       <li><strong>Perfil:</strong> foto, descripción, nicho, ubicación y demás datos que decidas añadir y mostrar.</li>
       <li><strong>Actividad en la plataforma:</strong> solicitudes de colaboración, ofertas, publicaciones, mensajes de chat, notificaciones y valoraciones.</li>
       <li><strong>Redes sociales conectadas:</strong> si conectas una cuenta (Instagram, YouTube u otras), guardamos su identificador, métricas públicas y el token de acceso, que se almacena cifrado.</li>
-      <li><strong>Pagos:</strong> el estado y el importe de suscripciones y colaboraciones. Los datos de tarjeta los gestiona Stripe; FEEDMA no los recibe ni los guarda.</li>
+      <li><strong>Pagos:</strong> el estado y el importe de suscripciones y colaboraciones. Los datos de tarjeta los gestiona Stripe; CIBERAN no los recibe ni los guarda.</li>
       <li><strong>Datos técnicos:</strong> dirección IP y registros del servidor para seguridad y prevención de abusos.</li>
     </ul>
 

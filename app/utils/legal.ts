@@ -12,7 +12,7 @@
  */
 export const legal = {
   /** Nombre comercial; ya conocido. */
-  brand: 'FEEDMA',
+  brand: 'CIBERAN',
   /** Persona física o jurídica titular del servicio. */
   ownerName: '[POR COMPLETAR: nombre y apellidos o razón social]',
   /** NIF/CIF del titular. */

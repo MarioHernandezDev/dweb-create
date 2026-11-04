@@ -8,9 +8,9 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
 // Capa visual inyectada en cada documento (no intercepta clics: pointer-events none).
 // ---------------------------------------------------------------------------
 export function overlayInitScript() {
-  // Recorrido de bienvenida dado por visto (clave feedma:tour:v1:<usuario>).
+  // Recorrido de bienvenida dado por visto (clave ciberan:tour:v1:<usuario>).
   const get = Storage.prototype.getItem
-  Storage.prototype.getItem = function (k) { return String(k).startsWith('feedma:tour:v1:') ? '2026-01-01T00:00:00.000Z' : get.call(this, k) }
+  Storage.prototype.getItem = function (k) { return String(k).startsWith('ciberan:tour:v1:') ? '2026-01-01T00:00:00.000Z' : get.call(this, k) }
 
   const install = () => {
     if (document.getElementById('__demo-root')) return

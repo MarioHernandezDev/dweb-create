@@ -1,0 +1,57 @@
+/* ==========================================================================
+   Componente · BrandMark (app/components/brand/BrandMark.vue)
+   Símbolo de dos arcos + punto, y wordmark en minúsculas. El tamaño llega en
+   --brand-size (alto del símbolo); todo lo demás se deriva de él.
+   ========================================================================== */
+
+@layer components {
+  .brand-mark {
+    --brand-ink: var(--color-tinta-950);
+    --brand-dot: var(--color-voltio-700);
+
+    display: inline-flex;
+    align-items: center;
+    gap: calc(var(--brand-size, 32px) * 0.32);
+    color: var(--brand-ink);
+    line-height: 1;
+    flex-shrink: 0;
+
+    &.brand-mark--light {
+      --brand-ink: var(--color-hueso-100);
+      --brand-dot: var(--color-voltio-400);
+    }
+  }
+
+  .brand-mark__symbol {
+    width: var(--brand-size, 32px);
+    height: var(--brand-size, 32px);
+    flex-shrink: 0;
+
+    & path {
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 9;
+      stroke-linecap: round;
+    }
+
+    & circle { fill: var(--brand-dot); }
+  }
+
+  /* Wordmark como texto, para titulares que deben seguir siendo texto (h1 de
+     la portada). Mismo dibujo que .brand-mark__word. */
+  .wordmark {
+    font-family: var(--font-brand);
+    font-weight: 800;
+    letter-spacing: -0.045em;
+    text-transform: lowercase;
+  }
+
+  .brand-mark__word {
+    font-family: var(--font-brand);
+    font-weight: 800;
+    font-size: calc(var(--brand-size, 32px) * 0.82);
+    letter-spacing: -0.045em;
+    /* Ajuste óptico: la x de Bricolage queda centrada con el símbolo. */
+    transform: translateY(-0.04em);
+  }
+}

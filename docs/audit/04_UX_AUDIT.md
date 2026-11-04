@@ -11,7 +11,7 @@
 
 ## 1. Valoración general
 
-FEEDMA ya transmite un producto SaaS cohesionado:
+CIBERAN ya transmite un producto SaaS cohesionado:
 - **Identidad:** paleta violeta, Sora para títulos y Hanken Grotesk para texto, aplicadas igual en todas las pantallas.
 - **Estructura:** barra lateral en escritorio y barra inferior en el móvil.
 - **Diálogos:** tarjetas, hojas y diálogos con el mismo lenguaje visual.

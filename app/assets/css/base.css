@@ -1,0 +1,60 @@
+/* ==========================================================================
+   CIBERAN · Base
+   Estilos de elementos HTML. Lo único de este archivo que usa selectores de
+   etiqueta: el resto del sistema trabaja con clases.
+   ========================================================================== */
+
+@layer base {
+  html {
+    background: var(--surface-app);
+    -webkit-tap-highlight-color: transparent;
+    text-size-adjust: 100%;
+  }
+
+  body {
+    min-height: 100dvh;
+    background: var(--surface-app);
+    color: var(--text-strong);
+    font-family: var(--font-sans);
+    font-size: var(--text-base);
+    line-height: var(--text-base--line-height);
+    -webkit-font-smoothing: antialiased;
+    overscroll-behavior-y: none;
+  }
+
+  /* La familia y el tamaño de un título los pone su patrón (page-header,
+     panel, section-title) o la clase `font-display`: hay encabezados que hoy
+     son etiquetas pequeñas y no deben heredar la fuente de títulos. */
+  h1, h2, h3, h4 {
+    text-wrap: balance;
+  }
+
+  /* La fuente de títulos se dibuja con interletrado cerrado. */
+  .font-display {
+    letter-spacing: -0.02em;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  a {
+    text-underline-offset: 0.18em;
+  }
+
+  ::selection {
+    background: var(--color-voltio-200);
+    color: var(--text-strong);
+  }
+
+  /* Foco de teclado visible en todo elemento interactivo. */
+  :focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+
+  /* Cifras alineadas en tablas y contadores. */
+  table, .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+}
