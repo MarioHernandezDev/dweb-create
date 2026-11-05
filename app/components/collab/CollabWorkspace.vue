@@ -6,6 +6,7 @@ import { collaborationWork, deliverableState, hasRated, type DeliverableState, t
 import type { CollaborationTerms } from '~/utils/collaboration-terms'
 import type { CollaborationStatus } from '~/types'
 import { expiryState } from '~/utils/collab-expiry'
+import { collabPhase, collabTitle, paymentState, COLLAB_PHASES } from '~/utils/collab-phase'
 
 /**
  * Página de una colaboración, para los dos roles (`/creator/collaborations/[id]`
@@ -84,6 +85,19 @@ if (!view.value) {
 }
 
 const expiry = computed(() => expiryState(view.value?.status ?? '', view.value?.expiresAt))
+
+// Fase, título y resumen de lo acordado (todo deducido de datos reales; ver utils/collab-phase.ts).
+const phase = computed(() => (view.value ? collabPhase(view.value, collabPosts.value) : null))
+const phaseLabel = computed(() => COLLAB_PHASES.find((p) => p.value === phase.value)?.label ?? null)
+const title = computed(() => (view.value ? collabTitle(view.value) : ''))
+const payment = computed(() => (view.value ? paymentState(view.value) : 'none' as const))
+const payLabel = isPartner ? 'Pago' : 'Cobro'
+const finalDue = computed(() => {
+  const dates = collabPosts.value.map((p) => p.dueDate).filter(Boolean).sort()
+  return dates[dates.length - 1] ?? null
+})
+const acceptedOn = computed(() => events.value.find((e) => e.kind === 'accepted')?.createdAt ?? null)
+const deliverablesText = computed(() => view.value?.scopeNotes || (collabDeliverables.value.length ? `${collabDeliverables.value.length} entregable${collabDeliverables.value.length === 1 ? '' : 's'}` : null))
 
 const posts = computed(() => (isPartner ? partnerPosts.value : myPosts.value))
 const events = computed(() => eventsByCollab.value[props.id] ?? [])
@@ -193,8 +207,6 @@ useHead({ title: computed(() => (view.value ? `Colaboración con ${view.value.co
 
 <template>
   <div class="cwork">
-    <NuxtLink :to="`/${role}/requests`" class="cwork__back"><Icon name="ph:arrow-left-bold" class="size-4" /> Colaboraciones</NuxtLink>
-
     <EmptyState
       v-if="notFound || !view"
       icon="ph:handshake" title="No encontramos esta colaboración"
@@ -209,9 +221,14 @@ useHead({ title: computed(() => (view.value ? `Colaboración con ${view.value.co
         <p class="text-sm">{{ route.query.payment === 'success' ? 'Pago enviado.' : 'Pago cancelado, no se ha cobrado nada.' }}</p>
       </BaseCard>
 
-      <CollabParty :name="view.counterpartName" :status="view.status" :brief="view.brief" class="cwork__party">
+      <CollabHeader
+        :role="role" :counterpart="view.counterpartName" :title="title" :status="view.status" :phase-label="phaseLabel"
+        :meta="finalDue ? `Entrega final ${new Date(`${finalDue}T00:00:00`).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }).replace('.', '')}` : undefined"
+      >
         <CollaborationChatButton :counterpart-profile-id="view.counterpartProfileId" :counterpart-name="view.counterpartName" />
-      </CollabParty>
+      </CollabHeader>
+
+      <CollabStepper v-if="phase" :phase="phase" :pay-label="payLabel === 'Pago' ? 'Pagada' : 'Cobrada'" />
 
       <p v-if="expiry.label" class="cwork__expiry" :data-expired="expiry.expired" role="status">
         <Icon :name="expiry.expired ? 'ph:clock-countdown-fill' : 'ph:clock'" class="size-4" />
@@ -325,6 +342,10 @@ useHead({ title: computed(() => (view.value ? `Colaboración con ${view.value.co
         </div>
 
         <aside class="cwork__side">
+          <CollabSummary
+            v-if="phase" :budget-cents="view.budgetCents" :deliverables="deliverablesText" :usage="view.usageRights"
+            :accepted-on="acceptedOn" :final-due="finalDue" :payment="payment" :pay-label="payLabel"
+          />
           <PanelCard title="Cronología" description="Lo que ha ocurrido, de lo más reciente a lo más antiguo.">
             <CollabNoteForm v-if="view.status !== 'declined'" :collaboration-id="view.id" class="cwork__note" @added="reloadEvents" />
             <CollabTimeline

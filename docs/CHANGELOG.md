@@ -4,6 +4,17 @@ Registro de qué se hizo, por qué, y qué queda pendiente de verificar — pens
 
 ---
 
+## 2026-11-05 (Alex-72) — [Alex] Remodelación de Colaboraciones desde los mockups (tablero, lista agrupada y detalle)
+
+Sin migraciones. Mockups: `colaboraciones-tablero`, `lista-agrupada-colaboracion`, `detalle-colaboracion`.
+- **Listado** (los dos roles, `CollabHub`): cabecera «Colaboraciones activas» (filtro por marca/creador, avatares, % de entregables) y cuatro vistas del mismo conjunto: **Tablero** por fases, **Lista** agrupada (con importes por fase, plegable) con «Por cobrar/pagar», «Cobrado/Pagado» y entregas de los próximos 7 días, **Calendario** de entregas y **Solicitudes** (pendientes e historial; conserva caducidad y aviso de «te toca»). Búsqueda, orden y exportar CSV. Los enlaces antiguos `?tab=` siguen funcionando.
+- **Fases deducidas, no guardadas** (`utils/collab-phase.ts`): Aceptada → En producción → Revisión de marca → Publicada → Pagada, a partir del estado de la colaboración, sus publicaciones y `paid_at`. No se arrastran: avanzan solas al trabajar.
+- **Detalle**: migas de pan, cabecera con título/fase, recorrido en 5 pasos y tarjeta «Resumen» (tarifa, entregables, uso, aceptada el, entrega final, estado del cobro). Se conservan negociación, entregables con decisiones, acuerdo, cronología y valoración.
+- **Diferencias con el mockup, a propósito** (no hay datos ni modelo detrás): «Cobro retenido» → «Pagado / Pago pendiente» (el dinero va directo al creador por Stripe, no se retiene); sin «Añadir fase», sin pestañas Chat/Archivos dentro del detalle (el chat sigue en su botón y no hay archivos propios) ni contador de mensajes por tarjeta.
+- Pruebas: `tests/unit/collab-phase.spec.ts`. Verificado en Chrome con ambos roles y en móvil contra el Supabase local.
+
+---
+
 ## 2026-11-05 (Alex-71) — [Alex] Señales del marketplace: marca verificada, tipos de colaboración, caducidad de propuestas y CSV
 
 Migración **`20261105130000_marketplace_signals.sql` — PREPARADA, aplicada solo en el Supabase local, NO en la compartida** (hay que aplicarla ANTES de subir este código: Descubrir, las listas de colaboraciones y la ficha de la marca leen las columnas nuevas).
