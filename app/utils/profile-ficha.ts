@@ -5,15 +5,21 @@
  */
 export const BIO_MAX = 500
 export const LOOKING_FOR_MAX = 300
+export const HEADLINE_MAX = 80
+export const LOCATION_MAX = 80
+export const WEBSITE_MAX = 200
 
 export interface FichaInput {
   bio: string
   lookingFor: string
   min: number | string | null
   max: number | string | null
+  headline?: string
+  location?: string
+  website?: string
 }
 
-export type FichaErrors = Partial<Record<'bio' | 'lookingFor' | 'min' | 'max', string>>
+export type FichaErrors = Partial<Record<'bio' | 'lookingFor' | 'min' | 'max' | 'headline' | 'location' | 'website', string>>
 
 function amountOf(v: number | string | null): number | null {
   if (v === null || v === '') return null
@@ -25,6 +31,11 @@ export function validateFicha(input: FichaInput, labels: { min: string; max: str
   const errors: FichaErrors = {}
   if (input.bio.length > BIO_MAX) errors.bio = `La biografía admite hasta ${BIO_MAX} caracteres (ahora ${input.bio.length}).`
   if (input.lookingFor.length > LOOKING_FOR_MAX) errors.lookingFor = `Admite hasta ${LOOKING_FOR_MAX} caracteres (ahora ${input.lookingFor.length}).`
+
+  if ((input.headline ?? '').length > HEADLINE_MAX) errors.headline = `La frase de presentación admite hasta ${HEADLINE_MAX} caracteres.`
+  if ((input.location ?? '').length > LOCATION_MAX) errors.location = `La ubicación admite hasta ${LOCATION_MAX} caracteres.`
+  const site = (input.website ?? '').trim()
+  if (site && (site.length > WEBSITE_MAX || !/^https?:\/\/[^\s]+$/i.test(site))) errors.website = 'La web debe empezar por http:// o https:// (máximo 200 caracteres).'
 
   const min = amountOf(input.min)
   const max = amountOf(input.max)
@@ -38,5 +49,5 @@ export function validateFicha(input: FichaInput, labels: { min: string; max: str
 
 /** Primer motivo legible para la barra de guardado; `null` si todo es válido. */
 export function firstFichaError(errors: FichaErrors): string | null {
-  return errors.bio ?? errors.lookingFor ?? errors.min ?? errors.max ?? null
+  return errors.bio ?? errors.headline ?? errors.location ?? errors.website ?? errors.lookingFor ?? errors.min ?? errors.max ?? null
 }

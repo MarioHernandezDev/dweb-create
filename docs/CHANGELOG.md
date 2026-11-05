@@ -4,6 +4,17 @@ Registro de qué se hizo, por qué, y qué queda pendiente de verificar — pens
 
 ---
 
+## 2026-11-05 (Alex-73) — [Alex] Perfil público rediseñado (`perfil-publico.png`) con sus datos en la edición del perfil
+
+Migración **`20261105140000_public_profile_data.sql` — PREPARADA, aplicada solo en el Supabase local, NO en la compartida** (aplicar ANTES de subir el código: la ficha pública lee columnas nuevas).
+- **Datos nuevos que la persona edita** (Tu perfil → Ficha pública, ambos roles): frase de presentación (≤80), ubicación (≤80), «mostrar con quién he colaborado». Creador: **audiencia declarada** (países, edad, género; cada bloque suma ≤100, validado también en base de datos) y **contenido destacado** (elige qué publicaciones ya publicadas enseña, máx. 12; se guarda al marcar). Marca: web (solo http/https). Permisos por columna: nadie edita la ficha de otro.
+- **Lo que se ve de otros sale de funciones agregadas** (`security definer`, solo `authenticated`): `get_public_creator_stats` (medias de likes/comentarios/vistas, engagement y publicaciones por red verificada con OAuth), `get_public_creator_content`, `get_public_collaborations` (colaboraciones completadas, respetando «mostrar») y `get_public_activity` (nº de colaboraciones y mediana de respuesta). Sin dato, no se enseña; la audiencia se rotula «Declarada por el creador».
+- **Vista** (`PublicProfileView`): cabecera oscura sobre la portada, tarjeta lateral (ubicación, bio, responde en, colaboraciones, valoración, redes con enlace, CTA) y pestañas: Estadísticas y contenido · Audiencia · Catálogo · Marcas colaboradoras · Creadores similares (marcas: Sobre la marca · Necesidades · Creadores colaboradores · Marcas similares). «Invitar a colaborar» (marca→creador, `InviteDialog` extraído de Descubrir) y «Proponer colaboración» (creador→marca, `ProposalDialog`). Se conservan chat, ofertas sobre paquetes, copiar enlace y el aviso de perfil propio.
+- **No hecho a propósito:** «Previsión de la próxima semana» (no hay dato), «Editar cabecera» (la portada se sigue editando en Tu perfil) y estadísticas de TikTok/otras redes sin OAuth (solo redes verificadas).
+- Pruebas: `tests/unit/audience-profile.spec.ts`, `tests/integration/public-profile-data.spec.ts` (local). Verificado en Chrome con ambos roles, edición con guardado y móvil.
+
+---
+
 ## 2026-11-05 (Alex-72) — [Alex] Remodelación de Colaboraciones desde los mockups (tablero, lista agrupada y detalle)
 
 Sin migraciones. Mockups: `colaboraciones-tablero`, `lista-agrupada-colaboracion`, `detalle-colaboracion`.

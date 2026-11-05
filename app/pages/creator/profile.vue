@@ -3,6 +3,7 @@ import draggable from 'vuedraggable'
 import { coverArtFromString } from '~/utils/avatar'
 import { formatEuros, formatCompactNumber, platformMeta } from '~/utils/mock-data'
 import { firstFichaError, validateFicha } from '~/utils/profile-ficha'
+import { audienceError, audienceFromDb, audienceToDb } from '~/utils/audience'
 import { socialChips } from '~/utils/profile-socials'
 import type { Package } from '~/composables/usePackages'
 import type { ChatPrivacy } from '~/types'
@@ -156,7 +157,11 @@ function fichaFromCreator() {
     categories: [...(creator.value?.categories ?? [])],
     min: (creator.value?.minRateCents ? creator.value.minRateCents / 100 : null) as number | string | null,
     max: (creator.value?.maxRateCents ? creator.value.maxRateCents / 100 : null) as number | string | null,
-    lookingFor: creator.value?.lookingFor ?? ''
+    lookingFor: creator.value?.lookingFor ?? '',
+    headline: creator.value?.headline ?? '',
+    location: creator.value?.location ?? '',
+    showCollaborations: creator.value?.showCollaborations ?? true,
+    audience: audienceFromDb(creator.value?.audience)
   }
 }
 const ficha = reactive(fichaFromCreator())
@@ -172,7 +177,7 @@ const fichaDirty = computed(() => JSON.stringify(ficha) !== fichaSnapshot.value)
 useUnsavedChangesGuard(fichaDirty)
 
 const fichaErrors = computed(() => validateFicha(ficha, { min: 'La tarifa mínima', max: 'La tarifa máxima' }))
-const fichaBlockedReason = computed(() => firstFichaError(fichaErrors.value))
+const fichaBlockedReason = computed(() => firstFichaError(fichaErrors.value) ?? audienceError(ficha.audience))
 
 function discardFicha() {
   Object.assign(ficha, fichaFromCreator())
@@ -192,7 +197,11 @@ async function saveFicha() {
       categories: ficha.categories,
       minRateCents: ficha.min ? Math.round(Number(ficha.min) * 100) : null,
       maxRateCents: ficha.max ? Math.round(Number(ficha.max) * 100) : null,
-      lookingFor: ficha.lookingFor.trim() || null
+      lookingFor: ficha.lookingFor.trim() || null,
+      headline: ficha.headline.trim() || null,
+      location: ficha.location.trim() || null,
+      showCollaborations: ficha.showCollaborations,
+      audience: audienceToDb(ficha.audience)
     })
     fichaSnapshot.value = JSON.stringify(ficha)
     fichaSaved.value = true
@@ -214,7 +223,9 @@ const fichaTexts = {
   minLabel: 'Desde',
   maxLabel: 'Hasta',
   lookingForLabel: 'Qué tipo de marcas buscas',
-  lookingForPlaceholder: 'Ej. marcas de moda sostenible, tono joven…'
+  lookingForPlaceholder: 'Ej. marcas de moda sostenible, tono joven…',
+  headlinePlaceholder: 'Ej. Creadora de contenido de deporte y fitness',
+  collaborationsHint: 'En tu perfil aparecerán las marcas con las que has completado colaboraciones en CIBERAN.'
 }
 
 // Vista previa en vivo — usa el MISMO componente que pinta /profile/[role]/[id],
@@ -400,6 +411,10 @@ async function saveWeeklyTarget() {
                       :cover-url="creator?.coverUrl ?? null" :cover-art="coverArtFromString(creator?.id ?? 'creator')" icon="ph:image-fill"
                       :upload="uploadCoverPhoto" :remove="removeCoverPhoto"
                     />
+                  </template>
+                  <template #extra>
+                    <ProfileAudienceEditor v-model="ficha.audience" />
+                    <ProfileShowcasePicker />
                   </template>
                 </ProfileFichaForm>
               </BaseCard>

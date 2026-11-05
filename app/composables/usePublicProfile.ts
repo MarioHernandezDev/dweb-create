@@ -23,6 +23,16 @@ export interface PublicProfile {
   chatPrivacy: ChatPrivacy
   /** Solo para creadores — redes con OAuth de verdad detrás (ver get_public_social_accounts), nunca las "conectadas" a mano sin token. Vacío para partners. */
   verifiedSocials: PublicVerifiedSocial[]
+  /** Id de la ficha creators/partners (el de la ruta). */
+  id: string
+  headline: string | null
+  location: string | null
+  /** Solo partners. */
+  website: string | null
+  /** Solo partners: formatos que ofrece. */
+  collaborationTypes: string[]
+  /** Solo creadores: audiencia declarada (jsonb crudo; ver utils/audience.ts). */
+  audience: Record<string, unknown>
 }
 
 interface SocialAccountPublicRow {
@@ -48,6 +58,9 @@ interface CreatorRow {
   looking_for: string | null
   cover_url: string | null
   created_at: string
+  headline: string | null
+  location: string | null
+  audience: Record<string, unknown> | null
 }
 
 interface PartnerRow {
@@ -62,6 +75,10 @@ interface PartnerRow {
   looking_for: string | null
   cover_url: string | null
   created_at: string
+  headline: string | null
+  location: string | null
+  website: string | null
+  collaboration_types: string[] | null
 }
 
 /**
@@ -88,7 +105,7 @@ export function usePublicProfile() {
       if (role === 'creator') {
         const { data, error } = await client
           .from('creators')
-          .select('id, profile_id, display_name, bio, categories, min_rate_cents, max_rate_cents, looking_for, cover_url, created_at')
+          .select('id, profile_id, display_name, bio, categories, min_rate_cents, max_rate_cents, looking_for, cover_url, created_at, headline, location, audience')
           .eq('id', id)
           .maybeSingle<CreatorRow>()
         if (error || !data) return null
@@ -112,6 +129,12 @@ export function usePublicProfile() {
           maxCents: data.max_rate_cents,
           lookingFor: data.looking_for,
           chatPrivacy: profileRow?.chat_privacy ?? 'everyone',
+          id: data.id,
+          headline: data.headline,
+          location: data.location,
+          website: null,
+          collaborationTypes: [],
+          audience: data.audience ?? {},
           verifiedSocials: ((socialRows as SocialAccountPublicRow[] | null) ?? []).map((r) => ({
             platform: r.platform,
             handle: r.handle,
@@ -123,7 +146,7 @@ export function usePublicProfile() {
 
       const { data, error } = await client
         .from('partners')
-        .select('id, profile_id, company_name, industry, bio, categories, min_budget_cents, max_budget_cents, looking_for, cover_url, created_at')
+        .select('id, profile_id, company_name, industry, bio, categories, min_budget_cents, max_budget_cents, looking_for, cover_url, created_at, headline, location, website, collaboration_types')
         .eq('id', id)
         .maybeSingle<PartnerRow>()
       if (error || !data) return null
@@ -144,7 +167,13 @@ export function usePublicProfile() {
         maxCents: data.max_budget_cents,
         lookingFor: data.looking_for,
         chatPrivacy: profileRow?.chat_privacy ?? 'everyone',
-        verifiedSocials: []
+        verifiedSocials: [],
+        id: data.id,
+        headline: data.headline,
+        location: data.location,
+        website: data.website,
+        collaborationTypes: data.collaboration_types ?? [],
+        audience: {}
       }
       return mapped
     } finally {

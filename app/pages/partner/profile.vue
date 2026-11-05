@@ -138,6 +138,10 @@ function fichaFromPartner() {
     min: (partner.value?.minBudgetCents ? partner.value.minBudgetCents / 100 : null) as number | string | null,
     max: (partner.value?.maxBudgetCents ? partner.value.maxBudgetCents / 100 : null) as number | string | null,
     lookingFor: partner.value?.lookingFor ?? '',
+    headline: partner.value?.headline ?? '',
+    location: partner.value?.location ?? '',
+    website: partner.value?.website ?? '',
+    showCollaborations: partner.value?.showCollaborations ?? true,
     collaborationTypes: [...(partner.value?.collaborationTypes ?? [])]
   }
 }
@@ -174,7 +178,11 @@ async function saveFicha() {
       minBudgetCents: ficha.min ? Math.round(Number(ficha.min) * 100) : null,
       maxBudgetCents: ficha.max ? Math.round(Number(ficha.max) * 100) : null,
       lookingFor: ficha.lookingFor.trim() || null,
-      collaborationTypes: ficha.collaborationTypes
+      collaborationTypes: ficha.collaborationTypes,
+      headline: ficha.headline.trim() || null,
+      location: ficha.location.trim() || null,
+      website: ficha.website.trim() || null,
+      showCollaborations: ficha.showCollaborations
     })
     fichaSnapshot.value = JSON.stringify(ficha)
     fichaSaved.value = true
@@ -196,7 +204,9 @@ const fichaTexts = {
   minLabel: 'Desde',
   maxLabel: 'Hasta',
   lookingForLabel: 'Qué tipo de creador buscas',
-  lookingForPlaceholder: 'Ej. creadores de fitness con audiencia en España…'
+  lookingForPlaceholder: 'Ej. creadores de fitness con audiencia en España…',
+  headlinePlaceholder: 'Ej. Ropa técnica y accesorios para entrenamiento funcional',
+  collaborationsHint: 'En tu perfil aparecerán los creadores con los que has completado colaboraciones en CIBERAN.'
 }
 
 // Vista previa en vivo — usa el MISMO componente que pinta /profile/[role]/[id].
@@ -305,6 +315,13 @@ const heroRange = computed(() => rangeText(
               <BaseButton variant="secondary" size="sm" icon="ph:eye-fill" block class="ficha-preview-btn" @click="previewSheetOpen = true">Ver vista previa</BaseButton>
               <BaseCard radius="lg" padding="lg">
                 <ProfileFichaForm :ficha="ficha" :errors="fichaErrors" :texts="fichaTexts">
+                  <template #identity-extra>
+                    <div class="field">
+                      <label class="field__label" for="ficha-website">Web</label>
+                      <input id="ficha-website" v-model="ficha.website" type="url" class="input" placeholder="https://tumarca.com" :aria-invalid="!!fichaErrors.website">
+                      <p v-if="fichaErrors.website" class="field__error" role="alert" data-error="website">{{ fichaErrors.website }}</p>
+                    </div>
+                  </template>
                   <template #collab-extra>
                     <div class="field">
                       <p class="field__label">Qué tipo de colaboración ofreces</p>

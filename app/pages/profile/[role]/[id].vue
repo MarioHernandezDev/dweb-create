@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { Role } from '~/types'
 import type { Package } from '~/composables/usePackages'
+import type { DiscoveryResult } from '~/composables/useDiscover'
 
 // Fuera de /creator y /partner a propósito: lo visita gente de los DOS
 // roles (un partner viendo un creador, o viceversa) y role-guard.global.ts
@@ -29,10 +30,14 @@ if (!profile) {
 }
 
 const { listPackagesOf } = usePackages()
-const packages = ref<Package[]>(await listPackagesOf(profile.profileId))
-
 const { fetchSummary } = useRatings()
-const ratingSummary = ref(await fetchSummary(profile.profileId))
+const { load: loadExtras } = usePublicProfileExtras()
+// Paquetes, valoraciones y los datos del perfil (métricas, contenido, colaboraciones…) son independientes: en paralelo.
+const [packagesList, summary, extras] = await Promise.all([
+  listPackagesOf(profile.profileId), fetchSummary(profile.profileId), loadExtras(targetRole, profile.id, profile.categories)
+])
+const packages = ref<Package[]>(packagesList)
+const ratingSummary = ref(summary)
 
 const isOwnProfile = computed(() => profile!.profileId === myProfileId)
 
@@ -61,6 +66,15 @@ function openOffer(pkg: Package) {
   offerSheetOpen.value = true
 }
 
+// «Invitar a colaborar» (marca → creador) y «Proponer» (creador → marca) reutilizan los diálogos de Descubrir.
+const dialogOpen = ref(false)
+const dialogTarget = computed<DiscoveryResult>(() => ({
+  id: profile!.id, name: profile!.name, bio: profile!.bio, categories: profile!.categories, lookingFor: profile!.lookingFor,
+  minCents: profile!.minCents, maxCents: profile!.maxCents, followers: profile!.verifiedSocials.reduce((s, x) => s + x.followersCount, 0),
+  coverUrl: profile!.coverUrl, score: 0, reason: null, profileId: profile!.profileId, collabCount: extras.activity.collabCount,
+  responseHours: extras.activity.responseHours, platforms: [], verified: false, collaborationTypes: profile!.collaborationTypes
+}))
+
 // Copiar el enlace del perfil — no había ninguna forma de compartirlo hasta
 // ahora, ni siquiera el tuyo propio para mandárselo a alguien (ver también
 // el botón "Compartir" en la pestaña Cuenta de creator/profile.vue y
@@ -76,8 +90,11 @@ function copyProfileLink() {
     <PublicProfileView
       :profile="profile" :packages="packages" :rating-summary="ratingSummary" :is-own-profile="isOwnProfile" :my-role="myRole ?? null"
       :starting-chat="startingChat" :chat-error="chatError" :link-copied="linkCopied" :copy-error="copyError"
-      @chat="startChat" @offer="openOffer" @copy="copyProfileLink"
+      :stats="extras.stats" :content="extras.content" :collabs="extras.collabs" :activity="extras.activity" :similar="extras.similar"
+      @chat="startChat" @offer="openOffer" @copy="copyProfileLink" @collaborate="dialogOpen = true"
     />
+    <InviteDialog v-if="myRole === 'partner' && profile.role === 'creator'" v-model="dialogOpen" :target="dialogTarget" />
+    <ProposalDialog v-else-if="myRole === 'creator' && profile.role === 'partner'" v-model="dialogOpen" :target="dialogTarget" />
     <ChatOfferSheet v-model="offerSheetOpen" :packages="offerTarget ? [offerTarget] : []" />
   </AppShell>
 </template>

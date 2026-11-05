@@ -10,6 +10,10 @@ export interface MyPartner {
   coverUrl: string | null
   /** Formatos que ofrece (post, reel, stories, ambassador). */
   collaborationTypes: string[]
+  headline: string | null
+  location: string | null
+  website: string | null
+  showCollaborations: boolean
 }
 
 interface PartnerFichaRow {
@@ -23,9 +27,13 @@ interface PartnerFichaRow {
   looking_for: string | null
   cover_url: string | null
   collaboration_types: string[] | null
+  headline: string | null
+  location: string | null
+  website: string | null
+  show_collaborations: boolean | null
 }
 
-const PARTNER_SELECT = 'id, company_name, industry, bio, categories, min_budget_cents, max_budget_cents, looking_for, cover_url, collaboration_types'
+const PARTNER_SELECT = 'id, company_name, industry, bio, categories, min_budget_cents, max_budget_cents, looking_for, cover_url, collaboration_types, headline, location, website, show_collaborations'
 
 function mapPartnerRow(data: PartnerFichaRow): MyPartner {
   return {
@@ -38,7 +46,11 @@ function mapPartnerRow(data: PartnerFichaRow): MyPartner {
     maxBudgetCents: data.max_budget_cents,
     lookingFor: data.looking_for,
     coverUrl: data.cover_url,
-    collaborationTypes: data.collaboration_types ?? []
+    collaborationTypes: data.collaboration_types ?? [],
+    headline: data.headline,
+    location: data.location,
+    website: data.website,
+    showCollaborations: data.show_collaborations ?? true
   }
 }
 
@@ -76,6 +88,10 @@ export function useMyPartner() {
     maxBudgetCents?: number | null
     lookingFor?: string | null
     collaborationTypes?: string[]
+    headline?: string | null
+    location?: string | null
+    website?: string | null
+    showCollaborations?: boolean
   }) {
     const me = partner.value ?? (await ensurePartner())
     if (!me) throw new Error('No hay ficha de partner que actualizar.')
@@ -87,6 +103,10 @@ export function useMyPartner() {
     if (patch.maxBudgetCents !== undefined) payload.max_budget_cents = patch.maxBudgetCents
     if (patch.lookingFor !== undefined) payload.looking_for = patch.lookingFor
     if (patch.collaborationTypes !== undefined) payload.collaboration_types = patch.collaborationTypes
+    if (patch.headline !== undefined) payload.headline = patch.headline
+    if (patch.location !== undefined) payload.location = patch.location
+    if (patch.website !== undefined) payload.website = patch.website
+    if (patch.showCollaborations !== undefined) payload.show_collaborations = patch.showCollaborations
 
     const { data, error } = await useSupabaseClient()
       .from('partners')

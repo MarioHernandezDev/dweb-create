@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { DISCOVERY_CATEGORIES } from '~/utils/categories'
-import { BIO_MAX, LOOKING_FOR_MAX, type FichaErrors } from '~/utils/profile-ficha'
+import { BIO_MAX, LOOKING_FOR_MAX, HEADLINE_MAX, LOCATION_MAX, type FichaErrors } from '~/utils/profile-ficha'
 
 /**
  * Formulario de la ficha pública (A-R18c) — SOLO lo que es idéntico entre
@@ -15,6 +15,9 @@ export interface FichaModel {
   min: number | string | null
   max: number | string | null
   lookingFor: string
+  headline: string
+  location: string
+  showCollaborations: boolean
 }
 
 const props = defineProps<{
@@ -29,6 +32,8 @@ const props = defineProps<{
     maxLabel: string
     lookingForLabel: string
     lookingForPlaceholder: string
+    headlinePlaceholder: string
+    collaborationsHint: string
   }
 }>()
 
@@ -47,6 +52,23 @@ function toggleCategory(cat: string) {
     <div class="ficha-form__cols">
       <section class="ficha-form__section" aria-labelledby="ficha-sec-identity">
         <h3 id="ficha-sec-identity" class="ficha-form__title">Presentación</h3>
+        <div class="field">
+          <div class="field__row">
+            <label class="field__label" for="ficha-headline">Frase de presentación</label>
+            <span class="field__count" :data-over="ficha.headline.length > HEADLINE_MAX">{{ ficha.headline.length }}/{{ HEADLINE_MAX }}</span>
+          </div>
+          <input id="ficha-headline" v-model="ficha.headline" type="text" class="input" :placeholder="texts.headlinePlaceholder" :aria-invalid="!!errors.headline">
+          <p v-if="errors.headline" class="field__error" role="alert" data-error="headline">{{ errors.headline }}</p>
+        </div>
+        <div class="field">
+          <div class="field__row">
+            <label class="field__label" for="ficha-location">Ubicación</label>
+            <span class="field__count" :data-over="ficha.location.length > LOCATION_MAX">{{ ficha.location.length }}/{{ LOCATION_MAX }}</span>
+          </div>
+          <input id="ficha-location" v-model="ficha.location" type="text" class="input" placeholder="Ej. Granada, España" :aria-invalid="!!errors.location">
+          <p v-if="errors.location" class="field__error" role="alert" data-error="location">{{ errors.location }}</p>
+        </div>
+        <slot name="identity-extra" />
         <div class="field">
           <div class="field__row">
             <label class="field__label" for="ficha-bio">Biografía</label>
@@ -98,7 +120,12 @@ function toggleCategory(cat: string) {
           <p v-if="errors.lookingFor" class="field__error" role="alert" data-error="lookingFor">{{ errors.lookingFor }}</p>
         </div>
         <slot name="collab-extra" />
+        <label class="ficha-form__switch">
+          <input v-model="ficha.showCollaborations" type="checkbox">
+          <span><strong>Mostrar con quién he colaborado</strong><small>{{ texts.collaborationsHint }}</small></span>
+        </label>
       </section>
     </div>
+    <slot name="extra" />
   </div>
 </template>

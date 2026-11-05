@@ -13,6 +13,11 @@ export interface MyCreator {
   boardWipLimits: Record<string, number>
   /** Publicaciones/semana que el propio creador se ha fijado como objetivo (ver creator/index.vue). */
   weeklyPostTarget: number
+  headline: string | null
+  location: string | null
+  /** Audiencia declarada (jsonb crudo; ver utils/audience.ts). */
+  audience: Record<string, unknown>
+  showCollaborations: boolean
 }
 
 interface CreatorFichaRow {
@@ -28,10 +33,14 @@ interface CreatorFichaRow {
   cover_url: string | null
   board_wip_limits: Record<string, number> | null
   weekly_post_target: number | null
+  headline: string | null
+  location: string | null
+  audience: Record<string, unknown> | null
+  show_collaborations: boolean | null
 }
 
 const CREATOR_SELECT =
-  'id, display_name, niche, stripe_connect_onboarded, bio, categories, min_rate_cents, max_rate_cents, looking_for, cover_url, board_wip_limits, weekly_post_target'
+  'id, display_name, niche, stripe_connect_onboarded, bio, categories, min_rate_cents, max_rate_cents, looking_for, cover_url, board_wip_limits, weekly_post_target, headline, location, audience, show_collaborations'
 
 function mapCreatorRow(data: CreatorFichaRow): MyCreator {
   return {
@@ -46,7 +55,11 @@ function mapCreatorRow(data: CreatorFichaRow): MyCreator {
     lookingFor: data.looking_for,
     coverUrl: data.cover_url,
     boardWipLimits: data.board_wip_limits ?? {},
-    weeklyPostTarget: data.weekly_post_target ?? 5
+    weeklyPostTarget: data.weekly_post_target ?? 5,
+    headline: data.headline,
+    location: data.location,
+    audience: data.audience ?? {},
+    showCollaborations: data.show_collaborations ?? true
   }
 }
 
@@ -90,6 +103,10 @@ export function useMyCreator() {
     maxRateCents?: number | null
     lookingFor?: string | null
     weeklyPostTarget?: number
+    headline?: string | null
+    location?: string | null
+    audience?: Record<string, unknown>
+    showCollaborations?: boolean
   }) {
     const me = creator.value ?? (await ensureCreator())
     if (!me) throw new Error('No hay ficha de creador que actualizar.')
@@ -101,6 +118,10 @@ export function useMyCreator() {
     if (patch.maxRateCents !== undefined) payload.max_rate_cents = patch.maxRateCents
     if (patch.lookingFor !== undefined) payload.looking_for = patch.lookingFor
     if (patch.weeklyPostTarget !== undefined) payload.weekly_post_target = patch.weeklyPostTarget
+    if (patch.headline !== undefined) payload.headline = patch.headline
+    if (patch.location !== undefined) payload.location = patch.location
+    if (patch.audience !== undefined) payload.audience = patch.audience
+    if (patch.showCollaborations !== undefined) payload.show_collaborations = patch.showCollaborations
 
     const { data, error } = await useSupabaseClient()
       .from('creators')
