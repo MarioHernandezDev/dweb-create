@@ -37,6 +37,7 @@
   .collab-card__bar { display: block; height: 0.375rem; border-radius: var(--radius-pill); background: var(--surface-sunken); overflow: hidden; }
   .collab-card__bar-fill { display: block; height: 100%; border-radius: inherit; background: var(--color-tinta-950); transition: width var(--dur) var(--ease-out); }
   .collab-card__count { color: var(--text-muted); font-size: var(--text-sm); font-variant-numeric: tabular-nums; }
+  .collab-card__expiry { font-size: var(--text-sm); font-weight: 600; color: var(--text-muted); &[data-expired="true"] { color: var(--color-danger); } }
   .collab-card__hint { color: var(--text-muted); font-size: var(--text-sm); font-weight: 600; overflow-wrap: anywhere;
     /* Lo que me toca a mí lleva el punto de la firma; lo que espera a la otra parte, sin él. */
     &[data-tone="action"] { display: inline-flex; align-items: center; gap: 0.5rem; color: var(--text-strong);

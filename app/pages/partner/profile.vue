@@ -137,7 +137,8 @@ function fichaFromPartner() {
     categories: [...(partner.value?.categories ?? [])],
     min: (partner.value?.minBudgetCents ? partner.value.minBudgetCents / 100 : null) as number | string | null,
     max: (partner.value?.maxBudgetCents ? partner.value.maxBudgetCents / 100 : null) as number | string | null,
-    lookingFor: partner.value?.lookingFor ?? ''
+    lookingFor: partner.value?.lookingFor ?? '',
+    collaborationTypes: [...(partner.value?.collaborationTypes ?? [])]
   }
 }
 const ficha = reactive(fichaFromPartner())
@@ -172,7 +173,8 @@ async function saveFicha() {
       categories: ficha.categories,
       minBudgetCents: ficha.min ? Math.round(Number(ficha.min) * 100) : null,
       maxBudgetCents: ficha.max ? Math.round(Number(ficha.max) * 100) : null,
-      lookingFor: ficha.lookingFor.trim() || null
+      lookingFor: ficha.lookingFor.trim() || null,
+      collaborationTypes: ficha.collaborationTypes
     })
     fichaSnapshot.value = JSON.stringify(ficha)
     fichaSaved.value = true
@@ -303,6 +305,18 @@ const heroRange = computed(() => rangeText(
               <BaseButton variant="secondary" size="sm" icon="ph:eye-fill" block class="ficha-preview-btn" @click="previewSheetOpen = true">Ver vista previa</BaseButton>
               <BaseCard radius="lg" padding="lg">
                 <ProfileFichaForm :ficha="ficha" :errors="fichaErrors" :texts="fichaTexts">
+                  <template #collab-extra>
+                    <div class="field">
+                      <p class="field__label">Qué tipo de colaboración ofreces</p>
+                      <p class="field__hint">Los creadores pueden filtrar por estos formatos en Descubrir.</p>
+                      <div class="ficha-form__chips" role="group" aria-label="Tipo de colaboración">
+                        <Chip
+                          v-for="t in COLLAB_TYPES" :key="t.value" size="sm" :selected="ficha.collaborationTypes.includes(t.value)"
+                          @click="ficha.collaborationTypes = ficha.collaborationTypes.includes(t.value) ? ficha.collaborationTypes.filter((x) => x !== t.value) : [...ficha.collaborationTypes, t.value]"
+                        >{{ t.label }}</Chip>
+                      </div>
+                    </div>
+                  </template>
                   <template #cover>
                     <CoverPhotoUploader
                       :cover-url="partner?.coverUrl ?? null" :cover-art="coverArtFromString(partner?.id ?? 'partner')" icon="ph:storefront-fill"

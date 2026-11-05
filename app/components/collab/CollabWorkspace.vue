@@ -5,6 +5,7 @@ import { relativeTime } from '~/utils/status'
 import { collaborationWork, deliverableState, hasRated, type DeliverableState, type WorkCollab, type WorkTask } from '~/utils/collaboration-work'
 import type { CollaborationTerms } from '~/utils/collaboration-terms'
 import type { CollaborationStatus } from '~/types'
+import { expiryState } from '~/utils/collab-expiry'
 
 /**
  * Página de una colaboración, para los dos roles (`/creator/collaborations/[id]`
@@ -56,6 +57,7 @@ interface View extends CollaborationTerms {
   budgetCents: number | null
   paidAt: string | null
   createdAt: string
+  expiresAt: string | null
   initiatedBy: 'creator' | 'partner'
   counterpartName: string
   counterpartProfileId: string | null
@@ -80,6 +82,8 @@ if (!view.value) {
   await (isPartner ? partnerSide.refresh() : creatorSide.refresh())
   notFound.value = !view.value
 }
+
+const expiry = computed(() => expiryState(view.value?.status ?? '', view.value?.expiresAt))
 
 const posts = computed(() => (isPartner ? partnerPosts.value : myPosts.value))
 const events = computed(() => eventsByCollab.value[props.id] ?? [])
@@ -208,6 +212,11 @@ useHead({ title: computed(() => (view.value ? `Colaboración con ${view.value.co
       <CollabParty :name="view.counterpartName" :status="view.status" :brief="view.brief" class="cwork__party">
         <CollaborationChatButton :counterpart-profile-id="view.counterpartProfileId" :counterpart-name="view.counterpartName" />
       </CollabParty>
+
+      <p v-if="expiry.label" class="cwork__expiry" :data-expired="expiry.expired" role="status">
+        <Icon :name="expiry.expired ? 'ph:clock-countdown-fill' : 'ph:clock'" class="size-4" />
+        {{ expiry.expired ? 'Esta propuesta ha caducado: ya no se puede aceptar. Puedes rechazarla o pedir que te la envíen de nuevo.' : `${expiry.label}: pasado ese plazo ya no se podrá aceptar.` }}
+      </p>
 
       <CollabNextStep :tasks="work.tasks" :waiting="work.waiting" :closed-text="closedText" @go="goTask" />
 

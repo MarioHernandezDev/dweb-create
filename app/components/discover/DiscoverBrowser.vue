@@ -4,7 +4,7 @@ import { formatEuros } from '~/utils/mock-data'
 import type { DiscoveryResult } from '~/composables/useDiscover'
 import { platformMeta } from '~/utils/mock-data'
 import { prefersReducedMotion } from '~/composables/useGsap'
-import { matchesClientFilters, sortResults, SORT_LABELS, type DiscoverSort, type ResponseFilter } from '~/utils/discover-view'
+import { matchesClientFilters, sortResults, SORT_LABELS, COLLAB_TYPES, type DiscoverSort, type ResponseFilter } from '~/utils/discover-view'
 import type { SavedSearch } from '~/composables/useSavedSearches'
 
 /**
@@ -50,6 +50,8 @@ const maxEuros = ref<number | null>(null)
 const filtersOpen = ref(false)
 const platforms = ref<string[]>([])
 const response = ref<ResponseFilter>('any')
+const types = ref<string[]>([])
+const verifiedOnly = ref(false)
 const sort = ref<DiscoverSort>('affinity')
 const { items: savedSearches, add: addSavedSearch, remove: removeSavedSearch } = useSavedSearches(props.kind)
 const savedMenuOpen = ref(false)
@@ -57,8 +59,8 @@ const savedMenuOpen = ref(false)
 // Un campo numérico vacío llega como '' (no null).
 const num = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) ? v : null)
 const hasBudget = computed(() => num(minEuros.value) !== null || num(maxEuros.value) !== null)
-const hasActiveFilters = computed(() => selectedCategories.value.length > 0 || hasBudget.value || platforms.value.length > 0 || response.value !== 'any')
-const activeCount = computed(() => selectedCategories.value.length + (hasBudget.value ? 1 : 0) + platforms.value.length + (response.value !== 'any' ? 1 : 0))
+const hasActiveFilters = computed(() => selectedCategories.value.length > 0 || hasBudget.value || platforms.value.length > 0 || response.value !== 'any' || types.value.length > 0 || verifiedOnly.value)
+const activeCount = computed(() => selectedCategories.value.length + (hasBudget.value ? 1 : 0) + platforms.value.length + (response.value !== 'any' ? 1 : 0) + types.value.length + (verifiedOnly.value ? 1 : 0))
 
 const PAGE_SIZE = 12
 const visibleCount = ref(PAGE_SIZE)
@@ -85,6 +87,8 @@ function clearFilters() {
   maxEuros.value = null
   platforms.value = []
   response.value = 'any'
+  types.value = []
+  verifiedOnly.value = false
 }
 function removePlatform(p: string) { platforms.value = platforms.value.filter((x) => x !== p) }
 
@@ -100,7 +104,7 @@ function saveSearch() {
   if (!canSaveSearch.value) return
   addSavedSearch(currentLabel(), {
     categories: [...selectedCategories.value], minEuros: num(minEuros.value), maxEuros: num(maxEuros.value),
-    platforms: [...platforms.value], response: response.value, sort: sort.value, nameQuery: nameQuery.value
+    platforms: [...platforms.value], response: response.value, types: [...types.value], verifiedOnly: verifiedOnly.value, sort: sort.value, nameQuery: nameQuery.value
   })
   toast.success('Búsqueda guardada')
 }
@@ -112,6 +116,8 @@ function applySavedSearch(item: SavedSearch) {
   maxEuros.value = st.maxEuros
   platforms.value = [...st.platforms]
   response.value = st.response
+  types.value = [...(st.types ?? [])]
+  verifiedOnly.value = !!st.verifiedOnly
   sort.value = st.sort
   nameQuery.value = st.nameQuery
   savedMenuOpen.value = false
@@ -131,13 +137,13 @@ const byName = computed(() => {
 // Cuántos resultados tiene cada red (con el resto de filtros ya aplicados, salvo la propia red).
 const platformCounts = computed(() => {
   const counts: Record<string, number> = {}
-  for (const r of byName.value.filter((x) => matchesClientFilters(x, { platforms: [], response: response.value }))) {
+  for (const r of byName.value.filter((x) => matchesClientFilters(x, { platforms: [], response: response.value, types: types.value, verifiedOnly: verifiedOnly.value }))) {
     for (const p of r.platforms) counts[p] = (counts[p] ?? 0) + 1
   }
   return counts
 })
 const filtered = computed(() => sortResults(
-  byName.value.filter((r) => matchesClientFilters(r, { platforms: platforms.value, response: response.value })),
+  byName.value.filter((r) => matchesClientFilters(r, { platforms: platforms.value, response: response.value, types: types.value, verifiedOnly: verifiedOnly.value })),
   sort.value
 ))
 const sortOptions = computed(() => (Object.keys(SORT_LABELS) as DiscoverSort[]).filter((k) => k !== 'followers' || props.kind === 'creator').map((k) => ({ value: k, label: SORT_LABELS[k] })))
@@ -210,7 +216,7 @@ useIntersectionObserver(sentinel, ([entry]) => { if (entry?.isIntersecting && ha
       <!-- Filtros: columna fija en escritorio; en móvil, hoja inferior -->
       <aside class="discover__aside" aria-label="Filtros">
         <DiscoverFilters
-          v-model:categories="selectedCategories" v-model:min="minEuros" v-model:max="maxEuros" v-model:platforms="platforms" v-model:response="response"
+          v-model:categories="selectedCategories" v-model:min="minEuros" v-model:max="maxEuros" v-model:platforms="platforms" v-model:response="response" v-model:types="types" v-model:verified-only="verifiedOnly" :brand-filters="kind === 'partner'"
           :active="hasActiveFilters" :platform-counts="platformCounts" :budget-label="noun.budget" @clear="clearFilters"
         />
       </aside>
@@ -265,6 +271,8 @@ useIntersectionObserver(sentinel, ([entry]) => { if (entry?.isIntersecting && ha
               {{ num(minEuros) ? formatEuros(num(minEuros)! * 100) : '…' }} - {{ num(maxEuros) ? formatEuros(num(maxEuros)! * 100) : '…' }}
             </Chip>
             <Chip v-for="p in platforms" :key="p" size="sm" :selected="true" icon="ph:x-bold" @click="removePlatform(p)">{{ platformMeta[p as keyof typeof platformMeta]?.label ?? p }}</Chip>
+            <Chip v-for="t in types" :key="t" size="sm" :selected="true" icon="ph:x-bold" @click="types = types.filter((x) => x !== t)">{{ COLLAB_TYPES.find((c) => c.value === t)?.label ?? t }}</Chip>
+            <Chip v-if="verifiedOnly" size="sm" :selected="true" icon="ph:x-bold" @click="verifiedOnly = false">Verificadas</Chip>
             <Chip v-if="response !== 'any'" size="sm" :selected="true" icon="ph:x-bold" @click="response = 'any'">Responde en &lt; {{ response }} h</Chip>
           </div>
         </div>
@@ -314,7 +322,7 @@ useIntersectionObserver(sentinel, ([entry]) => { if (entry?.isIntersecting && ha
 
     <BottomSheet v-model="filtersOpen" title="Filtros">
       <DiscoverFilters
-        v-model:categories="selectedCategories" v-model:min="minEuros" v-model:max="maxEuros" v-model:platforms="platforms" v-model:response="response"
+        v-model:categories="selectedCategories" v-model:min="minEuros" v-model:max="maxEuros" v-model:platforms="platforms" v-model:response="response" v-model:types="types" v-model:verified-only="verifiedOnly" :brand-filters="kind === 'partner'"
         :active="hasActiveFilters" :platform-counts="platformCounts" :budget-label="noun.budget" @clear="clearFilters"
       />
       <BaseButton variant="primary" size="lg" block class="mt-5" @click="filtersOpen = false">Ver {{ filtered.length }} {{ filtered.length === 1 ? noun.one : noun.many }}</BaseButton>

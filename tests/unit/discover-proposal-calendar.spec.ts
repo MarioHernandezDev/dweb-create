@@ -8,7 +8,8 @@ import type { Post } from '../../app/types'
 
 const r = (o: Partial<DiscoveryResult>): DiscoveryResult => ({
   id: 'x', name: 'X', bio: null, categories: [], lookingFor: null, minCents: null, maxCents: null, followers: 0,
-  coverUrl: null, score: 50, reason: null, profileId: 'p', collabCount: 0, responseHours: null, platforms: [], ...o
+  coverUrl: null, score: 50, reason: null, profileId: 'p', collabCount: 0, responseHours: null, platforms: [],
+  verified: false, collaborationTypes: [], ...o
 })
 
 describe('Descubrir: filtros y orden en el cliente', () => {
@@ -19,6 +20,16 @@ describe('Descubrir: filtros y orden en el cliente', () => {
     expect([a, b, c].filter((x) => matchesClientFilters(x, { platforms: ['instagram'], response: 'any' })).map((x) => x.id)).toEqual(['a', 'c'])
     expect([a, b, c].filter((x) => matchesClientFilters(x, { platforms: [], response: '24' })).map((x) => x.id)).toEqual(['a', 'b'])
     expect([a, b, c].filter((x) => matchesClientFilters(x, { platforms: [], response: '2' })).map((x) => x.id)).toEqual(['a'])
+  })
+
+  it('filtra por marcas verificadas y por tipo de colaboración', () => {
+    const a = r({ id: 'a', verified: true, collaborationTypes: ['post', 'reel'] })
+    const b = r({ id: 'b', verified: false, collaborationTypes: ['stories'] })
+    const c = r({ id: 'c', verified: true, collaborationTypes: [] })
+    const f = (x: Partial<Parameters<typeof matchesClientFilters>[1]>) => [a, b, c].filter((y) => matchesClientFilters(y, { platforms: [], response: 'any', ...x })).map((y) => y.id)
+    expect(f({ verifiedOnly: true })).toEqual(['a', 'c'])
+    expect(f({ types: ['reel', 'stories'] })).toEqual(['a', 'b'])
+    expect(f({ types: ['reel'], verifiedOnly: true })).toEqual(['a'])
   })
 
   it('los que no tienen el dato van al final al ordenar por respuesta o presupuesto', () => {

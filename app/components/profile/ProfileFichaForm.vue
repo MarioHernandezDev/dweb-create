@@ -97,6 +97,7 @@ function toggleCategory(cat: string) {
           />
           <p v-if="errors.lookingFor" class="field__error" role="alert" data-error="lookingFor">{{ errors.lookingFor }}</p>
         </div>
+        <slot name="collab-extra" />
       </section>
     </div>
   </div>

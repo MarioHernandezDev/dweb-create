@@ -7,7 +7,7 @@ interface ProfileRow {
   created_at: string
 }
 interface CreatorRow { id: string; profile_id: string; display_name: string }
-interface PartnerRow { id: string; profile_id: string; company_name: string }
+interface PartnerRow { id: string; profile_id: string; company_name: string; verified_at: string | null }
 interface SubscriptionRow { creator_id: string; plan_id: string; status: string; current_period_end: string | null }
 
 /**
@@ -25,7 +25,7 @@ export default defineEventHandler(async (event) => {
     client.from('profiles').select('id, role, full_name, created_at').order('created_at', { ascending: false }),
     client.auth.admin.listUsers({ perPage: 1000 }),
     client.from('creators').select('id, profile_id, display_name'),
-    client.from('partners').select('id, profile_id, company_name'),
+    client.from('partners').select('id, profile_id, company_name, verified_at'),
     client.from('subscriptions').select('creator_id, plan_id, status, current_period_end')
   ])
 
@@ -52,6 +52,7 @@ export default defineEventHandler(async (event) => {
       lastSignInAt: authUser?.last_sign_in_at ?? null,
       bannedUntil: authUser?.banned_until ?? null,
       creatorId: creator?.id ?? null,
+      partnerVerified: partner ? !!partner.verified_at : null,
       displayName: creator?.display_name ?? partner?.company_name ?? null,
       planId: subscription?.plan_id ?? null,
       planStatus: subscription?.status ?? null,

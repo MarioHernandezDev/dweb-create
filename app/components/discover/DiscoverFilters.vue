@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { DISCOVERY_CATEGORIES } from '~/utils/categories'
 import { platformMeta } from '~/utils/mock-data'
-import { BUDGET_SLIDER, type ResponseFilter } from '~/utils/discover-view'
+import { BUDGET_SLIDER, COLLAB_TYPES, type ResponseFilter } from '~/utils/discover-view'
 
 /**
  * Filtros de Descubrir. Se aplican solos al cambiar:
@@ -15,6 +15,8 @@ const props = defineProps<{
   platformCounts: Record<string, number>
   /** Etiqueta del presupuesto: lo que paga la marca / lo que cobra el creador. */
   budgetLabel: string
+  /** Solo al explorar marcas: tipo de colaboración y «solo verificadas». */
+  brandFilters?: boolean
 }>()
 defineEmits<{ clear: [] }>()
 const categories = defineModel<string[]>('categories', { required: true })
@@ -22,6 +24,11 @@ const minEuros = defineModel<number | null>('min', { required: true })
 const maxEuros = defineModel<number | null>('max', { required: true })
 const platforms = defineModel<string[]>('platforms', { required: true })
 const response = defineModel<ResponseFilter>('response', { required: true })
+const types = defineModel<string[]>('types', { required: true })
+const verifiedOnly = defineModel<boolean>('verifiedOnly', { required: true })
+function toggleType(t: string) {
+  types.value = types.value.includes(t) ? types.value.filter((x) => x !== t) : [...types.value, t]
+}
 
 const { min: SMIN, max: SMAX, step: SSTEP } = BUDGET_SLIDER
 const lo = computed(() => minEuros.value ?? SMIN)
@@ -97,6 +104,14 @@ const responseOptions: { value: ResponseFilter; label: string }[] = [
       </label>
     </fieldset>
 
+    <fieldset v-if="brandFilters" class="dfilters__group">
+      <legend class="dfilters__legend">Tipo de colaboración</legend>
+      <div class="dfilters__chips">
+        <Chip v-for="t in COLLAB_TYPES" :key="t.value" :selected="types.includes(t.value)" @click="toggleType(t.value)">{{ t.label }}</Chip>
+      </div>
+      <p class="dfilters__hint">Los formatos que cada marca dice ofrecer en su ficha.</p>
+    </fieldset>
+
     <fieldset class="dfilters__group">
       <legend class="dfilters__legend">Respuesta</legend>
       <label v-for="o in responseOptions" :key="o.value" class="dcheck dcheck--radio">
@@ -106,5 +121,11 @@ const responseOptions: { value: ResponseFilter; label: string }[] = [
       </label>
       <p class="dfilters__hint">Según lo que han tardado de verdad en contestar solicitudes. Si no hay datos, no aparecen al filtrar.</p>
     </fieldset>
+
+    <label v-if="brandFilters" class="dswitch">
+      <span>Solo marcas verificadas</span>
+      <input v-model="verifiedOnly" type="checkbox" role="switch">
+      <span class="dswitch__track" aria-hidden="true"><span class="dswitch__thumb" /></span>
+    </label>
   </div>
 </template>

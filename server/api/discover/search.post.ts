@@ -53,6 +53,10 @@ export interface DiscoveryResult {
   responseHours: number | null
   /** Redes con actividad real (cuentas vinculadas del creador; publicaciones del partner). */
   platforms: string[]
+  /** Marca verificada por el equipo de CIBERAN (siempre false para creadores). */
+  verified: boolean
+  /** Formatos que ofrece la marca (post, reel, stories, ambassador); vacío para creadores. */
+  collaborationTypes: string[]
 }
 
 interface CreatorCandidateRow {
@@ -80,6 +84,8 @@ interface PartnerCandidateRow {
   cover_url: string | null
   created_at: string
   profile_id: string
+  verified_at: string | null
+  collaboration_types: string[] | null
 }
 
 const CANDIDATE_POOL_LIMIT = 200
@@ -341,7 +347,7 @@ export default defineEventHandler(async (event) => {
   if (viewerRole === 'creator') {
     const { data, error } = await client
       .from('partners')
-      .select('id, profile_id, company_name, bio, categories, looking_for, min_budget_cents, max_budget_cents, cover_url, created_at')
+      .select('id, profile_id, company_name, bio, categories, looking_for, min_budget_cents, max_budget_cents, cover_url, created_at, verified_at, collaboration_types')
       .order('created_at', { ascending: false })
       .limit(CANDIDATE_POOL_LIMIT)
     if (error) throw createError({ statusCode: 500, statusMessage: error.message })
@@ -369,7 +375,9 @@ export default defineEventHandler(async (event) => {
       profileId: r.profile_id,
       collabCount: 0,
       responseHours: null,
-      platforms: []
+      platforms: [],
+      verified: !!r.verified_at,
+      collaborationTypes: r.collaboration_types ?? []
     }))
   } else {
     const { data, error } = await client
@@ -402,7 +410,9 @@ export default defineEventHandler(async (event) => {
       profileId: r.profile_id,
       collabCount: 0,
       responseHours: null,
-      platforms: [...new Set((r.social_accounts ?? []).map((a) => a.platform))]
+      platforms: [...new Set((r.social_accounts ?? []).map((a) => a.platform))],
+      verified: false,
+      collaborationTypes: []
     }))
   }
 

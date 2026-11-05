@@ -14,6 +14,8 @@ export interface CollabRequest extends CollaborationTerms {
   partnerProfileId: string | null
   createdAt: string
   updatedAt: string
+  /** Cuándo caduca la solicitud (solo si está pendiente y es posterior a la migración de caducidad). */
+  expiresAt: string | null
   initiatedBy: 'creator' | 'partner'
   packageTitle: string | null
   packageDescription: string | null
@@ -29,6 +31,7 @@ interface CollabRequestRow {
   partner_id: string
   created_at: string
   updated_at: string
+  expires_at: string | null
   initiated_by: 'creator' | 'partner'
   scope_notes: string | null
   revisions_included: number | null
@@ -55,6 +58,7 @@ function mapRow(row: CollabRequestRow): CollabRequest {
     partnerProfileId: row.partners?.profile_id ?? null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+    expiresAt: row.expires_at,
     initiatedBy: row.initiated_by,
     scopeNotes: row.scope_notes,
     revisionsIncluded: row.revisions_included,
@@ -89,7 +93,7 @@ export function useCollabRequests() {
 
     const { data, error } = await client
       .from('collaborations')
-      .select('id, status, brief, budget_cents, paid_at, partner_id, created_at, updated_at, initiated_by, scope_notes, revisions_included, exclusivity, usage_rights, campaign_goal, target_audience, tone, package_title, package_description, package_deliverables, partners(company_name, profile_id)')
+      .select('id, status, brief, budget_cents, paid_at, partner_id, created_at, updated_at, expires_at, initiated_by, scope_notes, revisions_included, exclusivity, usage_rights, campaign_goal, target_audience, tone, package_title, package_description, package_deliverables, partners(company_name, profile_id)')
       .eq('creator_id', me.id)
       .order('created_at', { ascending: false })
       .limit(300)

@@ -23,6 +23,8 @@ export interface MyCollaboration extends CollaborationTerms {
   budgetCents: number | null
   paidAt: string | null
   createdAt: string
+  /** Cuándo caduca la solicitud (solo si está pendiente y es posterior a la migración de caducidad). */
+  expiresAt: string | null
   initiatedBy: 'creator' | 'partner'
   /** Instantánea del paquete aceptado en el chat (null si no nació de una oferta o el paquete ya no existía). */
   packageTitle: string | null
@@ -38,6 +40,7 @@ interface CollaborationRow {
   budget_cents: number | null
   paid_at: string | null
   created_at: string
+  expires_at: string | null
   initiated_by: 'creator' | 'partner'
   scope_notes: string | null
   revisions_included: number | null
@@ -73,7 +76,7 @@ export function useMyCollaborations() {
 
     const { data, error } = await client
       .from('collaborations')
-      .select('id, status, creator_id, brief, budget_cents, paid_at, created_at, initiated_by, scope_notes, revisions_included, exclusivity, usage_rights, campaign_goal, target_audience, tone, package_title, package_description, package_deliverables, creators(display_name, profile_id)')
+      .select('id, status, creator_id, brief, budget_cents, paid_at, created_at, expires_at, initiated_by, scope_notes, revisions_included, exclusivity, usage_rights, campaign_goal, target_audience, tone, package_title, package_description, package_deliverables, creators(display_name, profile_id)')
       .eq('partner_id', me.id)
       .order('created_at', { ascending: false })
       .limit(300)
@@ -92,6 +95,7 @@ export function useMyCollaborations() {
       budgetCents: r.budget_cents,
       paidAt: r.paid_at,
       createdAt: r.created_at,
+      expiresAt: r.expires_at,
       initiatedBy: r.initiated_by,
       scopeNotes: r.scope_notes,
       revisionsIncluded: r.revisions_included,

@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { collaborationStatusMeta } from '~/utils/status'
+import { toCsv, downloadCsv } from '~/utils/csv'
+
 useHead({ title: 'Colaboraciones' })
 
 // Cada colaboración tiene su propia página (`/creator/collaborations/[id]`). Los
@@ -40,6 +43,16 @@ const active = computed(() => newestFirst(requests.value.filter((r) => ACTIVE_ST
 const history = computed(() => newestFirst(requests.value.filter((r) => r.status !== 'requested' && !ACTIVE_STATUSES.includes(r.status))))
 const visible = computed(() => (tab.value === 'pending' ? pending.value : tab.value === 'active' ? active.value : history.value))
 
+// Exportar lo que se está viendo (la pestaña activa) a CSV.
+const TAB_NAMES = { pending: 'pendientes', active: 'en-curso', history: 'historial' } as const
+function exportCsv() {
+  const rows = visible.value.map((c) => [
+    c.partnerName, collaborationStatusMeta[c.status].label, c.budgetCents != null ? c.budgetCents / 100 : '',
+    c.createdAt.slice(0, 10), c.expiresAt?.slice(0, 10) ?? '', c.scopeNotes ?? '', c.usageRights ?? '', c.brief
+  ])
+  downloadCsv(`colaboraciones-${TAB_NAMES[tab.value]}.csv`, toCsv(['Marca', 'Estado', 'Presupuesto (€)', 'Creada', 'Caduca', 'Entregables', 'Uso del contenido', 'Mensaje'], rows))
+}
+
 // Pestaña inicial: la de la URL (`?tab=`); si no, la que tenga contenido.
 const queryTab = route.query.tab
 tab.value = queryTab === 'active' || queryTab === 'history' || queryTab === 'pending'
@@ -49,7 +62,10 @@ tab.value = queryTab === 'active' || queryTab === 'history' || queryTab === 'pen
 
 <template>
   <AppShell role="creator" title="Colaboraciones" subtitle="Tus colaboraciones con partners">
-    <div class="collab-toolbar"><SegmentedTabs v-model="tab" :options="tabs" /></div>
+    <div class="collab-toolbar">
+      <SegmentedTabs v-model="tab" :options="tabs" />
+      <BaseButton variant="outline" size="sm" icon="ph:download-simple-bold" :disabled="!visible.length" data-export-csv @click="exportCsv">Exportar CSV</BaseButton>
+    </div>
 
     <EmptyState
       v-if="!visible.length && tab === 'pending'"
@@ -70,7 +86,7 @@ tab.value = queryTab === 'active' || queryTab === 'history' || queryTab === 'pen
     <div v-else class="collab-grid">
       <CollabCard
         v-for="req in visible" :key="req.id"
-        :name="req.partnerName" :status="req.status" :brief="req.brief" :budget-cents="req.budgetCents" :created-at="req.createdAt"
+        :name="req.partnerName" :status="req.status" :brief="req.brief" :budget-cents="req.budgetCents" :created-at="req.createdAt" :expires-at="req.expiresAt"
         :hint="hintOf(req)?.text" :hint-tone="hintOf(req)?.tone" :progress="work.progressFor(req.id)"
         @open="navigateTo(`/creator/collaborations/${req.id}`)"
       />

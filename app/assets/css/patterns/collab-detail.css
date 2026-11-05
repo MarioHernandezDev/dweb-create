@@ -11,6 +11,7 @@
     &:hover { color: var(--text-strong); }
   }
   .cwork__party { margin-bottom: 0; }
+  .cwork__expiry { display: flex; align-items: center; gap: 0.5rem; padding: 0.625rem 0.875rem; border-radius: var(--radius-sm); background: var(--surface-sunken); font-size: var(--text-sm); font-weight: 600; &[data-expired="true"] { background: color-mix(in srgb, var(--color-danger) 12%, var(--surface-raised)); color: var(--color-danger); } }
   .cwork__grid { display: grid; gap: var(--gap-loose); align-items: start; @media (width >= 64rem) { grid-template-columns: minmax(0, 1fr) 24rem; } }
   .cwork__main, .cwork__side { display: grid; gap: var(--gap-loose); min-width: 0; }
   .cwork__side { @media (width >= 64rem) { position: sticky; top: 6rem; } }

@@ -89,6 +89,7 @@ async function message() {
 
       <h3 class="dcard__name">
         <NuxtLink :to="`/profile/${kind}/${result.id}`" class="dcard__link">{{ result.name }}</NuxtLink>
+        <Icon v-if="result.verified" name="ph:seal-check-fill" class="dcard__verified" title="Marca verificada por CIBERAN" aria-label="Marca verificada" />
       </h3>
 
       <p v-if="featured && result.reason" class="dcard__reason"><Icon name="ph:lightbulb-fill" class="size-4 shrink-0 mt-0.5" />{{ result.reason }}</p>

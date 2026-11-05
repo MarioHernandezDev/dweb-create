@@ -8,6 +8,8 @@ export interface MyPartner {
   maxBudgetCents: number | null
   lookingFor: string | null
   coverUrl: string | null
+  /** Formatos que ofrece (post, reel, stories, ambassador). */
+  collaborationTypes: string[]
 }
 
 interface PartnerFichaRow {
@@ -20,9 +22,10 @@ interface PartnerFichaRow {
   max_budget_cents: number | null
   looking_for: string | null
   cover_url: string | null
+  collaboration_types: string[] | null
 }
 
-const PARTNER_SELECT = 'id, company_name, industry, bio, categories, min_budget_cents, max_budget_cents, looking_for, cover_url'
+const PARTNER_SELECT = 'id, company_name, industry, bio, categories, min_budget_cents, max_budget_cents, looking_for, cover_url, collaboration_types'
 
 function mapPartnerRow(data: PartnerFichaRow): MyPartner {
   return {
@@ -34,7 +37,8 @@ function mapPartnerRow(data: PartnerFichaRow): MyPartner {
     minBudgetCents: data.min_budget_cents,
     maxBudgetCents: data.max_budget_cents,
     lookingFor: data.looking_for,
-    coverUrl: data.cover_url
+    coverUrl: data.cover_url,
+    collaborationTypes: data.collaboration_types ?? []
   }
 }
 
@@ -71,6 +75,7 @@ export function useMyPartner() {
     minBudgetCents?: number | null
     maxBudgetCents?: number | null
     lookingFor?: string | null
+    collaborationTypes?: string[]
   }) {
     const me = partner.value ?? (await ensurePartner())
     if (!me) throw new Error('No hay ficha de partner que actualizar.')
@@ -81,6 +86,7 @@ export function useMyPartner() {
     if (patch.minBudgetCents !== undefined) payload.min_budget_cents = patch.minBudgetCents
     if (patch.maxBudgetCents !== undefined) payload.max_budget_cents = patch.maxBudgetCents
     if (patch.lookingFor !== undefined) payload.looking_for = patch.lookingFor
+    if (patch.collaborationTypes !== undefined) payload.collaboration_types = patch.collaborationTypes
 
     const { data, error } = await useSupabaseClient()
       .from('partners')

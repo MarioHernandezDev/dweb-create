@@ -11,6 +11,8 @@ export interface SavedSearchState {
   maxEuros: number | null
   platforms: string[]
   response: ResponseFilter
+  types?: string[]
+  verifiedOnly?: boolean
   sort: DiscoverSort
   nameQuery: string
 }

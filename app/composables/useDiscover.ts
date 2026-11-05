@@ -14,6 +14,8 @@ export interface DiscoveryResult {
   collabCount: number
   responseHours: number | null
   platforms: string[]
+  verified: boolean
+  collaborationTypes: string[]
 }
 
 export interface DiscoveryFilters {

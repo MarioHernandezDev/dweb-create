@@ -4,6 +4,18 @@ Registro de qué se hizo, por qué, y qué queda pendiente de verificar — pens
 
 ---
 
+## 2026-11-05 (Alex-71) — [Alex] Señales del marketplace: marca verificada, tipos de colaboración, caducidad de propuestas y CSV
+
+Migración **`20261105130000_marketplace_signals.sql` — PREPARADA, aplicada solo en el Supabase local, NO en la compartida** (hay que aplicarla ANTES de subir este código: Descubrir, las listas de colaboraciones y la ficha de la marca leen las columnas nuevas).
+- **Marca verificada**: `partners.verified_at`. La concede el equipo desde el panel de admin (`POST /api/admin/users/:id/verify`, botón «Verificar marca»); la columna no tiene UPDATE para el usuario (probado: una marca no se autoverifica). Insignia en la tarjeta de Descubrir y filtro «Solo marcas verificadas».
+- **Tipo de colaboración**: `partners.collaboration_types` (post, reel, stories, ambassador; con check). La marca lo edita en su ficha; filtro en Descubrir.
+- **Caducidad**: `collaborations.expires_at`, fijada por trigger a 7 días en las solicitudes nuevas (el cliente no puede fijarla). Las anteriores quedan sin fecha = no caducan. `accept_collaboration_request` rechaza una caducada; no hay estado nuevo («caducada» = `requested` con fecha pasada). Se ve en las tarjetas, en la página de la colaboración y en «Qué me toca» (una caducada deja de ser una tarea).
+- **Exportar CSV** de la pestaña visible en las listas de colaboraciones de los dos roles (`;`, BOM UTF-8, neutraliza fórmulas).
+- Pruebas: `tests/integration/marketplace-signals.spec.ts` (contra Supabase local; junto a flow-phase1 y events, 15/15), `tests/unit/expiry-csv.spec.ts`. Sin probar en navegador: el botón de admin (necesita sesión de admin).
+- **Deliberadamente no hecho**: «responsable» y hora en las tarjetas (un creador individual no tiene equipo ni hora de publicación) y «+N cards más».
+
+---
+
 ## 2026-11-05 (Alex-70) — [Alex] Rediseño desde los mockups de `references/` (Descubrir, Proponer, Publicaciones)
 
 Sin migraciones ni cambios de esquema: todo sale de datos que ya existen.

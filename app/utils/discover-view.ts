@@ -19,6 +19,14 @@ export const SORT_LABELS: Record<DiscoverSort, string> = {
 /** Siglas de las redes para las etiquetas pequeñas de la tarjeta. */
 export const PLATFORM_SHORT: Record<string, string> = { instagram: 'IG', tiktok: 'TT', youtube: 'YT', x: 'X', facebook: 'FB', linkedin: 'IN' }
 
+/** Formatos que puede ofrecer una marca (`partners.collaboration_types`). */
+export const COLLAB_TYPES = [
+  { value: 'post', label: 'Post' },
+  { value: 'reel', label: 'Reel / vídeo' },
+  { value: 'stories', label: 'Stories' },
+  { value: 'ambassador', label: 'Embajador/a' }
+] as const
+
 export const BUDGET_SLIDER = { min: 0, max: 5000, step: 50 } as const
 
 /** «~2 h», «~1 día»… a partir de las horas medianas de respuesta. */
@@ -30,7 +38,12 @@ export function responseLabel(hours: number | null): string | null {
   return `~${days} ${days === 1 ? 'día' : 'días'}`
 }
 
-export function matchesClientFilters(r: DiscoveryResult, f: { platforms: string[]; response: ResponseFilter }): boolean {
+export function matchesClientFilters(
+  r: DiscoveryResult,
+  f: { platforms: string[]; response: ResponseFilter; types?: string[]; verifiedOnly?: boolean }
+): boolean {
+  if (f.verifiedOnly && !r.verified) return false
+  if (f.types?.length && !f.types.some((t) => r.collaborationTypes.includes(t))) return false
   if (f.platforms.length && !f.platforms.some((p) => r.platforms.includes(p))) return false
   if (f.response !== 'any') {
     const limit = f.response === '2' ? 2 : 24

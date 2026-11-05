@@ -1,3 +1,4 @@
+import { expiryState } from './collab-expiry'
 import type { CollaborationStatus, PostStatus } from '~/types'
 import type { CollaborationTerms } from './collaboration-terms'
 import { hasAnyBriefSpecified, hasAnyTermsSpecified } from './collaboration-terms'
@@ -18,6 +19,8 @@ export interface WorkCollab extends CollaborationTerms {
   counterpartName: string
   /** Texto del brief: sirve para distinguir tareas de varias colaboraciones con la misma persona. */
   brief?: string
+  /** Caducidad de la solicitud pendiente: caducada ya no se puede aceptar, así que no es una tarea. */
+  expiresAt?: string | null
 }
 
 export interface WorkPost {
@@ -149,7 +152,9 @@ export function collaborationWork(
   let waitingText: string | null = null
 
   if (collab.status === 'requested') {
-    if (collab.initiatedBy === role) {
+    if (expiryState(collab.status, collab.expiresAt).expired) {
+      waitingText = `La propuesta con ${who} ha caducado`
+    } else if (collab.initiatedBy === role) {
       waitingText = `Esperando la respuesta de ${who}`
     } else {
       tasks.push({

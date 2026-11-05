@@ -12,6 +12,8 @@ interface AdminUser {
   lastSignInAt: string | null
   bannedUntil: string | null
   creatorId: string | null
+  /** null si no es una marca. */
+  partnerVerified: boolean | null
   displayName: string | null
   planId: string | null
   planStatus: string | null
@@ -198,6 +200,23 @@ async function toggleBlock(user: AdminUser) {
   }
 }
 
+async function toggleVerified(user: AdminUser) {
+  const verify = !user.partnerVerified
+  const ok = await confirm({
+    title: verify ? `¿Verificar a ${user.displayName ?? user.email}?` : `¿Quitar la verificación a ${user.displayName ?? user.email}?`,
+    message: verify ? 'Su ficha mostrará la insignia de marca verificada en Descubrir y se podrá filtrar por ella.' : 'Dejará de mostrar la insignia de marca verificada.',
+    confirmLabel: verify ? 'Verificar' : 'Quitar verificación'
+  })
+  if (!ok) return
+  acting.value = user.id
+  try {
+    await $fetch(`/api/admin/users/${user.id}/verify`, { method: 'POST', body: { verified: verify } })
+    await loadUsers()
+  } finally {
+    acting.value = null
+  }
+}
+
 const monthsByUser = reactive<Record<string, number>>({})
 function monthsFor(id: string) {
   return monthsByUser[id] ?? 6
@@ -274,6 +293,13 @@ function formatDate(iso: string | null) {
               :icon-spin="acting === user.id" @click="toggleBlock(user)"
             >
               {{ user.bannedUntil ? 'Desbloquear' : 'Bloquear' }}
+            </BaseButton>
+
+            <BaseButton
+              v-if="user.partnerVerified !== null" variant="secondary" size="sm" :icon="user.partnerVerified ? 'ph:seal-check-fill' : 'ph:seal-check'"
+              :disabled="acting === user.id" :icon-spin="acting === user.id" @click="toggleVerified(user)"
+            >
+              {{ user.partnerVerified ? 'Quitar verificación' : 'Verificar marca' }}
             </BaseButton>
 
             <template v-if="user.role === 'creator'">
