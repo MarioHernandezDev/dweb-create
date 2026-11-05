@@ -1,13 +1,17 @@
 <script setup lang="ts">
 import { formatCompactNumber, formatEuros } from '~/utils/mock-data'
+import { PLATFORM_SHORT, responseLabel } from '~/utils/discover-view'
 import type { DiscoveryResult } from '~/composables/useDiscover'
 
 /**
  * Tarjeta de un perfil en Descubrir (creador o partner). Toda la tarjeta abre
  * el perfil (enlace extendido sobre el nombre: un solo enlace real, sin
- * botones dentro de botones); guardar y contactar quedan por encima.
+ * botones dentro de botones); guardar, escribir y contactar quedan por encima.
  * La portada carga optimizada y diferida; sin foto o mientras carga se ve el
- * tinte de CoverArt.
+ * tinte de CoverArt con la inicial.
+ *
+ * Los datos de actividad (responde en, colaboraciones, redes) vienen del servidor y
+ * solo se enseñan cuando existen: nada se rellena por defecto.
  */
 const props = defineProps<{
   result: DiscoveryResult
@@ -29,20 +33,40 @@ const { isSaved, toggleSave, toggling, ensureIdsLoaded } = useSavedProfiles()
 onMounted(() => ensureIdsLoaded())
 const saved = computed(() => isSaved(props.kind, props.result.id))
 
-const icon = computed(() => (props.kind === 'creator' ? 'ph:user-focus' : 'ph:storefront-fill'))
 const topCategories = computed(() => props.result.categories.slice(0, props.featured ? 3 : 2))
 const budgetLabel = computed(() => {
   const { minCents, maxCents } = props.result
   if (!minCents && !maxCents) return null
-  return `${minCents ? formatEuros(minCents) : '…'}–${maxCents ? formatEuros(maxCents) : '…'}`
+  return `${minCents ? formatEuros(minCents) : '…'} – ${maxCents ? formatEuros(maxCents) : '…'}`
 })
+const budgetCaption = computed(() => (props.kind === 'partner' ? 'Presupuesto' : 'Tarifa'))
+const response = computed(() => responseLabel(props.result.responseHours))
+const initial = computed(() => (props.result.name.trim()[0] ?? '?').toUpperCase())
 const imageFailed = ref(false)
+
+// «Enviar mensaje»: la misma RPC que «Iniciar chat» del perfil (respeta la privacidad del chat).
+const { openConversationWith } = useChat()
+const toast = useToast()
+const opening = ref(false)
+async function message() {
+  if (opening.value) return
+  opening.value = true
+  try {
+    const conversationId = await openConversationWith(props.result.profileId)
+    await navigateTo(`/chat/${conversationId}`)
+  } catch (e) {
+    toast.error(errorMessage(e, 'No se ha podido abrir el chat.'))
+  } finally {
+    opening.value = false
+  }
+}
 </script>
 
 <template>
   <article class="dcard" :class="featured && 'dcard--featured'">
     <div class="dcard__media">
-      <CoverArt :seed="result.id" :icon="icon" />
+      <CoverArt :seed="result.id" />
+      <span class="dcard__initial" aria-hidden="true">{{ initial }}</span>
       <SmartImage
         v-if="result.coverUrl && !imageFailed" :src="result.coverUrl" :width="featured ? 640 : 440" :height="featured ? 400 : 275"
         :priority="priority" class="dcard__photo" @error="imageFailed = true"
@@ -55,7 +79,7 @@ const imageFailed = ref(false)
       >
         <Icon :name="saved ? 'ph:bookmark-simple-fill' : 'ph:bookmark-simple-bold'" class="size-4" />
       </button>
-      <span v-if="showScore" class="dcard__score">{{ Math.round(result.score) }}% de afinidad</span>
+      <span v-if="showScore" class="dcard__score">{{ Math.round(result.score) }}% afín</span>
     </div>
 
     <div class="dcard__body">
@@ -71,15 +95,30 @@ const imageFailed = ref(false)
       <p v-else-if="result.bio" class="dcard__bio">{{ result.bio }}</p>
       <p v-else class="dcard__bio dcard__bio--empty">Ficha en construcción</p>
 
-      <p v-if="(kind === 'creator' && result.followers) || budgetLabel" class="dcard__facts">
-        <span v-if="kind === 'creator' && result.followers"><Icon name="ph:users-three-fill" class="size-4" />{{ formatCompactNumber(result.followers) }} seguidores</span>
-        <span v-if="budgetLabel"><Icon name="ph:currency-eur" class="size-4" />{{ budgetLabel }}</span>
-      </p>
+      <ul v-if="response || result.collabCount || (kind === 'creator' && result.followers)" class="dcard__facts">
+        <li v-if="response"><Icon name="ph:clock" class="size-4" />Responde en {{ response }}</li>
+        <li v-if="result.collabCount"><Icon name="ph:check-bold" class="size-4" />{{ result.collabCount }} {{ result.collabCount === 1 ? 'colaboración' : 'colaboraciones' }}</li>
+        <li v-if="kind === 'creator' && result.followers"><Icon name="ph:users-three" class="size-4" />{{ formatCompactNumber(result.followers) }} seguidores</li>
+      </ul>
+
+      <div v-if="result.platforms.length" class="dcard__platforms">
+        <span v-for="p in result.platforms" :key="p" class="dcard__platform">{{ PLATFORM_SHORT[p] ?? p }}</span>
+      </div>
+
+      <p v-if="budgetLabel" class="dcard__budget"><span>{{ budgetCaption }}</span><strong>{{ budgetLabel }}</strong></p>
     </div>
 
     <div class="dcard__foot">
       <span v-if="isPending" class="collab-status" data-status="requested">Pendiente de respuesta</span>
-      <BaseButton v-else variant="primary" size="sm" block @click="$emit('contact')">{{ ctaLabel }}</BaseButton>
+      <template v-else>
+        <button
+          type="button" class="dcard__msg" :disabled="opening" :aria-label="`Enviar un mensaje a ${result.name}`" title="Enviar mensaje"
+          @click="message"
+        >
+          <Icon :name="opening ? 'ph:circle-notch-bold' : 'ph:envelope-simple'" class="size-5" :class="opening && 'animate-spin'" />
+        </button>
+        <BaseButton variant="primary" size="md" class="dcard__cta" @click="$emit('contact')">{{ ctaLabel }}</BaseButton>
+      </template>
     </div>
   </article>
 </template>

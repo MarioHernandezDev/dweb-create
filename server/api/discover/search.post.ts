@@ -45,6 +45,14 @@ export interface DiscoveryResult {
   coverUrl: string | null
   score: number
   reason: string | null
+  /** Perfil (auth) de la ficha: lo necesita «Enviar mensaje» desde la tarjeta. */
+  profileId: string
+  /** Colaboraciones aceptadas, en curso o completadas. Dato real, derivado de `collaborations`. */
+  collabCount: number
+  /** Mediana, en horas, de lo que tarda en responder a una solicitud (null si no hay datos). */
+  responseHours: number | null
+  /** Redes con actividad real (cuentas vinculadas del creador; publicaciones del partner). */
+  platforms: string[]
 }
 
 interface CreatorCandidateRow {
@@ -57,7 +65,8 @@ interface CreatorCandidateRow {
   max_rate_cents: number | null
   cover_url: string | null
   created_at: string
-  social_accounts: { followers_count: number }[] | null
+  profile_id: string
+  social_accounts: { followers_count: number; platform: string }[] | null
 }
 
 interface PartnerCandidateRow {
@@ -70,6 +79,7 @@ interface PartnerCandidateRow {
   max_budget_cents: number | null
   cover_url: string | null
   created_at: string
+  profile_id: string
 }
 
 const CANDIDATE_POOL_LIMIT = 200
@@ -96,6 +106,80 @@ function budgetCompatible(minA: number | null, maxA: number | null, minB: number
   const loB = minB ?? 0
   const hiB = maxB ?? Number.MAX_SAFE_INTEGER
   return loA <= hiB && loB <= hiA
+}
+
+const chunk = <T>(list: T[], size: number): T[][] => Array.from({ length: Math.ceil(list.length / size) }, (_, i) => list.slice(i * size, i * size + size))
+
+/**
+ * Rellena `collabCount`, `responseHours` y (para partners) `platforms` a partir de lo que ya hay en la base de
+ * datos — nada inventado: si no hay datos suficientes, el campo queda vacío y la tarjeta no lo enseña.
+ *  - colaboraciones: aceptadas, en curso o completadas de esa ficha.
+ *  - tiempo de respuesta: mediana entre el evento `requested` y el primer `accepted`/`declined` posterior,
+ *    solo en solicitudes que le enviaron a esa ficha (la otra parte las inició).
+ *  - redes de un partner: las de las publicaciones de sus colaboraciones.
+ */
+async function enrichActivity(client: { from: (table: string) => any }, viewerRole: ViewerRole, results: DiscoveryResult[]) {
+  if (!results.length) return
+  const targetCol = viewerRole === 'creator' ? 'partner_id' : 'creator_id'
+  const initiatorOfRequest = viewerRole === 'creator' ? 'creator' : 'partner'
+  try {
+    const collabRows: { id: string; target: string; status: string; initiated_by: string }[] = []
+    for (const ids of chunk(results.map((r) => r.id), 80)) {
+      const { data } = await client.from('collaborations').select(`id, ${targetCol}, status, initiated_by`).in(targetCol, ids)
+      for (const row of (data ?? []) as unknown as Record<string, string>[]) {
+        collabRows.push({ id: row.id as string, target: row[targetCol] as string, status: row.status as string, initiated_by: row.initiated_by as string })
+      }
+    }
+    if (!collabRows.length) return
+
+    const byTarget = new Map<string, typeof collabRows>()
+    for (const c of collabRows) byTarget.set(c.target, [...(byTarget.get(c.target) ?? []), c])
+
+    const requestIds = collabRows.filter((c) => c.initiated_by === initiatorOfRequest).map((c) => c.id)
+    const events: { collaboration_id: string; kind: string; created_at: string; seq: number }[] = []
+    for (const ids of chunk(requestIds, 80)) {
+      const { data } = await client.from('collaboration_events').select('collaboration_id, kind, created_at, seq').in('collaboration_id', ids).in('kind', ['requested', 'accepted', 'declined'])
+      events.push(...((data ?? []) as typeof events))
+    }
+    const eventsByCollab = new Map<string, typeof events>()
+    for (const e of events) eventsByCollab.set(e.collaboration_id, [...(eventsByCollab.get(e.collaboration_id) ?? []), e])
+
+    const platformsByCollab = new Map<string, Set<string>>()
+    if (viewerRole === 'creator') {
+      for (const ids of chunk(collabRows.map((c) => c.id), 80)) {
+        const { data } = await client.from('posts').select('collaboration_id, platform').in('collaboration_id', ids)
+        for (const p of (data ?? []) as { collaboration_id: string; platform: string }[]) {
+          platformsByCollab.set(p.collaboration_id, (platformsByCollab.get(p.collaboration_id) ?? new Set()).add(p.platform))
+        }
+      }
+    }
+
+    for (const r of results) {
+      const mine = byTarget.get(r.id) ?? []
+      r.collabCount = mine.filter((c) => ['accepted', 'in_progress', 'completed'].includes(c.status)).length
+      const hours: number[] = []
+      for (const c of mine) {
+        const list = (eventsByCollab.get(c.id) ?? []).sort((a, b) => a.created_at.localeCompare(b.created_at) || a.seq - b.seq)
+        const asked = list.find((e) => e.kind === 'requested')
+        const answered = asked ? list.find((e) => (e.kind === 'accepted' || e.kind === 'declined') && e.created_at >= asked.created_at) : null
+        if (asked && answered) hours.push((Date.parse(answered.created_at) - Date.parse(asked.created_at)) / 3_600_000)
+      }
+      if (hours.length) {
+        hours.sort((a, b) => a - b)
+        const mid = Math.floor(hours.length / 2)
+        const median = hours.length % 2 ? hours[mid]! : (hours[mid - 1]! + hours[mid]!) / 2
+        r.responseHours = Math.round(median * 10) / 10
+      }
+      if (viewerRole === 'creator') {
+        const set = new Set<string>()
+        for (const c of mine) for (const p of platformsByCollab.get(c.id) ?? []) set.add(p)
+        r.platforms = [...set]
+      }
+    }
+  } catch (err) {
+    // Es información de apoyo: si falla, las tarjetas salen sin ella en vez de romper la búsqueda.
+    console.error('[discover/search] no se pudo calcular la actividad de los resultados:', err)
+  }
 }
 
 function heuristicScore(candidateCategories: string[], filterCategories: string[]): number {
@@ -257,7 +341,7 @@ export default defineEventHandler(async (event) => {
   if (viewerRole === 'creator') {
     const { data, error } = await client
       .from('partners')
-      .select('id, company_name, bio, categories, looking_for, min_budget_cents, max_budget_cents, cover_url, created_at')
+      .select('id, profile_id, company_name, bio, categories, looking_for, min_budget_cents, max_budget_cents, cover_url, created_at')
       .order('created_at', { ascending: false })
       .limit(CANDIDATE_POOL_LIMIT)
     if (error) throw createError({ statusCode: 500, statusMessage: error.message })
@@ -281,12 +365,16 @@ export default defineEventHandler(async (event) => {
       followers: 0,
       coverUrl: r.cover_url,
       score: heuristicScore(r.categories ?? [], filterCategories),
-      reason: null
+      reason: null,
+      profileId: r.profile_id,
+      collabCount: 0,
+      responseHours: null,
+      platforms: []
     }))
   } else {
     const { data, error } = await client
       .from('creators')
-      .select('id, display_name, bio, categories, looking_for, min_rate_cents, max_rate_cents, cover_url, created_at, social_accounts(followers_count)')
+      .select('id, profile_id, display_name, bio, categories, looking_for, min_rate_cents, max_rate_cents, cover_url, created_at, social_accounts(followers_count, platform)')
       .order('created_at', { ascending: false })
       .limit(CANDIDATE_POOL_LIMIT)
     if (error) throw createError({ statusCode: 500, statusMessage: error.message })
@@ -310,9 +398,16 @@ export default defineEventHandler(async (event) => {
       followers: (r.social_accounts ?? []).reduce((sum, s) => sum + (s.followers_count ?? 0), 0),
       coverUrl: r.cover_url,
       score: heuristicScore(r.categories ?? [], filterCategories),
-      reason: null
+      reason: null,
+      profileId: r.profile_id,
+      collabCount: 0,
+      responseHours: null,
+      platforms: [...new Set((r.social_accounts ?? []).map((a) => a.platform))]
     }))
   }
+
+  // Datos reales de actividad (colaboraciones, tiempo de respuesta, redes) para las tarjetas.
+  await enrichActivity(client, viewerRole, results)
 
   let aiExtracted: { categories: string[]; summary: string | null } | null = null
 

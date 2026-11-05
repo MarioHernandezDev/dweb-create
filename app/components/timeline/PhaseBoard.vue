@@ -333,6 +333,7 @@ async function bulkDelete() {
             </div>
           </template>
         </draggable>
+        <NuxtLink v-if="phase === 'published' && board.published.length" to="/creator/metrics" class="board-col__link">Ver métricas →</NuxtLink>
       </section>
     </div>
 

@@ -1,0 +1,76 @@
+import { describe, expect, it } from 'vitest'
+import { matchesClientFilters, responseLabel, sortResults } from '../../app/utils/discover-view'
+import { buildDeliverablesSummary } from '../../app/utils/proposal'
+import { monthGrid, postsByDay, weekDays, weekRangeLabel } from '../../app/utils/post-calendar'
+import { platformFeeCents, MARKETPLACE_FEE_RATE } from '../../app/utils/fees'
+import type { DiscoveryResult } from '../../app/composables/useDiscover'
+import type { Post } from '../../app/types'
+
+const r = (o: Partial<DiscoveryResult>): DiscoveryResult => ({
+  id: 'x', name: 'X', bio: null, categories: [], lookingFor: null, minCents: null, maxCents: null, followers: 0,
+  coverUrl: null, score: 50, reason: null, profileId: 'p', collabCount: 0, responseHours: null, platforms: [], ...o
+})
+
+describe('Descubrir: filtros y orden en el cliente', () => {
+  it('filtra por red (basta con una) y por tiempo de respuesta', () => {
+    const a = r({ id: 'a', platforms: ['instagram'], responseHours: 1.5 })
+    const b = r({ id: 'b', platforms: ['youtube'], responseHours: 20 })
+    const c = r({ id: 'c', platforms: ['instagram', 'tiktok'], responseHours: null })
+    expect([a, b, c].filter((x) => matchesClientFilters(x, { platforms: ['instagram'], response: 'any' })).map((x) => x.id)).toEqual(['a', 'c'])
+    expect([a, b, c].filter((x) => matchesClientFilters(x, { platforms: [], response: '24' })).map((x) => x.id)).toEqual(['a', 'b'])
+    expect([a, b, c].filter((x) => matchesClientFilters(x, { platforms: [], response: '2' })).map((x) => x.id)).toEqual(['a'])
+  })
+
+  it('los que no tienen el dato van al final al ordenar por respuesta o presupuesto', () => {
+    const a = r({ id: 'a', responseHours: 5, minCents: 20000 })
+    const b = r({ id: 'b', responseHours: null, minCents: null })
+    const c = r({ id: 'c', responseHours: 1, minCents: 50000, maxCents: 90000 })
+    expect(sortResults([b, a, c], 'response').map((x) => x.id)).toEqual(['c', 'a', 'b'])
+    expect(sortResults([b, a, c], 'budget_asc').map((x) => x.id)).toEqual(['a', 'c', 'b'])
+    expect(sortResults([b, a, c], 'budget_desc').map((x) => x.id)).toEqual(['c', 'a', 'b'])
+  })
+
+  it('formatea el tiempo de respuesta', () => {
+    expect(responseLabel(null)).toBeNull()
+    expect(responseLabel(0.4)).toBe('~1 h')
+    expect(responseLabel(2.2)).toBe('~2 h')
+    expect(responseLabel(24)).toBe('~1 día')
+    expect(responseLabel(60)).toBe('~3 días')
+  })
+})
+
+describe('Proponer', () => {
+  it('resume los entregables solo con lo que tiene cantidad', () => {
+    expect(buildDeliverablesSummary({ reels: 1, posts: 0, stories: 0 })).toBe('1 reel/vídeo')
+    expect(buildDeliverablesSummary({ reels: 1, posts: 1, stories: 3 })).toBe('1 reel/vídeo, 1 post y 3 stories')
+    expect(buildDeliverablesSummary({ reels: 0, posts: 2, stories: 1 })).toBe('2 posts y 1 story')
+    expect(buildDeliverablesSummary({ reels: 0, posts: 0, stories: 0 })).toBe('')
+  })
+
+  it('la comisión es la misma que usa Stripe', () => {
+    expect(platformFeeCents(35000)).toBe(Math.round(35000 * MARKETPLACE_FEE_RATE))
+  })
+})
+
+describe('Calendario y resumen semanal', () => {
+  it('la semana va de lunes a domingo y marca hoy', () => {
+    const days = weekDays(new Date(2026, 10, 5)) // jueves 5 nov 2026
+    expect(days.map((d) => d.day)).toEqual([2, 3, 4, 5, 6, 7, 8])
+    expect(days.find((d) => d.isToday)?.day).toBe(5)
+    expect(weekRangeLabel(days)).toBe('2 - 8 nov')
+  })
+
+  it('el mes se pinta en semanas completas', () => {
+    const grid = monthGrid(2026, 10, new Date(2026, 10, 5))
+    expect(grid.length % 7).toBe(0)
+    expect(grid[0]!.date.getDay()).toBe(1)
+    expect(grid.filter((d) => d.inMonth)).toHaveLength(30)
+  })
+
+  it('agrupa las publicaciones por día', () => {
+    const posts = [{ id: '1', dueDate: '2026-11-05' }, { id: '2', dueDate: '2026-11-05' }, { id: '3', dueDate: '2026-11-06' }] as Post[]
+    const map = postsByDay(posts)
+    expect(map.get('2026-11-05')).toHaveLength(2)
+    expect(map.get('2026-11-06')).toHaveLength(1)
+  })
+})

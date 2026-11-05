@@ -2,7 +2,10 @@
 import { useDebounceFn, useIntersectionObserver } from '@vueuse/core'
 import { formatEuros } from '~/utils/mock-data'
 import type { DiscoveryResult } from '~/composables/useDiscover'
+import { platformMeta } from '~/utils/mock-data'
 import { prefersReducedMotion } from '~/composables/useGsap'
+import { matchesClientFilters, sortResults, SORT_LABELS, type DiscoverSort, type ResponseFilter } from '~/utils/discover-view'
+import type { SavedSearch } from '~/composables/useSavedSearches'
 
 /**
  * Exploración de Descubrir, igual para los dos roles: `kind` es lo que se
@@ -13,7 +16,9 @@ import { prefersReducedMotion } from '~/composables/useGsap'
  *  - los filtros se aplican solos (con una pausa de 0,4 s), sin botón «Buscar»;
  *  - la búsqueda por nombre filtra en el cliente, al instante;
  *  - «Con IA» sí tiene botón explícito (cuesta una llamada al modelo);
- *  - recomendados arriba solo si hay un criterio de verdad (categorías o IA);
+ *  - redes y tiempo de respuesta se filtran en el cliente (datos reales de actividad), y hay varios órdenes;
+ *  - «Guardar búsqueda» recuerda los criterios en este navegador (useSavedSearches);
+ *  - recomendados arriba solo si hay un criterio de verdad (categorías o IA) y se ordena por afinidad;
  *  - la rejilla se pinta de 12 en 12 con carga automática al llegar al final,
  *    y las fotos cargan optimizadas y diferidas (ver SmartImage.vue).
  */
@@ -26,9 +31,10 @@ const props = defineProps<{
 }>()
 const emit = defineEmits<{ contact: [result: DiscoveryResult] }>()
 
+const toast = useToast()
 const noun = computed(() => (props.kind === 'partner'
-  ? { one: 'marca', many: 'marcas', none: 'Ninguna marca encaja con esta búsqueda' }
-  : { one: 'creador', many: 'creadores', none: 'Ningún creador encaja con esta búsqueda' }))
+  ? { one: 'marca', many: 'marcas', budget: 'Presupuesto', none: 'Ninguna marca encaja con esta búsqueda' }
+  : { one: 'creador', many: 'creadores', budget: 'Tarifa', none: 'Ningún creador encaja con esta búsqueda' }))
 
 const { results, loading, searched, error, aiLoading, aiSummary, aiCategories, search, cancelAi } = useDiscover()
 const { savedPartnerIds, savedCreatorIds, ensureIdsLoaded } = useSavedProfiles()
@@ -42,11 +48,17 @@ const selectedCategories = ref<string[]>([])
 const minEuros = ref<number | null>(null)
 const maxEuros = ref<number | null>(null)
 const filtersOpen = ref(false)
+const platforms = ref<string[]>([])
+const response = ref<ResponseFilter>('any')
+const sort = ref<DiscoverSort>('affinity')
+const { items: savedSearches, add: addSavedSearch, remove: removeSavedSearch } = useSavedSearches(props.kind)
+const savedMenuOpen = ref(false)
 
 // Un campo numérico vacío llega como '' (no null).
 const num = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) ? v : null)
-const hasActiveFilters = computed(() => selectedCategories.value.length > 0 || num(minEuros.value) !== null || num(maxEuros.value) !== null)
-const activeCount = computed(() => selectedCategories.value.length + (num(minEuros.value) !== null || num(maxEuros.value) !== null ? 1 : 0))
+const hasBudget = computed(() => num(minEuros.value) !== null || num(maxEuros.value) !== null)
+const hasActiveFilters = computed(() => selectedCategories.value.length > 0 || hasBudget.value || platforms.value.length > 0 || response.value !== 'any')
+const activeCount = computed(() => selectedCategories.value.length + (hasBudget.value ? 1 : 0) + platforms.value.length + (response.value !== 'any' ? 1 : 0))
 
 const PAGE_SIZE = 12
 const visibleCount = ref(PAGE_SIZE)
@@ -71,6 +83,38 @@ function clearFilters() {
   selectedCategories.value = []
   minEuros.value = null
   maxEuros.value = null
+  platforms.value = []
+  response.value = 'any'
+}
+function removePlatform(p: string) { platforms.value = platforms.value.filter((x) => x !== p) }
+
+// ---- Búsquedas guardadas -------------------------------------------------
+const canSaveSearch = computed(() => hasActiveFilters.value || nameQuery.value.trim().length > 0)
+function currentLabel() {
+  const bits = [...selectedCategories.value, ...platforms.value.map((p) => platformMeta[p as keyof typeof platformMeta]?.label ?? p)]
+  if (hasBudget.value) bits.push(`${num(minEuros.value) ?? 0}–${num(maxEuros.value) ?? '∞'} €`)
+  if (nameQuery.value.trim()) bits.unshift(`«${nameQuery.value.trim()}»`)
+  return bits.slice(0, 4).join(' · ') || 'Búsqueda'
+}
+function saveSearch() {
+  if (!canSaveSearch.value) return
+  addSavedSearch(currentLabel(), {
+    categories: [...selectedCategories.value], minEuros: num(minEuros.value), maxEuros: num(maxEuros.value),
+    platforms: [...platforms.value], response: response.value, sort: sort.value, nameQuery: nameQuery.value
+  })
+  toast.success('Búsqueda guardada')
+}
+function applySavedSearch(item: SavedSearch) {
+  const st = item.state
+  mode.value = 'explore'
+  selectedCategories.value = [...st.categories]
+  minEuros.value = st.minEuros
+  maxEuros.value = st.maxEuros
+  platforms.value = [...st.platforms]
+  response.value = st.response
+  sort.value = st.sort
+  nameQuery.value = st.nameQuery
+  savedMenuOpen.value = false
 }
 function removeCategory(cat: string) { selectedCategories.value = selectedCategories.value.filter((c) => c !== cat) }
 function clearBudget() { minEuros.value = null; maxEuros.value = null }
@@ -80,13 +124,29 @@ await runSearch()
 
 // ---- Lo que se ve --------------------------------------------------------
 const norm = (s: string) => s.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase()
-const filtered = computed(() => {
+const byName = computed(() => {
   const q = norm(nameQuery.value.trim())
   return q ? results.value.filter((r) => norm(r.name).includes(q)) : results.value
 })
+// Cuántos resultados tiene cada red (con el resto de filtros ya aplicados, salvo la propia red).
+const platformCounts = computed(() => {
+  const counts: Record<string, number> = {}
+  for (const r of byName.value.filter((x) => matchesClientFilters(x, { platforms: [], response: response.value }))) {
+    for (const p of r.platforms) counts[p] = (counts[p] ?? 0) + 1
+  }
+  return counts
+})
+const filtered = computed(() => sortResults(
+  byName.value.filter((r) => matchesClientFilters(r, { platforms: platforms.value, response: response.value })),
+  sort.value
+))
+const sortOptions = computed(() => (Object.keys(SORT_LABELS) as DiscoverSort[]).filter((k) => k !== 'followers' || props.kind === 'creator').map((k) => ({ value: k, label: SORT_LABELS[k] })))
+const countNote = computed(() => (sort.value === 'affinity'
+  ? (scoreMeaningful.value ? 'ordenados por afinidad' : 'sin criterio de afinidad todavía')
+  : `orden: ${SORT_LABELS[sort.value].toLowerCase()}`))
 const scoreMeaningful = computed(() => selectedCategories.value.length > 0 || results.value.some((r) => r.reason))
 // Recomendados: los 3 primeros, solo con criterio y sin búsqueda por nombre.
-const featured = computed(() => (scoreMeaningful.value && !nameQuery.value.trim() ? filtered.value.slice(0, 3) : []))
+const featured = computed(() => (scoreMeaningful.value && sort.value === 'affinity' && !nameQuery.value.trim() ? filtered.value.slice(0, 3) : []))
 const rest = computed(() => filtered.value.slice(featured.value.length))
 const visibleRest = computed(() => rest.value.slice(0, visibleCount.value))
 const hasMore = computed(() => rest.value.length > visibleCount.value)
@@ -149,7 +209,10 @@ useIntersectionObserver(sentinel, ([entry]) => { if (entry?.isIntersecting && ha
     <div class="discover__layout">
       <!-- Filtros: columna fija en escritorio; en móvil, hoja inferior -->
       <aside class="discover__aside" aria-label="Filtros">
-        <DiscoverFilters v-model:categories="selectedCategories" v-model:min="minEuros" v-model:max="maxEuros" :active="hasActiveFilters" @clear="clearFilters" />
+        <DiscoverFilters
+          v-model:categories="selectedCategories" v-model:min="minEuros" v-model:max="maxEuros" v-model:platforms="platforms" v-model:response="response"
+          :active="hasActiveFilters" :platform-counts="platformCounts" :budget-label="noun.budget" @clear="clearFilters"
+        />
       </aside>
 
       <section class="discover__main" aria-live="polite">
@@ -169,14 +232,41 @@ useIntersectionObserver(sentinel, ([entry]) => { if (entry?.isIntersecting && ha
 
         <!-- Resumen y filtros activos -->
         <div v-if="searched" class="discover__summary">
-          <p class="discover__count">{{ filtered.length }} {{ filtered.length === 1 ? noun.one : noun.many }}</p>
-          <div v-if="hasActiveFilters" class="discover__active">
-            <Chip v-for="cat in selectedCategories" :key="cat" size="sm" :selected="true" icon="ph:x-bold" @click="removeCategory(cat)">{{ cat }}</Chip>
-            <Chip v-if="num(minEuros) !== null || num(maxEuros) !== null" size="sm" :selected="true" icon="ph:x-bold" @click="clearBudget">
-              {{ num(minEuros) ? formatEuros(num(minEuros)! * 100) : '…' }}–{{ num(maxEuros) ? formatEuros(num(maxEuros)! * 100) : '…' }}
-            </Chip>
+          <div class="discover__headline">
+            <p class="discover__count">{{ filtered.length }} {{ filtered.length === 1 ? noun.one : noun.many }}</p>
+            <p class="discover__note">{{ countNote }}</p>
           </div>
-          <SegmentedTabs v-if="carouselAllowed" :model-value="view" :options="viewOptions" label="Vista de los resultados" class="discover__view" @update:model-value="pickView" />
+          <div class="discover__tools">
+            <label class="discover__sort">
+              <span class="sr-only">Ordenar</span>
+              <select :value="sort" aria-label="Ordenar resultados" @change="sort = ($event.target as HTMLSelectElement).value as DiscoverSort">
+                <option v-for="o in sortOptions" :key="o.value" :value="o.value">Ordenar: {{ o.label }}</option>
+              </select>
+              <Icon name="ph:caret-down-bold" class="size-3.5" />
+            </label>
+            <div class="discover__savewrap">
+              <BaseButton variant="brand" icon="ph:heart" :disabled="!canSaveSearch" :title="canSaveSearch ? 'Guarda estos filtros en este navegador' : 'Elige algún filtro o escribe un nombre para guardar la búsqueda'" @click="saveSearch">Guardar búsqueda</BaseButton>
+              <BaseButton v-if="savedSearches.length" variant="ghost" icon="ph:clock-counter-clockwise" :aria-expanded="savedMenuOpen" @click="savedMenuOpen = !savedMenuOpen">
+                Mis búsquedas<span class="badge badge--on-light ml-1">{{ savedSearches.length }}</span>
+              </BaseButton>
+              <ul v-if="savedMenuOpen && savedSearches.length" class="discover__saved" aria-label="Búsquedas guardadas">
+                <li v-for="item in savedSearches" :key="item.id">
+                  <button type="button" class="discover__saved-apply" @click="applySavedSearch(item)">{{ item.label }}</button>
+                  <button type="button" class="discover__saved-del" :aria-label="`Borrar la búsqueda ${item.label}`" @click="removeSavedSearch(item.id)"><Icon name="ph:x-bold" class="size-3.5" /></button>
+                </li>
+              </ul>
+            </div>
+            <SegmentedTabs v-if="carouselAllowed" :model-value="view" :options="viewOptions" label="Vista de los resultados" class="discover__view" @update:model-value="pickView" />
+          </div>
+          <div v-if="hasActiveFilters" class="discover__active">
+            <span class="discover__active-label">Filtros activos:</span>
+            <Chip v-for="cat in selectedCategories" :key="cat" size="sm" :selected="true" icon="ph:x-bold" @click="removeCategory(cat)">{{ cat }}</Chip>
+            <Chip v-if="hasBudget" size="sm" :selected="true" icon="ph:x-bold" @click="clearBudget">
+              {{ num(minEuros) ? formatEuros(num(minEuros)! * 100) : '…' }} - {{ num(maxEuros) ? formatEuros(num(maxEuros)! * 100) : '…' }}
+            </Chip>
+            <Chip v-for="p in platforms" :key="p" size="sm" :selected="true" icon="ph:x-bold" @click="removePlatform(p)">{{ platformMeta[p as keyof typeof platformMeta]?.label ?? p }}</Chip>
+            <Chip v-if="response !== 'any'" size="sm" :selected="true" icon="ph:x-bold" @click="response = 'any'">Responde en &lt; {{ response }} h</Chip>
+          </div>
         </div>
 
         <!-- Cargando la primera vez -->
@@ -223,7 +313,10 @@ useIntersectionObserver(sentinel, ([entry]) => { if (entry?.isIntersecting && ha
     </div>
 
     <BottomSheet v-model="filtersOpen" title="Filtros">
-      <DiscoverFilters v-model:categories="selectedCategories" v-model:min="minEuros" v-model:max="maxEuros" :active="hasActiveFilters" @clear="clearFilters" />
+      <DiscoverFilters
+        v-model:categories="selectedCategories" v-model:min="minEuros" v-model:max="maxEuros" v-model:platforms="platforms" v-model:response="response"
+        :active="hasActiveFilters" :platform-counts="platformCounts" :budget-label="noun.budget" @clear="clearFilters"
+      />
       <BaseButton variant="primary" size="lg" block class="mt-5" @click="filtersOpen = false">Ver {{ filtered.length }} {{ filtered.length === 1 ? noun.one : noun.many }}</BaseButton>
     </BottomSheet>
   </div>

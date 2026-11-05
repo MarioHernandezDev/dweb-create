@@ -39,17 +39,15 @@ const { labels } = useLabels()
 
       <p class="post-card__title">{{ post.title }}</p>
 
-      <p v-if="project" class="post-card__meta" data-card-project>
-        <Icon name="ph:handshake-fill" class="size-3.5 shrink-0" /> <span class="truncate">{{ project }}</span>
-      </p>
-      <p v-if="overdue" class="post-card__meta post-card__meta--danger">
-        <Icon name="ph:warning-fill" class="size-3.5 shrink-0" />
-        {{ overdueLabel(post.dueInDays) }}
-      </p>
-      <p v-if="post.checklist.total" class="post-card__meta">
-        <Icon name="ph:check-square-fill" class="size-3.5 shrink-0" />
-        {{ post.checklist.done }}/{{ post.checklist.total }}
-      </p>
+      <p v-if="overdue" class="post-card__chip post-card__chip--danger">{{ overdueLabel(post.dueInDays) }}</p>
+      <p v-else-if="post.status !== 'published' && post.dueInDays === 1" class="post-card__chip">Vence mañana</p>
+      <p v-else-if="post.status !== 'published' && post.dueInDays === 0" class="post-card__chip">Vence hoy</p>
+
+      <p v-if="project" class="post-card__project" data-card-project>Campaña: <strong>{{ project }}</strong></p>
+      <div v-if="post.checklist.total" class="post-card__progress" :aria-label="`Checklist: ${post.checklist.done} de ${post.checklist.total}`">
+        <span class="post-card__bar"><span :style="{ width: `${Math.round((post.checklist.done / post.checklist.total) * 100)}%` }" /></span>
+        <span>{{ post.checklist.done }}/{{ post.checklist.total }}</span>
+      </div>
 
       <div class="post-card__foot">
         <label class="phase-chip phase-chip--select" :data-status="post.status">

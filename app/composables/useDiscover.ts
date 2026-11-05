@@ -10,6 +10,10 @@ export interface DiscoveryResult {
   coverUrl: string | null
   score: number
   reason: string | null
+  profileId: string
+  collabCount: number
+  responseHours: number | null
+  platforms: string[]
 }
 
 export interface DiscoveryFilters {

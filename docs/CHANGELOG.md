@@ -4,6 +4,17 @@ Registro de qué se hizo, por qué, y qué queda pendiente de verificar — pens
 
 ---
 
+## 2026-11-05 (Alex-70) — [Alex] Rediseño desde los mockups de `references/` (Descubrir, Proponer, Publicaciones)
+
+Sin migraciones ni cambios de esquema: todo sale de datos que ya existen.
+- **Descubrir** (`descubrir.png`): filtros con deslizador de presupuesto de dos puntas, plataforma (con contador) y tiempo de respuesta; orden (más afines, más colaboraciones, responden antes, presupuesto, seguidores); filtros activos en chips; «Guardar búsqueda» + «Mis búsquedas» (se guardan en este navegador, `useSavedSearches`); tarjeta nueva con inicial sobre tinte, «Responde en», colaboraciones, redes, presupuesto y botón de mensaje (misma RPC `get_or_create_conversation`, respeta la privacidad del chat). El servidor (`/api/discover/search`) calcula con datos reales: colaboraciones aceptadas/en curso/completadas, mediana del tiempo de respuesta (eventos `requested` → `accepted`/`declined`) y redes (cuentas vinculadas del creador; publicaciones del partner). Si no hay dato, la tarjeta no lo enseña.
+- **Proponer** (`negociar.png`): nuevo `ProposalDialog` — tarifa con deslizador sobre el rango de la marca, entregables (reels/posts/stories), uso del contenido (sin uso … perpetuo), mensaje opcional, resumen con la comisión real (`app/utils/fees.ts`, compartida con Stripe) y confirmación de que la propuesta es vinculante. Los entregables y el uso se guardan en `scope_notes` y `usage_rights`, que ya existían. Verificado enviando una propuesta real contra el Supabase local.
+- **Publicaciones** (`tablero.png`): vista **Calendario** mensual, resumen con rosco por fase y «Esta semana», botón «+ Publicación», tarjetas con avance del checklist, aviso de plazo («Atrasada», «Vence mañana») y «Campaña: …», y «Ver métricas →» en Publicado.
+- **No hecho (sin datos detrás, no se simula):** insignia «verificada» y filtro «solo verificadas», filtro «tipo de colaboración», «la propuesta caduca en N días» (no existe caducidad), hora de publicación y «responsable» de la tarjeta, «+N cards más» y «Exportar CSV» de la pantalla de negociaciones.
+- Pruebas: `tests/unit/discover-proposal-calendar.spec.ts`; la cuadrícula del mes calculaba mal las semanas cuando el mes acaba en lunes (corregido).
+
+---
+
 ## 2026-11-05 (Alex-69) — [Alex] Rendimiento: menos viajes a la base de datos y menos código por pantalla
 
 Medido con el Supabase local detrás de un proxy que añade 350 ms por petición (simula una base remota), cargas completas de página en Chrome; antes → después (hasta que la red queda en reposo / HTML):

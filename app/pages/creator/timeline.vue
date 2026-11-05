@@ -22,13 +22,14 @@ await Promise.all([ensureLoaded(), ensureCollabRequestsLoaded()])
 // Dos vistas del MISMO conjunto de publicaciones y de los MISMOS filtros: el
 // estado vive aquí (no en cada vista) para no perderlo al cambiar de una a otra.
 // La vista y el proyecto activo van en la URL (`?vista=lista&colaboracion=<id>`).
-const view = computed<'tablero' | 'lista'>(() => (route.query.vista === 'lista' ? 'lista' : 'tablero'))
+const view = computed<'tablero' | 'calendario' | 'lista'>(() => (route.query.vista === 'lista' ? 'lista' : route.query.vista === 'calendario' ? 'calendario' : 'tablero'))
 const viewOptions = [
   { value: 'tablero', label: 'Tablero' },
+  { value: 'calendario', label: 'Calendario' },
   { value: 'lista', label: 'Lista' }
 ]
 function setView(value: string) {
-  router.replace({ query: { ...route.query, vista: value === 'lista' ? 'lista' : undefined } })
+  router.replace({ query: { ...route.query, vista: value === 'lista' || value === 'calendario' ? value : undefined } })
 }
 
 const filters = ref<PostFilters>({ ...emptyFilters(), project: typeof route.query.colaboracion === 'string' ? route.query.colaboracion : '' })
@@ -49,6 +50,15 @@ const stats = computed(() => projectStats(filterPosts(posts.value, { ...emptyFil
 async function onMove(post: Post, status: PostStatus) {
   await changeStatus(post, status)
 }
+
+// El resumen y el calendario trabajan sobre lo mismo que el tablero: mismos filtros, sin el de estado.
+const visiblePosts = computed(() => filterPosts(posts.value, filters.value, { ignoreStatus: true }))
+
+// Ficha rápida al pulsar una publicación del resumen semanal o del calendario (el tablero tiene la suya).
+const phases: PostStatus[] = ['idea', 'in_production', 'ready_for_review', 'scheduled', 'published']
+const editingPost = ref<Post | null>(null)
+const editOpen = ref(false)
+function openEdit(post: Post) { editingPost.value = post; editOpen.value = true }
 async function onRemove(post: Post) {
   await remove(post)
 }
@@ -58,10 +68,11 @@ async function onRemove(post: Post) {
 <template>
   <AppShell
     role="creator" title="Publicaciones" full-width
-    :subtitle="view === 'tablero' ? 'Arrastra una card para cambiarla de fase' : 'Busca, ordena y gestiona todas tus publicaciones'"
+    :subtitle="view === 'tablero' ? 'Arrastra una card para cambiarla de fase' : view === 'calendario' ? 'Tus entregas por fecha' : 'Busca, ordena y gestiona todas tus publicaciones'"
   >
     <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
-      <SegmentedTabs :model-value="view" :options="viewOptions" @update:model-value="setView" />
+      <SegmentedTabs :model-value="view" :options="viewOptions" label="Vista de las publicaciones" @update:model-value="setView" />
+      <BaseButton variant="brand" icon="ph:plus-bold" class="hidden md:inline-flex" data-new-post @click="composerOpen = true">Publicación</BaseButton>
       <p v-if="activeCollab" class="inline-flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-[var(--color-text-muted)]" data-project-stats>
         <span class="font-medium text-[var(--color-text)]">{{ activeCollab.partnerName }}</span>
         <span>{{ stats.total }} entrega{{ stats.total === 1 ? '' : 's' }}</span>
@@ -72,7 +83,14 @@ async function onRemove(post: Post) {
       </p>
     </div>
 
+    <PostSummary v-if="view !== 'lista' && posts.length" :posts="visiblePosts" @open="openEdit" />
+
     <PhaseBoard v-if="view === 'tablero'" v-model:filters="filters" />
+
+    <template v-else-if="view === 'calendario'">
+      <PostFilterBar v-if="posts.length" v-model:filters="filters" :collabs="collabRequests" class="mb-4" />
+      <PostCalendar :posts="visiblePosts" @open="openEdit" />
+    </template>
 
     <template v-else>
       <PostFilterBar v-if="posts.length" v-model:filters="filters" v-model:sort="sort" :collabs="collabRequests" show-status show-sort class="mb-4">
@@ -97,7 +115,8 @@ async function onRemove(post: Post) {
       <p v-if="loadMoreError" class="text-micro text-[var(--color-status-alert)]" role="alert">{{ loadMoreError }}</p>
     </div>
 
-    <Fab :active="composerOpen" @click="composerOpen = true" />
+    <div class="md:hidden"><Fab :active="composerOpen" @click="composerOpen = true" /></div>
+    <PostEditSheet v-model="editOpen" :post="editingPost" :phases="phases" @move="(status) => editingPost && onMove(editingPost, status)" />
     <PostComposerSheet v-model="composerOpen" :collaboration-id="composerPreset.collaborationId" :deliverable-id="composerPreset.deliverableId" />
   </AppShell>
 </template>

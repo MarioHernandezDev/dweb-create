@@ -17,13 +17,5 @@ export const plans: Record<string, PlanConfig> = {
   pro: { id: 'pro', label: 'CIBERAN Pro', unitAmount: 1999, monthlyCredits: 20 }
 }
 
-/**
- * Comisión del marketplace: cuando un partner paga a un creador a través de
- * la plataforma, CIBERAN se queda este % (ver README Fase 3, "Stripe
- * Connect"). Vive aquí, en un único sitio, igual que los planes.
- */
-export const MARKETPLACE_FEE_RATE = 0.1
-
-export function platformFeeCents(budgetCents: number): number {
-  return Math.round(budgetCents * MARKETPLACE_FEE_RATE)
-}
+// La comisión vive en app/utils/fees.ts (la usa también la pantalla de «Proponer»).
+export { MARKETPLACE_FEE_RATE, platformFeeCents } from '../../app/utils/fees'

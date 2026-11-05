@@ -1,0 +1,63 @@
+/* ==========================================================================
+   Componente · Resumen del tablero (PostSummary.vue) y calendario (PostCalendar.vue)
+   El color de cada fase sale de los mismos tokens que las columnas del tablero.
+   ========================================================================== */
+
+@layer components {
+  [data-status="idea"] { --ph: var(--color-phase-idea); --pht: var(--color-phase-idea-tint); }
+  [data-status="in_production"] { --ph: var(--color-phase-production); --pht: var(--color-phase-production-tint); }
+  [data-status="ready_for_review"] { --ph: var(--color-phase-review); --pht: var(--color-phase-review-tint); }
+  [data-status="scheduled"] { --ph: var(--color-phase-scheduled); --pht: var(--color-phase-scheduled-tint); }
+  [data-status="published"] { --ph: var(--color-phase-published); --pht: var(--color-phase-published-tint); }
+
+  /* ---- Resumen ---- */
+  .psum { display: grid; gap: 1rem; margin-bottom: 1.25rem; @media (width >= 64rem) { grid-template-columns: 22rem minmax(0, 1fr); } }
+  .psum__card { padding: 1.25rem; background: var(--surface-raised); border: 1px solid var(--line); border-radius: var(--radius-md); min-width: 0; }
+  .psum__donut { display: flex; align-items: center; gap: 1.25rem; }
+  .psum__ring { flex: none; width: 7.5rem; height: 7.5rem; }
+  .psum__ring-bg { stroke: var(--surface-sunken); }
+  .psum__total { font-family: var(--font-display); font-weight: 800; font-size: 20px; fill: var(--text-strong); }
+  .psum__total-label { font-size: 7px; fill: var(--text-muted); }
+  .psum__legend { display: grid; gap: 0.375rem; flex: 1; margin: 0; padding: 0; list-style: none; font-size: var(--text-sm); & li { display: flex; align-items: center; gap: 0.5rem; & strong { margin-left: auto; font-variant-numeric: tabular-nums; } } }
+  .psum__dot { width: 0.625rem; height: 0.625rem; border-radius: 2px; flex: none; }
+
+  .psum__week-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 0.25rem 1rem; margin-bottom: 0.75rem; & h2 { font-family: var(--font-display); font-weight: 700; font-size: var(--text-lg); } & span { font-size: var(--text-sm); color: var(--text-muted); } }
+  .psum__days { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 0.5rem; @media (width < 48rem) { grid-template-columns: repeat(7, minmax(7.5rem, 1fr)); overflow-x: auto; padding-bottom: 0.25rem; } }
+  .psum__day { display: grid; align-content: start; gap: 0.375rem; min-height: 6.5rem; padding: 0.5rem; border-radius: var(--radius-sm); background: var(--surface-sunken); &.is-today { background: var(--color-voltio-400); } }
+  .psum__day-label { font-size: var(--text-micro); font-weight: 700; color: var(--text-muted); .is-today > & { color: var(--color-tinta-950); } }
+  .psum__item {
+    display: grid; gap: 0.125rem; text-align: left; padding: 0.375rem 0.5rem; border-radius: var(--radius-sm); font-size: var(--text-micro); line-height: 1.25;
+    background: var(--pht, var(--color-phase-idea-tint)); color: var(--color-tinta-950);
+    &:hover { filter: brightness(0.96); } &:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 1px; }
+  }
+  .psum__item-title { font-weight: 700; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .psum__item-net { opacity: 0.75; font-weight: 600; }
+  .psum__more { font-size: var(--text-micro); color: var(--text-muted); }
+
+  /* ---- Calendario ---- */
+  .pcal { display: grid; gap: 0.75rem; }
+  .pcal__head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+  .pcal__title { font-family: var(--font-display); font-weight: 700; font-size: var(--text-title); text-transform: capitalize; }
+  .pcal__nav { display: flex; gap: 0.5rem; }
+  .pcal__grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: var(--radius-md); overflow: hidden; @media (width < 48rem) { overflow-x: auto; grid-template-columns: repeat(7, minmax(6.5rem, 1fr)); } }
+  .pcal__dow { padding: 0.5rem; background: var(--surface-sunken); font-size: var(--text-micro); font-weight: 700; color: var(--text-muted); text-align: center; }
+  .pcal__cell { display: grid; align-content: start; gap: 0.25rem; min-height: 6.5rem; padding: 0.375rem; background: var(--surface-raised); &.is-out { background: var(--surface-sunken); & .pcal__num { opacity: 0.45; } } &.is-today { box-shadow: inset 0 0 0 2px var(--color-voltio-400); } }
+  .pcal__num { font-size: var(--text-micro); font-weight: 700; color: var(--text-muted); .is-today > & { color: var(--text-strong); } }
+  .pcal__item {
+    display: flex; align-items: center; gap: 0.375rem; min-width: 0; padding: 0.25rem 0.375rem; border-radius: var(--radius-sm); font-size: var(--text-micro); text-align: left;
+    background: var(--pht, var(--color-phase-idea-tint)); color: var(--color-tinta-950);
+    &:hover { filter: brightness(0.96); } &:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 1px; }
+  }
+  .pcal__item-net { flex: none; font-weight: 800; opacity: 0.7; }
+  .pcal__item-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+  .pcal__more { font-size: var(--text-micro); color: var(--text-muted); padding-left: 0.375rem; }
+  .pcal__empty { text-align: center; color: var(--text-muted); font-size: var(--text-sm); }
+
+  /* ---- Tarjeta del tablero: avance, campaña y avisos de plazo ---- */
+  .post-card__project { font-size: var(--text-micro); color: var(--text-muted); & strong { color: var(--text-strong); font-weight: 700; } }
+  .post-card__chip { justify-self: start; padding: 0.125rem 0.625rem; border-radius: var(--radius-pill); font-size: var(--text-micro); font-weight: 700; background: var(--color-mantequilla-200, var(--surface-sunken)); color: var(--color-tinta-950); }
+  .post-card__chip--danger { background: color-mix(in srgb, var(--color-danger) 14%, var(--surface-raised)); color: var(--color-danger); }
+  .post-card__progress { display: flex; align-items: center; gap: 0.5rem; font-size: var(--text-micro); color: var(--text-muted); font-variant-numeric: tabular-nums; }
+  .post-card__bar { flex: 1; height: 0.375rem; border-radius: var(--radius-pill); background: var(--surface-sunken); overflow: hidden; & > span { display: block; height: 100%; background: var(--color-tinta-950); border-radius: inherit; } }
+  .board-col__link { display: block; padding-top: 0.75rem; text-align: center; font-size: var(--text-sm); font-weight: 600; color: var(--text-muted); &:hover { color: var(--text-strong); } }
+}

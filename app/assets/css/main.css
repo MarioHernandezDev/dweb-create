@@ -50,6 +50,7 @@
 @import "./components/prose.css";
 @import "./components/cover-art.css";
 @import "./components/post-card.css";
+@import "./components/post-board-extras.css";
 @import "./components/profile-hero.css";
 @import "./components/package.css";
 
@@ -61,5 +62,6 @@
 @import "./patterns/lists.css";
 @import "./patterns/collab.css";
 @import "./patterns/collab-detail.css";
+@import "./patterns/proposal.css";
 @import "./patterns/public-profile.css";
 @import "./patterns/settings.css";
