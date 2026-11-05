@@ -112,10 +112,15 @@ export function useMyWork() {
     try {
       const me = await resolveMyProfileId()
       myProfileId.value = me
-      if (myRole.value === 'partner') await Promise.all([ensureCollaborations(), ensurePartnerPosts()])
-      else await Promise.all([ensureRequests(), ensureMyPosts()])
+      // Dos viajes en serie, no cuatro: las colaboraciones (y las ofertas, que no dependen de nada) primero;
+      // con sus ids, publicaciones, cronología y entregables a la vez.
+      const offersPromise = me ? loadOffers(me) : Promise.resolve()
+      await (myRole.value === 'partner' ? ensureCollaborations() : ensureRequests())
       const ids = collabs.value.map((c) => c.id)
-      await Promise.all([loadMany(ids), loadManyDeliverables(ids), me ? loadOffers(me) : Promise.resolve()])
+      await Promise.all([
+        myRole.value === 'partner' ? ensurePartnerPosts() : ensureMyPosts(),
+        loadMany(ids), loadManyDeliverables(ids), offersPromise
+      ])
       loaded.value = true
       loadedAt.value = Date.now()
       taskCount.value = tasks.value.length

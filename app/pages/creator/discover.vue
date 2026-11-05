@@ -9,7 +9,8 @@ const { creator } = useMyCreator()
 // Hallazgo #7: "Proponer" avisa de una solicitud ya enviada a ese mismo partner.
 const { requests: myRequests, ensureLoaded: ensureRequestsLoaded } = useCollabRequests()
 const pendingPartnerIds = computed(() => myRequests.value.filter((r) => r.status === 'requested').map((r) => r.partnerId))
-await ensureRequestsLoaded()
+// Solo sirven para marcar «solicitud ya enviada» en «Contactar»: no bloquean el primer pintado.
+onMounted(() => { ensureRequestsLoaded() })
 
 const sheetOpen = ref(false)
 const sheetStage = ref<'form' | 'sent'>('form')

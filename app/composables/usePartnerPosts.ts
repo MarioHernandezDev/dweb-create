@@ -13,6 +13,7 @@ interface PostRow {
   media_url: string | null
   content_version: number | null
   metadata: { hashtags?: string[] } | null
+  checklist_items: { done: boolean }[] | null
 }
 
 // Mismo truco que en useMyPosts: el esquema no guarda gradiente de portada,
@@ -61,24 +62,18 @@ function mapRow(row: PostRow, checklist?: { total: number; done: number }): Post
  */
 export function usePartnerPosts() {
   const client = useSupabaseClient()
-  const { collaborations, ensureLoaded: ensureCollaborationsLoaded } = useMyCollaborations()
-
   const posts = useState<Post[]>('partner-posts', () => [])
   const loaded = useState<boolean>('partner-posts-loaded', () => false)
 
   async function refresh() {
-    const myCollabs = await ensureCollaborationsLoaded()
-    const collabIds = myCollabs.map((c) => c.id)
-    if (!collabIds.length) {
-      posts.value = []
-      loaded.value = true
-      return
-    }
-
+    // UNA sola consulta, sin esperar antes a la lista de colaboraciones: la RLS de `posts`
+    // (`posts_select_scoped`) ya limita lo visible a las publicaciones de las colaboraciones de este
+    // partner, y el recuento del checklist viaja incrustado (`checklist_items(done)`), como en
+    // useMyPosts. Antes eran tres viajes en serie (colaboraciones → posts → checklist).
     const { data, error } = await client
       .from('posts')
-      .select('*')
-      .in('collaboration_id', collabIds)
+      .select('*, checklist_items(done)')
+      .not('collaboration_id', 'is', null)
       .order('due_date', { ascending: true })
       // Mismo tope de cordura que useMyPosts.ts — sin esto, un partner con
       // muchas colaboraciones activas durante años acababa trayendo CADA
@@ -90,28 +85,10 @@ export function usePartnerPosts() {
     }
     const rows = data as PostRow[]
 
-    // Un solo viaje de red para el checklist de TODOS los posts visibles,
-    // no uno por post — agregado en cliente, igual de válido que un count
-    // agregado en SQL para esta cantidad de filas (tope ya puesto arriba).
-    const checklistByPost: Record<string, { total: number; done: number }> = {}
-    if (rows.length) {
-      const { data: checklistRows, error: checklistError } = await client
-        .from('checklist_items')
-        .select('post_id, done')
-        .in('post_id', rows.map((r) => r.id))
-      if (checklistError) {
-        console.error('[usePartnerPosts] fallo al cargar el checklist:', checklistError.message)
-      } else {
-        for (const item of checklistRows as { post_id: string; done: boolean }[]) {
-          const entry = checklistByPost[item.post_id] ?? { total: 0, done: 0 }
-          entry.total += 1
-          if (item.done) entry.done += 1
-          checklistByPost[item.post_id] = entry
-        }
-      }
-    }
-
-    posts.value = rows.map((r) => mapRow(r, checklistByPost[r.id]))
+    posts.value = rows.map((r) => {
+      const items = r.checklist_items ?? []
+      return mapRow(r, { total: items.length, done: items.filter((i) => i.done).length })
+    })
     loaded.value = true
   }
 

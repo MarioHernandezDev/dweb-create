@@ -232,12 +232,15 @@ export default defineEventHandler(async (event) => {
 
   const client = serverSupabaseServiceRole(event)
 
-  const { data: ownCreator } = await client.from('creators').select('id').eq('profile_id', user.sub).maybeSingle<{ id: string }>()
+  // Las dos comprobaciones a la vez (un viaje a la base de datos en vez de dos en serie para un partner).
+  const [{ data: ownCreator }, { data: ownPartner }] = await Promise.all([
+    client.from('creators').select('id').eq('profile_id', user.sub).maybeSingle<{ id: string }>(),
+    client.from('partners').select('id').eq('profile_id', user.sub).maybeSingle<{ id: string }>()
+  ])
   let viewerRole: ViewerRole
   if (ownCreator) {
     viewerRole = 'creator'
   } else {
-    const { data: ownPartner } = await client.from('partners').select('id').eq('profile_id', user.sub).maybeSingle<{ id: string }>()
     if (!ownPartner) throw createError({ statusCode: 403, statusMessage: 'No tienes una ficha de creador ni de partner.' })
     viewerRole = 'partner'
   }
@@ -345,23 +348,29 @@ export default defineEventHandler(async (event) => {
 
   // Registro para analíticas de admin — da igual si falla (no debe romper
   // la búsqueda del usuario por un problema de logging).
-  try {
-    await client.from('discovery_searches').insert({
-      profile_id: user.sub,
-      searcher_role: viewerRole,
-      mode,
-      query_text: queryText,
-      filters: {
-        categories: filterCategories,
-        minBudgetCents,
-        maxBudgetCents,
-        ...(aiExtracted ? { aiExtractedCategories: aiExtracted.categories, aiSummary: aiExtracted.summary } : {})
-      },
-      results_count: results.length
-    } as never)
-  } catch (err) {
-    console.error('[discover/search] fallo al registrar la búsqueda (no afecta al resultado):', err)
-  }
+  // Sin esperarlo: es solo analítica y no debe alargar la respuesta (un viaje más a la base de datos).
+  const logSearch = (async () => {
+    try {
+      const { error: logError } = await client.from('discovery_searches').insert({
+        profile_id: user.sub,
+        searcher_role: viewerRole,
+        mode,
+        query_text: queryText,
+        filters: {
+          categories: filterCategories,
+          minBudgetCents,
+          maxBudgetCents,
+          ...(aiExtracted ? { aiExtractedCategories: aiExtracted.categories, aiSummary: aiExtracted.summary } : {})
+        },
+        results_count: results.length
+      } as never)
+      if (logError) console.error('[discover/search] fallo al registrar la búsqueda (no afecta al resultado):', logError.message)
+    } catch (err) {
+      console.error('[discover/search] fallo al registrar la búsqueda (no afecta al resultado):', err)
+    }
+  })()
+  // `waitUntil` mantiene viva la tarea en plataformas serverless tras responder; si no existe, simplemente sigue en segundo plano.
+  if (typeof event.waitUntil === 'function') event.waitUntil(logSearch)
 
   // `aiExtracted` antes se calculaba solo para el registro de analíticas y
   // se tiraba — la ficha-resumen de Destacados en el cliente lo necesita de

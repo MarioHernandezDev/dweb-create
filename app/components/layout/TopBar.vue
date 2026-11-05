@@ -28,7 +28,7 @@ onMounted(() => {
   refreshChatUnread()
   startRealtime()
   startTypingListener()
-  setTimeout(() => work.refreshIfStale(30_000), 1200)
+  setTimeout(() => work.refreshIfStale(60_000), 2500)
 })
 
 // Ya en caché desde role-guard.global.ts — sin parpadeo.

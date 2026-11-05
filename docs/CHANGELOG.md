@@ -4,6 +4,19 @@ Registro de qué se hizo, por qué, y qué queda pendiente de verificar — pens
 
 ---
 
+## 2026-11-05 (Alex-69) — [Alex] Rendimiento: menos viajes a la base de datos y menos código por pantalla
+
+Medido con el Supabase local detrás de un proxy que añade 350 ms por petición (simula una base remota), cargas completas de página en Chrome; antes → después (hasta que la red queda en reposo / HTML):
+- Inicio del partner: 5,6 s → 3,4 s (HTML 2,0 → ~1,5 s) · Descubrir (partner): 7,6 s → ~4,1 s (HTML 2,4 → ~1,4 s) · Colaboraciones: 3,2 → 2,5 s · Bandeja: 4,3 → 2,8 s · Inicio del creador: 5,0 → 3,2 s · Publicaciones: 3,4 → 2,8 s. Consultas del navegador por pantalla: 14 → 5–8 en las pantallas simples. Variación de una medida a otra de ±15 %.
+- **Chat**: al conectar el canal en tiempo real se recargaban las conversaciones en CADA página (cuatro consultas en serie) además del contador de no leídos y las ofertas; ahora solo tras una reconexión y solo lo que ya estaba cargado. `resolveNames` pasa de 3 consultas en serie a 1 viaje, y nombres y mensajes de las conversaciones se piden a la vez (de 5 viajes a 2).
+- **Publicaciones del partner**: una sola consulta (la RLS ya limita a sus colaboraciones y el recuento del checklist viaja incrustado) en vez de tres en serie.
+- **«Qué me toca»** (barra superior): 2 viajes en serie en vez de 4, más tarde (2,5 s tras montar) y con menos frecuencia (60 s).
+- **Descubrir**: la búsqueda del servidor comprueba el rol en paralelo y registra la analítica sin esperarla (`event.waitUntil`); las colaboraciones de la página ya no bloquean el primer pintado del servidor.
+- **Nuxt**: los enlaces precargan el código de su página al pasar el ratón / enfocar / tocar, no al verse (antes ~60 scripts por pantalla); estáticos precomprimidos (JS 1,6 MB → 562 KB con brotli, CSS 142 → 24 KB) y cabeceras de caché (`/_nuxt/**` inmutable, `/img/**` una semana).
+- **No hecho / pendiente**: `vuedraggable` arrastra el compilador de plantillas de Vue (~173 KB sin comprimir) en las pantallas del Studio y de los perfiles; sustituirlo por Sortable directo lo evitaría. Las fotos de Storage locales no pasan por `/api/img`, así que el peso real de imágenes no se ha medido. No se ha medido contra la base compartida.
+
+---
+
 ## 2026-11-05 (Alex-68) — [Alex] Colaboraciones · Fase 2: entregables como datos y reglas de aprobación
 
 Propuesta técnica en `docs/audit/10_FASE2_PROPUESTA_ENTREGABLES.md` (§13: desviaciones). Sin tocar pagos ni redes sociales. **Tres migraciones PREPARADAS, NO APLICADAS en el proyecto compartido** (probadas solo en el Supabase local, por este orden):

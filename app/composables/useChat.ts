@@ -158,34 +158,30 @@ export function useChat() {
     const names: Record<string, { name: string; role: Role; fichaId: string | null; avatarUrl: string | null }> = {}
     if (!profileIds.length) return names
 
-    const { data: profiles } = await client.from('profiles').select('id, role, full_name, avatar_url').in('id', profileIds)
+    // Las tres consultas a la vez (un viaje a la base de datos en vez de tres en serie): un perfil es o creador o
+    // partner, así que no hace falta saber el rol antes de pedir las fichas — las que no correspondan vuelven vacías.
+    // Se trae también `id` (el de la propia fila creators/partners, NO profile_id) — es lo que espera la ruta
+    // /profile/[role]/[id], igual que ya usan DiscoveryCard.vue y ProfileSearchBar.vue.
+    const [{ data: profiles }, { data: creatorRows }, { data: partnerRows }] = await Promise.all([
+      client.from('profiles').select('id, role, full_name, avatar_url').in('id', profileIds),
+      client.from('creators').select('id, profile_id, display_name').in('profile_id', profileIds),
+      client.from('partners').select('id, profile_id, company_name').in('profile_id', profileIds)
+    ])
     const rows = (profiles ?? []) as { id: string; role: Role; full_name: string | null; avatar_url: string | null }[]
     for (const p of rows) names[p.id] = { name: p.full_name || 'Usuario', role: p.role, fichaId: null, avatarUrl: p.avatar_url }
 
-    const creatorIds = rows.filter((p) => p.role === 'creator').map((p) => p.id)
-    const partnerIds = rows.filter((p) => p.role === 'partner').map((p) => p.id)
-
-    // Se trae también `id` (el de la propia fila creators/partners, NO
-    // profile_id) — es lo que espera la ruta /profile/[role]/[id], igual
-    // que ya usan DiscoveryCard.vue y ProfileSearchBar.vue.
-    if (creatorIds.length) {
-      const { data } = await client.from('creators').select('id, profile_id, display_name').in('profile_id', creatorIds)
-      for (const row of (data ?? []) as { id: string; profile_id: string; display_name: string }[]) {
-        const entry = names[row.profile_id]
-        if (entry) {
-          entry.name = row.display_name
-          entry.fichaId = row.id
-        }
+    for (const row of (creatorRows ?? []) as { id: string; profile_id: string; display_name: string }[]) {
+      const entry = names[row.profile_id]
+      if (entry && entry.role === 'creator') {
+        entry.name = row.display_name
+        entry.fichaId = row.id
       }
     }
-    if (partnerIds.length) {
-      const { data } = await client.from('partners').select('id, profile_id, company_name').in('profile_id', partnerIds)
-      for (const row of (data ?? []) as { id: string; profile_id: string; company_name: string }[]) {
-        const entry = names[row.profile_id]
-        if (entry) {
-          entry.name = row.company_name
-          entry.fichaId = row.id
-        }
+    for (const row of (partnerRows ?? []) as { id: string; profile_id: string; company_name: string }[]) {
+      const entry = names[row.profile_id]
+      if (entry && entry.role === 'partner') {
+        entry.name = row.company_name
+        entry.fichaId = row.id
       }
     }
 
@@ -208,19 +204,25 @@ export function useChat() {
 
     const rows = (data as ConversationRow[]) ?? []
     const otherIds = rows.map((c) => (c.participant_one_id === me ? c.participant_two_id : c.participant_one_id))
-    const names = await resolveNames([...new Set(otherIds)])
+    // Nombres y mensajes a la vez: no dependen uno del otro (solo de la lista de conversaciones).
+    const [names, messagesResult] = await Promise.all([
+      resolveNames([...new Set(otherIds)]),
+      rows.length
+        ? client
+          .from('messages')
+          .select(MESSAGE_SELECT)
+          .in('conversation_id', rows.map((c) => c.id))
+          .order('created_at', { ascending: false })
+          .limit(MESSAGE_PREVIEW_LIMIT)
+        : Promise.resolve({ data: [] as unknown[] })
+    ])
 
     const previews: Record<string, ChatMessage> = {}
     // Se agrupa por conversación (no solo el último mensaje) para poder
     // contar cuántos mensajes hay sin leer, no solo un booleano.
     const messagesByConv = new Map<string, MessageRow[]>()
     if (rows.length) {
-      const { data: allMessages } = await client
-        .from('messages')
-        .select(MESSAGE_SELECT)
-        .in('conversation_id', rows.map((c) => c.id))
-        .order('created_at', { ascending: false })
-        .limit(MESSAGE_PREVIEW_LIMIT)
+      const allMessages = messagesResult.data
       for (const row of (allMessages as MessageRow[]) ?? []) {
         if (!previews[row.conversation_id]) previews[row.conversation_id] = mapMessageRow(row)
         const arr = messagesByConv.get(row.conversation_id)
@@ -450,6 +452,7 @@ export function useChat() {
     if (import.meta.server) return
     if (realtimeStarted.value) return
     realtimeStarted.value = true
+    let hadDrop = false
     const me = await resolveMyProfileId()
 
     client
@@ -483,11 +486,20 @@ export function useChat() {
         // /chat se podía quedar con la preview vieja en silencio, sin
         // ningún aviso, hasta la siguiente recarga completa de la página.
         if (status === 'SUBSCRIBED') {
+          // La PRIMERA conexión no necesita recargar nada: el contador lo pide TopBar al montar y la lista de
+          // conversaciones se carga al abrir el chat. Recargarlas aquí (cuatro consultas en serie: conversaciones →
+          // perfiles → fichas → mensajes) penalizaba cada carga de página, también donde no hay chat.
+          // Tras una RECONEXIÓN sí: se perdieron eventos y hay que ponerse al día (solo lo que ya estaba cargado).
+          const reconnected = hadDrop
+          hadDrop = false
           realtimeStatus.value = 'connected'
-          refreshConversations()
-          refreshUnreadCount()
-          useOffers().refreshPendingIncoming()
+          if (reconnected) {
+            if (conversationsLoaded.value) refreshConversations()
+            refreshUnreadCount()
+            useOffers().refreshPendingIncoming()
+          }
         } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+          hadDrop = true
           realtimeStatus.value = 'disconnected'
         }
       })

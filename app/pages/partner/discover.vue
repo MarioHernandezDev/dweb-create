@@ -9,7 +9,8 @@ const { partner } = useMyPartner()
 // Hallazgo #7: "Contactar" avisa de una solicitud ya enviada a ese mismo creador.
 const { collaborations: myCollaborations, ensureLoaded: ensureCollaborationsLoaded } = useMyCollaborations()
 const pendingCreatorIds = computed(() => myCollaborations.value.filter((c) => c.status === 'requested').map((c) => c.creatorId))
-await ensureCollaborationsLoaded()
+// Solo sirven para marcar «solicitud ya enviada» en «Contactar»: no bloquean el primer pintado.
+onMounted(() => { ensureCollaborationsLoaded() })
 
 const sheetOpen = ref(false)
 const sheetStage = ref<'form' | 'sent'>('form')

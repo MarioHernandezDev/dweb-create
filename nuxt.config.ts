@@ -70,12 +70,28 @@ export default defineNuxtConfig({
   },
 
   // La página Redes (/creator/socials) se eliminó: sus funciones viven en Métricas > Conexiones. Se conserva el enlace antiguo (marcadores, correos).
+  // Rendimiento: antes cada enlace visible precargaba el código de su página (62+ scripts por pantalla, también
+  // los de páginas que casi nadie abre). Ahora se precarga al pasar el ratón / enfocar / tocar el enlace.
+  experimental: {
+    defaults: {
+      nuxtLink: { prefetchOn: { visibility: false, interaction: true } }
+    }
+  },
+  // Los estáticos se sirven ya comprimidos (gzip y brotli) si no hay un CDN delante.
+  nitro: {
+    compressPublicAssets: true
+  },
+
   routeRules: {
     '/creator/socials': { redirect: { to: '/creator/metrics', statusCode: 302 } },
     // Imágenes optimizadas de la landing (IPX): el navegador las conserva un año.
     // Las portadas y avatares de usuarios van por /api/img (ver server/api/img.get.ts),
     // que además cachea el resultado en el servidor.
-    '/_ipx/**': { headers: { 'cache-control': 'public, max-age=31536000, immutable' } }
+    '/_ipx/**': { headers: { 'cache-control': 'public, max-age=31536000, immutable' } },
+    // Código y fuentes con hash en el nombre: nunca cambian, el navegador no tiene que revalidarlos.
+    '/_nuxt/**': { headers: { 'cache-control': 'public, max-age=31536000, immutable' } },
+    // Imágenes y marca de /public: una semana, y se sirven mientras revalida si caduca.
+    '/img/**': { headers: { 'cache-control': 'public, max-age=604800, stale-while-revalidate=86400' } }
   },
 
   runtimeConfig: {
