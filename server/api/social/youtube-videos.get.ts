@@ -27,6 +27,7 @@ const PAGE_SIZE = 24
 export default defineEventHandler(async (event) => {
   const user = await serverSupabaseUser(event)
   if (!user) throw createError({ statusCode: 401, statusMessage: 'No autenticado.' })
+  enforceUserRateLimit(event, 'social-read', user.sub)
 
   const rawToken = getQuery(event).pageToken
   if (rawToken !== undefined && !isValidPageToken(rawToken)) {

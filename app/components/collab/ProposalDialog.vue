@@ -4,6 +4,7 @@ import { formatEuros } from '~/utils/mock-data'
 import { MARKETPLACE_FEE_RATE, platformFeeCents } from '~/utils/fees'
 import { responseLabel } from '~/utils/discover-view'
 import { buildDeliverablesSummary, USAGE_OPTIONS, type UsageOption } from '~/utils/proposal'
+import { sanitizeProposalTemplate, type ProposalTemplateData } from '~/utils/proposal-templates'
 
 /**
  * «Proponer» de un creador a una marca (Descubrir). Tarifa con deslizador sobre el rango habitual de la marca,
@@ -54,6 +55,23 @@ watch(open, (isOpen) => {
   revisionsIncluded.value = null
   exclusivity.value = false
 })
+
+// Plantillas: lo que se repite de una propuesta a otra (no la casilla de compromiso, que se marca cada vez).
+const templateData = computed<ProposalTemplateData>(() => ({
+  rateEuros: rateEuros.value || null, reels: reels.value, posts: posts.value, stories: stories.value, usage: usage.value, message: message.value,
+  campaignGoal: campaignGoal.value, targetAudience: targetAudience.value, tone: tone.value, revisionsIncluded: revisionsIncluded.value, exclusivity: exclusivity.value
+}))
+function applyTemplate(raw: unknown) {
+  const t = sanitizeProposalTemplate(raw)
+  rateEuros.value = t.rateEuros
+  reels.value = t.reels; posts.value = t.posts; stories.value = t.stories
+  usage.value = t.usage
+  message.value = t.message
+  campaignGoal.value = t.campaignGoal; targetAudience.value = t.targetAudience; tone.value = t.tone
+  revisionsIncluded.value = t.revisionsIncluded
+  exclusivity.value = t.exclusivity
+  termsOpen.value = !!(t.campaignGoal || t.targetAudience || t.tone || t.revisionsIncluded !== null || t.exclusivity)
+}
 
 const loEuros = computed(() => (props.target?.minCents ? Math.round(props.target.minCents / 100) : null))
 const hiEuros = computed(() => (props.target?.maxCents ? Math.round(props.target.maxCents / 100) : null))
@@ -130,6 +148,7 @@ async function send() {
     <div v-if="stage === 'form' && target" class="proposal">
       <div class="proposal__form">
         <p class="proposal__sub">{{ target.categories.slice(0, 2).join(' · ') }}{{ target.categories.length ? ' · ' : '' }}Rango habitual {{ rangeLabel }}</p>
+        <ProposalTemplateBar kind="proposal" :current="{ ...templateData }" @apply="applyTemplate" />
 
         <div class="proposal__rate">
           <div class="proposal__field">

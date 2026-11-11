@@ -5,7 +5,7 @@
    ========================================================================== */
 
 @layer components {
-  .hub { display: grid; gap: 1.25rem; min-width: 0; }
+  .hub { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.25rem; min-width: 0; }
   .hub__head { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem 1.5rem; padding: 1.25rem 1.5rem; background: var(--surface-raised); border: 1px solid var(--line); border-radius: var(--radius-lg); }
   .hub__icon { display: grid; place-items: center; width: 3.5rem; height: 3.5rem; border-radius: var(--radius-md); background: var(--surface-sunken); }
   .hub__title { display: grid; gap: 0.25rem; flex: 1; min-width: 14rem; & h2 { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem; font-family: var(--font-display); font-weight: 700; font-size: var(--text-title); letter-spacing: -0.02em; } }
@@ -42,7 +42,7 @@
 
   /* ---- Tablero ---- */
   .hboard { display: flex; gap: 1rem; align-items: flex-start; overflow-x: auto; padding-bottom: 0.75rem; scroll-snap-type: x proximity; }
-  .hboard__col { --ph: var(--color-phase-idea); flex: 0 0 19.5rem; padding: 0.875rem; border-radius: var(--radius-lg); background: var(--surface-sunken); scroll-snap-align: start;
+  .hboard__col { --ph: var(--color-phase-idea); flex: 0 0 min(19.5rem, 82vw); min-width: 0; padding: 0.875rem; border-radius: var(--radius-lg); background: var(--surface-sunken); scroll-snap-align: start;
     &[data-phase="accepted"] { --ph: var(--color-phase-scheduled); }
     &[data-phase="in_production"] { --ph: var(--color-phase-production); }
     &[data-phase="brand_review"] { --ph: var(--color-phase-review); }
@@ -52,10 +52,10 @@
   .hboard__head { display: flex; align-items: center; gap: 0.625rem; margin-bottom: 0.75rem; padding-bottom: 0.5rem; border-bottom: 3px solid var(--ph);
     & h3 { font-family: var(--font-display); font-weight: 700; font-size: var(--text-lg); letter-spacing: -0.01em; } & span { color: var(--text-muted); font-weight: 700; }
   }
-  .hboard__cards { display: grid; gap: 0.75rem; }
+  .hboard__cards { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.75rem; }
   .hboard__empty { display: grid; place-items: center; height: 3.5rem; border: 1px dashed var(--line-strong); border-radius: var(--radius-md); font-size: var(--text-sm); color: var(--text-muted); }
 
-  .hcard { position: relative; display: grid; gap: 0.5rem; padding: 0.875rem; border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--surface-raised); text-decoration: none; color: inherit;
+  .hcard { position: relative; display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.5rem; padding: 0.875rem; border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--surface-raised); text-decoration: none; color: inherit;
     transition: transform var(--dur) var(--ease-out), box-shadow var(--dur) var(--ease-out), border-color var(--dur) var(--ease-out);
     &:hover { transform: translateY(-2px); box-shadow: var(--shadow-2); border-color: var(--line-strong); }
     &:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }

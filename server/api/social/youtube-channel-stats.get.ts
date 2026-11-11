@@ -31,6 +31,7 @@ export interface YoutubeChannelStats {
 export default defineEventHandler(async (event) => {
   const user = await serverSupabaseUser(event)
   if (!user) throw createError({ statusCode: 401, statusMessage: 'No autenticado.' })
+  enforceUserRateLimit(event, 'social-read', user.sub)
 
   const config = useRuntimeConfig(event)
   if (!config.socialTokenEncryptionKey || !config.youtubeClientId || !config.youtubeClientSecret) {

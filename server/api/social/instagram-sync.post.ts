@@ -22,6 +22,7 @@ interface SocialAccountRow {
 export default defineEventHandler(async (event) => {
   const user = await serverSupabaseUser(event)
   if (!user) throw createError({ statusCode: 401, statusMessage: 'No autenticado.' })
+  enforceUserRateLimit(event, 'social-sync', user.sub)
 
   const config = useRuntimeConfig(event)
   if (!config.socialTokenEncryptionKey) {

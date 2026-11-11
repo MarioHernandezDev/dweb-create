@@ -43,6 +43,15 @@ export function resetAccountCaches() {
   // el valor de la cuenta anterior tras saltar de cuenta sin recarga).
   useChat().reset()
 
+  useState<string[]>('notification-muted-types', () => []).value = []
+  useState<boolean>('notification-preferences-loaded', () => false).value = false
+  useState('saved-searches-creator', () => []).value = []
+  useState('saved-searches-partner', () => []).value = []
+  for (const kind of ['proposal', 'invite']) {
+    useState(`proposal-templates-${kind}`, () => []).value = []
+    useState<boolean>(`proposal-templates-loaded-${kind}`, () => false).value = false
+  }
+
   useState<unknown>('my-subscription', () => null).value = null
   useState<boolean>('my-subscription-loaded', () => false).value = false
   useState<boolean>('my-connect-onboarded', () => false).value = false

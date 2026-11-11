@@ -25,6 +25,7 @@ interface CollaborationRow {
 export default defineEventHandler(async (event) => {
   const user = await serverSupabaseUser(event)
   if (!user?.email) throw createError({ statusCode: 401, statusMessage: 'No autenticado.' })
+  enforceUserRateLimit(event, 'payments', user.sub)
 
   const body = await readBody<Body>(event)
   if (!body?.collaborationId) throw createError({ statusCode: 400, statusMessage: 'Falta collaborationId.' })

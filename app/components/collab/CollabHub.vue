@@ -2,6 +2,7 @@
 import { collaborationStatusMeta } from '~/utils/status'
 import { COLLAB_PHASES, formatMoney } from '~/utils/collab-phase'
 import { toCsv, downloadCsv } from '~/utils/csv'
+import { buildIcs, downloadIcs } from '~/utils/ics'
 import { initialsFromName, hueFromString } from '~/utils/avatar'
 import type { HubItem } from '~/composables/useCollabHub'
 
@@ -16,6 +17,7 @@ const route = useRoute()
 const router = useRouter()
 
 const { items, load } = useCollabHub(props.role)
+const toast = useToast()
 await load()
 
 // Qué toca en cada colaboración (misma lógica que «Qué me toca»).
@@ -110,6 +112,16 @@ function openFromCalendar(post: { id: string }) {
   if (c) navigateTo(`/${props.role}/collaborations/${c.id}`)
 }
 
+// ---- Fechas de entrega a un calendario externo (.ics) ----
+function exportIcs() {
+  const events = activeShown.value.flatMap((c) => c.posts.filter((p) => !!p.dueDate).map((p) => ({
+    uid: `post-${p.id}`, date: p.dueDate.slice(0, 10), title: `Entrega: ${p.title} (${c.counterpart})`,
+    description: `Colaboración «${c.title}» en CIBERAN`, url: `${window.location.origin}/${props.role}/collaborations/${c.id}`
+  })))
+  downloadIcs('ciberan-entregas.ics', buildIcs(events, 'CIBERAN · Entregas'))
+  toast.success(`${events.length} fecha${events.length === 1 ? '' : 's'} de entrega en el archivo: ábrelo para añadirlas a tu calendario`)
+}
+
 // ---- CSV de lo que se ve ----
 function exportCsv() {
   const list = view.value === 'solicitudes' ? [...pendingShown.value, ...historyShown.value] : activeShown.value
@@ -165,6 +177,7 @@ function exportCsv() {
           </select>
           <Icon name="ph:caret-down-bold" class="size-3.5" />
         </label>
+        <BaseButton v-if="view === 'calendario'" variant="outline" size="sm" icon="ph:calendar-plus-bold" :disabled="!calendarPosts.some((p) => !!p.dueDate)" data-export-ics @click="exportIcs">Añadir a mi calendario</BaseButton>
         <BaseButton variant="outline" size="sm" icon="ph:download-simple-bold" data-export-csv @click="exportCsv">Exportar CSV</BaseButton>
       </div>
     </div>

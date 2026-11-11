@@ -25,7 +25,9 @@ export const collaborationStatusMeta: Record<CollaborationStatus, { label: strin
   accepted: { label: 'Aceptada', color: 'var(--color-status-scheduled)' },
   in_progress: { label: 'En curso', color: 'var(--color-status-production)' },
   completed: { label: 'Completada', color: 'var(--color-status-published)' },
-  declined: { label: 'Rechazada', color: 'var(--color-status-alert)' }
+  declined: { label: 'Rechazada', color: 'var(--color-status-alert)' },
+  cancelled: { label: 'Cancelada', color: 'var(--color-status-alert)' },
+  terminated: { label: 'Terminada por incumplimiento', color: 'var(--color-status-alert)' }
 }
 
 /**

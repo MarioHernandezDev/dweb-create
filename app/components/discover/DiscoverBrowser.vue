@@ -17,7 +17,7 @@ import type { SavedSearch } from '~/composables/useSavedSearches'
  *  - la búsqueda por nombre filtra en el cliente, al instante;
  *  - «Con IA» sí tiene botón explícito (cuesta una llamada al modelo);
  *  - redes y tiempo de respuesta se filtran en el cliente (datos reales de actividad), y hay varios órdenes;
- *  - «Guardar búsqueda» recuerda los criterios en este navegador (useSavedSearches);
+ *  - «Guardar búsqueda» guarda los criterios en la cuenta (useSavedSearches);
  *  - recomendados arriba solo si hay un criterio de verdad (categorías o IA) y se ordena por afinidad;
  *  - la rejilla se pinta de 12 en 12 con carga automática al llegar al final,
  *    y las fotos cargan optimizadas y diferidas (ver SmartImage.vue).
@@ -100,13 +100,17 @@ function currentLabel() {
   if (nameQuery.value.trim()) bits.unshift(`«${nameQuery.value.trim()}»`)
   return bits.slice(0, 4).join(' · ') || 'Búsqueda'
 }
-function saveSearch() {
+async function saveSearch() {
   if (!canSaveSearch.value) return
-  addSavedSearch(currentLabel(), {
+  const ok = await addSavedSearch(currentLabel(), {
     categories: [...selectedCategories.value], minEuros: num(minEuros.value), maxEuros: num(maxEuros.value),
     platforms: [...platforms.value], response: response.value, types: [...types.value], verifiedOnly: verifiedOnly.value, sort: sort.value, nameQuery: nameQuery.value
   })
-  toast.success('Búsqueda guardada')
+  if (ok) toast.success('Búsqueda guardada en tu cuenta')
+  else toast.error('No se ha podido guardar la búsqueda. Inténtalo de nuevo.')
+}
+async function deleteSavedSearch(id: string) {
+  if (!(await removeSavedSearch(id))) toast.error('No se ha podido borrar la búsqueda.')
 }
 function applySavedSearch(item: SavedSearch) {
   const st = item.state
@@ -251,14 +255,14 @@ useIntersectionObserver(sentinel, ([entry]) => { if (entry?.isIntersecting && ha
               <Icon name="ph:caret-down-bold" class="size-3.5" />
             </label>
             <div class="discover__savewrap">
-              <BaseButton variant="brand" icon="ph:heart" :disabled="!canSaveSearch" :title="canSaveSearch ? 'Guarda estos filtros en este navegador' : 'Elige algún filtro o escribe un nombre para guardar la búsqueda'" @click="saveSearch">Guardar búsqueda</BaseButton>
+              <BaseButton variant="brand" icon="ph:heart" :disabled="!canSaveSearch" :title="canSaveSearch ? 'Guarda estos filtros en tu cuenta' : 'Elige algún filtro o escribe un nombre para guardar la búsqueda'" @click="saveSearch">Guardar búsqueda</BaseButton>
               <BaseButton v-if="savedSearches.length" variant="ghost" icon="ph:clock-counter-clockwise" :aria-expanded="savedMenuOpen" @click="savedMenuOpen = !savedMenuOpen">
                 Mis búsquedas<span class="badge badge--on-light ml-1">{{ savedSearches.length }}</span>
               </BaseButton>
               <ul v-if="savedMenuOpen && savedSearches.length" class="discover__saved" aria-label="Búsquedas guardadas">
                 <li v-for="item in savedSearches" :key="item.id">
                   <button type="button" class="discover__saved-apply" @click="applySavedSearch(item)">{{ item.label }}</button>
-                  <button type="button" class="discover__saved-del" :aria-label="`Borrar la búsqueda ${item.label}`" @click="removeSavedSearch(item.id)"><Icon name="ph:x-bold" class="size-3.5" /></button>
+                  <button type="button" class="discover__saved-del" :aria-label="`Borrar la búsqueda ${item.label}`" @click="deleteSavedSearch(item.id)"><Icon name="ph:x-bold" class="size-3.5" /></button>
                 </li>
               </ul>
             </div>

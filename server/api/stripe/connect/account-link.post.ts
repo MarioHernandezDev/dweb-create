@@ -12,6 +12,7 @@ import { serverSupabaseServiceRole, serverSupabaseUser } from '#supabase/server'
 export default defineEventHandler(async (event) => {
   const user = await serverSupabaseUser(event)
   if (!user?.email) throw createError({ statusCode: 401, statusMessage: 'No autenticado.' })
+  enforceUserRateLimit(event, 'payments', user.sub)
 
   const client = serverSupabaseServiceRole(event)
   const payer = await resolvePayerIdentity(client, user.sub)

@@ -1,4 +1,4 @@
-export type ReportReason = 'spam' | 'unrealistic_budget' | 'inappropriate' | 'other'
+export type ReportReason = 'spam' | 'unrealistic_budget' | 'inappropriate' | 'other' | 'breach'
 
 /**
  * Reportar una solicitud/colaboración (spam, presupuesto poco serio...).

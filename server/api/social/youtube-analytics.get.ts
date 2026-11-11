@@ -29,6 +29,7 @@ const DAY_METRICS = 'views,estimatedMinutesWatched,subscribersGained,subscribers
 export default defineEventHandler(async (event) => {
   const user = await serverSupabaseUser(event)
   if (!user) throw createError({ statusCode: 401, statusMessage: 'No autenticado.' })
+  enforceUserRateLimit(event, 'social-read', user.sub)
 
   const days = Number(getQuery(event).days ?? 28)
   if (!isPeriodDays(days)) {

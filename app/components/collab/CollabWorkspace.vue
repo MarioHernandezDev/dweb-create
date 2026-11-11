@@ -7,6 +7,9 @@ import type { CollaborationTerms } from '~/utils/collaboration-terms'
 import type { CollaborationStatus } from '~/types'
 import { expiryState } from '~/utils/collab-expiry'
 import { collabPhase, collabTitle, paymentState, COLLAB_PHASES } from '~/utils/collab-phase'
+import { collaborationStatusMeta } from '~/utils/status'
+import { agreementFingerprint, buildAgreementHtml, printHtml, type AgreementData } from '~/utils/agreement-summary'
+import { buildIcs, downloadIcs } from '~/utils/ics'
 
 /**
  * Página de una colaboración, para los dos roles (`/creator/collaborations/[id]`
@@ -130,6 +133,8 @@ const work = computed(() => {
 const closedText = computed(() => {
   const s = view.value?.status
   if (s === 'declined') return 'Solicitud rechazada: no hay nada más que hacer'
+  if (s === 'cancelled') return 'Colaboración cancelada de común acuerdo'
+  if (s === 'terminated') return 'Colaboración terminada por incumplimiento'
   if (s === 'completed') return hasRated(events.value, myProfileId.value) ? 'Colaboración completada y valorada' : 'Colaboración completada'
   return 'No tienes nada pendiente aquí'
 })
@@ -200,6 +205,49 @@ async function confirmPay() {
   if (!ok) return
   lastPayAttempt.value = true
   await partnerSide.payForCollaboration(props.id)
+}
+
+// Tras proponer, aceptar o retirar una cancelación cambian el estado y la cronología.
+async function afterCancelChange() {
+  await Promise.all([isPartner ? partnerSide.refresh() : creatorSide.refresh(), loadEvents(props.id, true)])
+}
+
+// Resumen del acuerdo (imprimible / PDF) y fechas de entrega para el calendario.
+const { ensureCreator } = useMyCreator()
+const { ensurePartner } = useMyPartner()
+const toast = useToast()
+const printing = ref(false)
+const isOpen = computed(() => !!view.value && ['requested', 'accepted', 'in_progress'].includes(view.value.status))
+async function printAgreement() {
+  const v = view.value
+  if (!v || printing.value) return
+  printing.value = true
+  try {
+    const myName = (isPartner ? (await ensurePartner())?.name : (await ensureCreator())?.displayName) ?? 'Mi cuenta'
+    const data: AgreementData = {
+      id: v.id, title: title.value,
+      creatorName: isPartner ? v.counterpartName : myName, partnerName: isPartner ? myName : v.counterpartName,
+      status: collaborationStatusMeta[v.status].label, brief: v.brief, budgetCents: v.budgetCents,
+      acceptedOn: acceptedOn.value, finalDue: finalDue.value, paidAt: v.paidAt,
+      deliverables: collabDeliverables.value.length ? collabDeliverables.value.map((d) => d.title) : (v.packageDeliverables ?? []),
+      scopeNotes: v.scopeNotes, revisionsIncluded: v.revisionsIncluded, exclusivity: v.exclusivity, usageRights: v.usageRights,
+      campaignGoal: v.campaignGoal, targetAudience: v.targetAudience, tone: v.tone
+    }
+    printHtml(buildAgreementHtml(data, await agreementFingerprint(data)))
+  } catch {
+    toast.error('No se ha podido preparar el resumen del acuerdo.')
+  } finally {
+    printing.value = false
+  }
+}
+const datedPosts = computed(() => collabPosts.value.filter((p) => !!p.dueDate))
+function exportDates() {
+  const v = view.value
+  if (!v || !datedPosts.value.length) return
+  const link = `${window.location.origin}/${props.role}/collaborations/${v.id}`
+  const ics = buildIcs(datedPosts.value.map((p) => ({ uid: `post-${p.id}`, date: p.dueDate.slice(0, 10), title: `Entrega: ${p.title} (${v.counterpartName})`, description: `Colaboración «${title.value}» en CIBERAN`, url: link })), `CIBERAN · ${title.value}`)
+  downloadIcs(`ciberan-entregas-${v.id.slice(0, 8)}.ics`, ics)
+  toast.success('Calendario descargado: ábrelo para añadir las fechas')
 }
 
 useHead({ title: computed(() => (view.value ? `Colaboración con ${view.value.counterpartName}` : 'Colaboración')) })
@@ -275,6 +323,10 @@ useHead({ title: computed(() => (view.value ? `Colaboración con ${view.value.co
                 :collaboration-id="view.id" :counterpart-name="view.counterpartName" @rated="reloadEvents"
               />
               <p v-if="actionError" class="collab-error" role="alert">{{ actionError }}</p>
+              <CollabCancelPanel
+                :collaboration-id="view.id" :status="view.status" :paid-at="view.paidAt"
+                :my-profile-id="myProfileId" :counterpart-name="view.counterpartName" @changed="afterCancelChange"
+              />
             </div>
           </PanelCard>
 
@@ -334,9 +386,17 @@ useHead({ title: computed(() => (view.value ? `Colaboración con ${view.value.co
               :can-complete-brief="isPartner && (view.status === 'accepted' || view.status === 'in_progress')"
             />
             <DataList :items="[{ label: 'Pedida', value: relativeTime(view.createdAt) }, ...(view.budgetCents ? [{ label: 'Presupuesto', value: formatEuros(view.budgetCents) }] : [])]" />
+            <div v-if="view.status !== 'requested' && view.status !== 'declined'" class="cwork__agreement-actions">
+              <BaseButton variant="outline" size="sm" icon="ph:printer-bold" :loading="printing" data-print-agreement @click="printAgreement">Resumen del acuerdo (imprimir o PDF)</BaseButton>
+              <BaseButton v-if="datedPosts.length" variant="outline" size="sm" icon="ph:calendar-plus-bold" data-export-ics @click="exportDates">Añadir entregas al calendario</BaseButton>
+            </div>
           </PanelCard>
 
-          <PanelCard v-if="isPartner && view.status !== 'requested' && view.status !== 'declined'" title="Rendimiento" description="Cómo van las publicaciones de esta colaboración.">
+          <PanelCard v-if="view.status !== 'declined'" id="archivos" title="Archivos" description="Material compartido entre las dos partes. Solo lo veis vosotros." class="cwork__anchor">
+            <CollabFiles :collaboration-id="view.id" :open="isOpen" :my-profile-id="myProfileId" :counterpart-name="view.counterpartName" @changed="reloadEvents" />
+          </PanelCard>
+
+          <PanelCard v-if="isPartner && view.status !== 'requested' && view.status !== 'declined' && view.status !== 'cancelled' && view.status !== 'terminated'" title="Rendimiento" description="Cómo van las publicaciones de esta colaboración.">
             <CollaborationReport :collaboration-id="view.id" />
           </PanelCard>
         </div>
@@ -346,6 +406,9 @@ useHead({ title: computed(() => (view.value ? `Colaboración con ${view.value.co
             v-if="phase" :budget-cents="view.budgetCents" :deliverables="deliverablesText" :usage="view.usageRights"
             :accepted-on="acceptedOn" :final-due="finalDue" :payment="payment" :pay-label="payLabel"
           />
+          <PanelCard v-if="view.status !== 'declined'" id="chat" :title="`Chat con ${view.counterpartName}`" description="La misma conversación que tenéis en Mensajes." class="cwork__anchor">
+            <CollabChatPanel :counterpart-profile-id="view.counterpartProfileId" :counterpart-name="view.counterpartName" :role="role" />
+          </PanelCard>
           <PanelCard title="Cronología" description="Lo que ha ocurrido, de lo más reciente a lo más antiguo.">
             <CollabNoteForm v-if="view.status !== 'declined'" :collaboration-id="view.id" class="cwork__note" @added="reloadEvents" />
             <CollabTimeline

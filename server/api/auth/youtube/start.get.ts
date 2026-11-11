@@ -16,6 +16,7 @@ import { serverSupabaseServiceRole, serverSupabaseUser } from '#supabase/server'
 export default defineEventHandler(async (event) => {
   const user = await serverSupabaseUser(event)
   if (!user) throw createError({ statusCode: 401, statusMessage: 'No autenticado.' })
+  enforceUserRateLimit(event, 'oauth-start', user.sub)
 
   const config = useRuntimeConfig(event)
   if (!config.youtubeClientId || !config.socialTokenEncryptionKey) {

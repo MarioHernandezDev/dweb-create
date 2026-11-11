@@ -102,7 +102,7 @@ async function sendReport() {
       <div v-for="offer in (isAgreed ? [] : offers)" :key="offer.id" class="rounded-[var(--radius-sm)] bg-[var(--color-ink-overlay)] px-3 py-2 text-sm">
         <div class="flex items-center justify-between">
           <span class="text-[var(--color-text-muted)]">
-            Contraoferta de {{ offer.proposedBy === 'creator' ? 'el creador' : 'el partner' }} · {{ relativeTime(offer.createdAt) }}
+            Contraoferta {{ offer.proposedBy === 'creator' ? 'del creador' : 'de la marca' }} · {{ relativeTime(offer.createdAt) }}
           </span>
           <span class="font-medium text-[var(--color-text)]">{{ formatEuros(offer.budgetCents) }}</span>
         </div>

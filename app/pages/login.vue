@@ -54,6 +54,22 @@ async function login(loginEmail: string, loginPassword: string) {
   await navigateTo(roleMeta[role].home)
 }
 
+// Google (OAuth de Supabase): solo se ofrece si está configurado (GOOGLE_AUTH_ENABLED). La vuelta entra por
+// /confirm, que resuelve el rol igual que tras confirmar el email.
+const googleEnabled = useRuntimeConfig().public.googleAuthEnabled === true
+const googleLoading = ref(false)
+async function loginWithGoogle() {
+  if (googleLoading.value) return
+  googleLoading.value = true
+  error.value = ''
+  resetAccountCaches()
+  const { error: oauthError } = await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: `${window.location.origin}/confirm` } })
+  if (oauthError) {
+    error.value = 'No se ha podido abrir el acceso con Google. Inténtalo de nuevo o entra con tu email.'
+    googleLoading.value = false
+  }
+}
+
 function submit() {
   login(email.value, password.value)
 }
@@ -83,6 +99,10 @@ function loginAsDemo(demoEmail: string) {
         {{ loading ? 'Accediendo…' : 'Acceder' }}
       </BaseButton>
     </form>
+
+    <BaseButton v-if="googleEnabled" variant="outline" size="lg" block icon="ph:google-logo-bold" class="mt-3" :loading="googleLoading" :disabled="loading" data-google-login @click="loginWithGoogle">
+      Continuar con Google
+    </BaseButton>
 
     <p class="auth__alt">
       ¿No tienes cuenta todavía? <NuxtLink to="/onboarding">Crea una cuenta</NuxtLink>

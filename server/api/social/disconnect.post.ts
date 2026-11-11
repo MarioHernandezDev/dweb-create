@@ -33,6 +33,7 @@ export type DisconnectRevocation = 'revoked' | 'already_invalid' | 'unconfirmed'
 export default defineEventHandler(async (event) => {
   const user = await serverSupabaseUser(event)
   if (!user) throw createError({ statusCode: 401, statusMessage: 'No autenticado.' })
+  enforceUserRateLimit(event, 'social-write', user.sub)
 
   const body = await readBody<DisconnectBody>(event)
   const platform = body?.platform

@@ -26,7 +26,7 @@ function patch(p: Partial<PostFilters>) {
   filters.value = { ...filters.value, ...p }
 }
 
-const select = 'h-9 px-3 rounded-full bg-[var(--color-ink-overlay)] border border-[var(--color-hairline)] text-sm text-[var(--color-text)] focus:outline-none focus:border-[var(--color-primary-500)]/60'
+const select = 'h-9 px-3 max-w-full min-w-0 truncate rounded-full bg-[var(--color-ink-overlay)] border border-[var(--color-hairline)] text-sm text-[var(--color-text)] focus:outline-none focus:border-[var(--color-primary-500)]/60'
 </script>
 
 <template>

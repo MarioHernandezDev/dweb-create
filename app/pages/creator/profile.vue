@@ -513,6 +513,14 @@ async function saveWeeklyTarget() {
               </div>
               <p v-if="redirectError" class="setting-error" role="alert">{{ redirectError }}</p>
             </PanelCard>
+
+            <PanelCard title="Avisos" data-card="notifications">
+              <NotificationPreferences role="creator" />
+            </PanelCard>
+
+            <PanelCard title="Tus datos" data-card="data-export">
+              <DataExportCard />
+            </PanelCard>
           </div>
         </Transition>
       </div>

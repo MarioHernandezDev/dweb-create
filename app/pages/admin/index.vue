@@ -70,7 +70,8 @@ const reasonLabels: Record<string, string> = {
   spam: 'Spam',
   unrealistic_budget: 'Presupuesto poco serio',
   inappropriate: 'Contenido inapropiado',
-  other: 'Otro motivo'
+  other: 'Otro motivo',
+  breach: 'Incumplimiento (colaboración terminada)'
 }
 
 // `useRequestFetch()` reenvía la cookie de sesión también en el render del

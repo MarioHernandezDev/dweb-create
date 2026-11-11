@@ -14,6 +14,7 @@ interface Body {
 export default defineEventHandler(async (event) => {
   const user = await serverSupabaseUser(event)
   if (!user?.email) throw createError({ statusCode: 401, statusMessage: 'No autenticado.' })
+  enforceUserRateLimit(event, 'payments', user.sub)
 
   const body = await readBody<Body>(event)
   const plan = body?.planId ? plans[body.planId] : undefined

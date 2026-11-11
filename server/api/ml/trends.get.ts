@@ -144,6 +144,7 @@ Varía la plataforma entre las 4 ideas cuando tenga sentido para el nicho.`
 export default defineEventHandler(async (event) => {
   const user = await serverSupabaseUser(event)
   if (!user) throw createError({ statusCode: 401, statusMessage: 'No autenticado.' })
+  enforceUserRateLimit(event, 'ml-trends', user.sub)
 
   const client = serverSupabaseServiceRole(event)
 

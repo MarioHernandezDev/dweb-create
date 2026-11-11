@@ -56,3 +56,37 @@ export function groupNotifications<T extends GroupableNotification>(list: T[]): 
   }
   return [...groups.values()]
 }
+
+/**
+ * Preferencias de avisos (tabla `notification_preferences`, migración 20261110100000). Solo se pueden silenciar
+ * avisos que no piden ninguna acción; solicitudes, ofertas, revisiones y pagos llegan siempre. La misma lista de
+ * tipos está en el CHECK de la tabla: si se añade un grupo aquí, hay que ampliarlo allí.
+ */
+export interface NotificationPreferenceGroup {
+  id: string
+  label: string
+  description: string
+  types: string[]
+  /** A quién se le ofrece (por defecto, a los dos roles). */
+  role?: 'creator' | 'partner'
+}
+
+export const NOTIFICATION_PREFERENCE_GROUPS: NotificationPreferenceGroup[] = [
+  { id: 'reminders', label: 'Recordatorios de plazo', description: 'Solicitudes a punto de caducar y contenido que vence en menos de 48 horas.', types: ['collaboration_expiring', 'post_due_soon'] },
+  { id: 'ratings', label: 'Valoraciones', description: 'Cuando la otra parte te valora al terminar una colaboración.', types: ['rating_received'] },
+  { id: 'log', label: 'Notas del registro', description: 'Cuando la otra parte anota algo en el registro de una colaboración.', types: ['collaboration_incident_logged'] },
+  { id: 'login', label: 'Inicios de sesión', description: 'Un aviso en Actividad cada vez que entras en tu cuenta.', types: ['login'] }
+]
+
+export const MUTABLE_NOTIFICATION_TYPES: string[] = NOTIFICATION_PREFERENCE_GROUPS.flatMap((g) => g.types)
+
+/** Un grupo está activo si ninguno de sus tipos está silenciado. */
+export function isGroupEnabled(group: NotificationPreferenceGroup, muted: readonly string[]): boolean {
+  return !group.types.some((t) => muted.includes(t))
+}
+
+/** Lista de tipos silenciados tras activar o desactivar un grupo (sin duplicados ni tipos desconocidos). */
+export function toggleGroup(group: NotificationPreferenceGroup, muted: readonly string[], enabled: boolean): string[] {
+  const rest = muted.filter((t) => !group.types.includes(t) && MUTABLE_NOTIFICATION_TYPES.includes(t))
+  return [...new Set(enabled ? rest : [...rest, ...group.types])]
+}

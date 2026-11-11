@@ -63,6 +63,13 @@ function toLine(e: CollabEvent): Line {
     case 'deliverable_waived': return { ...base, tone: 'people', icon: 'ph:prohibit', text: `Entregable «${str(d.deliverableTitle) ?? ''}» renunciado`, quote: str(d.reason) }
     case 'deliverable_accepted_without_approval': return { ...base, tone: 'people', icon: 'ph:seal-warning', text: `«${str(d.deliverableTitle) ?? ''}» aceptado sin aprobación formal (v${d.contentVersion ?? '?'})`, quote: str(d.reason) }
     case 'deliverable_reopened': return { ...base, tone: 'people', icon: 'ph:arrow-u-up-left', text: `Entregable «${str(d.deliverableTitle) ?? ''}» reabierto`, quote: str(d.reason) }
+    case 'file_added': return { ...base, tone: 'people', icon: 'ph:paperclip', text: `Archivo añadido: «${str(d.name) ?? 'archivo'}»` }
+    case 'file_removed': return { ...base, tone: 'people', icon: 'ph:trash', text: `Archivo borrado: «${str(d.name) ?? 'archivo'}»` }
+    case 'cancel_requested': return { ...base, tone: 'people', icon: 'ph:prohibit', text: 'Propuesta de cancelar la colaboración', quote: str(d.reason) }
+    case 'cancel_declined': return { ...base, tone: 'people', icon: 'ph:arrow-bend-up-right', text: 'Cancelación no aceptada: la colaboración sigue' }
+    case 'cancel_withdrawn': return { ...base, tone: 'people', icon: 'ph:arrow-u-up-left', text: 'Propuesta de cancelación retirada' }
+    case 'cancelled': return { ...base, tone: 'system', icon: 'ph:prohibit', text: 'Colaboración cancelada de común acuerdo', quote: str(d.reason) }
+    case 'terminated': return { ...base, tone: 'people', icon: 'ph:warning-octagon', text: 'Colaboración terminada por incumplimiento', quote: str(d.reason) }
     default: return { ...base, tone: 'system', icon: 'ph:circle', text: e.kind }
   }
 }

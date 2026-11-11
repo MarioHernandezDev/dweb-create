@@ -20,7 +20,7 @@ const others = computed(() => props.tasks.slice(1))
 
 <template>
   <section class="nextstep" :data-state="main ? 'action' : waiting ? 'waiting' : 'done'" aria-labelledby="nextstep-title" data-next-step>
-    <p class="nextstep__kicker">Siguiente paso</p>
+    <p class="nextstep__kicker">{{ !main && !waiting && closedText ? 'Estado' : 'Siguiente paso' }}</p>
     <template v-if="main">
       <h2 id="nextstep-title" class="nextstep__title">{{ main.title }}</h2>
       <p v-if="main.detail" class="nextstep__detail">{{ main.detail }}</p>

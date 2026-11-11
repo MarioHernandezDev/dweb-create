@@ -55,7 +55,17 @@ const typeIcon: Record<string, string> = {
   collaboration_paid: 'ph:currency-eur-fill',
   offer_received: 'ph:tag-fill',
   offer_accepted: 'ph:check-circle-fill',
-  offer_declined: 'ph:x-circle-fill'
+  offer_declined: 'ph:x-circle-fill',
+  // Recordatorios de plazo (send_due_reminders, migración 20261109110000).
+  collaboration_expiring: 'ph:clock-countdown-fill',
+  post_due_soon: 'ph:alarm-fill',
+  // Archivos y cancelación pactada (migración 20261110110000).
+  collaboration_file_added: 'ph:paperclip-fill',
+  collaboration_cancel_requested: 'ph:prohibit-fill',
+  collaboration_cancel_declined: 'ph:arrow-bend-up-right-fill',
+  collaboration_cancelled: 'ph:prohibit-fill',
+  // Terminación por incumplimiento (migración 20261111100000).
+  collaboration_terminated: 'ph:warning-octagon-fill'
 }
 
 function iconFor(n: AppNotification) {

@@ -10,7 +10,7 @@ export type PostStatus =
   | 'published'
   | 'overdue'
 
-export type CollaborationStatus = 'requested' | 'accepted' | 'in_progress' | 'completed' | 'declined'
+export type CollaborationStatus = 'requested' | 'accepted' | 'in_progress' | 'completed' | 'declined' | 'cancelled' | 'terminated'
 
 export type ContentType = 'video' | 'reel' | 'carousel' | 'image' | 'story'
 

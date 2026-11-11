@@ -12,6 +12,7 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 export default defineEventHandler(async (event) => {
   const user = await serverSupabaseUser(event)
   if (!user) throw createError({ statusCode: 401, statusMessage: 'No autenticado.' })
+  enforceUserRateLimit(event, 'social-write', user.sub)
 
   const postId = getQuery(event).postId
   if (typeof postId !== 'string' || !UUID.test(postId)) throw createError({ statusCode: 400, statusMessage: 'Publicación no válida.' })

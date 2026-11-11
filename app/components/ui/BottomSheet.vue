@@ -16,8 +16,21 @@ function close() {
 const sheetEl = ref<HTMLElement | null>(null)
 let previouslyFocused: HTMLElement | null = null
 
+const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+
 function onKeydown(e: KeyboardEvent) {
-  if (e.key === 'Escape') close()
+  if (e.key === 'Escape') { close(); return }
+  if (e.key !== 'Tab' || !sheetEl.value) return
+  // Diálogo modal: Tab y Mayús+Tab dan la vuelta dentro de la hoja en vez de
+  // salir a la página que queda detrás del fondo.
+  const items = [...sheetEl.value.querySelectorAll<HTMLElement>(FOCUSABLE)].filter((el) => el.offsetParent !== null || el === document.activeElement)
+  if (!items.length) { e.preventDefault(); sheetEl.value.focus(); return }
+  const first = items[0]!
+  const last = items[items.length - 1]!
+  const active = document.activeElement as HTMLElement | null
+  const inside = !!active && sheetEl.value.contains(active)
+  if (e.shiftKey && (!inside || active === first || active === sheetEl.value)) { e.preventDefault(); last.focus() }
+  else if (!e.shiftKey && (!inside || active === last)) { e.preventDefault(); first.focus() }
 }
 
 watch(

@@ -420,6 +420,14 @@ const heroRange = computed(() => rangeText(
               <p class="setting-row__label">{{ currentPrivacy.label }}</p>
               <p class="setting-row__meta">{{ currentPrivacy.description }}</p>
             </PanelCard>
+
+            <PanelCard title="Avisos" data-card="notifications">
+              <NotificationPreferences role="partner" />
+            </PanelCard>
+
+            <PanelCard title="Tus datos" data-card="data-export">
+              <DataExportCard />
+            </PanelCard>
           </div>
         </Transition>
       </div>

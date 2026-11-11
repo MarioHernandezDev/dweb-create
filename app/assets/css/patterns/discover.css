@@ -156,6 +156,8 @@
     --dcar-w: min(17rem, 72vw);
 
     position: relative;
+    /* Contexto de apilado propio: GSAP sube el z-index de las tarjetas y, sin esto, tapaban los diálogos. */
+    isolation: isolate;
     height: 34rem;
     overflow: hidden;
     touch-action: pan-y;

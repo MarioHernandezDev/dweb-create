@@ -2,7 +2,7 @@ import tailwindcss from '@tailwindcss/vite'
 
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
-  modules: ['@nuxt/image', '@nuxt/fonts', '@nuxt/icon/module', '@pinia/nuxt', '@nuxtjs/supabase'],
+  modules: ['@nuxt/image', '@nuxt/fonts', '@nuxt/icon/module', '@pinia/nuxt', '@nuxtjs/supabase', '@sentry/nuxt/module'],
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
 
@@ -144,7 +144,13 @@ export default defineNuxtConfig({
     public: {
       // Pública a propósito: la usa el navegador para cargar Stripe.js antes
       // del Checkout. Nunca pongas aquí ninguna de las claves de arriba.
-      stripePublishableKey: process.env.STRIPE_PUBLISHABLE_KEY
+      stripePublishableKey: process.env.STRIPE_PUBLISHABLE_KEY,
+      // El DSN de Sentry es público por diseño (va en el navegador). Vacío = desactivado.
+      sentryDsn: process.env.SENTRY_DSN,
+      appEnv: process.env.APP_ENV,
+      // «Continuar con Google» en /login. Apagado hasta configurar el proveedor en Supabase
+      // (docs/13-INTEGRACIONES-PENDIENTES.md): sin eso el botón llevaría a un error.
+      googleAuthEnabled: process.env.GOOGLE_AUTH_ENABLED === 'true'
     }
   },
 

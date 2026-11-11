@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { DiscoveryResult } from '~/composables/useDiscover'
+import { sanitizeInviteTemplate, type InviteTemplateData } from '~/utils/proposal-templates'
 
 /**
  * «Contactar» de una marca a un creador (hoja con el formulario de solicitud). Compartido por Descubrir y por el
@@ -40,6 +41,22 @@ watch(sheetOpen, (open) => {
   usageRights.value = ''
 })
 
+// Plantillas: lo que se repite de una invitación a otra.
+const templateData = computed<InviteTemplateData>(() => ({
+  message: message.value, budgetEuros: budgetEuros.value || null, scopeNotes: scopeNotes.value, usageRights: usageRights.value,
+  campaignGoal: campaignGoal.value, targetAudience: targetAudience.value, tone: tone.value, revisionsIncluded: revisionsIncluded.value, exclusivity: exclusivity.value
+}))
+function applyTemplate(raw: unknown) {
+  const t = sanitizeInviteTemplate(raw)
+  message.value = t.message
+  budgetEuros.value = t.budgetEuros
+  scopeNotes.value = t.scopeNotes; usageRights.value = t.usageRights
+  campaignGoal.value = t.campaignGoal; targetAudience.value = t.targetAudience; tone.value = t.tone
+  revisionsIncluded.value = t.revisionsIncluded
+  exclusivity.value = t.exclusivity
+  termsOpen.value = !!(t.scopeNotes || t.usageRights || t.campaignGoal || t.targetAudience || t.tone || t.revisionsIncluded !== null || t.exclusivity)
+}
+
 async function send() {
   const target = props.target
   if (!target || !message.value || !budgetEuros.value || sending.value) return
@@ -75,6 +92,7 @@ async function send() {
 <template>
   <BottomSheet v-model="sheetOpen" :title="target ? `Contactar a ${target.name}` : 'Contactar'">
       <template v-if="sheetStage === 'form'">
+        <ProposalTemplateBar kind="invite" :current="{ ...templateData }" @apply="applyTemplate" />
         <label class="block text-sm font-medium text-[var(--color-text-muted)] mb-1.5" for="brief">Cuéntales tu campaña</label>
         <textarea
           id="brief" v-model="message" rows="4" placeholder="Qué necesitas y para cuándo…"
