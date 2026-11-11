@@ -11,6 +11,7 @@ const sheetOpen = defineModel<boolean>({ required: true })
 const emit = defineEmits<{ sent: [] }>()
 
 const client = useSupabaseClient()
+const { paymentsEnabled } = useLaunchMode()
 const { partner } = useMyPartner()
 
 const sheetStage = ref<'form' | 'sent'>('form')
@@ -104,7 +105,7 @@ async function send() {
           id="budget" v-model.number="budgetEuros" type="number" min="1" step="1" placeholder="Ej. 300"
           class="input w-full h-11"
         >
-        <p class="text-micro text-[var(--color-text-faint)] mt-1.5">Lo pagas desde CIBERAN cuando acordéis los detalles — el dinero llega directo, descontando la comisión de la plataforma.</p>
+        <p class="text-micro text-[var(--color-text-faint)] mt-1.5">{{ paymentsEnabled ? 'Lo pagas desde CIBERAN cuando acordéis los detalles — el dinero llega directo, descontando la comisión de la plataforma.' : 'Es el importe que propones. Durante el lanzamiento CIBERAN es gratis y no gestiona pagos: lo pagáis entre vosotros.' }}</p>
 
         <button
           type="button"

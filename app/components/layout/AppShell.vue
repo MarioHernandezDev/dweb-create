@@ -22,5 +22,6 @@ const { collapsed } = useRailState()
     <ConfirmDialogHost />
     <ToastHost />
     <OnboardingTour />
+    <TermsGate />
   </div>
 </template>

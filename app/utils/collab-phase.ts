@@ -22,6 +22,11 @@ export const COLLAB_PHASES: { value: CollabPhase; label: string }[] = [
   { value: 'paid', label: 'Pagada' }
 ]
 
+/** Fases que se enseñan: sin cobros activos (lanzamiento gratis) el recorrido acaba en «Publicada». */
+export function visiblePhases(paymentsEnabled: boolean) {
+  return paymentsEnabled ? COLLAB_PHASES : COLLAB_PHASES.filter((p) => p.value !== 'paid')
+}
+
 export interface PhaseSubject { status: string; paidAt: string | null }
 export interface PhasePost { status: PostStatus }
 
@@ -36,8 +41,10 @@ export function collabPhase(c: PhaseSubject, posts: PhasePost[]): CollabPhase | 
 }
 
 /** Estado del pago: el dinero va directo al creador por Stripe, así que solo hay «pagado» o «por pagar». */
-export function paymentState(c: PhaseSubject & { budgetCents: number | null }): 'paid' | 'pending' | 'none' {
+export function paymentState(c: PhaseSubject & { budgetCents: number | null }, paymentsEnabled = true): 'paid' | 'pending' | 'none' {
   if (c.paidAt) return 'paid'
+  // Sin cobros activos no hay nada «por pagar» dentro de CIBERAN.
+  if (!paymentsEnabled) return 'none'
   if (c.status !== 'accepted' && c.status !== 'in_progress' && c.status !== 'completed') return 'none'
   return c.budgetCents ? 'pending' : 'none'
 }

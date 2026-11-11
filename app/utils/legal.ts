@@ -35,6 +35,14 @@ export const legal = {
   lastUpdated: '[POR COMPLETAR: fecha de última actualización]'
 } as const
 
+/**
+ * Versión vigente de los términos y la política de privacidad (fecha del texto).
+ * Al cambiar el contenido legal, súbela: toda cuenta que tenga aceptada una
+ * versión anterior verá el aviso de aceptación la próxima vez que entre
+ * (components/legal/TermsGate.vue) y quedará registrada la nueva (`profiles.terms_version`).
+ */
+export const TERMS_VERSION = '2026-11-11'
+
 export const PLACEHOLDER_MARK = '[POR COMPLETAR'
 
 /** Verdadero mientras quede algún dato por rellenar (solo cuenta los obligatorios). */

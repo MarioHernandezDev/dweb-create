@@ -14,7 +14,7 @@ if (typeof target === 'string') {
 </script>
 
 <template>
-  <AppShell role="partner" title="Colaboraciones" subtitle="Sigue cada colaboración desde que se acepta hasta que pagas" full-width>
+  <AppShell role="partner" title="Colaboraciones" subtitle="Sigue cada colaboración desde que se acepta hasta que se publica" full-width>
     <CollabHub role="partner" />
   </AppShell>
 </template>

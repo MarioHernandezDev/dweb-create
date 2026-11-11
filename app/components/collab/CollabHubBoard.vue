@@ -1,18 +1,21 @@
 <script setup lang="ts">
 import { formatEuros } from '~/utils/mock-data'
-import { COLLAB_PHASES, type CollabPhase } from '~/utils/collab-phase'
+import { visiblePhases, type CollabPhase } from '~/utils/collab-phase'
 import { PLATFORM_SHORT } from '~/utils/discover-view'
 import { initialsFromName, hueFromString } from '~/utils/avatar'
 import type { HubItem } from '~/composables/useCollabHub'
 
 /** Tablero por fases de las colaboraciones activas. Las tarjetas son enlaces: la fase avanza sola, no se arrastra. */
-defineProps<{
+const props = defineProps<{
   items: HubItem[]
   role: 'creator' | 'partner'
   progressFor: (id: string) => { done: number; total: number } | null
   hintOf: (c: HubItem) => { text: string; tone: 'action' | 'waiting' } | null
 }>()
 
+// Sin cobros activos no hay columna «Pagada», salvo que ya exista alguna colaboración pagada que enseñar.
+const { paymentsEnabled } = useLaunchMode()
+const phases = computed(() => visiblePhases(paymentsEnabled || props.items.some((i) => i.phase === 'paid')))
 const short = (p: string) => PLATFORM_SHORT[p] ?? p
 const byPhase = (items: HubItem[], phase: CollabPhase) => items.filter((i) => i.phase === phase)
 const dueLabel = (d: string | null) => (d ? new Date(`${d}T00:00:00`).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }).replace('.', '') : null)
@@ -20,7 +23,7 @@ const dueLabel = (d: string | null) => (d ? new Date(`${d}T00:00:00`).toLocaleDa
 
 <template>
   <div class="hboard" role="list">
-    <section v-for="ph in COLLAB_PHASES" :key="ph.value" class="hboard__col" :data-phase="ph.value" role="listitem" :aria-label="ph.label">
+    <section v-for="ph in phases" :key="ph.value" class="hboard__col" :data-phase="ph.value" role="listitem" :aria-label="ph.label">
       <header class="hboard__head"><h3>{{ ph.label }}</h3><span>{{ byPhase(items, ph.value).length }}</span></header>
       <div class="hboard__cards">
         <NuxtLink

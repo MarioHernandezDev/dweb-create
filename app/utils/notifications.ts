@@ -9,6 +9,18 @@
  * bienvenida). Todo lo demás es "importante" — solicitudes, ofertas,
  * cambios pedidos, aprobaciones, valoraciones, pagos.
  */
+/**
+ * Texto de un aviso tal como se enseña. Algunos títulos los escribe la base de datos pensando en el cobro
+ * («Colaboración lista para pagar»); con los cobros apagados (lanzamiento gratis) se enseñan sin hablar de pagar.
+ */
+const PAY_TITLE = 'Colaboración lista para pagar'
+export function displayNoticeTitle(title: string, paymentsEnabled: boolean): string {
+  return !paymentsEnabled && title === PAY_TITLE ? 'Oferta aceptada: ya es una colaboración' : title
+}
+export function displayNoticeBody(title: string, body: string | null, paymentsEnabled: boolean): string | null {
+  return !paymentsEnabled && title === PAY_TITLE ? 'La oferta aceptada ya está en tus colaboraciones.' : body
+}
+
 export const ACTIVITY_NOTIFICATION_TYPES = ['login', 'welcome'] as const
 
 /** Lo mínimo que necesita `groupNotifications` de un aviso (lo cumple `AppNotification`). */

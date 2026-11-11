@@ -13,6 +13,7 @@ const props = defineProps<{
   payLabel: string
 }>()
 
+const { paymentsEnabled } = useLaunchMode()
 const closed = reactive<Record<string, boolean>>({ published: true, paid: true })
 const groups = computed(() => COLLAB_PHASES
   .map((ph) => {
@@ -33,7 +34,7 @@ function toggle(phase: CollabPhase) { closed[phase] = !closed[phase] }
 <template>
   <div class="hlist">
     <div class="hlist__cols" aria-hidden="true">
-      <span>Colaboración</span><span>Formato</span><span>Entregables</span><span>Entrega</span><span>{{ payLabel }}</span><span class="hlist__r">Importe</span>
+      <span>Colaboración</span><span>Formato</span><span>Entregables</span><span>Entrega</span><span>{{ paymentsEnabled ? payLabel : '' }}</span><span class="hlist__r">Importe</span>
     </div>
     <section v-for="g in groups" :key="g.value" class="hlist__group" :data-phase="g.value">
       <button type="button" class="hlist__head" :aria-expanded="!closed[g.value]" @click="toggle(g.value)">

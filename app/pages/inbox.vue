@@ -2,7 +2,7 @@
 import type { AppNotification } from '~/composables/useNotifications'
 import { relativeTime } from '~/utils/status'
 import { initialsFromName, hueFromString } from '~/utils/avatar'
-import { groupNotifications, type NotificationGroup } from '~/utils/notifications'
+import { displayNoticeBody, displayNoticeTitle, groupNotifications, type NotificationGroup } from '~/utils/notifications'
 
 useHead({ title: 'Bandeja de entrada' })
 
@@ -68,6 +68,10 @@ const typeIcon: Record<string, string> = {
   collaboration_terminated: 'ph:warning-octagon-fill'
 }
 
+const { paymentsEnabled } = useLaunchMode()
+const noticeTitle = (n: { title: string }) => displayNoticeTitle(n.title, paymentsEnabled)
+const noticeBody = (n: { title: string; body: string | null }) => displayNoticeBody(n.title, n.body, paymentsEnabled)
+
 function iconFor(n: AppNotification) {
   return typeIcon[n.type] ?? 'ph:bell-fill'
 }
@@ -127,12 +131,12 @@ async function open(n: NotificationGroup<AppNotification>) {
         <span class="notice__icon"><Icon :name="iconFor(n)" class="size-5" /></span>
         <span class="notice__head">
           <span class="notice__title">
-            {{ n.title }}
+            {{ noticeTitle(n) }}
             <span v-if="n.count > 1" class="notice__count" :aria-label="`${n.count} avisos iguales`">×{{ n.count }}</span>
           </span>
           <span v-if="n.unread" class="notice__flag">Nuevo</span>
         </span>
-        <span v-if="n.body" class="notice__body">{{ n.body }}</span>
+        <span v-if="n.body" class="notice__body">{{ noticeBody(n) }}</span>
         <span class="notice__time">{{ relativeTime(n.createdAt) }}</span>
       </button>
     </div>

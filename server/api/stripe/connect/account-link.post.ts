@@ -10,6 +10,7 @@ import { serverSupabaseServiceRole, serverSupabaseUser } from '#supabase/server'
  * CIBERAN.
  */
 export default defineEventHandler(async (event) => {
+  assertPaymentsEnabled(event)
   const user = await serverSupabaseUser(event)
   if (!user?.email) throw createError({ statusCode: 401, statusMessage: 'No autenticado.' })
   enforceUserRateLimit(event, 'payments', user.sub)

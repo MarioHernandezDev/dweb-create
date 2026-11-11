@@ -4,6 +4,8 @@ import { platformMeta, suggestionsForDraft } from '~/utils/mock-data'
 import { LABEL_COLORS } from '~/utils/labels'
 import type { Post, PostStatus } from '~/types'
 
+const { paymentsEnabled } = useLaunchMode()
+
 const props = defineProps<{ modelValue: boolean; post: Post | null; phases: PostStatus[] }>()
 const emit = defineEmits<{ 'update:modelValue': [value: boolean]; move: [status: PostStatus] }>()
 
@@ -220,7 +222,8 @@ async function onVisibility(open: boolean) {
         <div>
           <p class="text-base text-[var(--color-text)]">Todavía no has predicho el éxito</p>
           <p class="text-sm text-[var(--color-text-muted)] mt-0.5">
-            <template v-if="creditBalance === 0">
+            <template v-if="creditBalance === 0 && !paymentsEnabled">Sin créditos: durante el lanzamiento no se pueden ampliar.</template>
+            <template v-else-if="creditBalance === 0">
               Sin créditos —
               <NuxtLink to="/creator/profile?tab=billing" class="text-[var(--color-primary-500)] hover:text-[var(--color-primary-600)] underline underline-offset-2">mejora tu plan</NuxtLink>
             </template>

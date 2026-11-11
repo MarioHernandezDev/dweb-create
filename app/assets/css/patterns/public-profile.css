@@ -6,6 +6,16 @@
    ========================================================================== */
 
 @layer components {
+  /* Marco sin sesión (PublicShell.vue): barra oscura con la marca, la ficha y un pie mínimo. */
+  .pubshell { --content-pad: clamp(1rem, 4vw, 2rem); min-height: 100dvh; display: flex; flex-direction: column; background: var(--surface-app); }
+  .pubshell__bar { position: sticky; top: 0; z-index: 30; display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 0.75rem var(--content-pad); background: var(--color-tinta-950); }
+  .pubshell__brand { display: inline-flex; }
+  .pubshell__actions { display: flex; align-items: center; gap: 0.5rem; }
+  .pubshell__main { flex: 1; padding: var(--content-pad); min-width: 0; }
+  .pubshell__foot { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.5rem 1.5rem; padding: 1.25rem var(--content-pad); border-top: 1px solid var(--line); font-size: var(--text-sm); color: var(--text-muted);
+    & a { color: inherit; font-weight: 600; &:hover { color: var(--text-strong); } }
+  }
+
   .pp { position: relative; isolation: isolate; margin: calc(-1 * var(--content-pad, 1.25rem)); padding: 0 var(--content-pad, 1.25rem) 2rem; }
 
   .pp__bg { position: absolute; inset: 0 0 auto 0; height: 26rem; z-index: -1; overflow: hidden; background: var(--color-tinta-950);

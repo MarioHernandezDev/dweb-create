@@ -1,5 +1,15 @@
 # Integraciones externas pendientes
 
+## Cobros: apagados para el lanzamiento gratis (2026-11-11)
+`PAYMENTS_ENABLED` (ver `.env.example`) está apagado por defecto. Con él apagado:
+- La interfaz no enseña Pro, «Pagar», comisión, cuenta de cobro ni estados de pago (`useLaunchMode()`).
+- `/api/stripe/pay-collaboration`, `/api/stripe/create-checkout-session` y `/api/stripe/connect/account-link` responden 403 antes de tocar Stripe (`server/utils/payments-gate.ts`), aunque las claves estén puestas. El webhook sigue escuchando.
+- El importe acordado en una colaboración es solo una referencia: se paga fuera de CIBERAN.
+
+Para empezar a cobrar: completar `docs/7-STRIPE-SETUP.md` con claves reales, revisar términos (comisión) y poner `PAYMENTS_ENABLED=true`. No hay que tocar código.
+
+**Decisión pendiente (créditos de predicción):** sin Pro, un creador tiene 3 predicciones y no puede conseguir más. Opciones: dejarlo así, dar una recarga mensual gratis (cuesta llamadas de IA) u ocultar la predicción. Hoy el texto dice «durante el lanzamiento no se pueden ampliar».
+
 *Actualizado 2026-11-11. Lo que depende de credenciales, cuentas o servicios de terceros y por tanto no se puede terminar desde el código. Nada de esto bloquea el resto de la app: sin configurar, cada pieza queda apagada o con su aviso.*
 
 | Integración | Estado del código | Qué falta (externo) | Cómo se comprueba |

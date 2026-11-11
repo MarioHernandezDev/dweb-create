@@ -30,6 +30,8 @@ const props = defineProps<{
   collabs: PublicCollab[]
   activity: PublicActivity
   similar: SimilarProfile[]
+  /** Visita sin sesión (enlace compartido): sin guardar, sin contacto directo y solo con lo que es público. */
+  guest?: boolean
 }>()
 const emit = defineEmits<{ chat: []; offer: [pkg: Package]; copy: []; collaborate: [] }>()
 
@@ -54,7 +56,7 @@ const response = computed(() => responseLabel(props.activity.responseHours))
 
 // ---- Guardar ----
 const { isSaved, toggleSave, toggling, ensureIdsLoaded } = useSavedProfiles()
-onMounted(() => ensureIdsLoaded())
+onMounted(() => { if (!props.guest) ensureIdsLoaded() })
 const saved = computed(() => isSaved(props.profile.role, props.profile.id))
 
 // ---- Pestañas ----
@@ -63,6 +65,8 @@ const tabs = computed(() => {
   const t: { value: Tab; label: string }[] = isPartner.value
     ? [{ value: 'about', label: 'Sobre la marca' }]
     : [{ value: 'stats', label: 'Estadísticas y contenido' }, { value: 'audience', label: 'Audiencia' }]
+  // Sin sesión solo se enseña lo público: ni audiencia, ni catálogo con precios, ni colaboraciones.
+  if (props.guest) return t.filter((x) => x.value !== 'audience')
   if (!props.isOwnProfile || props.packages.length) t.push({ value: 'packages', label: isPartner.value ? 'Necesidades' : 'Catálogo' })
   t.push({ value: 'collabs', label: isPartner.value ? 'Creadores colaboradores' : 'Marcas colaboradoras' })
   t.push({ value: 'similar', label: isPartner.value ? 'Marcas similares' : 'Creadores similares' })
@@ -125,7 +129,7 @@ const socialHref = (s: { platform: Platform; handle: string | null }) => (s.plat
     </div>
 
     <div class="pp__top">
-      <NuxtLink :to="backHref" class="pp__back" data-back-link><Icon name="ph:caret-left-bold" class="size-4" /> Descubrir</NuxtLink>
+      <NuxtLink v-if="!guest" :to="backHref" class="pp__back" data-back-link><Icon name="ph:caret-left-bold" class="size-4" /> Descubrir</NuxtLink>
       <NuxtLink v-if="isOwnProfile" :to="editHref" class="pp__edit" data-own-banner><Icon name="ph:pencil-simple-bold" class="size-4" /> Editar perfil</NuxtLink>
     </div>
 
@@ -136,7 +140,7 @@ const socialHref = (s: { platform: Platform; handle: string | null }) => (s.plat
           <SmartImage v-if="profile.avatarUrl" :src="profile.avatarUrl" :width="480" :height="480" class="pp__photo-img" />
           <template v-else><CoverArt :seed="profile.profileId" /><span class="pp__initial" aria-hidden="true">{{ initial }}</span></template>
           <button
-            v-if="!isOwnProfile" type="button" class="pp__save" :class="saved && 'is-saved'" :aria-pressed="saved" :disabled="toggling === profile.id"
+            v-if="!isOwnProfile && !guest" type="button" class="pp__save" :class="saved && 'is-saved'" :aria-pressed="saved" :disabled="toggling === profile.id"
             :aria-label="saved ? `Quitar a ${profile.name} de guardados` : `Guardar a ${profile.name}`" @click="toggleSave(profile.role, profile.id)"
           ><Icon :name="saved ? 'ph:bookmark-simple-fill' : 'ph:bookmark-simple-bold'" class="size-4" /></button>
         </div>
@@ -174,7 +178,12 @@ const socialHref = (s: { platform: Platform; handle: string | null }) => (s.plat
           </ul>
         </div>
 
-        <div v-if="!isOwnProfile" class="pp__cta" data-public-actions>
+        <div v-if="guest" class="pp__cta" data-guest-actions>
+          <BaseButton to="/onboarding" variant="primary" size="lg" block data-guest-signup>Crear cuenta para contactar</BaseButton>
+          <BaseButton to="/login" variant="outline" size="lg" block data-guest-login>Ya tengo cuenta</BaseButton>
+          <p class="pp__muted">Las tarifas, el catálogo y el contacto se ven al iniciar sesión.</p>
+        </div>
+        <div v-else-if="!isOwnProfile" class="pp__cta" data-public-actions>
           <BaseButton v-if="canCollaborate" variant="primary" size="lg" block data-collaborate @click="emit('collaborate')">{{ collaborateLabel }}</BaseButton>
           <BaseButton variant="outline" size="lg" block :loading="startingChat" data-start-chat @click="emit('chat')">Enviar mensaje</BaseButton>
           <p v-if="chatError" class="pub__error" role="alert" data-chat-error>{{ chatError }}</p>

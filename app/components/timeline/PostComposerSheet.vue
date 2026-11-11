@@ -3,6 +3,8 @@ import { suggestionsForDraft, platformMeta } from '~/utils/mock-data'
 import type { ContentType, Platform, Suggestion } from '~/types'
 import { contentTypeMeta } from '~/utils/status'
 
+const { paymentsEnabled } = useLaunchMode()
+
 const props = defineProps<{
   /** Rellena el borrador al abrir — viene de "Usar esta idea" en Tendencias. */
   prefill?: { title: string; hashtags: string[]; contentType: ContentType; platform: Platform } | null
@@ -129,7 +131,7 @@ async function predict() {
     const statusCode = (err as { statusCode?: number; response?: { status?: number } })?.statusCode
       ?? (err as { response?: { status?: number } })?.response?.status
     error.value = statusCode === 402
-      ? 'Sin créditos disponibles. Mejora tu plan para seguir prediciendo.'
+      ? (paymentsEnabled ? 'Sin créditos disponibles. Mejora tu plan para seguir prediciendo.' : 'Sin créditos disponibles: durante el lanzamiento no se pueden ampliar.')
       : 'No se ha podido predecir. Inténtalo de nuevo.'
     stage.value = 'draft'
   }
@@ -268,7 +270,8 @@ watch(open, (value) => {
           {{ stage === 'predicting' ? 'Analizando…' : 'Predecir éxito' }}
         </BaseButton>
         <p class="text-center text-micro text-[var(--color-text-faint)] -mt-2">
-          <template v-if="creditBalance === 0">
+          <template v-if="creditBalance === 0 && !paymentsEnabled">Sin créditos: durante el lanzamiento no se pueden ampliar.</template>
+          <template v-else-if="creditBalance === 0">
             Sin créditos —
             <NuxtLink to="/creator/profile?tab=billing" class="text-[var(--color-primary-500)] hover:text-[var(--color-primary-600)] underline underline-offset-2">mejora tu plan</NuxtLink>
             para seguir prediciendo

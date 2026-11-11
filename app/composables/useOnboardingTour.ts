@@ -6,7 +6,8 @@ const storageKey = (userId: string) => `ciberan:tour:v1:${userId}`
 
 /**
  * Recorrido de bienvenida (M-O1). El progreso se guarda en `localStorage`
- * por usuario (Q1, primera versión): ver o saltar el recorrido lo deja
+ * por usuario y, además, en la cuenta (`profiles.onboarding_completed_at`,
+ * vía useAccountState) para que no reaparezca en otro dispositivo: ver o saltar el recorrido lo deja
  * cerrado en los siguientes inicios de sesión de ESE navegador. En otro
  * dispositivo volvería a salir una vez; si molesta, el paso siguiente es una
  * columna `profiles.onboarding_completed_at`.
@@ -44,11 +45,15 @@ export function useOnboardingTour() {
   }
 
   /** Decide, una sola vez por pestaña, si hay que abrirlo solo (primera vez). */
-  function maybeAutoStart(id: string, userRole: Role) {
+  function maybeAutoStart(id: string, userRole: Role, seenInAccount = false) {
     if (decided.value) return
     decided.value = true
     userId.value = id
     role.value = userRole
+    if (seenInAccount) {
+      markSeen()
+      return
+    }
     if (!wasSeen(id)) {
       stepIndex.value = 0
       open.value = true

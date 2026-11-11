@@ -150,7 +150,11 @@ export default defineNuxtConfig({
       appEnv: process.env.APP_ENV,
       // «Continuar con Google» en /login. Apagado hasta configurar el proveedor en Supabase
       // (docs/13-INTEGRACIONES-PENDIENTES.md): sin eso el botón llevaría a un error.
-      googleAuthEnabled: process.env.GOOGLE_AUTH_ENABLED === 'true'
+      googleAuthEnabled: process.env.GOOGLE_AUTH_ENABLED === 'true',
+      // Cobros (Pro, pago de colaboraciones, comisión, cuenta de cobro). APAGADO por defecto:
+      // lanzamiento gratis. Con esto apagado la interfaz no enseña nada de pago y los
+      // endpoints de Stripe responden 403 (server/utils/payments-gate.ts). Solo 'true' lo enciende.
+      paymentsEnabled: process.env.PAYMENTS_ENABLED === 'true'
     }
   },
 
@@ -165,11 +169,13 @@ export default defineNuxtConfig({
     redirectOptions: {
       login: '/login',
       callback: '/confirm',
-      // Páginas públicas: todo lo demás exige sesión iniciada. /admin/* no
+      // Páginas públicas: todo lo demás exige sesión iniciada. /profile/* es la
+      // ficha compartible: sin sesión enseña solo lo público (ver
+      // server/api/public/profile), con sesión la ficha completa. /admin/* no
       // usa cuentas de Supabase en absoluto (ver server/utils/admin-
       // session.ts) — sin esto, este módulo las mandaría a /login antes de
       // que nuestra propia comprobación de contraseña entrara en juego.
-      exclude: ['/', '/onboarding', '/instalaciones', '/privacidad', '/terminos', '/admin', '/admin/*']
+      exclude: ['/', '/onboarding', '/instalaciones', '/privacidad', '/terminos', '/admin', '/admin/*', '/profile/*']
     }
   }
 })

@@ -2,6 +2,7 @@
 import { roleMeta } from '~/utils/nav'
 import { translateAuthError } from '~/utils/auth-errors'
 import type { Role } from '~/types'
+import { TERMS_VERSION } from '~/utils/legal'
 
 useHead({ title: 'Crear cuenta' })
 
@@ -28,6 +29,7 @@ const orgName = ref('') // nombre de empresa — solo partner
 const detail = ref('') // niche/industry, opcional
 const email = ref('')
 const password = ref('')
+const acceptedTerms = ref(false)
 const loading = ref(false)
 const error = ref('')
 
@@ -36,6 +38,10 @@ const detailLabel = computed(() => (selectedRole.value === 'partner' ? 'Sector' 
 
 async function register() {
   if (!selectedRole.value) return
+  if (!acceptedTerms.value) {
+    error.value = 'Tienes que aceptar los términos y la política de privacidad para crear la cuenta.'
+    return
+  }
   loading.value = true
   error.value = ''
 
@@ -51,7 +57,9 @@ async function register() {
         // Para creator (sin campo de empresa), el display_name es el
         // propio nombre — ver handle_new_user() en la migración.
         name: needsOrgName.value ? orgName.value : fullName.value,
-        detail: detail.value || null
+        detail: detail.value || null,
+        // Versión aceptada en el alta: TermsGate la registra en la cuenta al primer acceso.
+        terms_version: TERMS_VERSION
       }
     }
   })
@@ -120,16 +128,21 @@ async function register() {
             <BaseInput v-bind="f" v-model="password" type="password" required minlength="8" autocomplete="new-password" />
           </BaseField>
 
+          <label class="proposal__check text-[var(--text-muted)]" data-terms-check>
+            <input v-model="acceptedTerms" type="checkbox" required>
+            <span>
+              He leído y acepto los
+              <NuxtLink to="/terminos" target="_blank" class="underline">términos</NuxtLink>
+              y la
+              <NuxtLink to="/privacidad" target="_blank" class="underline">política de privacidad</NuxtLink>.
+            </span>
+          </label>
+
           <BaseButton type="submit" variant="primary" size="lg" block :loading="loading" :icon="loading ? undefined : 'ph:arrow-right-bold'">
             {{ loading ? 'Creando cuenta…' : 'Crear cuenta' }}
           </BaseButton>
 
-          <p class="text-sm text-[var(--text-muted)] text-center">
-            Al crear tu cuenta aceptas los
-            <NuxtLink to="/terminos" target="_blank" class="underline">términos</NuxtLink>
-            y la
-            <NuxtLink to="/privacidad" target="_blank" class="underline">política de privacidad</NuxtLink>.
-          </p>
+          <p class="text-sm text-[var(--text-muted)] text-center">Crear la cuenta es gratis. Tu perfil será visible para otros usuarios y, si no lo cambias en Privacidad, también con su enlace sin iniciar sesión.</p>
         </div>
       </form>
 

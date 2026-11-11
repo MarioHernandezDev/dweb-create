@@ -93,7 +93,8 @@ const expiry = computed(() => expiryState(view.value?.status ?? '', view.value?.
 const phase = computed(() => (view.value ? collabPhase(view.value, collabPosts.value) : null))
 const phaseLabel = computed(() => COLLAB_PHASES.find((p) => p.value === phase.value)?.label ?? null)
 const title = computed(() => (view.value ? collabTitle(view.value) : ''))
-const payment = computed(() => (view.value ? paymentState(view.value) : 'none' as const))
+const { paymentsEnabled } = useLaunchMode()
+const payment = computed(() => (view.value ? paymentState(view.value, paymentsEnabled) : 'none' as const))
 const payLabel = isPartner ? 'Pago' : 'Cobro'
 const finalDue = computed(() => {
   const dates = collabPosts.value.map((p) => p.dueDate).filter(Boolean).sort()
@@ -145,7 +146,28 @@ const expandedChecklist = computed(() => (expandedPostId.value ? itemsByPost.val
 watch(expandedPostId, (pid) => { if (pid) ensureItems(pid) }, { immediate: true })
 function togglePost(pid: string) { expandedPostId.value = expandedPostId.value === pid ? null : pid }
 
+// ---- Secciones (pestañas) ----
+// La página era una sola columna muy larga, sobre todo en móvil. Cada bloque sigue montado (v-show),
+// así que los enlaces con ancla (#respuesta, #entregables, #brief…) abren su pestaña y bajan hasta él.
+type Section = 'resumen' | 'entregables' | 'acuerdo' | 'chat' | 'actividad'
+const SECTIONS: { value: Section; label: string }[] = [
+  { value: 'resumen', label: 'Resumen' }, { value: 'entregables', label: 'Entregables' }, { value: 'acuerdo', label: 'Acuerdo y archivos' },
+  { value: 'chat', label: 'Chat' }, { value: 'actividad', label: 'Actividad' }
+]
+const SECTION_OF_HASH: Record<string, Section> = { '#respuesta': 'resumen', '#entregables': 'entregables', '#brief': 'acuerdo', '#archivos': 'acuerdo', '#chat': 'chat', '#cronologia': 'actividad' }
+const initialSection = (): Section => SECTION_OF_HASH[route.hash]
+  ?? SECTIONS.find((s) => s.value === route.query.seccion)?.value
+  ?? (typeof route.query.post === 'string' ? 'entregables' : 'resumen')
+const section = ref<Section>(initialSection())
+const sections = computed(() => (view.value?.status === 'declined' ? SECTIONS.filter((s) => s.value !== 'chat') : SECTIONS))
+function setSection(v: string) {
+  section.value = v as Section
+  router.replace({ query: { ...route.query, seccion: v }, hash: '' })
+}
+
 function scrollToHash(hash: string) {
+  const target = SECTION_OF_HASH[hash]
+  if (target) section.value = target
   nextTick(() => document.querySelector(hash)?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
 }
 onMounted(() => { if (route.hash) scrollToHash(route.hash) })
@@ -285,10 +307,12 @@ useHead({ title: computed(() => (view.value ? `Colaboración con ${view.value.co
 
       <CollabNextStep :tasks="work.tasks" :waiting="work.waiting" :closed-text="closedText" @go="goTask" />
 
-      <div class="cwork__grid">
+      <SegmentedTabs :model-value="section" :options="sections" label="Secciones de la colaboración" class="cwork__tabs" data-collab-sections @update:model-value="setSection" />
+
+      <div class="cwork__grid" :data-section="section">
         <div class="cwork__main">
           <!-- Presupuesto y respuesta: el panel de negociación sigue siendo el único sitio con el precio acordado. -->
-          <PanelCard id="respuesta" title="Presupuesto y respuesta" class="cwork__anchor">
+          <PanelCard v-show="section === 'resumen'" id="respuesta" title="Presupuesto y respuesta" class="cwork__anchor">
             <div class="collab-actions">
               <NegotiationPanel
                 :collaboration-id="view.id" :initial-budget-cents="view.budgetCents" :status="view.status"
@@ -298,8 +322,11 @@ useHead({ title: computed(() => (view.value ? `Colaboración con ${view.value.co
 
               <template v-if="isPartner">
                 <p v-if="view.paidAt" class="collab-paid"><Icon name="ph:check-circle-fill" class="size-4" /> Cobrado el {{ relativeTime(view.paidAt) }}</p>
+                <p v-else-if="!paymentsEnabled && payableStatuses.includes(view.status) && view.budgetCents" class="collab-freepay" data-free-launch-pay>
+                  <Icon name="ph:info" class="size-4" /> En esta etapa CIBERAN no gestiona pagos ni cobra comisión: el importe acordado lo pagas a {{ view.counterpartName }} por el medio que acordéis.
+                </p>
                 <BaseButton
-                  v-else-if="payableStatuses.includes(view.status)"
+                  v-else-if="paymentsEnabled && payableStatuses.includes(view.status)"
                   variant="brand" block :disabled="!view.budgetCents" :loading="partnerSide.paying.value === view.id"
                   @click="confirmPay"
                 >
@@ -308,6 +335,9 @@ useHead({ title: computed(() => (view.value ? `Colaboración con ${view.value.co
                 <p v-if="partnerSide.payError.value && lastPayAttempt" class="collab-error" role="alert">{{ partnerSide.payError.value }}</p>
               </template>
               <p v-else-if="view.paidAt" class="collab-paid"><Icon name="ph:check-circle-fill" class="size-4" /> Cobrado el {{ relativeTime(view.paidAt) }}</p>
+              <p v-else-if="!paymentsEnabled && payableStatuses.includes(view.status) && view.budgetCents" class="collab-freepay" data-free-launch-pay>
+                <Icon name="ph:info" class="size-4" /> En esta etapa CIBERAN no gestiona pagos ni cobra comisión: el importe acordado te lo paga {{ view.counterpartName }} por el medio que acordéis.
+              </p>
 
               <BaseButton
                 v-if="view.status === 'accepted' || view.status === 'in_progress'"
@@ -330,7 +360,7 @@ useHead({ title: computed(() => (view.value ? `Colaboración con ${view.value.co
             </div>
           </PanelCard>
 
-          <PanelCard id="entregables" title="Entregables" :description="collabDeliverables.length ? 'Lo contratado, con su publicación y su estado.' : 'Las publicaciones vinculadas a esta colaboración.'" class="cwork__anchor">
+          <PanelCard v-show="section === 'entregables'" id="entregables" title="Entregables" :description="collabDeliverables.length ? 'Lo contratado, con su publicación y su estado.' : 'Las publicaciones vinculadas a esta colaboración.'" class="cwork__anchor">
             <DeliverableList
               v-if="collabDeliverables.length"
               :role="role" :collaboration-id="view.id" :counterpart-name="view.counterpartName" :deliverables="collabDeliverables"
@@ -378,7 +408,7 @@ useHead({ title: computed(() => (view.value ? `Colaboración con ${view.value.co
             </template>
           </PanelCard>
 
-          <PanelCard id="brief" title="Acuerdo" description="Brief y condiciones pactadas." class="cwork__anchor">
+          <PanelCard v-show="section === 'acuerdo'" id="brief" title="Acuerdo" description="Brief y condiciones pactadas." class="cwork__anchor">
             <p class="collab-brief">{{ view.brief }}</p>
             <CollaborationTermsCard
               :terms="view" :collaboration-id="view.id" :status="view.status"
@@ -392,24 +422,24 @@ useHead({ title: computed(() => (view.value ? `Colaboración con ${view.value.co
             </div>
           </PanelCard>
 
-          <PanelCard v-if="view.status !== 'declined'" id="archivos" title="Archivos" description="Material compartido entre las dos partes. Solo lo veis vosotros." class="cwork__anchor">
+          <PanelCard v-if="view.status !== 'declined'" v-show="section === 'acuerdo'" id="archivos" title="Archivos" description="Material compartido entre las dos partes. Solo lo veis vosotros." class="cwork__anchor">
             <CollabFiles :collaboration-id="view.id" :open="isOpen" :my-profile-id="myProfileId" :counterpart-name="view.counterpartName" @changed="reloadEvents" />
           </PanelCard>
 
-          <PanelCard v-if="isPartner && view.status !== 'requested' && view.status !== 'declined' && view.status !== 'cancelled' && view.status !== 'terminated'" title="Rendimiento" description="Cómo van las publicaciones de esta colaboración.">
+          <PanelCard v-if="isPartner && view.status !== 'requested' && view.status !== 'declined' && view.status !== 'cancelled' && view.status !== 'terminated'" v-show="section === 'entregables'" title="Rendimiento" description="Cómo van las publicaciones de esta colaboración.">
             <CollaborationReport :collaboration-id="view.id" />
           </PanelCard>
         </div>
 
         <aside class="cwork__side">
           <CollabSummary
-            v-if="phase" :budget-cents="view.budgetCents" :deliverables="deliverablesText" :usage="view.usageRights"
+            v-if="phase" v-show="section === 'resumen'" :budget-cents="view.budgetCents" :deliverables="deliverablesText" :usage="view.usageRights"
             :accepted-on="acceptedOn" :final-due="finalDue" :payment="payment" :pay-label="payLabel"
           />
-          <PanelCard v-if="view.status !== 'declined'" id="chat" :title="`Chat con ${view.counterpartName}`" description="La misma conversación que tenéis en Mensajes." class="cwork__anchor">
+          <PanelCard v-if="view.status !== 'declined'" v-show="section === 'chat'" id="chat" :title="`Chat con ${view.counterpartName}`" description="La misma conversación que tenéis en Mensajes." class="cwork__anchor">
             <CollabChatPanel :counterpart-profile-id="view.counterpartProfileId" :counterpart-name="view.counterpartName" :role="role" />
           </PanelCard>
-          <PanelCard title="Cronología" description="Lo que ha ocurrido, de lo más reciente a lo más antiguo.">
+          <PanelCard v-show="section === 'actividad'" id="cronologia" title="Cronología" class="cwork__anchor" description="Lo que ha ocurrido, de lo más reciente a lo más antiguo.">
             <CollabNoteForm v-if="view.status !== 'declined'" :collaboration-id="view.id" class="cwork__note" @added="reloadEvents" />
             <CollabTimeline
               :events="events" :error="eventsError"

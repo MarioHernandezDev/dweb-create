@@ -29,6 +29,7 @@ export interface HubItem {
 
 export function useCollabHub(role: 'creator' | 'partner') {
   const partnerSide = useMyCollaborations()
+  const { paymentsEnabled } = useLaunchMode()
   const creatorSide = useCollabRequests()
   const partnerPosts = usePartnerPosts()
   const myPosts = useMyPosts()
@@ -66,7 +67,7 @@ export function useCollabHub(role: 'creator' | 'partner') {
         scopeNotes: c.scopeNotes,
         usageRights: c.usageRights,
         phase: collabPhase(c, mine),
-        payment: paymentState(c),
+        payment: paymentState(c, paymentsEnabled),
         platforms: [...new Set(mine.map((p) => p.platform))],
         dueDate: due,
         posts: mine

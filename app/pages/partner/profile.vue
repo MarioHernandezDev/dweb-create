@@ -421,12 +421,20 @@ const heroRange = computed(() => rangeText(
               <p class="setting-row__meta">{{ currentPrivacy.description }}</p>
             </PanelCard>
 
+            <PanelCard title="Visibilidad del perfil" data-card="public-profile">
+              <PublicProfileToggle />
+            </PanelCard>
+
             <PanelCard title="Avisos" data-card="notifications">
               <NotificationPreferences role="partner" />
             </PanelCard>
 
             <PanelCard title="Tus datos" data-card="data-export">
               <DataExportCard />
+            </PanelCard>
+
+            <PanelCard title="Eliminar cuenta" data-card="delete-account">
+              <DeleteAccountCard />
             </PanelCard>
           </div>
         </Transition>

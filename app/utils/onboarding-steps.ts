@@ -29,7 +29,7 @@ export const tourSteps: Record<Role, TourStep[]> = {
     {
       icon: 'ph:compass-fill',
       title: 'Descubrir y Colaboraciones',
-      body: 'En Descubrir encuentras marcas y agencias que encajan contigo. Cuando alguien te contacta, o tú a él, la negociación y los pagos viven en Colaboraciones y en el Chat.'
+      body: 'En Descubrir encuentras marcas y agencias que encajan contigo. Cuando alguien te contacta, o tú a él, la negociación y el seguimiento viven en Colaboraciones y en el Chat.'
     },
     {
       icon: 'ph:share-network-fill',
@@ -57,7 +57,7 @@ export const tourSteps: Record<Role, TourStep[]> = {
     {
       icon: 'ph:handshake-fill',
       title: 'Colaboraciones y Chat',
-      body: 'Contacta a un creador, negocia en el Chat y gestiona el estado, la revisión del contenido y el pago desde Colaboraciones.'
+      body: 'Contacta a un creador, negocia en el Chat y gestiona el estado y la revisión del contenido desde Colaboraciones.'
     },
     {
       icon: 'ph:house-fill',

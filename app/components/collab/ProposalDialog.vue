@@ -92,6 +92,7 @@ const rangeHint = computed(() => {
 })
 
 const rateCents = computed(() => Math.round((rateEuros.value ?? 0) * 100))
+const { paymentsEnabled } = useLaunchMode()
 const feeCents = computed(() => platformFeeCents(rateCents.value))
 const netCents = computed(() => rateCents.value - feeCents.value)
 const feePct = Math.round(MARKETPLACE_FEE_RATE * 100)
@@ -212,10 +213,10 @@ async function send() {
         <h3 class="proposal__summary-title">Resumen de la propuesta</h3>
         <dl class="proposal__lines">
           <div><dt>Tarifa</dt><dd>{{ rateEuros ? formatEuros(rateCents) : '—' }}</dd></div>
-          <div><dt>Comisión plataforma ({{ feePct }} %)</dt><dd>{{ rateEuros ? `− ${formatEuros(feeCents)}` : '—' }}</dd></div>
-          <div class="proposal__net"><dt>Recibirás</dt><dd>{{ rateEuros ? formatEuros(netCents) : '—' }}</dd></div>
+          <div v-if="paymentsEnabled"><dt>Comisión plataforma ({{ feePct }} %)</dt><dd>{{ rateEuros ? `− ${formatEuros(feeCents)}` : '—' }}</dd></div>
+          <div class="proposal__net"><dt>Recibirás</dt><dd>{{ rateEuros ? formatEuros(paymentsEnabled ? netCents : rateCents) : '—' }}</dd></div>
         </dl>
-        <p class="proposal__note">Si acepta, cobras desde CIBERAN: el dinero llega directo, descontando la comisión de la plataforma.</p>
+        <p class="proposal__note">{{ paymentsEnabled ? 'Si acepta, cobras desde CIBERAN: el dinero llega directo, descontando la comisión de la plataforma.' : 'Durante el lanzamiento CIBERAN es gratis: sin comisión. El cobro lo acordáis entre vosotros.' }}</p>
         <ul class="proposal__facts">
           <li v-if="totalDeliverables"><Icon name="ph:check-bold" class="size-4" />{{ buildDeliverablesSummary({ reels, posts, stories }) }}</li>
           <li v-if="responds"><Icon name="ph:clock" class="size-4" />Responden en {{ responds }} de media</li>

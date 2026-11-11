@@ -8,6 +8,7 @@ const { open, stepIndex, steps, current, isLast, maybeAutoStart, next, back, clo
 const { role, ensureRole } = useMyRole()
 const { resolveMyProfileId } = useMyProfileId()
 const router = useRouter()
+const account = useAccountState()
 
 const primaryBtn = ref<{ $el: HTMLElement } | null>(null)
 
@@ -17,6 +18,7 @@ function onKeydown(e: KeyboardEvent) {
 
 watch(open, async (isOpen) => {
   if (!import.meta.client) return
+  if (!isOpen) account.markOnboardingDone()
   if (isOpen) {
     document.addEventListener('keydown', onKeydown)
     await nextTick()
@@ -27,8 +29,9 @@ watch(open, async (isOpen) => {
 })
 
 onMounted(async () => {
-  const [id, myRole] = await Promise.all([resolveMyProfileId(), ensureRole()])
-  if (id && myRole) maybeAutoStart(id, myRole)
+  const [id, myRole, acc] = await Promise.all([resolveMyProfileId(), ensureRole(), account.ensureLoaded()])
+  // Ya visto en otra sesión o dispositivo: queda anotado en la cuenta y no vuelve a salir solo.
+  if (id && myRole) maybeAutoStart(id, myRole, !!acc?.onboarding_completed_at)
 })
 
 onUnmounted(() => {

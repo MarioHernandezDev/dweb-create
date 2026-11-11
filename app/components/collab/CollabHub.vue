@@ -18,6 +18,7 @@ const router = useRouter()
 
 const { items, load } = useCollabHub(props.role)
 const toast = useToast()
+const { paymentsEnabled } = useLaunchMode()
 await load()
 
 // Qué toca en cada colaboración (misma lógica que «Qué me toca»).
@@ -187,7 +188,7 @@ function exportCsv() {
       <EmptyState
         v-if="!activeShown.length" icon="ph:handshake"
         :title="filtering ? 'Ninguna colaboración con estos filtros' : 'Sin colaboraciones en curso'"
-        :description="filtering ? 'Prueba a quitar el buscador o el filtro.' : 'Las solicitudes y ofertas que se acepten aparecerán aquí, de la aceptación al pago.'"
+        :description="filtering ? 'Prueba a quitar el buscador o el filtro.' : (paymentsEnabled ? 'Las solicitudes y ofertas que se acepten aparecerán aquí, de la aceptación al pago.' : 'Las solicitudes y ofertas que se acepten aparecerán aquí, de la aceptación a la publicación.')"
       >
         <BaseButton v-if="!filtering && pending.length" variant="primary" size="sm" @click="setView('solicitudes')">Ver {{ pending.length }} solicitud{{ pending.length === 1 ? '' : 'es' }} pendiente{{ pending.length === 1 ? '' : 's' }}</BaseButton>
       </EmptyState>
@@ -197,8 +198,8 @@ function exportCsv() {
     <!-- LISTA -->
     <template v-else-if="view === 'lista'">
       <div class="hub__kpis">
-        <div class="hub__kpi hub__kpi--ink"><p>{{ who.cobro }}</p><strong>{{ formatMoney(sum(unpaid)) }}</strong><small>{{ unpaid.length }} colaboración{{ unpaid.length === 1 ? '' : 'es' }} sin {{ isPartner ? 'pagar' : 'cobrar' }}</small></div>
-        <div class="hub__kpi hub__kpi--volt"><p>{{ who.cobrado }}</p><strong>{{ formatMoney(sum(paid)) }}</strong><small>{{ paid.length }} colaboración{{ paid.length === 1 ? '' : 'es' }}</small></div>
+        <div v-if="paymentsEnabled" class="hub__kpi hub__kpi--ink"><p>{{ who.cobro }}</p><strong>{{ formatMoney(sum(unpaid)) }}</strong><small>{{ unpaid.length }} colaboración{{ unpaid.length === 1 ? '' : 'es' }} sin {{ isPartner ? 'pagar' : 'cobrar' }}</small></div>
+        <div v-if="paymentsEnabled" class="hub__kpi hub__kpi--volt"><p>{{ who.cobrado }}</p><strong>{{ formatMoney(sum(paid)) }}</strong><small>{{ paid.length }} colaboración{{ paid.length === 1 ? '' : 'es' }}</small></div>
         <div class="hub__kpi"><p>Entregas en los próximos 7 días</p><strong>{{ soon.length }}</strong><small>{{ soonUntil ? `hasta el ${soonUntil}` : 'ninguna prevista' }}</small></div>
       </div>
       <EmptyState

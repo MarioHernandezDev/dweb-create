@@ -26,6 +26,24 @@ export interface PublicCollab { id: string; name: string; completedAt: string }
 export interface PublicActivity { collabCount: number; responseHours: number | null }
 export interface SimilarProfile { id: string; name: string; coverUrl: string | null; categories: string[] }
 
+const num = (v: unknown) => (v == null ? null : Number(v))
+
+export function mapPublicStat(r: Record<string, unknown>): PublicStat {
+  return {
+    platform: r.platform as Platform, handle: (r.handle as string) ?? null, followers: Number(r.followers) || 0,
+    postsPublished: Number(r.posts_published) || 0, measuredPosts: Number(r.measured_posts) || 0,
+    avgViews: num(r.avg_views), avgLikes: num(r.avg_likes), avgComments: num(r.avg_comments), engagement: num(r.engagement)
+  }
+}
+
+export function mapPublicContent(r: Record<string, unknown>): PublicContentItem {
+  return {
+    postId: r.post_id as string, title: r.title as string, platform: r.platform as Platform, contentType: r.content_type as string,
+    mediaUrl: (r.media_url as string) ?? null, externalUrl: (r.external_url as string) ?? null,
+    views: num(r.views), likes: num(r.likes), publishedAt: r.published_at as string
+  }
+}
+
 /**
  * Lo que enseña el perfil público además de la ficha: métricas medias por red, contenido destacado, con quién ha
  * colaborado, actividad y perfiles parecidos. Todo sale de funciones de base de datos que solo devuelven agregados o lo
@@ -33,7 +51,6 @@ export interface SimilarProfile { id: string; name: string; coverUrl: string | n
  */
 export function usePublicProfileExtras() {
   const client = useSupabaseClient()
-  const num = (v: unknown) => (v == null ? null : Number(v))
 
   async function load(role: Role, id: string, categories: string[]) {
     const rpc = async <T>(fn: string, args: Record<string, unknown>): Promise<T[]> => {
@@ -56,16 +73,8 @@ export function usePublicProfileExtras() {
     ])
 
     return {
-      stats: stats.map((r): PublicStat => ({
-        platform: r.platform as Platform, handle: (r.handle as string) ?? null, followers: Number(r.followers) || 0,
-        postsPublished: Number(r.posts_published) || 0, measuredPosts: Number(r.measured_posts) || 0,
-        avgViews: num(r.avg_views), avgLikes: num(r.avg_likes), avgComments: num(r.avg_comments), engagement: num(r.engagement)
-      })),
-      content: content.map((r): PublicContentItem => ({
-        postId: r.post_id as string, title: r.title as string, platform: r.platform as Platform, contentType: r.content_type as string,
-        mediaUrl: (r.media_url as string) ?? null, externalUrl: (r.external_url as string) ?? null,
-        views: num(r.views), likes: num(r.likes), publishedAt: r.published_at as string
-      })),
+      stats: stats.map(mapPublicStat),
+      content: content.map(mapPublicContent),
       collabs: collabs.map((r): PublicCollab => ({ id: r.counterpart_id as string, name: r.counterpart_name as string, completedAt: r.completed_at as string })),
       activity: ((): PublicActivity => {
         const a = activity[0]

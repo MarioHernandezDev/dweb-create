@@ -114,6 +114,22 @@ Detalle de alcance en `docs/HOJA_DE_RUTA.md`. Orden: Fase 1 (cimientos) → 2 (a
 4. Entorno de trabajo: el shell de Claude no llega a Postgres ni a GitHub. La base se consulta con el conector de Supabase (solo lectura hasta ahora); `git fetch`/`push` los lanza Alex.
 5. `supabase/migrations/auditoria-completa.md` es un documento dentro de la carpeta de migraciones; conviene moverlo a `docs/audit/` para no confundir a la CLI.
 
+## 6 bis. Sesión 2026-11-11 (tarde): cierre de producto para el lanzamiento gratis
+Estrategia vigente: terminar el producto → preparar el lanzamiento → lanzar gratis → monetizar después. Las 21 cuentas actuales son de prueba.
+
+| Hecho | Dónde |
+|---|---|
+| Pruebas en navegador (escritorio y móvil) de archivos, cancelación, incumplimiento, chat, plantillas, avisos, búsquedas y descarga de datos; 7 fallos corregidos | commit `b47b6d5` |
+| Perfil público sin sesión con lista cerrada de campos e interruptor por cuenta | `server/api/public/profile`, `server/utils/public-profile.ts`, migración `20261112100000` |
+| Modo lanzamiento gratis: `PAYMENTS_ENABLED` apaga Pro, pagos y comisión en interfaz y servidor | `useLaunchMode`, `server/utils/payments-gate.ts` |
+| Términos con versión (casilla en el alta + aviso al entrar) y recorrido recordado en la cuenta | `TermsGate`, `useAccountState`, migración `20261112110000` |
+| Eliminación de cuenta (inmediata sin historial; solicitud con historial) | `server/api/account/delete.*`, `DeleteAccountCard` |
+| Colaboración en pestañas (Resumen, Entregables, Acuerdo y archivos, Chat, Actividad) | `CollabWorkspace.vue` |
+| Revisión de reportes e incumplimientos en el panel de admin; permisos de `reports` cerrados | migración `20261112120000`, `docs/14-OPERACIONES-ADMIN.md` |
+| Script de staging con seguros contra producción | `scripts/staging-bootstrap.mjs`, `docs/12` |
+
+Pendiente de verificar en navegador (el panel del navegador dejó de estar visible a mitad de sesión): pestañas de la colaboración, alta con casilla de términos, tarjeta de eliminar cuenta y panel de admin. El borrado real de una cuenta no se ha ejecutado nunca.
+
 ## 7. Próximos pasos
 1. **Push de `main`** (lo lanza Alex): `git fetch`, comprobar que Mario no ha empujado, y `git push`. No hay migraciones que aplicar.
 2. Decidir staging (1.2) y Sentry (1.4): ambos generan coste.

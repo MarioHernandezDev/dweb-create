@@ -30,6 +30,25 @@ interface AdminReport {
   collaborationBrief: string | null
   creatorName: string | null
   partnerName: string | null
+  status: 'open' | 'reviewing' | 'resolved' | 'dismissed'
+  adminNote: string | null
+  resolvedAt: string | null
+  collaborationStatus: string | null
+  budgetCents: number | null
+  paid: boolean
+  reportedName: string | null
+  reportedProfileId: string | null
+}
+
+interface DeletionRequest {
+  id: string
+  profileId: string
+  name: string
+  role: string | null
+  reason: string | null
+  status: 'pending' | 'cancelled' | 'done'
+  createdAt: string
+  resolvedAt: string | null
 }
 
 interface ActivityEvent {
@@ -116,6 +135,51 @@ async function loadReports() {
   }
 }
 
+// ---- Revisión de reportes e incumplimientos (procedimiento en docs/14-OPERACIONES-ADMIN.md) ----
+const reportStatusLabels: Record<AdminReport['status'], string> = { open: 'Abierto', reviewing: 'En revisión', resolved: 'Resuelto', dismissed: 'Desestimado' }
+const collabStatusLabels: Record<string, string> = { requested: 'Solicitada', accepted: 'Aceptada', in_progress: 'En curso', completed: 'Completada', declined: 'Rechazada', cancelled: 'Cancelada', terminated: 'Terminada por incumplimiento' }
+const reportFilter = ref<'pending' | 'breach' | 'all'>('pending')
+const reportFilters = [{ value: 'pending', label: 'Por revisar' }, { value: 'breach', label: 'Incumplimientos' }, { value: 'all', label: 'Todos' }]
+const shownReports = computed(() => reports.value.filter((r) =>
+  reportFilter.value === 'all' ? true : reportFilter.value === 'breach' ? r.reason === 'breach' : r.status === 'open' || r.status === 'reviewing'))
+const reportNotes = reactive<Record<string, string>>({})
+const savingReport = ref<string | null>(null)
+const reportError = ref('')
+
+async function setReportStatus(report: AdminReport, status: AdminReport['status']) {
+  reportError.value = ''
+  savingReport.value = report.id
+  try {
+    const res = await $fetch<{ status: AdminReport['status']; admin_note: string | null; resolved_at: string | null }>(`/api/admin/reports/${report.id}`, {
+      method: 'PATCH', body: { status, note: reportNotes[report.id] ?? report.adminNote ?? '' }
+    })
+    report.status = res.status
+    report.adminNote = res.admin_note
+    report.resolvedAt = res.resolved_at
+  } catch (e) {
+    reportError.value = (e as { data?: { message?: string } })?.data?.message ?? 'No se ha podido guardar el cambio.'
+  } finally {
+    savingReport.value = null
+  }
+}
+
+const deletionRequests = ref<DeletionRequest[]>([])
+async function loadDeletionRequests() {
+  const res = await requestFetch('/api/admin/deletion-requests').catch(() => ({ requests: [] }))
+  deletionRequests.value = res.requests as DeletionRequest[]
+}
+const pendingDeletions = computed(() => deletionRequests.value.filter((r) => r.status === 'pending'))
+async function resolveDeletion(req: DeletionRequest, status: 'done' | 'cancelled') {
+  const ok = await confirm({
+    title: status === 'done' ? `¿Marcar como atendida la solicitud de ${req.name}?` : `¿Descartar la solicitud de ${req.name}?`,
+    message: status === 'done' ? 'Hazlo solo después de borrar o anonimizar la cuenta siguiendo docs/14-OPERACIONES-ADMIN.md. Aquí solo queda constancia.' : 'La cuenta seguirá activa.',
+    confirmLabel: status === 'done' ? 'Marcar atendida' : 'Descartar'
+  })
+  if (!ok) return
+  await $fetch(`/api/admin/deletion-requests/${req.id}`, { method: 'PATCH', body: { status } })
+  req.status = status
+}
+
 const activity = ref<ActivityEvent[]>([])
 const loadingActivity = ref(false)
 let activityLoaded = false
@@ -154,7 +218,7 @@ async function loadDiscoveryAnalytics() {
 }
 
 watch(tab, (value) => {
-  if (value === 'reports' && !reportsLoaded) loadReports()
+  if (value === 'reports' && !reportsLoaded) { loadReports(); loadDeletionRequests() }
   if (value === 'activity' && !activityLoaded) loadActivity()
   if (value === 'analytics' && !analytics.value) loadAnalytics()
   if (value === 'analytics' && !discoveryAnalytics.value) loadDiscoveryAnalytics()
@@ -409,11 +473,28 @@ function formatDate(iso: string | null) {
       </div>
 
       <div v-else class="flex flex-col gap-2.5">
-        <EmptyState v-if="!loadingReports && !reports.length" icon="ph:flag" title="Sin reportes" description="Cuando alguien reporte una solicitud, aparecerá aquí." />
-        <BaseCard v-for="report in reports" :key="report.id" radius="lg" padding="md">
+        <BaseCard v-if="pendingDeletions.length" radius="lg" padding="md" data-deletion-requests>
+          <p class="text-sm font-medium text-[var(--color-text)] mb-1">Solicitudes de eliminación de cuenta ({{ pendingDeletions.length }})</p>
+          <p class="text-micro text-[var(--color-text-faint)] mb-3">Cuentas con colaboraciones terminadas: no se borran solas. Procedimiento en docs/14-OPERACIONES-ADMIN.md.</p>
+          <div v-for="req in pendingDeletions" :key="req.id" class="flex flex-wrap items-center justify-between gap-2 py-2 border-b border-[var(--color-hairline)] last:border-0">
+            <div class="min-w-0">
+              <p class="text-sm text-[var(--color-text)]">{{ req.name }} ({{ req.role === 'creator' ? 'creador' : 'partner' }}) · {{ formatDate(req.createdAt) }}</p>
+              <p v-if="req.reason" class="text-micro text-[var(--color-text-muted)]">{{ req.reason }}</p>
+            </div>
+            <div class="flex gap-2">
+              <BaseButton variant="outline" size="sm" @click="resolveDeletion(req, 'cancelled')">Descartar</BaseButton>
+              <BaseButton variant="primary" size="sm" @click="resolveDeletion(req, 'done')">Marcar atendida</BaseButton>
+            </div>
+          </div>
+        </BaseCard>
+
+        <SegmentedTabs v-model="reportFilter" :options="reportFilters" label="Filtro de reportes" class="self-start" />
+        <p v-if="reportError" class="text-sm text-[var(--color-status-alert)]" role="alert">{{ reportError }}</p>
+        <EmptyState v-if="!loadingReports && !shownReports.length" icon="ph:flag" :title="reports.length ? 'Nada en este filtro' : 'Sin reportes'" description="Los reportes de solicitudes y las terminaciones por incumplimiento aparecen aquí." />
+        <BaseCard v-for="report in shownReports" :key="report.id" radius="lg" padding="md" data-report :data-status="report.status">
           <div class="flex items-center justify-between gap-3 mb-2">
             <span class="text-sm font-medium text-[var(--color-status-alert)]">{{ reasonLabels[report.reason] ?? report.reason }}</span>
-            <span class="text-micro text-[var(--color-text-faint)]">{{ formatDate(report.createdAt) }}</span>
+            <span class="text-micro text-[var(--color-text-faint)]">{{ reportStatusLabels[report.status] }} · {{ formatDate(report.createdAt) }}</span>
           </div>
           <p class="text-sm text-[var(--color-text-muted)] mb-2">
             Reportado por {{ report.reporterName }} ({{ report.reporterRole === 'creator' ? 'creador' : 'partner' }})
@@ -422,6 +503,23 @@ function formatDate(iso: string | null) {
             "{{ report.collaborationBrief }}" — {{ report.creatorName }} / {{ report.partnerName }}
           </p>
           <p v-if="report.detail" class="text-sm text-[var(--color-text-muted)]">{{ report.detail }}</p>
+          <p class="text-micro text-[var(--color-text-faint)] mt-2">
+            Contra: {{ report.reportedName ?? '—' }} · Colaboración: {{ report.collaborationStatus ? (collabStatusLabels[report.collaborationStatus] ?? report.collaborationStatus) : '—' }}
+            <template v-if="report.budgetCents"> · {{ (report.budgetCents / 100).toLocaleString('es-ES') }} € {{ report.paid ? '(pagada en CIBERAN)' : '(sin pago en CIBERAN)' }}</template>
+          </p>
+          <div class="mt-3 grid gap-2">
+            <label class="sr-only" :for="`report-note-${report.id}`">Nota interna</label>
+            <textarea
+              :id="`report-note-${report.id}`" class="input w-full" rows="2" maxlength="2000" placeholder="Nota interna: qué se ha comprobado y qué se decide"
+              :value="reportNotes[report.id] ?? report.adminNote ?? ''" @input="reportNotes[report.id] = ($event.target as HTMLTextAreaElement).value"
+            />
+            <div class="flex flex-wrap gap-2 justify-end">
+              <BaseButton v-if="report.status === 'open'" variant="outline" size="sm" :loading="savingReport === report.id" @click="setReportStatus(report, 'reviewing')">Pasar a revisión</BaseButton>
+              <BaseButton v-if="report.status !== 'dismissed'" variant="outline" size="sm" :loading="savingReport === report.id" @click="setReportStatus(report, 'dismissed')">Desestimar</BaseButton>
+              <BaseButton v-if="report.status !== 'resolved'" variant="primary" size="sm" :loading="savingReport === report.id" @click="setReportStatus(report, 'resolved')">Resolver</BaseButton>
+              <BaseButton v-if="report.status === 'resolved' || report.status === 'dismissed'" variant="ghost" size="sm" :loading="savingReport === report.id" @click="setReportStatus(report, 'reviewing')">Reabrir</BaseButton>
+            </div>
+          </div>
         </BaseCard>
       </div>
     </div>

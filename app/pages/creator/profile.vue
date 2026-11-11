@@ -16,6 +16,7 @@ const { resolveMyProfileId } = useMyProfileId()
 const { avatarUrl, initials: myInitials, hue: myHue, uploadAvatar, removeAvatar } = useMyAvatar()
 
 const route = useRoute()
+const { paymentsEnabled } = useLaunchMode()
 const { subscription, connectOnboarded, redirecting, redirectError, ensureLoaded, refresh: refreshBilling, subscribe, connectPayouts } = useMyBilling()
 const { creator, ensureCreator, updateFicha, uploadCoverPhoto, removeCoverPhoto } = useMyCreator()
 const { accounts: socialAccounts, ensureLoaded: ensureSocials } = useMySocialAccounts()
@@ -50,7 +51,7 @@ const tabs = [
   { id: 'account', label: 'Resumen', icon: 'ph:squares-four-fill' },
   { id: 'ficha', label: 'Ficha pública', icon: 'ph:identification-card-fill' },
   { id: 'packages', label: 'Paquetes', icon: 'ph:package-fill' },
-  { id: 'billing', label: 'Privacidad y pagos', icon: 'ph:shield-check-fill' }
+  { id: 'billing', label: 'Privacidad y cuenta', icon: 'ph:shield-check-fill' }
 ] as const
 type TabId = (typeof tabs)[number]['id']
 // `?tab=billing` permite enlazar directo desde fuera (p. ej. "mejora tu plan"
@@ -378,7 +379,7 @@ async function saveWeeklyTarget() {
                     <div class="setting-row__text">
                       <p class="setting-row__label">Créditos de predicción</p>
                       <!-- Ver grant_welcome_credits() y stripe-plans.ts (plan "pro") para las cifras reales. -->
-                      <p class="setting-row__meta">Cada predicción gasta 1 crédito. Recibiste 3 gratis al crear tu cuenta; con CIBERAN Pro (19,99 €/mes) se renuevan 20 más cada mes.</p>
+                      <p class="setting-row__meta">{{ paymentsEnabled ? 'Cada predicción gasta 1 crédito. Recibiste 3 gratis al crear tu cuenta; con CIBERAN Pro (19,99 €/mes) se renuevan 20 más cada mes.' : 'Cada predicción gasta 1 crédito. Recibiste 3 gratis al crear tu cuenta.' }}</p>
                     </div>
                     <span class="setting-row__value" data-credits>{{ creditsBalance === null ? '…' : creditsBalance }}</span>
                   </div>
@@ -492,7 +493,10 @@ async function saveWeeklyTarget() {
               <ChatPrivacyChoices :options="chatPrivacyOptions" :model-value="chatPrivacy" :error="chatPrivacyError" @select="setChatPrivacy" />
             </PanelCard>
 
-            <PanelCard title="Pagos" data-card="payments">
+            <PanelCard v-if="!paymentsEnabled" title="Pagos" data-card="payments-off">
+              <p class="setting-row__meta" data-free-launch>CIBERAN es gratis durante el lanzamiento: no hay cuotas ni comisiones y la plataforma no gestiona pagos. Lo que acordéis en una colaboración lo cobráis entre vosotros.</p>
+            </PanelCard>
+            <PanelCard v-else title="Pagos" data-card="payments">
               <div class="setting-list">
                 <div class="setting-row">
                   <div class="setting-row__text">
@@ -514,12 +518,20 @@ async function saveWeeklyTarget() {
               <p v-if="redirectError" class="setting-error" role="alert">{{ redirectError }}</p>
             </PanelCard>
 
+            <PanelCard title="Visibilidad del perfil" data-card="public-profile">
+              <PublicProfileToggle />
+            </PanelCard>
+
             <PanelCard title="Avisos" data-card="notifications">
               <NotificationPreferences role="creator" />
             </PanelCard>
 
             <PanelCard title="Tus datos" data-card="data-export">
               <DataExportCard />
+            </PanelCard>
+
+            <PanelCard title="Eliminar cuenta" data-card="delete-account">
+              <DeleteAccountCard />
             </PanelCard>
           </div>
         </Transition>

@@ -52,6 +52,11 @@ export function resetAccountCaches() {
     useState<boolean>(`proposal-templates-loaded-${kind}`, () => false).value = false
   }
 
+  useState<boolean | null>('my-public-profile-enabled', () => null).value = null
+  useState<unknown>('account-state', () => null).value = null
+  useState<boolean>('account-state-loaded', () => false).value = false
+  useState<boolean>('onboarding-tour-decided', () => false).value = false
+
   useState<unknown>('my-subscription', () => null).value = null
   useState<boolean>('my-subscription-loaded', () => false).value = false
   useState<boolean>('my-connect-onboarded', () => false).value = false
