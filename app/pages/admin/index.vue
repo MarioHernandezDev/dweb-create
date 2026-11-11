@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import type { Avg, MetricsResult } from '~~/server/utils/collab-metrics'
+import { formatDecimal, formatHours, formatPct } from '~/utils/insights-view'
 import { relativeTime } from '~/utils/status'
 
 useHead({ title: 'Panel de admin' })
@@ -100,11 +102,12 @@ const requestFetch = useRequestFetch()
 const me = await requestFetch('/api/admin/me').catch(() => ({ authenticated: false }))
 if (!me.authenticated) await navigateTo('/admin/login')
 
-const tab = ref<'users' | 'activity' | 'analytics' | 'reports'>('users')
+const tab = ref<'users' | 'activity' | 'analytics' | 'platform' | 'reports'>('users')
 const tabs = [
   { value: 'users', label: 'Usuarios' },
   { value: 'activity', label: 'Actividad' },
   { value: 'analytics', label: 'Analíticas' },
+  { value: 'platform', label: 'Colaboraciones' },
   { value: 'reports', label: 'Reportes' }
 ]
 
@@ -180,6 +183,32 @@ async function resolveDeletion(req: DeletionRequest, status: 'done' | 'cancelled
   req.status = status
 }
 
+// ---- Métricas propias de la plataforma y fiabilidad por cuenta (server/utils/collab-metrics.ts) ----
+interface PlatformAccount {
+  profileId: string; name: string; role: 'creator' | 'partner'
+  started: number; completed: number; cancelled: number; terminatedByMe: number; terminatedAgainstMe: number
+  successRate: Avg | null; onTimeRate: Avg | null; responseHours: Avg | null; rating: Avg | null
+}
+const platform = ref<{ metrics: MetricsResult; accounts: PlatformAccount[] } | null>(null)
+const platformRange = ref('12m')
+const loadingPlatform = ref(false)
+const platformError = ref('')
+async function loadPlatform() {
+  loadingPlatform.value = true
+  platformError.value = ''
+  try {
+    platform.value = await $fetch<{ metrics: MetricsResult; accounts: PlatformAccount[] }>('/api/admin/platform-metrics', { query: { range: platformRange.value } })
+  } catch {
+    platformError.value = 'No se han podido cargar las métricas.'
+  } finally {
+    loadingPlatform.value = false
+  }
+}
+function setPlatformRange(v: string) {
+  platformRange.value = v
+  loadPlatform()
+}
+
 const activity = ref<ActivityEvent[]>([])
 const loadingActivity = ref(false)
 let activityLoaded = false
@@ -220,6 +249,7 @@ async function loadDiscoveryAnalytics() {
 watch(tab, (value) => {
   if (value === 'reports' && !reportsLoaded) { loadReports(); loadDeletionRequests() }
   if (value === 'activity' && !activityLoaded) loadActivity()
+  if (value === 'platform' && !platform.value) loadPlatform()
   if (value === 'analytics' && !analytics.value) loadAnalytics()
   if (value === 'analytics' && !discoveryAnalytics.value) loadDiscoveryAnalytics()
 })
@@ -468,6 +498,34 @@ function formatDate(iso: string | null) {
               </div>
               <span class="shrink-0 text-micro text-[var(--color-text-faint)]">{{ q.resultsCount }} resultado{{ q.resultsCount === 1 ? '' : 's' }}</span>
             </div>
+          </div>
+        </BaseCard>
+      </div>
+
+      <div v-else-if="tab === 'platform'" class="flex flex-col gap-6" data-admin-platform>
+        <CollabInsights scope="platform" :metrics="platform?.metrics ?? null" :range="platformRange" :loading="loadingPlatform" :error="platformError" @update:range="setPlatformRange" @retry="loadPlatform" />
+        <BaseCard v-if="platform?.accounts.length" radius="lg" padding="lg">
+          <p class="text-sm font-medium text-[var(--color-text)] mb-1">Actividad y fiabilidad por cuenta</p>
+          <p class="text-micro text-[var(--color-text-faint)] mb-3">Mismo cálculo que ve cada usuario en «Resultados». «—» significa que no hay datos suficientes. Las terminaciones son las declaradas, no las acreditadas.</p>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm" data-accounts-table>
+              <thead>
+                <tr class="text-left text-micro text-[var(--color-text-faint)]">
+                  <th class="py-2 pr-3 font-medium">Cuenta</th><th class="py-2 px-2 font-medium">Iniciadas</th><th class="py-2 px-2 font-medium">Completadas</th>
+                  <th class="py-2 px-2 font-medium">Éxito</th><th class="py-2 px-2 font-medium">A tiempo</th><th class="py-2 px-2 font-medium">Responde en</th>
+                  <th class="py-2 px-2 font-medium">Valoración</th><th class="py-2 px-2 font-medium">Canceladas</th><th class="py-2 pl-2 font-medium">Incumpl. en contra</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="a in platform.accounts" :key="a.profileId" class="border-t border-[var(--color-hairline)]">
+                  <td class="py-2 pr-3"><span class="text-[var(--color-text)]">{{ a.name }}</span> <span class="text-micro text-[var(--color-text-faint)]">{{ a.role === 'creator' ? 'creador' : 'marca' }}</span></td>
+                  <td class="py-2 px-2 tabular-nums">{{ a.started }}</td><td class="py-2 px-2 tabular-nums">{{ a.completed }}</td>
+                  <td class="py-2 px-2 tabular-nums">{{ formatPct(a.successRate) }}</td><td class="py-2 px-2 tabular-nums">{{ formatPct(a.onTimeRate) }}</td>
+                  <td class="py-2 px-2 tabular-nums">{{ formatHours(a.responseHours) }}</td><td class="py-2 px-2 tabular-nums">{{ formatDecimal(a.rating) }}</td>
+                  <td class="py-2 px-2 tabular-nums">{{ a.cancelled }}</td><td class="py-2 pl-2 tabular-nums">{{ a.terminatedAgainstMe }}</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </BaseCard>
       </div>

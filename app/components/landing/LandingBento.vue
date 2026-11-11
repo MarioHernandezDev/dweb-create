@@ -28,8 +28,8 @@ const metrics = localPhotos.metrics
         </article>
 
         <article class="bento__tile bento__tile--c bento__tile--text bento__tile--lila reveal">
-          <span class="chip chip--outline self-start">Predicción de éxito</span>
-          <p class="bento__text-title">Antes de publicar, una estimación de cómo puede funcionar cada pieza.</p>
+          <span class="chip chip--outline self-start">Resultados</span>
+          <p class="bento__text-title">Cuántas colaboraciones cierras, si llegan a tiempo y cómo te valoran.</p>
         </article>
 
         <article class="bento__tile bento__tile--d reveal">

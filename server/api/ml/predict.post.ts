@@ -126,6 +126,7 @@ En "suggestions" incluye 3 o 4 objetos, al menos uno de cada tipo: una mejora de
 }
 
 export default defineEventHandler(async (event) => {
+  assertPredictionsEnabled(event)
   const user = await serverSupabaseUser(event)
   if (!user) throw createError({ statusCode: 401, statusMessage: 'No autenticado.' })
   // Cada predicción puede llamar al LLM: 10 por minuto y usuario frena el abuso.

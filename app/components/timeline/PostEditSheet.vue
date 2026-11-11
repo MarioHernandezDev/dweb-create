@@ -4,7 +4,7 @@ import { platformMeta, suggestionsForDraft } from '~/utils/mock-data'
 import { LABEL_COLORS } from '~/utils/labels'
 import type { Post, PostStatus } from '~/types'
 
-const { paymentsEnabled } = useLaunchMode()
+const { paymentsEnabled, predictionsEnabled } = useLaunchMode()
 
 const props = defineProps<{ modelValue: boolean; post: Post | null; phases: PostStatus[] }>()
 const emit = defineEmits<{ 'update:modelValue': [value: boolean]; move: [status: PostStatus] }>()
@@ -214,6 +214,7 @@ async function onVisibility(open: boolean) {
         </div>
       </div>
 
+      <template v-if="predictionsEnabled">
       <SuccessScoreCard
         v-if="post.successScore" :score="post.successScore" :ai-evaluated="post.aiEvaluated"
         :suggestions="post.suggestions ?? suggestionsForDraft" :generic-suggestions="!post.suggestions" class="mb-5"
@@ -238,6 +239,7 @@ async function onVisibility(open: boolean) {
           {{ predicting ? 'Analizando…' : 'Predecir' }}
         </BaseButton>
       </BaseCard>
+      </template>
 
       <section v-if="revisionNotes.length" class="mb-5">
         <h2 class="text-sm font-semibold text-[var(--text-muted)] mb-3">Historial de revisión</h2>

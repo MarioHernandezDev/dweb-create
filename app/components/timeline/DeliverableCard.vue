@@ -12,6 +12,7 @@ const props = withDefaults(defineProps<{
 
 defineEmits<{ open: [post: Post] }>()
 
+const { predictionsEnabled } = useLaunchMode()
 const overdue = computed(() => isPostOverdue(props.post))
 
 // Mismo lenguaje que BoardCard/PackageCard/FeaturedDeck: textura de
@@ -64,7 +65,7 @@ const coverStyle = computed(() => {
               <span class="size-1 rounded-full bg-[var(--color-text-faint)]" />
               {{ creator.name }}
             </span>
-            <span v-if="post.successScore" class="inline-flex items-center gap-1 text-micro font-medium text-[var(--color-signal-500)]">
+            <span v-if="predictionsEnabled && post.successScore" class="inline-flex items-center gap-1 text-micro font-medium text-[var(--color-signal-500)]">
               <Icon name="ph:sparkle-fill" class="size-3.5" />
               {{ post.successScore }}
             </span>

@@ -3,7 +3,7 @@ import { suggestionsForDraft, platformMeta } from '~/utils/mock-data'
 import type { ContentType, Platform, Suggestion } from '~/types'
 import { contentTypeMeta } from '~/utils/status'
 
-const { paymentsEnabled } = useLaunchMode()
+const { paymentsEnabled, predictionsEnabled } = useLaunchMode()
 
 const props = defineProps<{
   /** Rellena el borrador al abrir — viene de "Usar esta idea" en Tendencias. */
@@ -262,14 +262,14 @@ watch(open, (value) => {
         <p v-if="error" class="text-sm text-[var(--color-status-alert)] -mt-1">{{ error }}</p>
 
         <BaseButton
-          variant="primary" size="lg"
+          v-if="predictionsEnabled" variant="primary" size="lg"
           :icon="stage === 'predicting' ? 'ph:circle-notch-bold' : 'ph:sparkle-fill'" :icon-spin="stage === 'predicting'"
           class="w-full mt-1"
           :disabled="!title || stage === 'predicting' || stage === 'saving' || creditBalance === 0" @click="predict"
         >
           {{ stage === 'predicting' ? 'Analizando…' : 'Predecir éxito' }}
         </BaseButton>
-        <p class="text-center text-micro text-[var(--color-text-faint)] -mt-2">
+        <p v-if="predictionsEnabled" class="text-center text-micro text-[var(--color-text-faint)] -mt-2">
           <template v-if="creditBalance === 0 && !paymentsEnabled">Sin créditos: durante el lanzamiento no se pueden ampliar.</template>
           <template v-else-if="creditBalance === 0">
             Sin créditos —
@@ -280,12 +280,12 @@ watch(open, (value) => {
         </p>
 
         <BaseButton
-          variant="secondary" size="lg"
+          :variant="predictionsEnabled ? 'secondary' : 'primary'" size="lg"
           :icon="stage === 'saving' ? 'ph:circle-notch-bold' : 'ph:note-pencil-fill'" :icon-spin="stage === 'saving'"
           class="w-full"
           :disabled="!title || stage === 'predicting' || stage === 'saving'" @click="saveOnly"
         >
-          {{ stage === 'saving' ? 'Guardando…' : 'Guardar sin predecir' }}
+          {{ stage === 'saving' ? 'Guardando…' : predictionsEnabled ? 'Guardar sin predecir' : 'Guardar publicación' }}
         </BaseButton>
       </div>
 

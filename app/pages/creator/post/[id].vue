@@ -5,6 +5,7 @@ import { LABEL_COLORS } from '~/utils/labels'
 import type { PostStatus } from '~/types'
 
 const route = useRoute()
+const { predictionsEnabled } = useLaunchMode()
 const router = useRouter()
 const { posts, ensureLoaded } = useMyPosts()
 const { requests: collabRequests, ensureLoaded: ensureCollabRequestsLoaded } = useCollabRequests()
@@ -289,6 +290,7 @@ async function advanceStatus() {
       </div>
 
       <section class="mt-6 lg:mt-0">
+        <template v-if="predictionsEnabled">
         <SuccessScoreCard
           v-if="post.successScore" :score="post.successScore" :ai-evaluated="post.aiEvaluated"
           :suggestions="post.suggestions ?? suggestionsForDraft" :generic-suggestions="!post.suggestions"
@@ -314,6 +316,7 @@ async function advanceStatus() {
             {{ predicting ? 'Analizando…' : 'Predecir' }}
           </BaseButton>
         </BaseCard>
+        </template>
 
         <!-- A-R7: vínculo con el contenido real (solo YouTube e Instagram tienen conexión real) -->
         <PostExternalLinkCard v-if="post.platform === 'youtube' || post.platform === 'instagram'" :post-id="post.id" :platform="post.platform" class="mt-4" />

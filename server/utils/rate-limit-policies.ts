@@ -25,6 +25,8 @@ export const RATE_POLICIES = {
   'oauth-start': { max: 10, windowMs: 60_000 },
   /** Todo lo que abre pagos o sesiones de Stripe. */
   payments: { max: 10, windowMs: 60_000 },
+  /** Métricas propias (varias consultas por petición). */
+  analytics: { max: 30, windowMs: 60_000 },
   /** Eliminación de cuenta. */
   account: { max: 5, windowMs: 60_000 },
   /** Tendencias (lectura pesada). */

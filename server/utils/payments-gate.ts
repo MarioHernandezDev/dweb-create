@@ -10,6 +10,12 @@ export function paymentsEnabled(event: H3Event): boolean {
   return useRuntimeConfig(event).public.paymentsEnabled === true
 }
 
+/** Predicción de éxito con IA: apagada salvo PREDICTIONS_ENABLED='true' (no gasta llamadas de IA en el lanzamiento). */
+export function assertPredictionsEnabled(event: H3Event): void {
+  if (useRuntimeConfig(event).public.predictionsEnabled === true) return
+  throw createError({ statusCode: 403, statusMessage: 'Predicciones no activas', message: 'La predicción de éxito no está disponible durante el lanzamiento.' })
+}
+
 export function assertPaymentsEnabled(event: H3Event): void {
   if (paymentsEnabled(event)) return
   // statusMessage viaja en la línea de estado HTTP (solo ASCII); el texto completo va en `message`.

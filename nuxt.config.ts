@@ -154,7 +154,10 @@ export default defineNuxtConfig({
       // Cobros (Pro, pago de colaboraciones, comisión, cuenta de cobro). APAGADO por defecto:
       // lanzamiento gratis. Con esto apagado la interfaz no enseña nada de pago y los
       // endpoints de Stripe responden 403 (server/utils/payments-gate.ts). Solo 'true' lo enciende.
-      paymentsEnabled: process.env.PAYMENTS_ENABLED === 'true'
+      paymentsEnabled: process.env.PAYMENTS_ENABLED === 'true',
+      // «Predicción de éxito» (IA). APAGADA por defecto en el lanzamiento gratis: no se enseña
+      // y /api/ml/predict responde 403, así no gasta llamadas de IA. El código se conserva.
+      predictionsEnabled: process.env.PREDICTIONS_ENABLED === 'true'
     }
   },
 

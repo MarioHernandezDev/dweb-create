@@ -8,6 +8,9 @@
  * la API a mano (server/utils/payments-gate.ts).
  */
 export function useLaunchMode() {
-  const paymentsEnabled = useRuntimeConfig().public.paymentsEnabled === true
-  return { paymentsEnabled }
+  const config = useRuntimeConfig().public
+  const paymentsEnabled = config.paymentsEnabled === true
+  /** «Predicción de éxito» con IA: oculta durante el lanzamiento (PREDICTIONS_ENABLED). */
+  const predictionsEnabled = config.predictionsEnabled === true
+  return { paymentsEnabled, predictionsEnabled }
 }

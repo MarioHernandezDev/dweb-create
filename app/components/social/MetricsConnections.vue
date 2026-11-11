@@ -28,7 +28,7 @@ const comingSoon = computed(() => props.accounts.filter((a) => isComingSoonPlatf
       <p class="text-micro text-[var(--color-text-faint)]">{{ connectedCount }} de {{ available.length }} conectadas</p>
     </div>
     <p class="text-sm text-[var(--color-text-muted)] leading-relaxed mb-4">
-      Conecta tus cuentas para que tus métricas se actualicen solas y podamos calcular predicciones con tu historial real.
+      Conecta tus cuentas para que tus métricas se actualicen solas.
     </p>
     <div class="flex flex-col gap-2.5">
       <SocialAccountRow

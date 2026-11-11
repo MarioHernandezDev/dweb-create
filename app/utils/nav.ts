@@ -34,12 +34,14 @@ export const roleNav: Record<Role, NavItem[]> = {
     { to: '/creator/timeline', label: 'Publicaciones', icon: 'ph:kanban-fill' },
     { to: '/creator/discover', label: 'Descubrir', icon: 'ph:compass-fill' },
     { to: '/creator/requests', label: 'Colaboraciones', icon: 'ph:handshake-fill' },
+    { to: '/creator/insights', label: 'Resultados', icon: 'ph:chart-bar-fill' },
     { to: '/creator/metrics', label: 'Métricas', icon: 'ph:chart-line-up-fill' }
   ],
   partner: [
     { to: '/partner', label: 'Inicio', icon: 'ph:house-fill' },
     { to: '/partner/discover', label: 'Descubrir', icon: 'ph:compass-fill' },
-    { to: '/partner/requests', label: 'Colaboraciones', icon: 'ph:handshake-fill' }
+    { to: '/partner/requests', label: 'Colaboraciones', icon: 'ph:handshake-fill' },
+    { to: '/partner/insights', label: 'Resultados', icon: 'ph:chart-bar-fill' }
   ]
 }
 

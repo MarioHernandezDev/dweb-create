@@ -16,7 +16,7 @@ const { resolveMyProfileId } = useMyProfileId()
 const { avatarUrl, initials: myInitials, hue: myHue, uploadAvatar, removeAvatar } = useMyAvatar()
 
 const route = useRoute()
-const { paymentsEnabled } = useLaunchMode()
+const { paymentsEnabled, predictionsEnabled } = useLaunchMode()
 const { subscription, connectOnboarded, redirecting, redirectError, ensureLoaded, refresh: refreshBilling, subscribe, connectPayouts } = useMyBilling()
 const { creator, ensureCreator, updateFicha, uploadCoverPhoto, removeCoverPhoto } = useMyCreator()
 const { accounts: socialAccounts, ensureLoaded: ensureSocials } = useMySocialAccounts()
@@ -375,7 +375,7 @@ async function saveWeeklyTarget() {
                       <BaseButton variant="secondary" size="sm" :loading="savingWeeklyTarget" :disabled="!weeklyTargetInput || weeklyTargetInput === creator?.weeklyPostTarget" @click="saveWeeklyTarget">Guardar</BaseButton>
                     </div>
                   </div>
-                  <div class="setting-row">
+                  <div v-if="predictionsEnabled" class="setting-row">
                     <div class="setting-row__text">
                       <p class="setting-row__label">Créditos de predicción</p>
                       <!-- Ver grant_welcome_credits() y stripe-plans.ts (plan "pro") para las cifras reales. -->

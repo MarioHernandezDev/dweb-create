@@ -10,7 +10,7 @@ const cards: RoleCard[] = [
     points: [
       'Tu semana, con lo que toca grabar y cuándo.',
       'Conecta tus redes y las métricas llegan solas.',
-      'Predicciones de qué formato va a funcionar mejor.'
+      'Resultados de tus colaboraciones: plazos, respuestas y valoraciones.'
     ]
   },
   {

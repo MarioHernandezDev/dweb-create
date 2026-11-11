@@ -34,7 +34,7 @@ export const tourSteps: Record<Role, TourStep[]> = {
     {
       icon: 'ph:share-network-fill',
       title: 'Redes y Métricas',
-      body: 'Conecta tus redes para ver tus métricas reales y recibir predicciones sobre tu contenido.'
+      body: 'Conecta tus redes para ver tus métricas reales. En Resultados tienes cómo van tus colaboraciones dentro de CIBERAN.'
     },
     {
       icon: 'ph:user-circle-fill',

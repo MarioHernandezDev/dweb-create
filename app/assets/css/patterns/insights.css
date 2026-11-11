@@ -1,0 +1,55 @@
+/* ==========================================================================
+   Patrón · Resultados (components/insights/CollabInsights.vue)
+   Métricas propias de CIBERAN: cifras grandes con su muestra debajo, barras
+   horizontales para recuentos y un gráfico de columnas por mes.
+   ========================================================================== */
+
+@layer components {
+  .insights { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--gap-loose); min-width: 0; }
+  .insights__bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem 1.5rem; }
+  .insights__hint, .insights__foot { font-size: var(--text-sm); color: var(--text-muted); }
+  .insights__foot { margin-top: 0.875rem; }
+  .insights__error { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 1rem 1.25rem; border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--surface-raised); }
+
+  .insights__tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem; transition: opacity var(--dur) var(--ease-out);
+    @media (width >= 64rem) { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1rem; }
+    &.is-loading { opacity: 0.55; }
+  }
+  .insight { display: grid; gap: 0.25rem; align-content: start; padding: 1rem 1.125rem; border-radius: var(--radius-lg); border: 1px solid var(--line); background: var(--surface-raised); min-width: 0;
+    &[data-metric="success"] { background: var(--color-tinta-950); border-color: transparent; color: var(--color-hueso-50); & .insight__label, & .insight__note { color: color-mix(in srgb, var(--color-hueso-50) 72%, transparent); } & .insight__value { color: var(--color-voltio-400); } }
+  }
+  .insight__label { font-size: var(--text-sm); font-weight: 600; color: var(--text-muted); }
+  .insight__value { font-family: var(--font-display); font-weight: 700; font-size: clamp(1.75rem, 5vw, 2.5rem); line-height: 1.05; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; & small { font-size: 0.45em; font-weight: 600; opacity: 0.7; } }
+  .insight__note { font-size: var(--text-micro); color: var(--text-muted); }
+
+  .insights__grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--gap-loose); align-items: start; @media (width >= 64rem) { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .insights__wide { @media (width >= 64rem) { grid-column: 1 / -1; } }
+  .insights__chart { display: grid; gap: 0.75rem; min-width: 0; }
+  .insights__legend { display: flex; flex-wrap: wrap; gap: 0.5rem 1.25rem; font-size: var(--text-sm); color: var(--text-muted); & span { display: inline-flex; align-items: center; gap: 0.375rem; } & i { width: 0.625rem; height: 0.625rem; border-radius: 2px; } }
+
+  .ibars { display: grid; gap: 0.625rem; list-style: none; margin: 0; padding: 0; }
+  .ibars__row { --tone: var(--color-tinta-950); display: grid; grid-template-columns: minmax(0, 11rem) minmax(0, 1fr) 2.5rem; align-items: center; gap: 0.75rem; font-size: var(--text-sm);
+    @media (width < 40rem) { grid-template-columns: minmax(0, 1fr) 2.5rem; & .ibars__track { grid-column: 1 / -1; grid-row: 2; } }
+    &[data-tone="blue"] { --tone: var(--color-phase-scheduled); }
+    &[data-tone="green"] { --tone: var(--color-phase-published); }
+    &[data-tone="muted"] { --tone: var(--color-phase-idea); }
+    &[data-tone="alert"] { --tone: var(--color-status-alert); }
+  }
+  .ibars__label { overflow: hidden; text-overflow: ellipsis; }
+  .ibars__track { height: 0.625rem; border-radius: var(--radius-pill); background: var(--surface-sunken); overflow: hidden; }
+  .ibars__fill { display: block; height: 100%; min-width: 2px; border-radius: inherit; background: var(--tone); transition: width var(--dur-slow) var(--ease-out); }
+  .ibars__value { text-align: right; font-variant-numeric: tabular-nums; }
+
+  .ifacts { display: grid; gap: 0; margin: 0;
+    & > div { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; padding-block: 0.625rem; border-bottom: 1px solid var(--line); &:last-child { border-bottom: 0; } }
+    & dt { font-size: var(--text-sm); color: var(--text-muted); min-width: 0; }
+    & dd { margin: 0; text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; & small { display: block; font-weight: 400; font-size: var(--text-micro); color: var(--text-muted); white-space: normal; } }
+  }
+
+  .insights__how { padding: 1rem 1.25rem; border: 1px solid var(--line); border-radius: var(--radius-lg); font-size: var(--text-sm); color: var(--text-muted);
+    & summary { cursor: pointer; font-weight: 700; color: var(--text-strong); }
+    & dl { display: grid; gap: 0.625rem; margin: 0.875rem 0; }
+    & dt { font-weight: 700; color: var(--text-strong); }
+    & dd { margin: 0; }
+  }
+}
