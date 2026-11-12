@@ -29,7 +29,6 @@ export interface Creator {
   initials: string
   hue: number
   weeklyTarget: number
-  followers: number
 }
 
 /** Un partner: la marca/empresa que encarga campañas a un creador. */

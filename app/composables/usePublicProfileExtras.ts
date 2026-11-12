@@ -1,16 +1,5 @@
 import type { Platform, Role } from '~/types'
 
-export interface PublicStat {
-  platform: Platform
-  handle: string | null
-  followers: number
-  postsPublished: number
-  measuredPosts: number
-  avgViews: number | null
-  avgLikes: number | null
-  avgComments: number | null
-  engagement: number | null
-}
 export interface PublicContentItem {
   postId: string
   title: string
@@ -18,8 +7,6 @@ export interface PublicContentItem {
   contentType: string
   mediaUrl: string | null
   externalUrl: string | null
-  views: number | null
-  likes: number | null
   publishedAt: string
 }
 export interface PublicCollab { id: string; name: string; completedAt: string }
@@ -28,24 +15,16 @@ export interface SimilarProfile { id: string; name: string; coverUrl: string | n
 
 const num = (v: unknown) => (v == null ? null : Number(v))
 
-export function mapPublicStat(r: Record<string, unknown>): PublicStat {
-  return {
-    platform: r.platform as Platform, handle: (r.handle as string) ?? null, followers: Number(r.followers) || 0,
-    postsPublished: Number(r.posts_published) || 0, measuredPosts: Number(r.measured_posts) || 0,
-    avgViews: num(r.avg_views), avgLikes: num(r.avg_likes), avgComments: num(r.avg_comments), engagement: num(r.engagement)
-  }
-}
-
 export function mapPublicContent(r: Record<string, unknown>): PublicContentItem {
   return {
     postId: r.post_id as string, title: r.title as string, platform: r.platform as Platform, contentType: r.content_type as string,
     mediaUrl: (r.media_url as string) ?? null, externalUrl: (r.external_url as string) ?? null,
-    views: num(r.views), likes: num(r.likes), publishedAt: r.published_at as string
+    publishedAt: r.published_at as string
   }
 }
 
 /**
- * Lo que enseña el perfil público además de la ficha: métricas medias por red, contenido destacado, con quién ha
+ * Lo que enseña el perfil público además de la ficha: contenido destacado, con quién ha
  * colaborado, actividad y perfiles parecidos. Todo sale de funciones de base de datos que solo devuelven agregados o lo
  * que su dueño eligió enseñar (migración 20261105140000). Si algo falla, esa parte queda vacía y el resto sigue.
  */
@@ -61,8 +40,7 @@ export function usePublicProfileExtras() {
     const table = role === 'creator' ? 'creators' : 'partners'
     const nameCol = role === 'creator' ? 'display_name' : 'company_name'
 
-    const [stats, content, collabs, activity, similar] = await Promise.all([
-      role === 'creator' ? rpc<Record<string, unknown>>('get_public_creator_stats', { p_creator_id: id }) : Promise.resolve([]),
+    const [content, collabs, activity, similar] = await Promise.all([
       role === 'creator' ? rpc<Record<string, unknown>>('get_public_creator_content', { p_creator_id: id }) : Promise.resolve([]),
       rpc<Record<string, unknown>>('get_public_collaborations', { p_role: role, p_id: id }),
       rpc<Record<string, unknown>>('get_public_activity', { p_role: role, p_id: id }),
@@ -73,7 +51,6 @@ export function usePublicProfileExtras() {
     ])
 
     return {
-      stats: stats.map(mapPublicStat),
       content: content.map(mapPublicContent),
       collabs: collabs.map((r): PublicCollab => ({ id: r.counterpart_id as string, name: r.counterpart_name as string, completedAt: r.completed_at as string })),
       activity: ((): PublicActivity => {

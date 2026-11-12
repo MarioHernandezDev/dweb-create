@@ -4,12 +4,14 @@ export interface NavItem {
   to: string
   label: string
   icon: string
+  /** Funcionalidad prevista, aún sin construir: se enseña con la etiqueta «Pronto». */
+  soon?: boolean
 }
 
 export const roleMeta: Record<Role, { label: string; description: string; home: string; icon: string }> = {
   creator: {
     label: 'Creador de contenido',
-    description: 'Gestionas tu calendario, tus redes y tus datos.',
+    description: 'Gestionas tus publicaciones, tus colaboraciones y tus resultados.',
     home: '/creator',
     icon: 'ph:sparkle-fill'
   },
@@ -35,7 +37,7 @@ export const roleNav: Record<Role, NavItem[]> = {
     { to: '/creator/discover', label: 'Descubrir', icon: 'ph:compass-fill' },
     { to: '/creator/requests', label: 'Colaboraciones', icon: 'ph:handshake-fill' },
     { to: '/creator/insights', label: 'Resultados', icon: 'ph:chart-bar-fill' },
-    { to: '/creator/metrics', label: 'Métricas', icon: 'ph:chart-line-up-fill' }
+    { to: '/creator/metrics', label: 'Métricas de redes', icon: 'ph:chart-line-up-fill', soon: true }
   ],
   partner: [
     { to: '/partner', label: 'Inicio', icon: 'ph:house-fill' },

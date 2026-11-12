@@ -55,16 +55,16 @@ describe('enforceUserRateLimit', () => {
     const b = `b-${Math.random()}`
     for (let i = 0; i < RATE_POLICIES.payments.max; i++) enforceUserRateLimit({} as never, 'payments', a)
     expect(() => enforceUserRateLimit({} as never, 'payments', b)).not.toThrow()
-    expect(() => enforceUserRateLimit({} as never, 'oauth-start', a)).not.toThrow()
+    expect(() => enforceUserRateLimit({} as never, 'analytics', a)).not.toThrow()
   })
 
   it('el cupo se recupera al pasar la ventana', () => {
     const user = `w-${Math.random()}`
-    const { max, windowMs } = RATE_POLICIES['social-sync']
-    for (let i = 0; i < max; i++) enforceUserRateLimit({} as never, 'social-sync', user)
-    expect(() => enforceUserRateLimit({} as never, 'social-sync', user)).toThrow()
+    const { max, windowMs } = RATE_POLICIES['payments']
+    for (let i = 0; i < max; i++) enforceUserRateLimit({} as never, 'payments', user)
+    expect(() => enforceUserRateLimit({} as never, 'payments', user)).toThrow()
     vi.advanceTimersByTime(windowMs + 1)
-    expect(() => enforceUserRateLimit({} as never, 'social-sync', user)).not.toThrow()
+    expect(() => enforceUserRateLimit({} as never, 'payments', user)).not.toThrow()
   })
 })
 

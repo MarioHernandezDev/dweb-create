@@ -80,6 +80,7 @@ async function confirmLogout() {
         >
           <Icon :name="item.icon" class="size-5 shrink-0" />
           <span class="font-semibold flex-1">{{ item.label }}</span>
+          <span v-if="item.soon" class="soon-tag">Pronto</span>
           <span v-if="badgeCount(item.to)" class="badge badge--on-light">{{ badgeCount(item.to) > 9 ? '9+' : badgeCount(item.to) }}</span>
         </NuxtLink>
         <button

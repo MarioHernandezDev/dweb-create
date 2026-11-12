@@ -9,7 +9,7 @@ const cards: RoleCard[] = [
     role: 'creator',
     points: [
       'Tu semana, con lo que toca grabar y cuándo.',
-      'Conecta tus redes y las métricas llegan solas.',
+      'Todas tus colaboraciones y tus entregas en un solo sitio.',
       'Resultados de tus colaboraciones: plazos, respuestas y valoraciones.'
     ]
   },
@@ -17,7 +17,7 @@ const cards: RoleCard[] = [
     role: 'partner',
     points: [
       'Apruebas cada entrega antes de que se publique.',
-      'Ves las métricas reales de tu campaña.',
+      'Sigues cada campaña: plazos, respuestas y estado de cada entrega.',
       'Hablas directamente con el creador.'
     ]
   }

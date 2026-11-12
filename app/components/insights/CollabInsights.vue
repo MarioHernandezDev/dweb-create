@@ -4,8 +4,7 @@ import { INSIGHT_RANGES, METRIC_NOTES, NO_DATA, formatDecimal, formatEurosAvg, f
 
 /**
  * Resultados dentro de CIBERAN: métricas propias calculadas con las colaboraciones, la
- * cronología y las valoraciones (server/utils/collab-metrics.ts). No son las métricas de
- * redes sociales. Sirve para el creador, la marca y la vista general de admin (`scope`).
+ * cronología y las valoraciones (server/utils/collab-metrics.ts). Sirve para el creador, la marca y la vista general de admin (`scope`).
  */
 const props = defineProps<{
   metrics: MetricsResult | null
@@ -76,7 +75,7 @@ const fmtInt = (v: number) => String(v)
   <div class="insights" data-insights :data-scope="scope">
     <div class="insights__bar">
       <SegmentedTabs :model-value="range" :options="INSIGHT_RANGES" label="Periodo" @update:model-value="emit('update:range', $event)" />
-      <p class="insights__hint">Calculado con la actividad dentro de CIBERAN. No incluye datos de redes sociales.</p>
+      <p class="insights__hint">Calculado con la actividad dentro de CIBERAN.</p>
     </div>
 
     <div v-if="error" class="insights__error" role="alert">

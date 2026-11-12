@@ -1,10 +1,9 @@
 <script setup lang="ts">
 import draggable from 'vuedraggable'
 import { coverArtFromString } from '~/utils/avatar'
-import { formatEuros, formatCompactNumber, platformMeta } from '~/utils/mock-data'
+import { formatEuros } from '~/utils/mock-data'
 import { firstFichaError, validateFicha } from '~/utils/profile-ficha'
 import { audienceError, audienceFromDb, audienceToDb } from '~/utils/audience'
-import { socialChips } from '~/utils/profile-socials'
 import type { Package } from '~/composables/usePackages'
 import type { ChatPrivacy } from '~/types'
 
@@ -19,7 +18,6 @@ const route = useRoute()
 const { paymentsEnabled, predictionsEnabled } = useLaunchMode()
 const { subscription, connectOnboarded, redirecting, redirectError, ensureLoaded, refresh: refreshBilling, subscribe, connectPayouts } = useMyBilling()
 const { creator, ensureCreator, updateFicha, uploadCoverPhoto, removeCoverPhoto } = useMyCreator()
-const { accounts: socialAccounts, ensureLoaded: ensureSocials } = useMySocialAccounts()
 
 // `user.value?.id` puede seguir vacío justo al cargar la página (ver
 // role-guard.global.ts) — se resuelve de forma fiable con useMyProfileId.
@@ -42,7 +40,6 @@ await Promise.all([
   route.query.checkout || route.query.connect ? refreshBilling() : ensureLoaded(),
   ensureCreator(),
   ensureCredits(),
-  ensureSocials()
 ])
 
 // Las mismas cuatro secciones de siempre (A-R18): "Cuenta" pasa a llamarse
@@ -261,10 +258,6 @@ const heroRange = computed(() => rangeText(
   creator.value?.minRateCents ? creator.value.minRateCents / 100 : null,
   creator.value?.maxRateCents ? creator.value.maxRateCents / 100 : null
 ))
-const chips = computed(() => socialChips(socialAccounts.value))
-const connectedChips = computed(() => chips.value.filter((c) => c.tone !== 'off'))
-const accountByPlatform = computed(() => new Map(socialAccounts.value.map((a) => [a.platform, a])))
-const unitFor = (p: string) => (p === 'youtube' ? 'suscriptores' : 'seguidores')
 
 const weeklyTargetInput = ref(creator.value?.weeklyPostTarget ?? 5)
 const savingWeeklyTarget = ref(false)
@@ -308,15 +301,8 @@ async function saveWeeklyTarget() {
           <Chip v-for="c in heroCategories.slice(0, 4)" :key="c" data-fact="category">{{ c }}</Chip>
           <span v-if="heroCategories.length > 4" class="hero-facts-empty">+{{ heroCategories.length - 4 }}</span>
           <Chip v-if="heroRange" outline data-fact="rate">Tarifa {{ heroRange }}</Chip>
-          <span
-            v-for="c in connectedChips" :key="c.platform" class="social-chip"
-            :data-tone="c.tone === 'ok' ? 'ok' : 'warn'" :data-fact="`social-${c.platform}`"
-          >
-            <Icon :name="c.tone === 'ok' ? 'ph:check-circle-fill' : 'ph:warning-fill'" class="size-4" />
-            {{ platformMeta[c.platform].label }} · {{ c.statusText }}
-          </span>
-          <span v-if="!heroCategories.length && !heroRange && !creator?.niche && !connectedChips.length" class="hero-facts-empty" data-fact="empty">
-            Aún no has completado tu ficha: añade categorías, tarifa o conecta una red.
+          <span v-if="!heroCategories.length && !heroRange && !creator?.niche" class="hero-facts-empty" data-fact="empty">
+            Aún no has completado tu ficha: añade categorías y tarifa.
           </span>
         </template>
       </ProfileHero>
@@ -337,32 +323,7 @@ async function saveWeeklyTarget() {
         <Transition name="profile-tab">
           <div v-show="activeTab === 'account'" id="profile-panel-account" role="tabpanel" aria-labelledby="profile-tab-account" class="settings">
             <div class="settings-grid">
-              <PanelCard title="Redes" class="yt-reveal" style="--i: 0" data-card="socials">
-                <div class="setting-list">
-                  <div v-for="id in (['youtube', 'instagram'] as const)" :key="id" class="setting-row">
-                    <div class="setting-row__text">
-                      <p class="setting-row__label">{{ platformMeta[id].label }}</p>
-                      <p class="setting-row__meta">
-                        <template v-if="accountByPlatform.get(id)?.connected">
-                          {{ accountByPlatform.get(id)?.handle }}<template v-if="accountByPlatform.get(id)?.status === 'connected'"> · {{ formatCompactNumber(accountByPlatform.get(id)?.followers ?? 0) }} {{ unitFor(id) }}</template>
-                        </template>
-                        <template v-else>No conectada</template>
-                      </p>
-                    </div>
-                    <span
-                      class="state-text"
-                      :data-tone="accountByPlatform.get(id)?.status === 'connected' ? 'ok' : accountByPlatform.get(id)?.connected ? 'warn' : undefined"
-                    >
-                      {{ socialChips(socialAccounts).find((c) => c.platform === id)?.statusText }}
-                    </span>
-                  </div>
-                </div>
-                <NuxtLink to="/creator/metrics#conexiones" class="link-arrow mt-2">
-                  Gestionar redes y ver métricas <Icon name="ph:arrow-right-bold" class="size-4" />
-                </NuxtLink>
-              </PanelCard>
-
-              <PanelCard title="Actividad" class="yt-reveal" style="--i: 1" data-card="activity">
+              <PanelCard title="Actividad" class="yt-reveal" style="--i: 0" data-card="activity">
                 <div class="setting-list">
                   <div class="setting-row">
                     <div class="setting-row__text">

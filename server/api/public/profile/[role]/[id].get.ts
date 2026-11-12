@@ -35,9 +35,7 @@ export default defineEventHandler(async (event): Promise<GuestProfilePayload> =>
     return Array.isArray(data) ? (data as Record<string, unknown>[]) : data ? [data as Record<string, unknown>] : []
   }
 
-  const [socials, stats, content, activity, rating] = await Promise.all([
-    role === 'creator' ? rpc('get_public_social_accounts', { p_creator_id: id }) : Promise.resolve([]),
-    role === 'creator' ? rpc('get_public_creator_stats', { p_creator_id: id }) : Promise.resolve([]),
+  const [content, activity, rating] = await Promise.all([
     role === 'creator' ? rpc('get_public_creator_content', { p_creator_id: id }) : Promise.resolve([]),
     rpc('get_public_activity', { p_role: role, p_id: id }),
     rpc('profile_rating_summary', { p_profile_id: row.profile_id })
@@ -47,9 +45,8 @@ export default defineEventHandler(async (event): Promise<GuestProfilePayload> =>
   setResponseHeader(event, 'Cache-Control', 'public, max-age=60, s-maxage=300')
 
   return {
-    profile: toGuestProfile(role, row, account.avatar_url, socials),
-    stats,
-    content,
+    profile: toGuestProfile(role, row, account.avatar_url),
+    content: content.map(publicContentItem),
     activity: { collabCount: Number(activity[0]?.collab_count) || 0, responseHours: activity[0]?.response_hours == null ? null : Number(activity[0].response_hours) },
     rating: { avgStars: Number(rating[0]?.avg_stars) || 0, ratingCount: Number(rating[0]?.rating_count) || 0 }
   }

@@ -6,7 +6,6 @@ export interface DiscoveryResult {
   lookingFor: string | null
   minCents: number | null
   maxCents: number | null
-  followers: number
   coverUrl: string | null
   score: number
   reason: string | null

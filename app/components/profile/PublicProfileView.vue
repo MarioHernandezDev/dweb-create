@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { hueFromString } from '~/utils/avatar'
-import { formatCompactNumber, formatEuros, platformMeta } from '~/utils/mock-data'
-import { PLATFORM_SHORT, responseLabel, COLLAB_TYPES } from '~/utils/discover-view'
+import { formatEuros } from '~/utils/mock-data'
+import { responseLabel, COLLAB_TYPES } from '~/utils/discover-view'
 import { audienceFromDb, hasAudience } from '~/utils/audience'
 import { formatRatingSummary, hasEnoughRatingsToShowAverage, type RatingSummary } from '~/utils/ratings'
 import type { Package } from '~/composables/usePackages'
 import type { PublicProfile } from '~/composables/usePublicProfile'
-import type { PublicStat, PublicContentItem, PublicCollab, PublicActivity, SimilarProfile } from '~/composables/usePublicProfileExtras'
+import type { PublicContentItem, PublicCollab, PublicActivity, SimilarProfile } from '~/composables/usePublicProfileExtras'
 import type { Platform, Role } from '~/types'
 
 /**
@@ -25,7 +25,6 @@ const props = defineProps<{
   chatError: string
   linkCopied: boolean
   copyError: boolean
-  stats: PublicStat[]
   content: PublicContentItem[]
   collabs: PublicCollab[]
   activity: PublicActivity
@@ -43,8 +42,7 @@ const backHref = computed(() => `/${props.myRole ?? 'creator'}/discover`)
 const editHref = computed(() => `/${props.profile.role}/profile?tab=ficha`)
 
 // ---- Cabecera ----
-const mainHandle = computed(() => props.profile.verifiedSocials.find((s) => s.handle?.startsWith('@'))?.handle ?? null)
-const subline = computed(() => [mainHandle.value, props.profile.headline || (isPartner.value ? props.profile.industry : null)].filter(Boolean).join(' · '))
+const subline = computed(() => [props.profile.headline || (isPartner.value ? props.profile.industry : null)].filter(Boolean).join(' · '))
 const initial = computed(() => (props.profile.name.trim()[0] ?? '?').toUpperCase())
 const heroTint = computed(() => hueFromString(props.profile.profileId))
 const rangeLabel = computed(() => {
@@ -60,11 +58,11 @@ onMounted(() => { if (!props.guest) ensureIdsLoaded() })
 const saved = computed(() => isSaved(props.profile.role, props.profile.id))
 
 // ---- Pestañas ----
-type Tab = 'stats' | 'about' | 'audience' | 'packages' | 'collabs' | 'similar'
+type Tab = 'content' | 'about' | 'audience' | 'packages' | 'collabs' | 'similar'
 const tabs = computed(() => {
   const t: { value: Tab; label: string }[] = isPartner.value
     ? [{ value: 'about', label: 'Sobre la marca' }]
-    : [{ value: 'stats', label: 'Estadísticas y contenido' }, { value: 'audience', label: 'Audiencia' }]
+    : [{ value: 'content', label: 'Contenido' }, { value: 'audience', label: 'Audiencia' }]
   // Sin sesión solo se enseña lo público: ni audiencia, ni catálogo con precios, ni colaboraciones.
   if (props.guest) return t.filter((x) => x.value !== 'audience')
   if (!props.isOwnProfile || props.packages.length) t.push({ value: 'packages', label: isPartner.value ? 'Necesidades' : 'Catálogo' })
@@ -77,37 +75,11 @@ const router = useRouter()
 const tab = ref<Tab>(tabs.value.find((t) => t.value === route.query.seccion)?.value ?? tabs.value[0]!.value)
 function setTab(v: string) { tab.value = v as Tab; router.replace({ query: { ...route.query, seccion: v } }) }
 
-// ---- Estadísticas por red ----
-const platform = ref<Platform | null>(null)
-watchEffect(() => { if (!platform.value || !props.stats.some((s) => s.platform === platform.value)) platform.value = props.stats[0]?.platform ?? null })
-const stat = computed(() => props.stats.find((s) => s.platform === platform.value) ?? null)
-const dash = '—'
-const compact = (n: number | null) => (n == null ? dash : formatCompactNumber(n))
-const statCells = computed(() => {
-  const s = stat.value
-  if (!s) return []
-  return [
-    { label: 'Seguidores', value: compact(s.followers) },
-    { label: 'Media de likes', value: compact(s.avgLikes) },
-    { label: 'Media de comentarios', value: compact(s.avgComments) },
-    { label: 'Media de vistas', value: compact(s.avgViews) },
-    { label: 'Engagement', value: s.engagement == null ? dash : `${String(s.engagement).replace('.', ',')} %` },
-    { label: 'Publicaciones', value: String(s.postsPublished) },
-    { label: 'Colaboraciones', value: String(props.activity.collabCount) },
-    { label: 'Responde en', value: response.value ?? dash }
-  ]
-})
-
 // ---- Contenido destacado ----
 const typeFilter = ref('')
-const sort = ref<'recent' | 'views' | 'likes'>('recent')
 const typeOptions = computed(() => [...new Set(props.content.map((c) => c.contentType))])
 const TYPE_LABEL: Record<string, string> = { video: 'Vídeo', reel: 'Reel', carousel: 'Carrusel', image: 'Imagen', story: 'Story' }
-const shownContent = computed(() => {
-  const list = props.content.filter((c) => !typeFilter.value || c.contentType === typeFilter.value)
-  const by = (k: 'views' | 'likes') => (a: PublicContentItem, b: PublicContentItem) => (b[k] ?? -1) - (a[k] ?? -1)
-  return sort.value === 'views' ? [...list].sort(by('views')) : sort.value === 'likes' ? [...list].sort(by('likes')) : list
-})
+const shownContent = computed(() => props.content.filter((c) => !typeFilter.value || c.contentType === typeFilter.value))
 const isVideo = (c: PublicContentItem) => c.contentType === 'video' || c.contentType === 'reel'
 
 // ---- Audiencia declarada ----
@@ -118,7 +90,6 @@ const genderRows = computed(() => [{ k: 'Mujeres', v: audience.value.gender.fema
 const fmtMonth = (d: string) => new Date(d).toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })
 const typeLabels = computed(() => props.profile.collaborationTypes.map((v) => COLLAB_TYPES.find((c) => c.value === v)?.label ?? v))
 const websiteHost = computed(() => { try { return new URL(props.profile.website ?? '').host.replace(/^www\./, '') } catch { return props.profile.website } })
-const socialHref = (s: { platform: Platform; handle: string | null }) => (s.platform === 'instagram' && s.handle?.startsWith('@') ? `https://instagram.com/${s.handle.slice(1)}` : null)
 </script>
 
 <template>
@@ -159,16 +130,9 @@ const socialHref = (s: { platform: Platform; handle: string | null }) => (s.plat
           </div>
         </dl>
 
-        <div v-if="profile.verifiedSocials.length || profile.website" class="pp__nets">
-          <h2 class="pp__h">Redes</h2>
+        <div v-if="profile.website" class="pp__nets">
+          <h2 class="pp__h">Web</h2>
           <ul>
-            <li v-for="s in profile.verifiedSocials" :key="s.platform" data-fact="social" :data-platform="s.platform" :title="`${platformMeta[s.platform].label}: conexión verificada con la red`">
-              <component :is="socialHref(s) ? 'a' : 'div'" :href="socialHref(s) ?? undefined" :target="socialHref(s) ? '_blank' : undefined" rel="noopener noreferrer" class="pp__net">
-                <span class="pp__net-badge">{{ PLATFORM_SHORT[s.platform] ?? s.platform }}</span>
-                <span class="pp__net-text"><strong>{{ s.handle ?? platformMeta[s.platform].label }}</strong><small>{{ formatCompactNumber(s.followersCount) }} seguidores <Icon name="ph:seal-check-fill" class="size-3.5" aria-label="Verificada" /></small></span>
-                <Icon v-if="socialHref(s)" name="ph:arrow-up-right" class="size-4" />
-              </component>
-            </li>
             <li v-if="profile.website">
               <a :href="profile.website" target="_blank" rel="noopener noreferrer nofollow" class="pp__net" data-fact="website">
                 <span class="pp__net-badge"><Icon name="ph:globe" class="size-4" /></span>
@@ -205,32 +169,14 @@ const socialHref = (s: { platform: Platform; handle: string | null }) => (s.plat
 
       <!-- Contenido -->
       <div class="pp__content">
-        <!-- Estadísticas y contenido (creador) -->
-        <template v-if="tab === 'stats'">
-          <section class="pp__panel" aria-labelledby="pp-stats">
-            <header class="pp__panel-head">
-              <h2 id="pp-stats">Estadísticas del creador</h2>
-              <div v-if="stats.length" class="pp__nets-row" role="group" aria-label="Red">
-                <span class="pp__lead">Estadísticas de</span>
-                <button v-for="s in stats" :key="s.platform" type="button" class="pp__pill" :class="platform === s.platform && 'is-on'" :aria-pressed="platform === s.platform" @click="platform = s.platform">{{ platformMeta[s.platform].label }}</button>
-              </div>
-            </header>
-            <div v-if="stat" class="pp__stats">
-              <div v-for="c in statCells" :key="c.label"><p>{{ c.label }}</p><strong>{{ c.value }}</strong></div>
-            </div>
-            <p v-else class="pp__empty">Todavía no ha verificado ninguna red con la plataforma, así que no hay estadísticas que enseñar.</p>
-            <p v-if="stat" class="pp__foot">{{ stat.measuredPosts ? `Medias sobre ${stat.measuredPosts} publicación${stat.measuredPosts === 1 ? '' : 'es'} con métricas.` : 'Aún no hay publicaciones con métricas medidas en esta red.' }} Seguidores verificados con la red.</p>
-          </section>
-
+        <!-- Contenido destacado (creador) -->
+        <template v-if="tab === 'content'">
           <section class="pp__panel" aria-labelledby="pp-content">
             <header class="pp__panel-head">
               <h2 id="pp-content">Contenido del creador</h2>
               <div v-if="content.length" class="pp__filters">
                 <label class="pp__sel"><span class="sr-only">Tipo</span>
                   <select v-model="typeFilter" aria-label="Tipo"><option value="">Tipo: Todo</option><option v-for="t in typeOptions" :key="t" :value="t">Tipo: {{ TYPE_LABEL[t] ?? t }}</option></select><Icon name="ph:caret-down-bold" class="size-3" />
-                </label>
-                <label class="pp__sel"><span class="sr-only">Ordenar</span>
-                  <select v-model="sort" aria-label="Ordenar"><option value="recent">Ordenar: Recientes</option><option value="views">Ordenar: Más vistas</option><option value="likes">Ordenar: Más likes</option></select><Icon name="ph:caret-down-bold" class="size-3" />
                 </label>
               </div>
             </header>
@@ -239,7 +185,7 @@ const socialHref = (s: { platform: Platform; handle: string | null }) => (s.plat
                 <component :is="c.externalUrl ? 'a' : 'div'" :href="c.externalUrl ?? undefined" :target="c.externalUrl ? '_blank' : undefined" rel="noopener noreferrer" class="pp__tile" :title="c.title">
                   <CoverArt :seed="c.postId" /><SmartImage v-if="c.mediaUrl" :src="c.mediaUrl" :width="320" :height="400" class="pp__tile-img" />
                   <span v-if="isVideo(c)" class="pp__play" aria-hidden="true"><Icon name="ph:play-fill" class="size-5" /></span>
-                  <span class="pp__tile-foot"><span v-if="c.views != null"><Icon name="ph:eye" class="size-4" />{{ formatCompactNumber(c.views) }}</span><span v-if="c.likes != null"><Icon name="ph:heart" class="size-4" />{{ formatCompactNumber(c.likes) }}</span><span v-if="c.views == null && c.likes == null" class="pp__tile-title">{{ c.title }}</span></span>
+                  <span class="pp__tile-foot"><span class="pp__tile-title">{{ c.title }}</span></span>
                 </component>
               </li>
             </ul>

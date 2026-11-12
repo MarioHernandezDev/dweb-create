@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { isPublicRole, isUuid, safeWebsite, toGuestProfile } from '../../server/utils/public-profile'
+import { isPublicRole, isUuid, publicContentItem, safeWebsite, toGuestProfile } from '../../server/utils/public-profile'
 
 const creatorRow = {
   id: '39e31592-6636-4789-aec0-cf8f1a81d067',
@@ -21,9 +21,16 @@ const creatorRow = {
   stripe_account_id: 'acct_123'
 }
 
+describe('contenido destacado sin cifras de rendimiento', () => {
+  it('quita vistas y likes y deja solo lo que el creador eligió enseñar', () => {
+    const out = publicContentItem({ post_id: 'p', title: 'T', platform: 'youtube', content_type: 'video', media_url: null, external_url: null, published_at: 'x', views: 10, likes: 5 })
+    expect(Object.keys(out).sort()).toEqual(['content_type', 'external_url', 'media_url', 'platform', 'post_id', 'published_at', 'title'])
+  })
+})
+
 describe('ficha pública sin sesión', () => {
   it('no expone el id de la cuenta, tarifas, audiencia ni datos de pago', () => {
-    const p = toGuestProfile('creator', creatorRow, 'https://x.test/a.png', [{ platform: 'instagram', handle: '@marcos', followers_count: '290000' }])
+    const p = toGuestProfile('creator', creatorRow, 'https://x.test/a.png')
     const json = JSON.stringify(p)
     expect(json).not.toContain(creatorRow.profile_id)
     expect(json).not.toContain('acct_123')
@@ -33,24 +40,24 @@ describe('ficha pública sin sesión', () => {
     expect(p.maxCents).toBeNull()
     expect(p.audience).toEqual({})
     expect(p.profileId).toBe(creatorRow.id)
-    expect(p.verifiedSocials).toEqual([{ platform: 'instagram', handle: '@marcos', followersCount: 290000 }])
+    expect(json).not.toContain('290000')
+    expect(p).not.toHaveProperty('verifiedSocials')
     expect(p.name).toBe('Marcos')
     expect(p.lookingFor).toBe('Marcas de deporte')
   })
 
   it('las claves de la ficha son una lista cerrada', () => {
-    const p = toGuestProfile('creator', creatorRow, null, [])
+    const p = toGuestProfile('creator', creatorRow, null)
     expect(Object.keys(p).sort()).toEqual([
       'audience', 'avatarUrl', 'bio', 'categories', 'chatPrivacy', 'collaborationTypes', 'coverUrl', 'createdAt', 'headline', 'id',
-      'industry', 'location', 'lookingFor', 'maxCents', 'minCents', 'name', 'profileId', 'role', 'verifiedSocials', 'website'
+      'industry', 'location', 'lookingFor', 'maxCents', 'minCents', 'name', 'profileId', 'role', 'website'
     ])
   })
 
   it('marca: web solo http(s), sin presupuesto', () => {
     const row = { id: creatorRow.id, profile_id: creatorRow.profile_id, company_name: 'Alma', industry: 'Belleza', website: 'javascript:alert(1)', collaboration_types: ['paid'], created_at: 'x', min_budget_cents: 5 }
-    const p = toGuestProfile('partner', row, null, [{ platform: 'instagram' }])
+    const p = toGuestProfile('partner', row, null)
     expect(p.website).toBeNull()
-    expect(p.verifiedSocials).toEqual([])
     expect(p.collaborationTypes).toEqual(['paid'])
     expect(safeWebsite('https://alma.test')).toBe('https://alma.test/')
     expect(safeWebsite('ftp://alma.test')).toBeNull()

@@ -1,7 +1,5 @@
 <script setup lang="ts">
 import { initialsFromName, hueFromString, coverArtFromString } from '~/utils/avatar'
-import { formatCompactNumber, platformMeta } from '~/utils/mock-data'
-import type { PublicVerifiedSocial } from '~/composables/usePublicProfile'
 
 /**
  * Cabecera de "tarjeta de presentación" — la usan TANTO
@@ -27,7 +25,6 @@ withDefaults(
     rangeLabel: string | null
     rangeFieldLabel: string
     lookingFor: string | null
-    verifiedSocials?: PublicVerifiedSocial[]
     /** ISO de cuándo se creó la ficha — "Miembro desde…". Se omite en la vista previa del editor (no aporta nada ver tu propia fecha de alta mientras editas). */
     memberSince?: string | null
     catalogCount?: number
@@ -35,7 +32,7 @@ withDefaults(
     /** Vista reducida para la columna de vista previa del editor (portada/avatar más pequeños, sin fila de "más información"). */
     compact?: boolean
   }>(),
-  { verifiedSocials: () => [], memberSince: null, catalogCount: 0, catalogLabel: 'publicados', compact: false }
+  { memberSince: null, catalogCount: 0, catalogLabel: 'publicados', compact: false }
 )
 
 function coverArt(seed: string) {
@@ -89,17 +86,6 @@ function memberSinceLabel(iso: string) {
       <span v-if="catalogCount > 0" class="inline-flex items-center gap-1.5">
         <Icon name="ph:package-fill" class="size-4 text-[var(--color-text-faint)]" />
         {{ catalogCount }} {{ catalogLabel }}
-      </span>
-    </div>
-
-    <div v-if="verifiedSocials.length" class="flex flex-wrap gap-2" :class="compact ? 'mt-3 mb-4' : 'mt-5 mb-6'">
-      <span
-        v-for="social in verifiedSocials" :key="social.platform"
-        class="inline-flex items-center gap-1.5 h-7 pl-2 pr-2.5 rounded-full border border-[var(--color-hairline)] bg-[var(--color-ink-overlay)] text-micro font-medium text-[var(--color-text)]"
-      >
-        <Icon :name="platformMeta[social.platform].icon" class="size-3.5 shrink-0" :style="{ color: platformMeta[social.platform].colorVar }" />
-        {{ formatCompactNumber(social.followersCount) }}
-        <Icon name="ph:seal-check-fill" class="size-3.5 shrink-0 text-[var(--color-primary-500)]" />
       </span>
     </div>
 

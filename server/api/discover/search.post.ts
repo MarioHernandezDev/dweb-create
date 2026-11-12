@@ -41,7 +41,6 @@ export interface DiscoveryResult {
   lookingFor: string | null
   minCents: number | null
   maxCents: number | null
-  followers: number
   coverUrl: string | null
   score: number
   reason: string | null
@@ -70,7 +69,6 @@ interface CreatorCandidateRow {
   cover_url: string | null
   created_at: string
   profile_id: string
-  social_accounts: { followers_count: number; platform: string }[] | null
 }
 
 interface PartnerCandidateRow {
@@ -368,7 +366,6 @@ export default defineEventHandler(async (event) => {
       lookingFor: r.looking_for,
       minCents: r.min_budget_cents,
       maxCents: r.max_budget_cents,
-      followers: 0,
       coverUrl: r.cover_url,
       score: heuristicScore(r.categories ?? [], filterCategories),
       reason: null,
@@ -382,7 +379,7 @@ export default defineEventHandler(async (event) => {
   } else {
     const { data, error } = await client
       .from('creators')
-      .select('id, profile_id, display_name, bio, categories, looking_for, min_rate_cents, max_rate_cents, cover_url, created_at, social_accounts(followers_count, platform)')
+      .select('id, profile_id, display_name, bio, categories, looking_for, min_rate_cents, max_rate_cents, cover_url, created_at')
       .order('created_at', { ascending: false })
       .limit(CANDIDATE_POOL_LIMIT)
     if (error) throw createError({ statusCode: 500, statusMessage: error.message })
@@ -403,14 +400,13 @@ export default defineEventHandler(async (event) => {
       lookingFor: r.looking_for,
       minCents: r.min_rate_cents,
       maxCents: r.max_rate_cents,
-      followers: (r.social_accounts ?? []).reduce((sum, s) => sum + (s.followers_count ?? 0), 0),
       coverUrl: r.cover_url,
       score: heuristicScore(r.categories ?? [], filterCategories),
       reason: null,
       profileId: r.profile_id,
       collabCount: 0,
       responseHours: null,
-      platforms: [...new Set((r.social_accounts ?? []).map((a) => a.platform))],
+      platforms: [],
       verified: false,
       collaborationTypes: []
     }))

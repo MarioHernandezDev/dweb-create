@@ -8,7 +8,7 @@ const stages: Stage[] = [
   { status: 'in_production', copy: 'Se graba o se diseña; quien lo está haciendo marca el estado.' },
   { status: 'ready_for_review', copy: 'La marca lo revisa antes de que salga.' },
   { status: 'scheduled', copy: 'Fecha y hora fijadas, listo para publicarse.' },
-  { status: 'published', copy: 'Publicado. Las métricas empiezan a entrar.' }
+  { status: 'published', copy: 'Publicado. La colaboración se da por cerrada.' }
 ]
 </script>
 

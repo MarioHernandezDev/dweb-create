@@ -22,7 +22,6 @@ useHead({ title: 'Política de privacidad' })
       <li><strong>Cuenta:</strong> nombre, email, contraseña (almacenada cifrada, nunca en claro) y rol (creador o partner).</li>
       <li><strong>Perfil:</strong> foto, descripción, nicho, ubicación y demás datos que decidas añadir y mostrar.</li>
       <li><strong>Actividad en la plataforma:</strong> solicitudes de colaboración, ofertas, publicaciones, mensajes de chat, notificaciones y valoraciones.</li>
-      <li><strong>Redes sociales conectadas:</strong> si conectas una cuenta (Instagram, YouTube u otras), guardamos su identificador, métricas públicas y el token de acceso, que se almacena cifrado.</li>
       <li><strong>Pagos:</strong> el estado y el importe de suscripciones y colaboraciones. Los datos de tarjeta los gestiona Stripe; CIBERAN no los recibe ni los guarda.</li>
       <li><strong>Datos técnicos:</strong> dirección IP y registros del servidor para seguridad y prevención de abusos.</li>
     </ul>
@@ -32,7 +31,6 @@ useHead({ title: 'Política de privacidad' })
       <li><strong>Prestar el servicio</strong> (crear tu cuenta, conectar creadores con partners, chat, publicaciones, pagos): ejecución del contrato.</li>
       <li><strong>Seguridad y prevención del fraude</strong> (límites de uso, revisión de abusos): interés legítimo.</li>
       <li><strong>Sugerencias y predicciones</strong> sobre tu contenido: ejecución del contrato; las sugerencias de IA son orientativas y no producen efectos jurídicos sobre ti.</li>
-      <li><strong>Conectar tus redes sociales:</strong> tu consentimiento, que puedes retirar desconectando la cuenta en cualquier momento.</li>
       <li><strong>Obligaciones legales</strong> (fiscales y contables sobre pagos): obligación legal.</li>
     </ul>
 
@@ -41,7 +39,6 @@ useHead({ title: 'Política de privacidad' })
     <ul>
       <li><strong>Supabase:</strong> base de datos, autenticación y almacenamiento de archivos.</li>
       <li><strong>Stripe:</strong> cobros, suscripciones y pagos a creadores.</li>
-      <li><strong>Meta (Instagram) y Google (YouTube):</strong> solo si conectas esas cuentas, para leer los datos que autorices.</li>
       <li><strong>OpenRouter:</strong> proveedor del modelo de IA para las sugerencias. Solo se le envía el texto necesario de la consulta, no tu email ni tus credenciales.</li>
       <li><strong>Proveedor de alojamiento:</strong> <LegalValue value="[POR COMPLETAR: dónde se despliega la aplicación]" /></li>
     </ul>

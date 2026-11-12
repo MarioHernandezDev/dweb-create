@@ -46,8 +46,7 @@ const collaborator = computed<Creator | null>(() => {
     niche: '',
     initials: initialsFromName(c.creatorName),
     hue: hueFromString(c.creatorName),
-    weeklyTarget: 0,
-    followers: 0
+    weeklyTarget: 0
   }
 })
 

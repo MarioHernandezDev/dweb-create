@@ -1,5 +1,5 @@
 <script setup lang="ts">
-useHead({ title: 'Integraciones' })
+useHead({ title: 'Instalar la app' })
 </script>
 
 <template>
@@ -7,7 +7,6 @@ useHead({ title: 'Integraciones' })
     <LandingNav />
     <InstallHero />
     <InstallGuide />
-    <IntegrationsGrid />
     <LandingCta />
     <LandingFooter />
   </div>

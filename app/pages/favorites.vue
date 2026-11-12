@@ -153,7 +153,7 @@ function rangeLabel(profile: PublicProfile) {
               :avatar-url="c.profile.avatarUrl" :cover-url="c.profile.coverUrl" :cover-seed="c.profile.profileId"
               :categories="c.profile.categories" :bio="c.profile.bio"
               :range-label="rangeLabel(c.profile)" :range-field-label="c.entry.kind === 'creator' ? 'Tarifa orientativa' : 'Presupuesto'"
-              :looking-for="null" :verified-socials="c.profile.verifiedSocials"
+              :looking-for="null"
             />
 
             <div v-if="rangeLabel(c.profile)" class="compare__fact">

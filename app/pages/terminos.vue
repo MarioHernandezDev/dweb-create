@@ -34,7 +34,7 @@ useHead({ title: 'Términos y condiciones' })
     <p>Conservas los derechos sobre el contenido que subes. Nos concedes una licencia limitada para alojarlo y mostrarlo dentro de la plataforma con el único fin de prestar el servicio. Los derechos sobre el contenido de una colaboración (uso, exclusividad, duración) los acuerdan entre sí creador y partner. La marca, el diseño y el software de CIBERAN pertenecen a su titular.</p>
 
     <h2>6. Conexión con redes sociales</h2>
-    <p>Si conectas una cuenta de una red social, nos autorizas a leer los datos que concedas en esa red. Puedes desconectarla en cualquier momento desde la plataforma o desde los ajustes de la propia red. Debes cumplir además las condiciones de cada red.</p>
+    <p>Por ahora CIBERAN no se conecta con tus cuentas de redes sociales ni lee datos de ellas. Si en el futuro lo ofrece, te lo pediremos de forma expresa y actualizaremos estos términos antes de hacerlo.</p>
 
     <h2>7. Precios, suscripciones y pagos</h2>
     <ul>

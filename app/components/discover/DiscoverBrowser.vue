@@ -150,7 +150,7 @@ const filtered = computed(() => sortResults(
   byName.value.filter((r) => matchesClientFilters(r, { platforms: platforms.value, response: response.value, types: types.value, verifiedOnly: verifiedOnly.value })),
   sort.value
 ))
-const sortOptions = computed(() => (Object.keys(SORT_LABELS) as DiscoverSort[]).filter((k) => k !== 'followers' || props.kind === 'creator').map((k) => ({ value: k, label: SORT_LABELS[k] })))
+const sortOptions = computed(() => (Object.keys(SORT_LABELS) as DiscoverSort[]).map((k) => ({ value: k, label: SORT_LABELS[k] })))
 const countNote = computed(() => (sort.value === 'affinity'
   ? (scoreMeaningful.value ? 'ordenados por afinidad' : 'sin criterio de afinidad todavía')
   : `orden: ${SORT_LABELS[sort.value].toLowerCase()}`))

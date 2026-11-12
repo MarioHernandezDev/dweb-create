@@ -30,14 +30,12 @@ export interface GuestProfilePayload {
     industry: string | null
     website: string | null
     collaborationTypes: string[]
-    verifiedSocials: { platform: string; handle: string | null; followersCount: number }[]
     minCents: null
     maxCents: null
     lookingFor: string | null
     chatPrivacy: 'everyone'
     audience: Record<string, never>
   }
-  stats: Record<string, unknown>[]
   content: Record<string, unknown>[]
   activity: { collabCount: number; responseHours: number | null }
   rating: { avgStars: number; ratingCount: number }
@@ -71,8 +69,7 @@ export function safeWebsite(v: unknown): string | null {
 export function toGuestProfile(
   role: PublicRole,
   row: Record<string, unknown>,
-  avatarUrl: string | null,
-  socials: Record<string, unknown>[]
+  avatarUrl: string | null
 ): GuestProfilePayload['profile'] {
   const id = String(row.id)
   return {
@@ -90,13 +87,18 @@ export function toGuestProfile(
     industry: role === 'partner' ? str(row.industry) : null,
     website: role === 'partner' ? safeWebsite(row.website) : null,
     collaborationTypes: role === 'partner' ? list(row.collaboration_types) : [],
-    verifiedSocials: role === 'creator'
-      ? socials.map((s) => ({ platform: String(s.platform), handle: str(s.handle), followersCount: Number(s.followers_count) || 0 }))
-      : [],
     minCents: null,
     maxCents: null,
     lookingFor: str(row.looking_for),
     chatPrivacy: 'everyone',
     audience: {}
+  }
+}
+
+/** Contenido destacado sin cifras de rendimiento: solo lo que el creador eligió enseñar, sin vistas ni likes. */
+export function publicContentItem(r: Record<string, unknown>): Record<string, unknown> {
+  return {
+    post_id: r.post_id, title: r.title, platform: r.platform, content_type: r.content_type,
+    media_url: r.media_url, external_url: r.external_url, published_at: r.published_at
   }
 }

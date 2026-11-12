@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { formatCompactNumber, formatEuros } from '~/utils/mock-data'
+import { formatEuros } from '~/utils/mock-data'
 import { PLATFORM_SHORT, responseLabel } from '~/utils/discover-view'
 import type { DiscoveryResult } from '~/composables/useDiscover'
 
@@ -96,10 +96,9 @@ async function message() {
       <p v-else-if="result.bio" class="dcard__bio">{{ result.bio }}</p>
       <p v-else class="dcard__bio dcard__bio--empty">Ficha en construcción</p>
 
-      <ul v-if="response || result.collabCount || (kind === 'creator' && result.followers)" class="dcard__facts">
+      <ul v-if="response || result.collabCount" class="dcard__facts">
         <li v-if="response"><Icon name="ph:clock" class="size-4" />Responde en {{ response }}</li>
         <li v-if="result.collabCount"><Icon name="ph:check-bold" class="size-4" />{{ result.collabCount }} {{ result.collabCount === 1 ? 'colaboración' : 'colaboraciones' }}</li>
-        <li v-if="kind === 'creator' && result.followers"><Icon name="ph:users-three" class="size-4" />{{ formatCompactNumber(result.followers) }} seguidores</li>
       </ul>
 
       <div v-if="result.platforms.length" class="dcard__platforms">

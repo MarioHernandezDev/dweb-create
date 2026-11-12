@@ -31,8 +31,7 @@ const year = new Date().getFullYear()
         <div>
           <p class="land-foot__title">Redes</p>
           <ul class="land-foot__list">
-            <li>Instagram · YouTube</li>
-            <li>Próximamente: TikTok, X, Facebook y LinkedIn</li>
+            <li>Planifica para Instagram, YouTube, TikTok y más</li>
           </ul>
         </div>
       </div>

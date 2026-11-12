@@ -66,6 +66,7 @@ async function confirmLogout() {
       >
         <Icon :name="item.icon" class="rail__link-icon" />
         <span class="rail__label">{{ item.label }}</span>
+        <span v-if="item.soon" class="soon-tag rail__label">Pronto</span>
       </NuxtLink>
     </nav>
 

@@ -1,10 +1,4 @@
-import type { ChatPrivacy, Platform, Role } from '~/types'
-
-export interface PublicVerifiedSocial {
-  platform: Platform
-  handle: string | null
-  followersCount: number
-}
+import type { ChatPrivacy, Role } from '~/types'
 
 export interface PublicProfile {
   profileId: string
@@ -21,8 +15,6 @@ export interface PublicProfile {
   maxCents: number | null
   lookingFor: string | null
   chatPrivacy: ChatPrivacy
-  /** Solo para creadores — redes con OAuth de verdad detrás (ver get_public_social_accounts), nunca las "conectadas" a mano sin token. Vacío para partners. */
-  verifiedSocials: PublicVerifiedSocial[]
   /** Id de la ficha creators/partners (el de la ruta). */
   id: string
   headline: string | null
@@ -33,12 +25,6 @@ export interface PublicProfile {
   collaborationTypes: string[]
   /** Solo creadores: audiencia declarada (jsonb crudo; ver utils/audience.ts). */
   audience: Record<string, unknown>
-}
-
-interface SocialAccountPublicRow {
-  platform: Platform
-  handle: string | null
-  followers_count: number
 }
 
 interface ProfileRow {
@@ -110,10 +96,7 @@ export function usePublicProfile() {
           .maybeSingle<CreatorRow>()
         if (error || !data) return null
 
-        const [{ data: profileRow }, { data: socialRows }] = await Promise.all([
-          client.from('profiles').select('id, chat_privacy, avatar_url').eq('id', data.profile_id).maybeSingle<ProfileRow>(),
-          client.rpc('get_public_social_accounts', { p_creator_id: data.id } as never)
-        ])
+        const { data: profileRow } = await client.from('profiles').select('id, chat_privacy, avatar_url').eq('id', data.profile_id).maybeSingle<ProfileRow>()
 
         const mapped: PublicProfile = {
           profileId: data.profile_id,
@@ -134,12 +117,7 @@ export function usePublicProfile() {
           location: data.location,
           website: null,
           collaborationTypes: [],
-          audience: data.audience ?? {},
-          verifiedSocials: ((socialRows as SocialAccountPublicRow[] | null) ?? []).map((r) => ({
-            platform: r.platform,
-            handle: r.handle,
-            followersCount: r.followers_count
-          }))
+          audience: data.audience ?? {}
         }
         return mapped
       }
@@ -167,7 +145,6 @@ export function usePublicProfile() {
         maxCents: data.max_budget_cents,
         lookingFor: data.looking_for,
         chatPrivacy: profileRow?.chat_privacy ?? 'everyone',
-        verifiedSocials: [],
         id: data.id,
         headline: data.headline,
         location: data.location,

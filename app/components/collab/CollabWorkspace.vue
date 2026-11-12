@@ -425,10 +425,6 @@ useHead({ title: computed(() => (view.value ? `Colaboración con ${view.value.co
           <PanelCard v-if="view.status !== 'declined'" v-show="section === 'acuerdo'" id="archivos" title="Archivos" description="Material compartido entre las dos partes. Solo lo veis vosotros." class="cwork__anchor">
             <CollabFiles :collaboration-id="view.id" :open="isOpen" :my-profile-id="myProfileId" :counterpart-name="view.counterpartName" @changed="reloadEvents" />
           </PanelCard>
-
-          <PanelCard v-if="isPartner && view.status !== 'requested' && view.status !== 'declined' && view.status !== 'cancelled' && view.status !== 'terminated'" v-show="section === 'entregables'" title="Rendimiento" description="Cómo van las publicaciones de esta colaboración.">
-            <CollaborationReport :collaboration-id="view.id" />
-          </PanelCard>
         </div>
 
         <aside class="cwork__side">

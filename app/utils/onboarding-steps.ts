@@ -19,7 +19,7 @@ export const tourSteps: Record<Role, TourStep[]> = {
     {
       icon: 'ph:hand-waving-fill',
       title: 'Te damos la bienvenida a CIBERAN',
-      body: 'Aquí gestionas tus publicaciones, tus redes y tus colaboraciones con marcas en un solo sitio. Te enseñamos lo esencial en un minuto.'
+      body: 'Aquí gestionas tus publicaciones y tus colaboraciones con marcas en un solo sitio. Te enseñamos lo esencial en un minuto.'
     },
     {
       icon: 'ph:kanban-fill',
@@ -32,9 +32,9 @@ export const tourSteps: Record<Role, TourStep[]> = {
       body: 'En Descubrir encuentras marcas y agencias que encajan contigo. Cuando alguien te contacta, o tú a él, la negociación y el seguimiento viven en Colaboraciones y en el Chat.'
     },
     {
-      icon: 'ph:share-network-fill',
-      title: 'Redes y Métricas',
-      body: 'Conecta tus redes para ver tus métricas reales. En Resultados tienes cómo van tus colaboraciones dentro de CIBERAN.'
+      icon: 'ph:chart-bar-fill',
+      title: 'Resultados',
+      body: 'En Resultados tienes cómo van tus colaboraciones dentro de CIBERAN: plazos, respuestas y valoraciones.'
     },
     {
       icon: 'ph:user-circle-fill',

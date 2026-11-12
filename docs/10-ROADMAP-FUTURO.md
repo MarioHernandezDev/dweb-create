@@ -48,6 +48,7 @@ El bucle completo **ya existe**: descubrir creador → contactar → negociar pr
 - **Verificación de identidad de quien cobra**: la resuelve Stripe Connect solo (KYC), no hay que construir nada aparte.
 - **Español únicamente**: asumido como decisión consciente (mercado español), no un olvido — si algún día se quiere crecer fuera, es trabajo de internacionalización aparte.
 - **Publicar contenido desde la app**: decisión ya tomada, que no se va a construir — el tablero es seguimiento interno, nunca sube nada a redes vía API (ver `docs/9-INSTAGRAM-OAUTH-SETUP.md` §5).
+- **Métricas de redes sociales (YouTube/Instagram)**: aparcadas como "Próximamente", aisladas en carpetas `_disabled` y sin dependencias en el resto de la app. Definición, valor y pasos para reactivarlas en `docs/17-METRICAS-REDES-PROXIMAMENTE.md`.
 - **Motor de tendencias con IA**: aparcado (`app/_disabled/creator/trends.vue`), no descartado — la IA no daba ideas lo bastante buenas todavía. Código intacto para retomar cuando interese.
 
 ## 3. Por dónde seguir mañana, en orden

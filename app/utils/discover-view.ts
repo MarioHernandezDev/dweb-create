@@ -5,7 +5,7 @@
 import type { DiscoveryResult } from '~/composables/useDiscover'
 
 export type ResponseFilter = 'any' | '24' | '2'
-export type DiscoverSort = 'affinity' | 'collabs' | 'response' | 'budget_asc' | 'budget_desc' | 'followers'
+export type DiscoverSort = 'affinity' | 'collabs' | 'response' | 'budget_asc' | 'budget_desc'
 
 export const SORT_LABELS: Record<DiscoverSort, string> = {
   affinity: 'Más afines',
@@ -13,7 +13,6 @@ export const SORT_LABELS: Record<DiscoverSort, string> = {
   response: 'Responden antes',
   budget_asc: 'Presupuesto: de menor a mayor',
   budget_desc: 'Presupuesto: de mayor a menor',
-  followers: 'Más seguidores'
 }
 
 /** Siglas de las redes para las etiquetas pequeñas de la tarjeta. */
@@ -69,6 +68,5 @@ export function sortResults(list: DiscoveryResult[], sort: DiscoverSort): Discov
     case 'response': return copy.sort(nullsLast((r) => r.responseHours, 1))
     case 'budget_asc': return copy.sort(nullsLast((r) => r.minCents ?? r.maxCents, 1))
     case 'budget_desc': return copy.sort(nullsLast((r) => r.maxCents ?? r.minCents, -1))
-    case 'followers': return copy.sort((a, b) => b.followers - a.followers)
   }
 }

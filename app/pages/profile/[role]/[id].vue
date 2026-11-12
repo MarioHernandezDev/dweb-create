@@ -3,7 +3,7 @@ import type { Role } from '~/types'
 import type { Package } from '~/composables/usePackages'
 import type { DiscoveryResult } from '~/composables/useDiscover'
 import type { PublicProfile } from '~/composables/usePublicProfile'
-import { mapPublicContent, mapPublicStat, type PublicActivity, type PublicCollab, type PublicContentItem, type PublicStat, type SimilarProfile } from '~/composables/usePublicProfileExtras'
+import { mapPublicContent, type PublicActivity, type PublicCollab, type PublicContentItem, type SimilarProfile } from '~/composables/usePublicProfileExtras'
 import type { RatingSummary } from '~/utils/ratings'
 import type { GuestProfilePayload } from '~~/server/utils/public-profile'
 
@@ -35,7 +35,6 @@ const guest = !myProfileId
 let profile: PublicProfile | null = null
 const packages = ref<Package[]>([])
 const ratingSummary = ref<RatingSummary>({ avgStars: 0, ratingCount: 0 })
-let stats: PublicStat[] = []
 let content: PublicContentItem[] = []
 let collabs: PublicCollab[] = []
 let activity: PublicActivity = { collabCount: 0, responseHours: null }
@@ -48,7 +47,6 @@ if (guest) {
     throw createError({ statusCode: 404, statusMessage: 'Perfil no encontrado', fatal: true })
   }
   profile = data.value.profile as unknown as PublicProfile
-  stats = data.value.stats.map(mapPublicStat)
   content = data.value.content.map(mapPublicContent)
   activity = data.value.activity
   ratingSummary.value = data.value.rating
@@ -68,7 +66,7 @@ if (guest) {
   ])
   packages.value = packagesList
   ratingSummary.value = summary
-  ;({ stats, content, collabs, activity, similar } = extras)
+  ;({ content, collabs, activity, similar } = extras)
 }
 
 const shown = profile!
@@ -118,7 +116,7 @@ function openOffer(pkg: Package) {
 const dialogOpen = ref(false)
 const dialogTarget = computed<DiscoveryResult>(() => ({
   id: shown.id, name: shown.name, bio: shown.bio, categories: shown.categories, lookingFor: shown.lookingFor,
-  minCents: shown.minCents, maxCents: shown.maxCents, followers: shown.verifiedSocials.reduce((s, x) => s + x.followersCount, 0),
+  minCents: shown.minCents, maxCents: shown.maxCents, 
   coverUrl: shown.coverUrl, score: 0, reason: null, profileId: shown.profileId, collabCount: activity.collabCount,
   responseHours: activity.responseHours, platforms: [], verified: false, collaborationTypes: shown.collaborationTypes
 }))
@@ -135,7 +133,7 @@ function copyProfileLink() {
     <PublicProfileView
       guest :profile="shown" :packages="[]" :rating-summary="ratingSummary" :is-own-profile="false" :my-role="null"
       :starting-chat="false" chat-error="" :link-copied="linkCopied" :copy-error="copyError"
-      :stats="stats" :content="content" :collabs="[]" :activity="activity" :similar="[]"
+      :content="content" :collabs="[]" :activity="activity" :similar="[]"
       @copy="copyProfileLink"
     />
   </PublicShell>
@@ -143,7 +141,7 @@ function copyProfileLink() {
     <PublicProfileView
       :profile="shown" :packages="packages" :rating-summary="ratingSummary" :is-own-profile="isOwnProfile" :my-role="myRole ?? null"
       :starting-chat="startingChat" :chat-error="chatError" :link-copied="linkCopied" :copy-error="copyError"
-      :stats="stats" :content="content" :collabs="collabs" :activity="activity" :similar="similar"
+      :content="content" :collabs="collabs" :activity="activity" :similar="similar"
       @chat="startChat" @offer="openOffer" @copy="copyProfileLink" @collaborate="dialogOpen = true"
     />
     <InviteDialog v-if="myRole === 'partner' && shown.role === 'creator'" v-model="dialogOpen" :target="dialogTarget" />

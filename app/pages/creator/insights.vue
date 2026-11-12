@@ -1,5 +1,5 @@
 <script setup lang="ts">
-// Resultados dentro de CIBERAN (métricas propias). Las métricas de redes sociales viven aparte, en /creator/metrics.
+// Resultados dentro de CIBERAN (métricas propias de las colaboraciones).
 useHead({ title: 'Resultados' })
 const { range, metrics, loading, error, load, setRange } = useCollabInsights()
 await load()

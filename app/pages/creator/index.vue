@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { formatCompactNumber, formatEuros } from '~/utils/mock-data'
+import { formatEuros } from '~/utils/mock-data'
 import { isFichaIncomplete } from '~/utils/ficha'
 import { relativeTime, isPostOverdue } from '~/utils/status'
 import { publishedThisWeek as countPublishedThisWeek } from '~/utils/post-library'
@@ -10,11 +10,6 @@ useHead({ title: 'Hoy' })
 
 const { posts, ensureLoaded, loadUntilDue } = useMyPosts()
 const { requests, pendingCount: pendingRequests, activeCount: activeCollaborations, ensureLoaded: ensureRequestsLoaded } = useCollabRequests()
-// Seguidores reales de tus redes conectadas — mismo dato (y mismo motivo
-// honesto) que ya usa metrics.vue: nada de "interacciones"/"racha" fijas,
-// porque no hay ninguna fuente real detrás todavía (alcance/interacciones
-// necesitan el permiso de insights de Instagram, pendiente de Meta).
-const { accounts: socialAccounts, ensureLoaded: ensureSocialsLoaded } = useMySocialAccounts()
 const { creator, ensureCreator } = useMyCreator()
 const { myPackages, ensureMyPackages } = usePackages()
 const { resolveMyProfileId } = useMyProfileId()
@@ -29,7 +24,7 @@ const myProfileId = await resolveMyProfileId()
 // En paralelo, no en serie — seis consultas independientes, esperarlas una
 // tras otra solo suma su latencia de red sin motivo.
 await Promise.all([
-  ensureLoaded(), ensureRequestsLoaded(), ensureSocialsLoaded(), ensureCreator(),
+  ensureLoaded(), ensureRequestsLoaded(), ensureCreator(),
   myProfileId ? ensureMyPackages(myProfileId) : Promise.resolve([])
 ])
 // Lo siguiente NO bloquea el primer pintado (cada espera encadenada suma una ida
@@ -70,8 +65,6 @@ const upcoming = computed(() => posts.value.filter((p) => p.dueInDays > 0 && p.d
 // ese valor del enum existe en la base de datos pero ningún código lo
 // asigna jamás, así que ese filtro nunca encontraba nada (ver utils/status.ts).
 const overdue = computed(() => posts.value.filter(isPostOverdue).sort((a, b) => a.dueInDays - b.dueInDays))
-const connectedFollowers = computed(() => socialAccounts.value.filter((a) => a.connected).reduce((sum, a) => sum + a.followers, 0))
-const hasConnectedSocials = computed(() => socialAccounts.value.some((a) => a.connected))
 
 // Objetivo semanal real del creador (editable en Perfil → Ficha pública).
 const weeklyTarget = computed(() => creator.value?.weeklyPostTarget ?? 5)
@@ -160,9 +153,6 @@ const tips = computed(() => {
   } else if (hasNoPackages.value) {
     list.push({ icon: 'ph:package-fill', text: 'Publica tu primer paquete para que puedan hacerte una oferta desde el chat.', cta: 'Publicar', to: '/creator/profile' })
   }
-  if (!hasConnectedSocials.value) {
-    list.push({ icon: 'ph:share-network-fill', text: 'Conecta una red social para ver tus métricas reales aquí.', cta: 'Conectar', to: '/creator/metrics#conexiones' })
-  }
   return list
 })
 </script>
@@ -233,10 +223,6 @@ const tips = computed(() => {
             </NuxtLink>
           </div>
         </PanelCard>
-
-        <section v-if="hasConnectedSocials">
-          <StatTile label="Seguidores totales en tus redes" :value="formatCompactNumber(connectedFollowers)" />
-        </section>
 
         <BaseCard v-if="tips.length" tone="overlay" radius="lg">
           <SectionTitle title="Para sacarle más partido" as="h2" class="mb-3" />
