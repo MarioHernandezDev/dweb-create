@@ -79,8 +79,12 @@ export default defineNuxtConfig({
   },
   // Los estáticos se sirven ya comprimidos (gzip y brotli) si no hay un CDN delante.
   nitro: {
-    compressPublicAssets: true
+    compressPublicAssets: true,
+    // Código aparcado (ver docs/17-METRICAS-REDES-PROXIMAMENTE.md): no se compila, tampoco en el typecheck.
+    typescript: { tsConfig: { exclude: ['../server/_disabled/**'] } }
   },
+
+  typescript: { tsConfig: { exclude: ['../app/_disabled/**', '../tests/_disabled/**'] } },
 
   routeRules: {
     '/creator/socials': { redirect: { to: '/creator/metrics', statusCode: 302 } },

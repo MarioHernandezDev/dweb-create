@@ -108,6 +108,10 @@
     &.rail__link--small { height: 2.25rem; font-size: var(--text-sm); }
   }
   .rail__link-icon { width: 1.25rem; height: 1.25rem; flex-shrink: 0; }
+  /* El texto cede espacio con «…» (nunca un recorte seco) y la etiqueta «Pronto»
+     y los contadores conservan siempre su ancho completo. */
+  .rail__link .rail__label:not(.soon-tag) { flex: 0 1 auto; text-overflow: ellipsis; }
+  .rail__link .soon-tag, .rail__link .badge { flex-shrink: 0; }
   .rail__foot { margin-top: auto; padding-top: 1.25rem; border-top: 1px solid rgb(245 241 234 / 14%); }
   .rail__account {
     display: flex;

@@ -100,6 +100,7 @@ Detalle de alcance en `docs/HOJA_DE_RUTA.md`. Orden: Fase 1 (cimientos) → 2 (a
 | 3–10 | Resto de fases | Pendiente | Fase 1 y 2 |
 
 ## 5. Decisiones técnicas
+- **Métricas de redes sociales: aplazadas a una fase futura (2026-11-12).** Definidas en `docs/17-METRICAS-REDES-PROXIMAMENTE.md`; código aislado en carpetas `_disabled`, sin dependencias en ninguna sección activa; `/creator/metrics` es una página «Próximamente». No reactivar sin petición expresa.
 - No se renombra ninguna migración ya aplicada, aunque el sello esté duplicado.
 - ROLLBACK obligatorio en migraciones desde `20261105100000`, forzado por test.
 - No se simulan integraciones sin credenciales.
