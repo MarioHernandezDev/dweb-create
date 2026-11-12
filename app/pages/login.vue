@@ -94,6 +94,7 @@ function loginAsDemo(demoEmail: string) {
       <BaseField label="Contraseña" :error="error" v-slot="f">
         <BaseInput v-bind="f" v-model="password" type="password" required autocomplete="current-password" />
       </BaseField>
+      <p class="text-sm text-right -mt-2"><NuxtLink to="/forgot-password" class="text-[var(--text-muted)] hover:underline" data-forgot-link>¿Olvidaste tu contraseña?</NuxtLink></p>
 
       <BaseButton type="submit" variant="primary" size="lg" block :loading="loading">
         {{ loading ? 'Accediendo…' : 'Acceder' }}

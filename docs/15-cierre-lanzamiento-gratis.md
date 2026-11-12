@@ -31,7 +31,10 @@ Plan free: sin backups automáticos descargables ni PITR. Antes de migrar produc
 Ver docs/14. Borrar solo perfiles marcados como semilla, en staging primero; nunca por patrón de email sin revisar la lista.
 
 ## Falta (email, legal, dominio, despliegue)
-- Email: integrado por SMTP propio (docs/16). Falta la contraseña de aplicación de Google y ponerla en `.env` y en Supabase Auth.
+- Email: SMTP propio integrado y probado (docs/16). Falta pegar las 5 plantillas en Supabase (Authentication → Emails → Templates; asuntos en `supabase/templates/README.md`) y subir la longitud mínima de contraseña a 8.
+- Recuperación de contraseña: hecha (`/forgot-password` → enlace por correo → `/reset-password`). Añadir `<dominio>/reset-password` a las Redirect URLs de Supabase al tener dominio.
+- Métricas de redes sociales: aparcadas como "Próximamente" (docs/17); no son requisito de lanzamiento.
+- Antes de lanzar: cambiar `ADMIN_PASSWORD` (hoy es un valor de prueba) y retirar las cuentas de prueba tras revisar la lista.
 - Legal: términos y privacidad revisados por un profesional; titular/CIF en el aviso legal.
 - Dominio y hosting elegidos; `site URL` y redirects de auth actualizados.
 - Sentry: DSN opcional.
