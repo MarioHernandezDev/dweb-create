@@ -1,6 +1,7 @@
 import { serverSupabaseServiceRole } from '#supabase/server'
 import { type PendingNotification, emailWindow, groupForEmail } from '../../utils/notification-email'
 import { notificationDigestMail } from '../../utils/mail-templates'
+import { unsubscribeUrl } from '../../utils/unsubscribe-token'
 
 /**
  * POST /api/notifications/email-dispatch — manda por correo los avisos sin leer.
@@ -73,8 +74,9 @@ export default defineEventHandler(async (event) => {
       await markEmailed(batch.ids)
       continue
     }
-    const mail = notificationDigestMail(batch.items, config.appUrl)
-    const result = await sendMail({ to, ...mail }, event)
+    const unsubscribe = unsubscribeUrl(config.appUrl, batch.profileId, config.adminSessionSecret)
+    const mail = notificationDigestMail(batch.items, config.appUrl, unsubscribe)
+    const result = await sendMail({ to, ...mail, unsubscribeUrl: unsubscribe, automated: true }, event)
     if (result.ok) {
       sent++
       await markEmailed(batch.ids)

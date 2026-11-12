@@ -21,6 +21,10 @@ export interface MailMessage {
   subject: string
   text: string
   html?: string
+  /** Enlace de baja: añade las cabeceras List-Unsubscribe que piden Gmail y Yahoo a los correos automáticos. */
+  unsubscribeUrl?: string | null
+  /** Correo generado por el sistema (avisos): evita respuestas automáticas en cadena. */
+  automated?: boolean
 }
 
 export type MailResult =
@@ -52,6 +56,18 @@ function transporterFor(s: MailSettings): Transporter {
   return transporter
 }
 
+/** Baja con un clic solo si el enlace es HTTPS (lo exige el estándar, RFC 8058). */
+export function mailHeaders(message: Pick<MailMessage, 'unsubscribeUrl' | 'automated'>): Record<string, string> {
+  const headers: Record<string, string> = {}
+  if (message.automated) headers['Auto-Submitted'] = 'auto-generated'
+  const url = message.unsubscribeUrl
+  if (url && /^https?:\/\/[^\s<>]+$/.test(url)) {
+    headers['List-Unsubscribe'] = `<${url}>`
+    if (url.startsWith('https://')) headers['List-Unsubscribe-Post'] = 'List-Unsubscribe=One-Click'
+  }
+  return headers
+}
+
 export function mailSettings(event?: H3Event) {
   const config = useRuntimeConfig(event)
   return resolveMailSettings(config as never)
@@ -68,7 +84,9 @@ export async function sendMail(message: MailMessage, event?: H3Event): Promise<M
     to: message.to,
     subject: message.subject.replace(/[\r\n]+/g, ' ').slice(0, 200),
     text: message.text,
-    html: message.html
+    html: message.html,
+    replyTo: s.fromEmail,
+    headers: mailHeaders(message)
   }
   let lastCode: MailErrorCode = 'unknown'
   for (let attempt = 1; attempt <= 2; attempt++) {

@@ -104,3 +104,64 @@ describe('agrupar avisos para el correo', () => {
     expect(w.newerThan).toBe('2026-01-01T12:00:00.000Z')
   })
 })
+
+import { authEmailTemplates, testMail } from '../../server/utils/mail-templates'
+import { createUnsubscribeToken, unsubscribeUrl, verifyUnsubscribeToken } from '../../server/utils/unsubscribe-token'
+import { unsubscribePage } from '../../server/utils/unsubscribe-page'
+
+describe('diseño y entregabilidad', () => {
+  it('sin imágenes, scripts ni recursos externos; con versión de texto', () => {
+    const mails = [testMail(), notificationDigestMail([{ title: 'A', body: 'b', link: '/x' }], 'https://ciberan.app', 'https://ciberan.app/api/notifications/unsubscribe?token=t')]
+    for (const m of mails) {
+      expect(m.html).not.toMatch(/<img|<script|<link|@import|url\(/i)
+      expect(m.html).toContain('lang="es"')
+      expect(m.text.length).toBeGreaterThan(40)
+    }
+  })
+  it('el resumen lleva el enlace de baja en HTML y en texto', () => {
+    const u = 'https://ciberan.app/api/notifications/unsubscribe?token=abc'
+    const m = notificationDigestMail([{ title: 'A', body: null, link: null }], 'https://ciberan.app', u)
+    expect(m.html).toContain(u)
+    expect(m.text).toContain(u)
+  })
+  it('plantillas de Supabase Auth: las cinco, con su enlace de confirmación', () => {
+    const t = authEmailTemplates()
+    expect(t.map((x) => x.file)).toEqual(['confirmation.html', 'recovery.html', 'email_change.html', 'magic_link.html', 'invite.html'])
+    for (const x of t) {
+      expect(x.html).toContain('href="{{ .ConfirmationURL }}"')
+      expect(x.subject.length).toBeLessThan(60)
+    }
+    expect(t[2]!.html).toContain('{{ .NewEmail }}')
+  })
+})
+
+describe('baja de avisos por correo', () => {
+  const secret = 'x'.repeat(40)
+  const id = '0f8fad5b-d9cb-469f-a165-70867728950e'
+  it('el token firmado se verifica y devuelve el perfil', () => {
+    const token = createUnsubscribeToken(id, secret)!
+    expect(verifyUnsubscribeToken(token, secret)).toBe(id)
+  })
+  it('rechaza firmas manipuladas, otro perfil, otro secreto y basura', () => {
+    const token = createUnsubscribeToken(id, secret)!
+    const other = '1f8fad5b-d9cb-469f-a165-70867728950e'
+    expect(verifyUnsubscribeToken(token.slice(0, -2) + 'zz', secret)).toBeNull()
+    expect(verifyUnsubscribeToken(other + token.slice(36), secret)).toBeNull()
+    expect(verifyUnsubscribeToken(token, 'y'.repeat(40))).toBeNull()
+    expect(verifyUnsubscribeToken('nada', secret)).toBeNull()
+    expect(verifyUnsubscribeToken(undefined, secret)).toBeNull()
+  })
+  it('sin secreto suficiente no hay token ni enlace', () => {
+    expect(createUnsubscribeToken(id, 'corto')).toBeNull()
+    expect(unsubscribeUrl('https://ciberan.app', id, undefined)).toBeNull()
+    expect(unsubscribeUrl(undefined, id, secret)).toBeNull()
+  })
+  it('el enlace apunta a la app', () => {
+    expect(unsubscribeUrl('https://ciberan.app/', id, secret)).toMatch(/^https:\/\/ciberan\.app\/api\/notifications\/unsubscribe\?token=/)
+  })
+  it('la página de confirmación da de baja por POST, no al abrirla', () => {
+    const html = unsubscribePage('confirm', 'a.b')
+    expect(html).toContain('method="post"')
+    expect(unsubscribePage('done')).not.toContain('<form')
+  })
+})

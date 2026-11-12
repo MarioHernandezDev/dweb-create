@@ -26,7 +26,7 @@ Después:
 
 - **Authentication → Rate limits**: con SMTP propio el límite de correos por hora deja de ser el mínimo del servicio integrado; súbelo a un valor razonable (p. ej. 30/h).
 - **Authentication → URL Configuration**: *Site URL* y *Redirect URLs* deben apuntar al dominio real cuando lo haya (hoy `http://localhost:3000`).
-- **Authentication → Emails → Templates**: traducir al español «Confirm signup», «Reset password», «Change email» y «Magic link». Mantener la variable `{{ .ConfirmationURL }}` en el enlace.
+- **Authentication → Emails → Templates**: pegar las plantillas de `supabase/templates/` (mismo diseño que los correos de la app). Para cada una: abrir la plantilla del panel, pegar el asunto de `supabase/templates/README.md` en *Subject*, sustituir todo el *Body* por el contenido del `.html` y guardar. Se regeneran con `npx tsx scripts/build-auth-email-templates.mjs`.
 - Si la confirmación de correo está desactivada (*Sign In / Providers → Email → Confirm email*), actívala antes de abrir el registro.
 
 ## 3. La aplicación (avisos)
@@ -72,6 +72,22 @@ Con sesión en `/admin`:
 
 Migración: `20261113100000_notification_emails.sql` (solo añade `notifications.emailed_at` y `notification_preferences.email_enabled`; aplicada el 2026-11-12; los avisos anteriores quedaron marcados como enviados).
 
+## Diseño y entrega (que no acaben en spam)
+
+Lo que ya hace el código:
+
+- Un único diseño (`mailLayout` en `server/utils/mail-templates.ts`) con la marca: sin imágenes, fuentes ni recursos externos, con versión de texto equivalente y una sola acción por correo.
+- Los avisos llevan enlace de baja firmado en el pie y en las cabeceras `List-Unsubscribe` / `List-Unsubscribe-Post` (baja con un clic cuando `APP_URL` es HTTPS), más `Auto-Submitted: auto-generated`.
+- La baja (`/api/notifications/unsubscribe`) no exige sesión: abrir el enlace muestra una confirmación y solo el botón (POST) apaga los avisos. Usa `ADMIN_SESSION_SECRET` para firmar.
+- Solo se escribe a correos confirmados, un correo por persona y pasada, y nunca avisos de más de 24 h.
+
+Lo que depende de fuera del código:
+
+- **`APP_URL` debe ser el dominio real con HTTPS.** Un correo con enlaces a `http://localhost` es una señal clara de spam.
+- Enviando desde `@gmail.com` por el SMTP de Google, SPF y DKIM los pone Google y pasan. Lo que hunde la reputación son los rebotes y las quejas: no enviar a direcciones inventadas (perfiles ficticios) y no superar el límite diario.
+- Para garantías reales hace falta **dominio propio** (p. ej. `hola@ciberan.…`) con SPF, DKIM y DMARC en un servicio transaccional. Solo cambian las variables `SMTP_*` y los datos del panel de Supabase.
+- Ningún remitente puede garantizar la bandeja de entrada: los primeros envíos de un buzón nuevo pueden caer en spam hasta que los destinatarios los abren o marcan «no es spam».
+
 ## Límites de Gmail
 
 - Unos 500 destinatarios al día por cuenta gratuita; superarlo bloquea el envío 24 h. Vale para el lanzamiento; con volumen real conviene pasar a un servicio transaccional con dominio propio (SPF, DKIM y DMARC), cambiando solo las variables `SMTP_*`.
@@ -79,7 +95,8 @@ Migración: `20261113100000_notification_emails.sql` (solo añade `notifications
 
 ## Pendiente
 
-- [ ] Crear la contraseña de aplicación (paso 1) y ponerla en `.env` y en Supabase (paso 2). **Lo hace Alex: es un secreto.**
-- [ ] Probar con `mail-test` y con un registro real.
-- [ ] Traducir las plantillas de Supabase Auth.
+- [x] Contraseña de aplicación creada y puesta en `.env` y en Supabase (2026-11-12). `mail-status` → conexión ok; `mail-test` entregado a Gmail.
+- [ ] Pegar las cinco plantillas de `supabase/templates/` en el panel de Supabase.
+- [ ] Probar un registro real y una recuperación de contraseña.
+- [ ] Cambiar `ADMIN_PASSWORD` de prueba por una definitiva antes de abrir.
 - [ ] Programar `email-dispatch` cuando haya hosting y se hayan borrado los perfiles ficticios.
