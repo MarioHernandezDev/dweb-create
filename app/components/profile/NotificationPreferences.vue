@@ -3,7 +3,7 @@ import { NOTIFICATION_PREFERENCE_GROUPS, isGroupEnabled } from '~/utils/notifica
 
 /** Qué avisos quiere recibir el usuario en la bandeja. Lo que pide una acción (solicitudes, ofertas, revisiones, pagos) llega siempre. */
 const props = defineProps<{ role: 'creator' | 'partner' }>()
-const { muted, loaded, saving, error, load, setGroup } = useNotificationPreferences()
+const { muted, emailEnabled, loaded, saving, error, load, setGroup, setEmailEnabled } = useNotificationPreferences()
 const toast = useToast()
 const groups = computed(() => NOTIFICATION_PREFERENCE_GROUPS.filter((g) => !g.role || g.role === props.role))
 
@@ -14,6 +14,11 @@ async function toggle(id: string) {
   if (!group) return
   const enable = !isGroupEnabled(group, muted.value)
   if (await setGroup(group, enable)) toast.success(enable ? `Volverás a recibir: ${group.label.toLowerCase()}` : `Silenciado: ${group.label.toLowerCase()}`)
+}
+
+async function toggleEmail() {
+  const enable = !emailEnabled.value
+  if (await setEmailEnabled(enable)) toast.success(enable ? 'Te avisaremos también por correo' : 'Ya no recibirás avisos por correo')
 }
 </script>
 
@@ -30,6 +35,18 @@ async function toggle(id: string) {
         <button
           type="button" role="switch" class="switch" :aria-checked="isGroupEnabled(g, muted)" :aria-labelledby="`notif-pref-${g.id}`"
           :disabled="!loaded || saving !== null" :aria-busy="saving === g.id" @click="toggle(g.id)"
+        >
+          <span class="switch__thumb" />
+        </button>
+      </div>
+      <div class="setting-row" data-notification-email>
+        <div class="setting-row__text">
+          <p id="notif-pref-email" class="setting-row__label">Avisos por correo</p>
+          <p class="setting-row__meta">Si tienes avisos sin leer, te mandamos un resumen a tu correo. Los de tu cuenta (verificación, contraseña) llegan siempre.</p>
+        </div>
+        <button
+          type="button" role="switch" class="switch" :aria-checked="emailEnabled" aria-labelledby="notif-pref-email"
+          :disabled="!loaded || saving !== null" :aria-busy="saving === 'email'" @click="toggleEmail"
         >
           <span class="switch__thumb" />
         </button>

@@ -135,6 +135,14 @@ export default defineNuxtConfig({
     // llega por un túnel HTTPS (Meta no acepta http://localhost) para no
     // quedarse en el dominio del túnel, donde no hay sesión. Opcional.
     appUrl: process.env.APP_URL,
+    // Correo saliente por SMTP propio (server/utils/mailer.ts, docs/16-EMAIL-SMTP.md).
+    // Sin SMTP_HOST/USER/PASS el correo queda apagado y la app funciona igual.
+    smtpHost: process.env.SMTP_HOST,
+    smtpPort: process.env.SMTP_PORT,
+    smtpUser: process.env.SMTP_USER,
+    smtpPass: process.env.SMTP_PASS,
+    smtpFromEmail: process.env.SMTP_FROM_EMAIL,
+    smtpFromName: process.env.SMTP_FROM_NAME,
     // Panel de admin (/admin) — contraseña única compartida por el equipo,
     // sin cuenta de Supabase de por medio a propósito (ver
     // server/utils/admin-session.ts). `adminSessionSecret` solo cifra la
