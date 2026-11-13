@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { emptyFilters, filterPosts, hasActiveFilters, projectStats, publishedThisWeek, sortPosts, OWN_PROJECT } from '../../app/utils/post-library'
+import { emptyFilters, filterPosts, hasActiveFilters, isDueThisWeek, isOldPublished, projectStats, publishedThisWeek, quickCounts, sortPosts, OWN_PROJECT } from '../../app/utils/post-library'
 import type { Post } from '../../app/types'
 
 let n = 0
@@ -97,5 +97,64 @@ describe('publishedThisWeek (objetivo semanal, lunes a domingo)', () => {
   })
   it('sin ninguna publicada devuelve 0', () => {
     expect(publishedThisWeek([], now)).toBe(0)
+  })
+})
+
+describe('atajos, etiquetas y búsqueda ampliada', () => {
+  // Miércoles 11 nov 2026: la semana va del lunes 9 al domingo 15.
+  const now = new Date(2026, 10, 11, 10, 0, 0)
+  const late = post({ title: 'Tarde', dueDate: '2026-11-03', dueInDays: -8, status: 'in_production', labelIds: ['l1'] })
+  const thisWeek = post({ title: 'Esta semana', dueDate: '2026-11-14', dueInDays: 3, status: 'idea', labelIds: ['l1', 'l2'] })
+  const mondayEdge = post({ title: 'Lunes', dueDate: '2026-11-09', dueInDays: -2, status: 'scheduled' })
+  const nextWeek = post({ title: 'Próxima', dueDate: '2026-11-16', dueInDays: 5, status: 'idea' })
+  const done = post({ title: 'Hecha', dueDate: '2026-11-12', dueInDays: 1, status: 'published' })
+  const all = [late, thisWeek, mondayEdge, nextWeek, done]
+
+  it('«Atrasadas» no incluye las publicadas', () => {
+    expect(filterPosts(all, { ...emptyFilters(), quick: 'overdue' }).map((p) => p.title)).toEqual(['Tarde', 'Lunes'])
+  })
+  it('«Esta semana» va de lunes a domingo y deja fuera las publicadas', () => {
+    expect(filterPosts(all, { ...emptyFilters(), quick: 'week' }, { now }).map((p) => p.title)).toEqual(['Esta semana', 'Lunes'])
+    expect(isDueThisWeek(nextWeek, now)).toBe(false)
+    expect(isDueThisWeek(done, now)).toBe(false)
+  })
+  it('el domingo todavía es «esta semana» y el lunes siguiente ya no', () => {
+    const sunday = post({ dueDate: '2026-11-15', status: 'idea' })
+    const monday = post({ dueDate: '2026-11-16', status: 'idea' })
+    expect(isDueThisWeek(sunday, now)).toBe(true)
+    expect(isDueThisWeek(monday, now)).toBe(false)
+  })
+  it('filtra por etiqueta', () => {
+    expect(filterPosts(all, { ...emptyFilters(), label: 'l2' }).map((p) => p.title)).toEqual(['Esta semana'])
+    expect(filterPosts(all, { ...emptyFilters(), label: 'l1' })).toHaveLength(2)
+  })
+  it('los atajos y la etiqueta cuentan como filtro activo', () => {
+    expect(hasActiveFilters({ ...emptyFilters(), quick: 'overdue' })).toBe(true)
+    expect(hasActiveFilters({ ...emptyFilters(), label: 'l1' })).toBe(true)
+  })
+  it('la búsqueda mira también el texto y los hashtags', () => {
+    const withText = post({ title: 'Sin pista', caption: 'Rutina de noche con retinol', hashtags: ['#skincare'] })
+    expect(filterPosts([withText], { ...emptyFilters(), search: 'retinol' })).toEqual([withText])
+    expect(filterPosts([withText], { ...emptyFilters(), search: '#skincare' })).toEqual([withText])
+    expect(filterPosts([withText], { ...emptyFilters(), search: 'no existe' })).toEqual([])
+  })
+  it('quickCounts cuenta lo que dejan pasar el resto de filtros', () => {
+    expect(quickCounts(all, emptyFilters(), { now })).toEqual({ overdue: 2, week: 2 })
+    expect(quickCounts(all, { ...emptyFilters(), label: 'l1' }, { now })).toEqual({ overdue: 1, week: 1 })
+    // el atajo activo no cambia su propio número
+    expect(quickCounts(all, { ...emptyFilters(), quick: 'overdue' }, { now })).toEqual({ overdue: 2, week: 2 })
+  })
+})
+
+describe('isOldPublished', () => {
+  const now = new Date('2026-11-12T12:00:00Z')
+  it('solo las publicadas de hace más de 30 días', () => {
+    expect(isOldPublished(post({ status: 'published', publishedAt: '2026-10-01T10:00:00Z' }), now)).toBe(true)
+    expect(isOldPublished(post({ status: 'published', publishedAt: '2026-11-01T10:00:00Z' }), now)).toBe(false)
+    expect(isOldPublished(post({ status: 'in_production', dueDate: '2026-01-01' }), now)).toBe(false)
+  })
+  it('sin fecha de publicación usa la de entrega', () => {
+    expect(isOldPublished(post({ status: 'published', publishedAt: null, dueDate: '2026-08-01' }), now)).toBe(true)
+    expect(isOldPublished(post({ status: 'published', publishedAt: null, dueDate: '2026-11-05' }), now)).toBe(false)
   })
 })

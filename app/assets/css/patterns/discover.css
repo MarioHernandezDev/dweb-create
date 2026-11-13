@@ -25,7 +25,7 @@
   }
   .discover__main { display: grid; gap: 1.25rem; min-width: 0; }
 
-  .discover__summary { display: grid; gap: 0.75rem; }
+  .discover__summary { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.75rem; }
   .discover__headline { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.25rem 0.75rem; }
   .discover__count { font-family: var(--font-display); font-weight: 700; font-size: var(--text-title); letter-spacing: -0.02em; }
   .discover__note { color: var(--text-muted); font-size: var(--text-sm); }
@@ -36,7 +36,8 @@
     & select { appearance: none; height: 2.75rem; padding: 0 2.25rem 0 1rem; border-radius: var(--radius-md); background: var(--surface-raised); border: 1px solid var(--line); font-weight: 600; font-size: var(--text-sm); color: var(--text-strong); cursor: pointer; &:hover { border-color: var(--line-strong); } &:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; } }
     & > svg { position: absolute; right: 0.875rem; pointer-events: none; }
   }
-  .discover__savewrap { position: relative; display: flex; align-items: center; gap: 0.25rem; }
+  /* En móvil los dos botones no caben en una línea: saltan en vez de salirse de la pantalla. */
+  .discover__savewrap { position: relative; display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem; max-width: 100%; }
   .discover__saved {
     position: absolute; top: calc(100% + 0.5rem); left: 0; z-index: 20; min-width: 16rem; max-width: 22rem; padding: 0.375rem; list-style: none; margin: 0;
     background: var(--surface-raised); border: 1px solid var(--line); border-radius: var(--radius-md); box-shadow: var(--shadow-2);
@@ -151,14 +152,17 @@
   /* ---- Carrusel de resultados (ResultsCarousel.vue) ----
      Las tarjetas se colocan en el centro del escenario y GSAP las mueve con
      transform (xPercent, scale, opacidad). --dcar-w es el ancho de cada una. */
-  .dcar { display: grid; gap: 1rem; outline: none; &:focus-visible .dcar__stage { outline: 2px solid var(--focus-ring); outline-offset: 4px; border-radius: var(--radius-md); } }
+  .dcar { display: grid; gap: 1.25rem; min-width: 0; outline: none; &:focus-visible .dcar__stage { outline: 2px solid var(--focus-ring); outline-offset: 4px; border-radius: var(--radius-md); } }
   .dcar__stage {
-    --dcar-w: min(17rem, 72vw);
+    --dcar-w: min(18rem, 78vw);
+    --dcar-pad: 1rem; /* aire arriba y abajo para que la sombra de la protagonista no se corte */
 
     position: relative;
     /* Contexto de apilado propio: GSAP sube el z-index de las tarjetas y, sin esto, tapaban los diálogos. */
     isolation: isolate;
-    height: 34rem;
+    /* --dcar-h (altura de la tarjeta más alta) la mide ResultsCarousel.vue. */
+    height: calc(var(--dcar-h, 0px) + var(--dcar-pad) * 2);
+    min-height: 20rem;
     overflow: hidden;
     touch-action: pan-y;
     user-select: none;
@@ -170,15 +174,18 @@
   }
   .dcar__item {
     position: absolute;
-    top: 0;
-    bottom: 0;
+    top: var(--dcar-pad);
     left: 50%;
     width: var(--dcar-w);
     margin-left: calc(var(--dcar-w) / -2);
 
-    & > .dcard { height: 100%; }
+    & > .dcard { min-height: var(--dcar-h, 0px); cursor: default; }
+    /* La protagonista se despega del resto; las vecinas (inertes) invitan a pulsarlas. */
+    &.is-active > .dcard { border-color: var(--line-strong); box-shadow: var(--shadow-2); }
+    &:not(.is-active) { cursor: pointer; }
   }
-  .dcar__actions { display: flex; justify-content: center; gap: 0.75rem; }
+  .dcar__actions { display: flex; align-items: center; justify-content: center; gap: 1rem; }
+  .dcar__count { min-width: 4.5rem; margin: 0; text-align: center; font-size: var(--text-sm); color: var(--text-muted); font-variant-numeric: tabular-nums; & strong { color: var(--text-strong); font-weight: 700; } }
 
   /* Interruptor «solo verificadas» (casilla real debajo, accesible por teclado). */
   .dswitch { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding-top: 1rem; border-top: 1px solid var(--line); font-size: var(--text-sm); font-weight: 600; cursor: pointer; & input { position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; } }

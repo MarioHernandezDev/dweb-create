@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { platformMeta, formatEuros } from '~/utils/mock-data'
 import { collaborationStatusMeta, statusMeta } from '~/utils/status'
-import { OWN_PROJECT, POST_SORT_OPTIONS, type PostFilters, type PostSort } from '~/utils/post-library'
-import type { Platform, PostStatus } from '~/types'
+import { OWN_PROJECT, POST_SORT_OPTIONS, quickCounts, type PostFilters, type PostSort, type QuickFilter } from '~/utils/post-library'
+import type { Platform, Post, PostStatus } from '~/types'
 
 /**
  * Barra de búsqueda y filtros compartida por el Tablero y la Lista de
@@ -13,11 +13,24 @@ import type { Platform, PostStatus } from '~/types'
 const filters = defineModel<PostFilters>('filters', { required: true })
 const sort = defineModel<PostSort>('sort')
 
-defineProps<{
+const props = defineProps<{
   collabs: { id: string; partnerName: string; budgetCents: number | null; status: keyof typeof collaborationStatusMeta }[]
   showStatus?: boolean
   showSort?: boolean
+  /** Publicaciones sobre las que se cuentan los atajos «Atrasadas» y «Esta semana». Sin ellas, no se enseña ningún número. */
+  posts?: Post[]
 }>()
+
+const { labels, ensureLabels } = useLabels()
+onMounted(() => ensureLabels())
+const counts = computed(() => (props.posts ? quickCounts(props.posts, filters.value, { ignoreStatus: !props.showStatus }) : null))
+const quickOptions = computed<{ value: QuickFilter; label: string; n: number | null }[]>(() => [
+  { value: 'overdue', label: 'Atrasadas', n: counts.value?.overdue ?? null },
+  { value: 'week', label: 'Esta semana', n: counts.value?.week ?? null }
+])
+function toggleQuick(value: QuickFilter) {
+  patch({ quick: filters.value.quick === value ? '' : value })
+}
 
 const platformOptions = Object.entries(platformMeta).map(([value, meta]) => ({ value: value as Platform, label: meta.label }))
 const statusOptions = (['idea', 'in_production', 'ready_for_review', 'scheduled', 'published'] as PostStatus[]).map((s) => ({ value: s, label: statusMeta[s].label }))
@@ -31,11 +44,21 @@ const select = 'h-9 px-3 max-w-full min-w-0 truncate rounded-full bg-[var(--colo
 
 <template>
   <div class="flex flex-wrap items-center gap-2.5" role="search" data-filter-bar>
+    <div class="flex items-center gap-1.5" role="group" aria-label="Atajos" data-quick-filters>
+      <button
+        v-for="q in quickOptions" :key="q.value" type="button" class="chip chip--sm"
+        :class="filters.quick !== q.value && 'chip--outline'" :aria-pressed="filters.quick === q.value"
+        @click="toggleQuick(q.value)"
+      >
+        {{ q.label }}<span v-if="q.n !== null" class="ml-1 tabular-nums" :data-quick-count="q.value">{{ q.n }}</span>
+      </button>
+    </div>
+
     <div class="relative flex-1 min-w-[11rem] max-w-xs">
       <Icon name="ph:magnifying-glass-bold" class="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-[var(--color-text-faint)]" />
-      <label class="sr-only" for="post-filter-search">Buscar publicaciones por título</label>
+      <label class="sr-only" for="post-filter-search">Buscar publicaciones por título, texto o hashtags</label>
       <input
-        id="post-filter-search" :value="filters.search" type="search" placeholder="Buscar por título…"
+        id="post-filter-search" :value="filters.search" type="search" placeholder="Buscar por título o texto…"
         class="input w-full h-9 pl-8 pr-3"
         @input="patch({ search: ($event.target as HTMLInputElement).value })"
       >
@@ -52,6 +75,14 @@ const select = 'h-9 px-3 max-w-full min-w-0 truncate rounded-full bg-[var(--colo
       <option value="">Todas las redes</option>
       <option v-for="p in platformOptions" :key="p.value" :value="p.value">{{ p.label }}</option>
     </select>
+
+    <template v-if="labels.length">
+      <label class="sr-only" for="post-filter-label">Etiqueta</label>
+      <select id="post-filter-label" :class="select" :value="filters.label" @change="patch({ label: ($event.target as HTMLSelectElement).value })">
+        <option value="">Todas las etiquetas</option>
+        <option v-for="l in labels" :key="l.id" :value="l.id">{{ l.name }}</option>
+      </select>
+    </template>
 
     <label class="sr-only" for="post-filter-project">Proyecto</label>
     <select id="post-filter-project" :class="select" :value="filters.project" @change="patch({ project: ($event.target as HTMLSelectElement).value })">

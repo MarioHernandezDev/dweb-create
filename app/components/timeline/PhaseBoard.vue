@@ -3,7 +3,7 @@ import draggable from 'vuedraggable'
 import type { ComponentPublicInstance } from 'vue'
 import type { Post, PostStatus, Platform } from '~/types'
 import { statusMeta, isPostOverdue, phaseDescription } from '~/utils/status'
-import { emptyFilters, filterPosts, hasActiveFilters, type PostFilters } from '~/utils/post-library'
+import { emptyFilters, filterPosts, hasActiveFilters, isOldPublished, RECENT_PUBLISHED_DAYS, type PostFilters } from '~/utils/post-library'
 
 const { posts, deletePost, refresh } = useMyPosts()
 const { changeStatus } = usePostActions()
@@ -33,7 +33,15 @@ function clearFilters() {
 }
 
 // El Tablero no filtra por estado: las columnas ya son los estados.
-const filteredPosts = computed(() => filterPosts(posts.value, filters.value, { ignoreStatus: true }))
+const matchingPosts = computed(() => filterPosts(posts.value, filters.value, { ignoreStatus: true }))
+
+// «Publicado» crece sin parar: las de hace más de RECENT_PUBLISHED_DAYS días se esconden tras un botón
+// (no se borran ni se archivan en la base: siguen en la Lista y en el Calendario). Con algún filtro
+// activo se enseñan todas, para que una búsqueda no oculte lo que se busca.
+const showOldPublished = ref(false)
+const oldPublishedCount = computed(() => matchingPosts.value.filter((p) => isOldPublished(p)).length)
+const hidingOld = computed(() => !showOldPublished.value && !hasFilters.value)
+const filteredPosts = computed(() => (hidingOld.value ? matchingPosts.value.filter((p) => !isOldPublished(p)) : matchingPosts.value))
 
 // Las columnas viven en su propio estado local, mutado directamente por
 // vuedraggable al arrastrar — si se derivaran de `posts` con un `computed`,
@@ -210,7 +218,7 @@ async function bulkDelete() {
 
 <template>
   <div>
-    <PostFilterBar v-if="posts.length" v-model:filters="filters" :collabs="collabRequests" class="mb-5">
+    <PostFilterBar v-if="posts.length" v-model:filters="filters" :collabs="collabRequests" :posts="posts" class="mb-5">
       <template #end>
         <button
           type="button" class="text-sm font-medium transition-colors"
@@ -333,6 +341,12 @@ async function bulkDelete() {
             </div>
           </template>
         </draggable>
+        <button
+          v-if="phase === 'published' && oldPublishedCount && !hasFilters" type="button" class="board-col__link text-left" data-old-published
+          @click="showOldPublished = !showOldPublished"
+        >
+          {{ showOldPublished ? 'Ocultar las anteriores' : `Ver ${oldPublishedCount} de hace más de ${RECENT_PUBLISHED_DAYS} días` }}
+        </button>
       </section>
     </div>
 

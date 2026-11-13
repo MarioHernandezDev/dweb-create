@@ -1,7 +1,8 @@
 import { LABEL_COLORS } from '~/utils/labels'
 import type { Label } from '~/composables/useLabels'
 import type { ChecklistItem } from '~/composables/useChecklist'
-import type { Post } from '~/types'
+import { platformMeta } from '~/utils/mock-data'
+import type { Platform, Post, PostStatus } from '~/types'
 
 /**
  * Estado y acciones compartidas entre las dos superficies de edición de una
@@ -27,28 +28,44 @@ export function usePostEditorPanel(post: Ref<Post | null | undefined>) {
   const title = ref('')
   const caption = ref('')
   const dueDate = ref('')
+  /** Hashtags como texto libre («#moda #verano»); se guardan como lista. */
+  const hashtagsText = ref('')
+  const parsedHashtags = computed(() => parseHashtags(hashtagsText.value))
+  const hashtagsChanged = computed(() => !!post.value && parsedHashtags.value.join(' ') !== post.value.hashtags.join(' '))
 
   const dirty = computed(
-    () => !!post.value && (title.value !== post.value.title || caption.value !== post.value.caption || dueDate.value !== post.value.dueDate)
+    () => !!post.value && (title.value !== post.value.title || caption.value !== post.value.caption || dueDate.value !== post.value.dueDate || hashtagsChanged.value)
   )
+  /** Vuelve a lo guardado, sin tocar el servidor. */
+  function discard() {
+    if (!post.value) return
+    title.value = post.value.title
+    caption.value = post.value.caption
+    dueDate.value = post.value.dueDate
+    hashtagsText.value = post.value.hashtags.join(' ')
+  }
   const saving = ref(false)
   async function save() {
     if (!post.value) return
     // Una pieza ya aprobada de una colaboración: cambiar el título o el texto invalida la aprobación
     // (el servidor la devuelve a «En producción»). Se avisa antes, no después.
     const changesApprovedContent = post.value.status === 'scheduled' && !!post.value.collaborationId
-      && (title.value !== post.value.title || caption.value !== post.value.caption)
+      && (title.value !== post.value.title || caption.value !== post.value.caption || hashtagsChanged.value)
     if (changesApprovedContent) {
       const ok = await confirm({
         title: 'Esta publicación ya está aprobada',
-        message: 'Si cambias el título o el texto, la marca tendrá que aprobarla de nuevo: volverá a «En producción» y tendrás que enviarla otra vez a revisión.',
+        message: 'Si cambias el título, el texto o los hashtags, la marca tendrá que aprobarla de nuevo: volverá a «En producción» y tendrás que enviarla otra vez a revisión.',
         confirmLabel: 'Guardar y pedir nueva aprobación'
       })
       if (!ok) return
     }
     saving.value = true
     try {
-      await updatePost(post.value.id, { title: title.value, caption: caption.value, dueDate: dueDate.value })
+      const patch: Parameters<typeof updatePost>[1] = { title: title.value, caption: caption.value, dueDate: dueDate.value }
+      // Solo si cambian: los hashtags son contenido material (suben la versión).
+      if (hashtagsChanged.value) patch.hashtags = parsedHashtags.value
+      await updatePost(post.value.id, patch)
+      hashtagsText.value = post.value.hashtags.join(' ')
       if (changesApprovedContent) await refreshPosts() // el servidor cambió la fase: se muestra la real
       toast.success('Cambios guardados')
     } catch (err) {
@@ -182,6 +199,7 @@ export function usePostEditorPanel(post: Ref<Post | null | undefined>) {
       title.value = post.value.title
       caption.value = post.value.caption
       dueDate.value = post.value.dueDate
+      hashtagsText.value = post.value.hashtags.join(' ')
       predictError.value = ''
       labelsPickerOpen.value = false
       newLabelName.value = ''
@@ -195,11 +213,83 @@ export function usePostEditorPanel(post: Ref<Post | null | undefined>) {
     { immediate: true }
   )
 
+  // ---- Guardado con aviso, validación y atajo (lo comparten la página y la ficha rápida) ----
+  const saved = ref(false)
+  let savedTimer: ReturnType<typeof setTimeout> | undefined
+  async function saveWithFeedback() {
+    if (!dirty.value || saving.value || blockedReason.value) return
+    await save()
+    if (dirty.value) return // falló o se canceló: el aviso ya lo dio `save`
+    saved.value = true
+    clearTimeout(savedTimer)
+    savedTimer = setTimeout(() => { saved.value = false }, 3000)
+  }
+  onBeforeUnmount(() => clearTimeout(savedTimer))
+
+  const titleError = computed(() => (title.value.trim() ? null : 'Ponle un título para reconocerla en el tablero.'))
+  // Límite del texto que admite cada red (el que publican ellas); sin dato, sin límite.
+  const captionMax = computed(() => (post.value ? CAPTION_LIMIT[post.value.platform] : undefined))
+  const captionLength = computed(() => caption.value.length + (parsedHashtags.value.length ? parsedHashtags.value.join(' ').length + 2 : 0))
+  const captionError = computed(() => (post.value && captionMax.value && captionLength.value > captionMax.value
+    ? `Te pasas ${captionLength.value - captionMax.value} caracteres del límite de ${platformMeta[post.value.platform].label} (texto + hashtags).`
+    : null))
+  const blockedReason = computed(() => titleError.value || captionError.value)
+
+  const { copied, copy } = useClipboard()
+  function copyText() {
+    copy([caption.value.trim(), parsedHashtags.value.join(' ')].filter(Boolean).join('\n\n'))
+  }
+
+  // ---- Fases ----
+  const { statusFlow, stepIndex, nextStatus, prevStatus, waitingForPartner, advanceLabel } = usePostFlow(post)
+
   return {
-    title, caption, dueDate, dirty, saving, save, deleting, remove,
+    title, caption, dueDate, hashtagsText, parsedHashtags, dirty, discard, saving, save, deleting, remove,
+    saved, saveWithFeedback, titleError, captionMax, captionLength, captionError, blockedReason, copied, copyText,
+    statusFlow, stepIndex, nextStatus, prevStatus, waitingForPartner, advanceLabel,
     predicting, predictError, predict, creditBalance,
     labels, labelsPickerOpen, newLabelName, newLabelColor, attachedLabels, isLabelAttached, toggleLabel, createAndAttachLabel,
     checklistItems, checklistPct, newItemText, addItem, toggleItem, deleteItem,
     revisionNotes, pendingChangeRequest
   }
+}
+
+/** «moda, #verano  ootd» → ['#moda', '#verano', '#ootd'] (sin vacíos ni repetidos). */
+export function parseHashtags(text: string): string[] {
+  const tags = text
+    .split(/[\s,]+/)
+    .map((h) => h.trim().replace(/^#+/, ''))
+    .filter(Boolean)
+    .map((h) => `#${h}`)
+  return [...new Set(tags)]
+}
+
+const CAPTION_LIMIT: Partial<Record<Platform, number>> = { instagram: 2200, tiktok: 2200, youtube: 5000, x: 280, linkedin: 3000 }
+
+const FULL_FLOW: PostStatus[] = ['idea', 'in_production', 'ready_for_review', 'scheduled', 'published']
+
+/**
+ * Fases por las que pasa una publicación y qué botón toca. El contenido propio no
+ * pasa por «Para revisar» (no hay marca que apruebe), salvo que ya esté ahí; en una
+ * colaboración, mientras está en revisión decide la marca, no el creador.
+ */
+export function usePostFlow(post: Ref<Post | null | undefined>) {
+  const statusFlow = computed<PostStatus[]>(() => {
+    if (!post.value || post.value.collaborationId || post.value.status === 'ready_for_review') return FULL_FLOW
+    return FULL_FLOW.filter((s) => s !== 'ready_for_review')
+  })
+  const stepIndex = computed(() => (post.value ? statusFlow.value.indexOf(post.value.status) : -1))
+  const nextStatus = computed(() => statusFlow.value[stepIndex.value + 1] ?? null)
+  const prevStatus = computed(() => (stepIndex.value > 0 ? statusFlow.value[stepIndex.value - 1]! : null))
+  const waitingForPartner = computed(() => !!post.value?.collaborationId && post.value.status === 'ready_for_review')
+  const advanceLabel = computed(() => {
+    switch (nextStatus.value) {
+      case 'in_production': return 'Empezar a producirla'
+      case 'ready_for_review': return 'Enviar a revisión'
+      case 'scheduled': return 'Marcar como programada'
+      case 'published': return 'Marcar como publicada'
+      default: return ''
+    }
+  })
+  return { statusFlow, stepIndex, nextStatus, prevStatus, waitingForPartner, advanceLabel }
 }

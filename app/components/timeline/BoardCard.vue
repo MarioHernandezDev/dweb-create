@@ -3,12 +3,24 @@ import type { Post, PostStatus } from '~/types'
 import { contentTypeMeta, statusMeta, overdueLabel } from '~/utils/status'
 import { platformMeta } from '~/utils/mock-data'
 
-defineProps<{ post: Post; phases: PostStatus[]; overdue?: boolean; /** Proyecto = nombre del partner de la colaboración; null/undefined = contenido propio (sin chip). */ project?: string | null }>()
 defineEmits<{ open: [post: Post]; move: [status: PostStatus] }>()
 
 // Cargadas una sola vez desde PhaseBoard.vue (onMounted) — este componente
 // solo lee el `useState` ya compartido para resolver color/nombre.
+const props = defineProps<{ post: Post; phases: PostStatus[]; overdue?: boolean; /** Proyecto = nombre del partner de la colaboración; null/undefined = contenido propio (sin chip). */ project?: string | null }>()
 const { labels } = useLabels()
+
+// Hasta dos etiquetas con su nombre; el resto, como «+N».
+const MAX_LABELS = 2
+const postLabels = computed(() => props.post.labelIds.map((id) => labels.value.find((l) => l.id === id)).filter((l): l is NonNullable<typeof l> => !!l))
+
+// La fecha que importa: la de entrega mientras no esté publicada; la de publicación después.
+const dateFmt = new Intl.DateTimeFormat('es-ES', { day: 'numeric', month: 'short' })
+const dateLine = computed(() => {
+  const p = props.post
+  if (p.status === 'published') return p.publishedAt ? `Publicada ${dateFmt.format(new Date(p.publishedAt))}` : null
+  return p.dueDate ? `Entrega ${dateFmt.format(new Date(`${p.dueDate}T12:00:00`))}` : null
+})
 
 </script>
 
@@ -30,11 +42,9 @@ const { labels } = useLabels()
     </div>
 
     <div class="post-card__body">
-      <div v-if="post.labelIds.length" class="post-card__labels">
-        <span
-          v-for="id in post.labelIds" :key="id" class="post-card__label"
-          :style="{ '--label': labels.find((l) => l.id === id)?.color }"
-        />
+      <div v-if="postLabels.length" class="post-card__labels">
+        <span v-for="l in postLabels.slice(0, MAX_LABELS)" :key="l.id" class="post-card__label" :style="{ '--label': l.color }">{{ l.name }}</span>
+        <span v-if="postLabels.length > MAX_LABELS" class="post-card__label post-card__label--more" :title="postLabels.slice(MAX_LABELS).map((l) => l.name).join(', ')">+{{ postLabels.length - MAX_LABELS }}</span>
       </div>
 
       <p class="post-card__title">{{ post.title }}</p>
@@ -42,6 +52,10 @@ const { labels } = useLabels()
       <p v-if="overdue" class="post-card__chip post-card__chip--danger">{{ overdueLabel(post.dueInDays) }}</p>
       <p v-else-if="post.status !== 'published' && post.dueInDays === 1" class="post-card__chip">Vence mañana</p>
       <p v-else-if="post.status !== 'published' && post.dueInDays === 0" class="post-card__chip">Vence hoy</p>
+
+      <p v-if="dateLine" class="post-card__meta" data-card-date>
+        <Icon :name="post.status === 'published' ? 'ph:check-circle' : 'ph:calendar-blank'" class="size-3.5 shrink-0" />{{ dateLine }}
+      </p>
 
       <p v-if="project" class="post-card__project" data-card-project>Campaña: <strong>{{ project }}</strong></p>
       <div v-if="post.checklist.total" class="post-card__progress" :aria-label="`Checklist: ${post.checklist.done} de ${post.checklist.total}`">

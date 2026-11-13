@@ -6,7 +6,7 @@
  * validación, Guardar queda desactivado y se dice por qué (no se deja pulsar
  * y fallar en silencio).
  */
-const props = defineProps<{ dirty: boolean; saving: boolean; saved: boolean; blockedReason?: string | null; error?: string }>()
+const props = defineProps<{ dirty: boolean; saving: boolean; saved: boolean; blockedReason?: string | null; error?: string; /** Dentro de una hoja con scroll propio (queda pegada abajo, sin la barra de pestañas). */ sheet?: boolean }>()
 const emit = defineEmits<{ save: []; discard: [] }>()
 
 const visible = computed(() => props.dirty || props.saved || !!props.error)
@@ -14,7 +14,7 @@ const visible = computed(() => props.dirty || props.saved || !!props.error)
 
 <template>
   <Transition name="profile-savebar">
-    <div v-if="visible" class="savebar" :data-state="error || (dirty && blockedReason) ? 'error' : dirty ? 'dirty' : 'done'" role="status" aria-live="polite" data-save-bar>
+    <div v-if="visible" class="savebar" :class="sheet && 'savebar--sheet'" :data-state="error || (dirty && blockedReason) ? 'error' : dirty ? 'dirty' : 'done'" role="status" aria-live="polite" data-save-bar>
       <p v-if="error" class="savebar__msg" data-save-error>{{ error }}</p>
       <p v-else-if="dirty && blockedReason" class="savebar__msg" data-save-blocked>{{ blockedReason }}</p>
       <p v-else-if="dirty" class="savebar__msg" data-save-dirty>Cambios sin guardar</p>

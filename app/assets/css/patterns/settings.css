@@ -198,6 +198,7 @@
 
     &[data-state="error"] .savebar__msg { color: var(--color-rosa); }
   }
+  .savebar--sheet { bottom: 0.5rem; @media (width >= 48rem) { bottom: 0.5rem; } }
   .savebar__msg { display: inline-flex; align-items: center; gap: 0.5rem; font-size: var(--text-sm); font-weight: 600; }
   .savebar__actions { display: flex; align-items: center; gap: 0.5rem; }
   .savebar .btn--ghost { color: var(--text-on-inverse); }

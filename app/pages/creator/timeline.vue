@@ -88,12 +88,12 @@ async function onRemove(post: Post) {
     <PhaseBoard v-if="view === 'tablero'" v-model:filters="filters" />
 
     <template v-else-if="view === 'calendario'">
-      <PostFilterBar v-if="posts.length" v-model:filters="filters" :collabs="collabRequests" class="mb-4" />
+      <PostFilterBar v-if="posts.length" v-model:filters="filters" :collabs="collabRequests" :posts="posts" class="mb-4" />
       <PostCalendar :posts="visiblePosts" @open="openEdit" />
     </template>
 
     <template v-else>
-      <PostFilterBar v-if="posts.length" v-model:filters="filters" v-model:sort="sort" :collabs="collabRequests" show-status show-sort class="mb-4">
+      <PostFilterBar v-if="posts.length" v-model:filters="filters" v-model:sort="sort" :collabs="collabRequests" :posts="posts" show-status show-sort class="mb-4">
         <template #end>
           <button type="button" class="inline-flex items-center gap-1.5 text-sm font-medium text-[var(--color-primary-500)] hover:text-[var(--color-primary-600)]" data-go-board @click="setView('tablero')">
             <Icon name="ph:kanban-bold" class="size-4" /> Ir al tablero{{ activeCollab ? ` de ${activeCollab.partnerName}` : '' }}
