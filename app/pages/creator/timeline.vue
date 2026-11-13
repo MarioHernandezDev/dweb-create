@@ -6,10 +6,28 @@ useHead({ title: 'Publicaciones' })
 
 const route = useRoute()
 const router = useRouter()
-const { posts, ensureLoaded, hasMore, loadingMore, loadMoreError, loadMore } = useMyPosts()
+const { posts, ensureLoaded, hasMore, loadingMore, loadMoreError, loadMore, updatePost } = useMyPosts()
+const toast = useToast()
 const { requests: collabRequests, ensureLoaded: ensureCollabRequestsLoaded } = useCollabRequests()
 const { changeStatus, remove } = usePostActions()
 const composerOpen = ref(false)
+// Día del calendario desde el que se pulsó «+» (vacío = fecha por defecto).
+const composerDate = ref<string | undefined>(undefined)
+function createOn(dueDate: string) { composerDate.value = dueDate; composerOpen.value = true }
+watch(composerOpen, (open) => { if (!open) composerDate.value = undefined })
+
+const dayFmt = new Intl.DateTimeFormat('es-ES', { weekday: 'short', day: 'numeric', month: 'short' })
+async function reschedule(post: Post, dueDate: string) {
+  const previous = post.dueDate
+  try {
+    await updatePost(post.id, { dueDate })
+    toast.success(`«${post.title}» movida al ${dayFmt.format(new Date(`${dueDate}T12:00:00`))}`)
+  } catch (err) {
+    console.error('[timeline] fallo al reprogramar:', err)
+    post.dueDate = previous
+    toast.error(`No se ha podido mover «${post.title}». Sigue en su fecha.`)
+  }
+}
 // «Crear publicación» desde un entregable llega con ?nueva=1&colaboracion=<id>&entregable=<id>.
 const composerPreset = computed(() => ({
   collaborationId: route.query.nueva === '1' && typeof route.query.colaboracion === 'string' ? route.query.colaboracion : undefined,
@@ -68,7 +86,7 @@ async function onRemove(post: Post) {
 <template>
   <AppShell
     role="creator" title="Publicaciones" full-width
-    :subtitle="view === 'tablero' ? 'Arrastra una card para cambiarla de fase' : view === 'calendario' ? 'Tus entregas por fecha' : 'Busca, ordena y gestiona todas tus publicaciones'"
+    :subtitle="view === 'tablero' ? 'Arrastra una card para cambiarla de fase' : view === 'calendario' ? 'Arrastra una entrega a otro día para reprogramarla' : 'Busca, ordena y gestiona todas tus publicaciones'"
   >
     <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
       <SegmentedTabs :model-value="view" :options="viewOptions" label="Vista de las publicaciones" @update:model-value="setView" />
@@ -89,7 +107,7 @@ async function onRemove(post: Post) {
 
     <template v-else-if="view === 'calendario'">
       <PostFilterBar v-if="posts.length" v-model:filters="filters" :collabs="collabRequests" :posts="posts" class="mb-4" />
-      <PostCalendar :posts="visiblePosts" @open="openEdit" />
+      <PostCalendar :posts="visiblePosts" @open="openEdit" @reschedule="reschedule" @create="createOn" />
     </template>
 
     <template v-else>
@@ -117,6 +135,6 @@ async function onRemove(post: Post) {
 
     <div class="md:hidden"><Fab :active="composerOpen" @click="composerOpen = true" /></div>
     <PostEditSheet v-model="editOpen" :post="editingPost" :phases="phases" @move="(status) => editingPost && onMove(editingPost, status)" />
-    <PostComposerSheet v-model="composerOpen" :collaboration-id="composerPreset.collaborationId" :deliverable-id="composerPreset.deliverableId" />
+    <PostComposerSheet v-model="composerOpen" :collaboration-id="composerPreset.collaborationId" :deliverable-id="composerPreset.deliverableId" :preset-date="composerDate" />
   </AppShell>
 </template>

@@ -12,6 +12,8 @@ const props = defineProps<{
   collaborationId?: string
   /** Y la asigna a este entregable (hueco) de la colaboración. */
   deliverableId?: string
+  /** Fecha de entrega con la que se abre («YYYY-MM-DD»): viene de pulsar un día del calendario. */
+  presetDate?: string
 }>()
 
 const open = defineModel<boolean>({ default: false })
@@ -167,6 +169,7 @@ watch(open, (value) => {
   }
   if (value) {
     navigated.value = false
+    if (props.presetDate) dueDate.value = props.presetDate
     ensureCreditsLoaded()
     ensureCollabRequestsLoaded()
     if (props.prefill) {

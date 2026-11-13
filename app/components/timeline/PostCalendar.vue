@@ -2,11 +2,15 @@
 import type { Post } from '~/types'
 import { statusMeta } from '~/utils/status'
 import { PLATFORM_SHORT } from '~/utils/discover-view'
-import { monthGrid, monthName, postsByDay } from '~/utils/post-calendar'
+import { iso, monthGrid, monthName, postsByDay } from '~/utils/post-calendar'
 
-/** Calendario mensual de publicaciones por fecha de entrega. Abre la ficha rápida de la publicación al pulsarla. */
+/**
+ * Calendario mensual de publicaciones por fecha de entrega. Pulsar una publicación abre su ficha rápida; arrastrarla a
+ * otro día la reprograma; el «+» de un día crea una publicación con esa fecha. No se programa en el pasado (igual que
+ * el campo de fecha de la ficha) y las ya publicadas no se mueven.
+ */
 const props = defineProps<{ posts: Post[] }>()
-const emit = defineEmits<{ open: [post: Post] }>()
+const emit = defineEmits<{ open: [post: Post]; reschedule: [post: Post, dueDate: string]; create: [dueDate: string] }>()
 
 const now = new Date()
 const cursor = ref({ year: now.getFullYear(), month: now.getMonth() })
@@ -21,6 +25,29 @@ function shift(delta: number) {
 }
 function today() { cursor.value = { year: now.getFullYear(), month: now.getMonth() } }
 const MAX = 3
+
+const todayIso = iso(now)
+const canDrop = (dayIso: string) => dayIso >= todayIso
+const draggingId = ref<string | null>(null)
+const overDay = ref<string | null>(null)
+
+function onDragStart(e: DragEvent, p: Post) {
+  draggingId.value = p.id
+  e.dataTransfer?.setData('text/plain', p.id)
+  if (e.dataTransfer) e.dataTransfer.effectAllowed = 'move'
+}
+function onDragEnd() { draggingId.value = null; overDay.value = null }
+function onDragOver(e: DragEvent, dayIso: string) {
+  if (!draggingId.value || !canDrop(dayIso)) return
+  e.preventDefault() // sin esto el navegador no admite soltar aquí
+  overDay.value = dayIso
+}
+function onDrop(e: DragEvent, dayIso: string) {
+  e.preventDefault()
+  const post = props.posts.find((p) => p.id === draggingId.value)
+  onDragEnd()
+  if (post && canDrop(dayIso) && post.dueDate.slice(0, 10) !== dayIso) emit('reschedule', post, dayIso)
+}
 </script>
 
 <template>
@@ -35,11 +62,25 @@ const MAX = 3
     </header>
     <div class="pcal__grid" role="grid">
       <div v-for="d in dow" :key="d" class="pcal__dow" role="columnheader">{{ d }}</div>
-      <div v-for="day in grid" :key="day.iso" class="pcal__cell" :class="[day.isToday && 'is-today', !day.inMonth && 'is-out']" role="gridcell">
-        <span class="pcal__num">{{ day.day }}</span>
+      <div
+        v-for="day in grid" :key="day.iso" class="pcal__cell"
+        :class="[day.isToday && 'is-today', !day.inMonth && 'is-out', overDay === day.iso && 'is-drop']" role="gridcell"
+        @dragover="onDragOver($event, day.iso)" @dragleave="overDay === day.iso && (overDay = null)" @drop="onDrop($event, day.iso)"
+      >
+        <div class="pcal__top">
+          <span class="pcal__num">{{ day.day }}</span>
+          <button
+            v-if="canDrop(day.iso)" type="button" class="pcal__add" :aria-label="`Nueva publicación el ${day.day} de ${monthName(day.date.getMonth())}`"
+            @click="emit('create', day.iso)"
+          >
+            <Icon name="ph:plus-bold" class="size-3" />
+          </button>
+        </div>
         <button
           v-for="p in (byDay.get(day.iso) ?? []).slice(0, MAX)" :key="p.id" type="button" class="pcal__item" :data-status="p.status"
-          :title="`${p.title} · ${statusMeta[p.status].label}`" @click="emit('open', p)"
+          :class="draggingId === p.id && 'is-dragging'" :draggable="p.status !== 'published'"
+          :title="`${p.title} · ${statusMeta[p.status].label}${p.status === 'published' ? '' : ' · arrástrala a otro día para reprogramarla'}`"
+          @click="emit('open', p)" @dragstart="onDragStart($event, p)" @dragend="onDragEnd"
         >
           <span class="pcal__item-net">{{ PLATFORM_SHORT[p.platform] ?? p.platform }}</span>
           <span class="pcal__item-title">{{ p.title }}</span>
