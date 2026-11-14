@@ -1,72 +1,47 @@
 import { serverSupabaseServiceRole } from '#supabase/server'
 
 interface ReportRow {
-  id: string
-  reason: string
-  detail: string | null
-  created_at: string
-  status: string
-  admin_note: string | null
-  resolved_at: string | null
-  reporter_profile_id: string
-  profiles: { full_name: string | null; role: string } | null
-  collaborations: {
-    id: string
-    brief: string
-    status: string
-    budget_cents: number | null
-    paid_at: string | null
-    creators: { display_name: string; profile_id: string } | null
-    partners: { company_name: string; profile_id: string } | null
-  } | null
+  id: string; reason: string; detail: string | null; created_at: string; status: string; admin_note: string | null; resolved_at: string | null
+  assigned_to: string | null; assigned_name: string | null; reporter_profile_id: string; reporter_name: string | null; reporter_role: string | null
+  collaboration_id: string | null; collaboration_brief: string | null; collaboration_status: string | null; budget_cents: number | null; paid: boolean | null
+  creator_name: string | null; partner_name: string | null; reported_profile_id: string | null; reported_name: string | null
 }
 
 /**
- * Reportes de solicitudes (spam, presupuesto poco serio...) y terminaciones por
- * incumplimiento — ver supabase/migrations/20261021140000_collaboration_offers_and_reports.sql
- * y 20261112120000_report_review_workflow.sql.
- * Sin policy de select para el cliente a propósito: esta es la única
- * forma de leerlos, con la service_role y detrás de la contraseña de admin.
+ * Bandeja de reportes (vista `admin_reports_view`), paginada y filtrada en la base. Por defecto los pendientes
+ * (abiertos + en revisión), los más antiguos primero. Parámetros: status (pending|open|reviewing|resolved|dismissed|all),
+ * reason, assigned (me|none|<id de miembro>), q, sort (oldest|newest), profile (cuenta reportada o que reporta), page, pageSize.
+ * Ver supabase/migrations/20261021140000_collaboration_offers_and_reports.sql y 20261112120000_report_review_workflow.sql.
  */
 export default defineEventHandler(async (event) => {
-  await requireAdmin(event)
+  const actor = await requireAdmin(event)
+  const q = getQuery(event)
+  const { page, pageSize, from, to } = pageParams(q, 20, 100)
   const client = serverSupabaseServiceRole(event)
 
-  const { data, error } = await client
-    .from('reports')
-    .select('id, reason, detail, created_at, status, admin_note, resolved_at, reporter_profile_id, profiles(full_name, role), collaborations(id, brief, status, budget_cents, paid_at, creators(display_name, profile_id), partners(company_name, profile_id))')
-    .order('created_at', { ascending: false })
-    // Sin tope, esto traía TODOS los reportes desde el origen de los tiempos
-    // en cada visita al panel — 500 ya es mucho más de lo que un equipo
-    // pequeño revisa de una sentada (igual que el resto de /api/admin/*.get.ts).
-    .limit(500)
+  let query = client.from('admin_reports_view').select('*', { count: 'exact' })
+  const status = typeof q.status === 'string' ? q.status : 'pending'
+  if (status === 'pending') query = query.in('status', ['open', 'reviewing'])
+  else if (['open', 'reviewing', 'resolved', 'dismissed'].includes(status)) query = query.eq('status', status)
+  if (typeof q.reason === 'string' && ['spam', 'unrealistic_budget', 'inappropriate', 'other', 'breach'].includes(q.reason)) query = query.eq('reason', q.reason)
+  if (q.assigned === 'none') query = query.is('assigned_to', null)
+  else if (q.assigned === 'me' && actor.memberId) query = query.eq('assigned_to', actor.memberId)
+  else if (typeof q.assigned === 'string' && UUID_RE.test(q.assigned)) query = query.eq('assigned_to', q.assigned)
+  if (typeof q.profile === 'string' && UUID_RE.test(q.profile)) query = query.or(`reporter_profile_id.eq.${q.profile},reported_profile_id.eq.${q.profile}`)
+  const term = searchTerm(q.q)
+  if (term) query = query.or(orIlike(['detail', 'reporter_name', 'reported_name', 'collaboration_brief', 'creator_name', 'partner_name'], term))
+
+  query = query.order('created_at', { ascending: q.sort === 'oldest' || (q.sort === undefined && status === 'pending') })
+  const { data, error, count } = await query.order('id', { ascending: true }).range(from, to)
   if (error) throw createError({ statusCode: 500, statusMessage: error.message })
 
-  const reports = (data as unknown as ReportRow[]).map((r) => {
-    const c = r.collaborations
-    // La otra parte: contra quién va el reporte.
-    const reportedIsCreator = c?.partners?.profile_id === r.reporter_profile_id
-    return {
-      id: r.id,
-      reason: r.reason,
-      detail: r.detail,
-      createdAt: r.created_at,
-      status: r.status,
-      adminNote: r.admin_note,
-      resolvedAt: r.resolved_at,
-      reporterName: r.profiles?.full_name ?? 'Sin nombre',
-      reporterRole: r.profiles?.role ?? null,
-      collaborationId: c?.id ?? null,
-      collaborationBrief: c?.brief ?? null,
-      collaborationStatus: c?.status ?? null,
-      budgetCents: c?.budget_cents ?? null,
-      paid: !!c?.paid_at,
-      creatorName: c?.creators?.display_name ?? null,
-      partnerName: c?.partners?.company_name ?? null,
-      reportedName: (reportedIsCreator ? c?.creators?.display_name : c?.partners?.company_name) ?? null,
-      reportedProfileId: (reportedIsCreator ? c?.creators?.profile_id : c?.partners?.profile_id) ?? null
-    }
-  })
-
-  return { reports }
+  const reports = ((data ?? []) as ReportRow[]).map((r) => ({
+    id: r.id, reason: r.reason, detail: r.detail, createdAt: r.created_at, status: r.status, adminNote: r.admin_note, resolvedAt: r.resolved_at,
+    assignedTo: r.assigned_to, assignedName: r.assigned_name,
+    reporterName: r.reporter_name ?? 'Sin nombre', reporterRole: r.reporter_role, reporterProfileId: r.reporter_profile_id,
+    collaborationId: r.collaboration_id, collaborationBrief: r.collaboration_brief, collaborationStatus: r.collaboration_status,
+    budgetCents: r.budget_cents, paid: !!r.paid, creatorName: r.creator_name, partnerName: r.partner_name,
+    reportedName: r.reported_name, reportedProfileId: r.reported_profile_id
+  }))
+  return { reports, total: count ?? reports.length, page, pageSize }
 })

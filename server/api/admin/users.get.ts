@@ -1,64 +1,44 @@
 import { serverSupabaseServiceRole } from '#supabase/server'
 
-interface ProfileRow {
-  id: string
-  role: string
-  full_name: string | null
-  created_at: string
+interface UserRow {
+  id: string; email: string | null; full_name: string | null; role: string; created_at: string; last_sign_in_at: string | null; banned: boolean
+  creator_id: string | null; partner_verified: boolean | null; display_name: string | null
+  plan_id: string | null; plan_status: string | null; plan_expires_at: string | null; deletion_pending: boolean
 }
-interface CreatorRow { id: string; profile_id: string; display_name: string }
-interface PartnerRow { id: string; profile_id: string; company_name: string; verified_at: string | null }
-interface SubscriptionRow { creator_id: string; plan_id: string; status: string; current_period_end: string | null }
 
 /**
- * Lista de cuentas para el panel de admin — cruza `profiles` (de dónde
- * sale el rol) con `auth.users` (email, si está baneada) y, si es
- * creadora, su suscripción. Pensado para un equipo de 2 personas mirando
- * una tabla pequeña, no para escalar a miles de usuarios: un solo
- * `listUsers` sin paginar de verdad.
+ * Cuentas del panel de admin, paginadas y filtradas en la base (vista `admin_users_view`, que cruza perfiles,
+ * login, fichas y suscripción). Parámetros: q (nombre, correo o id), role, plan, status (banned|active|deletion),
+ * verified (yes|no), sort (recent|login|name), page, pageSize.
  */
 export default defineEventHandler(async (event) => {
   await requireAdmin(event)
+  const q = getQuery(event)
+  const { page, pageSize, from, to } = pageParams(q)
   const client = serverSupabaseServiceRole(event)
 
-  const [profilesRes, authRes, creatorsRes, partnersRes, subsRes] = await Promise.all([
-    client.from('profiles').select('id, role, full_name, created_at').order('created_at', { ascending: false }),
-    client.auth.admin.listUsers({ perPage: 1000 }),
-    client.from('creators').select('id, profile_id, display_name'),
-    client.from('partners').select('id, profile_id, company_name, verified_at'),
-    client.from('subscriptions').select('creator_id, plan_id, status, current_period_end')
-  ])
+  let query = client.from('admin_users_view').select('*', { count: 'exact' })
+  const term = searchTerm(q.q)
+  if (term) query = UUID_RE.test(term) ? query.eq('id', term) : query.or(orIlike(['email', 'full_name', 'display_name'], term))
+  if (q.role === 'creator' || q.role === 'partner') query = query.eq('role', q.role)
+  if (q.plan === 'pro') query = query.eq('plan_id', 'pro')
+  if (q.plan === 'free') query = query.eq('role', 'creator').or('plan_id.is.null,plan_id.neq.pro')
+  if (q.status === 'banned') query = query.eq('banned', true)
+  if (q.status === 'active') query = query.eq('banned', false)
+  if (q.status === 'deletion') query = query.eq('deletion_pending', true)
+  if (q.verified === 'yes') query = query.eq('partner_verified', true)
+  if (q.verified === 'no') query = query.eq('partner_verified', false)
+  if (q.sort === 'login') query = query.order('last_sign_in_at', { ascending: false, nullsFirst: false })
+  else if (q.sort === 'name') query = query.order('display_name', { ascending: true, nullsFirst: false })
+  else query = query.order('created_at', { ascending: false })
 
-  if (profilesRes.error) throw createError({ statusCode: 500, statusMessage: profilesRes.error.message })
-  if (authRes.error) throw createError({ statusCode: 500, statusMessage: authRes.error.message })
+  const { data, error, count } = await query.order('id', { ascending: true }).range(from, to)
+  if (error) throw createError({ statusCode: 500, statusMessage: error.message })
 
-  const authById = new Map(authRes.data.users.map((u) => [u.id, u]))
-  const creatorByProfile = new Map(((creatorsRes.data ?? []) as CreatorRow[]).map((c) => [c.profile_id, c]))
-  const partnerByProfile = new Map(((partnersRes.data ?? []) as PartnerRow[]).map((p) => [p.profile_id, p]))
-  const subByCreatorId = new Map(((subsRes.data ?? []) as SubscriptionRow[]).map((s) => [s.creator_id, s]))
-
-  const users = ((profilesRes.data ?? []) as ProfileRow[]).map((profile) => {
-    const authUser = authById.get(profile.id)
-    const creator = creatorByProfile.get(profile.id)
-    const partner = partnerByProfile.get(profile.id)
-    const subscription = creator ? subByCreatorId.get(creator.id) : undefined
-
-    return {
-      id: profile.id,
-      email: authUser?.email ?? null,
-      fullName: profile.full_name,
-      role: profile.role,
-      createdAt: profile.created_at,
-      lastSignInAt: authUser?.last_sign_in_at ?? null,
-      bannedUntil: authUser?.banned_until ?? null,
-      creatorId: creator?.id ?? null,
-      partnerVerified: partner ? !!partner.verified_at : null,
-      displayName: creator?.display_name ?? partner?.company_name ?? null,
-      planId: subscription?.plan_id ?? null,
-      planStatus: subscription?.status ?? null,
-      planExpiresAt: subscription?.current_period_end ?? null
-    }
-  })
-
-  return { users }
+  const users = ((data ?? []) as UserRow[]).map((u) => ({
+    id: u.id, email: u.email, fullName: u.full_name, role: u.role, createdAt: u.created_at, lastSignInAt: u.last_sign_in_at, banned: u.banned,
+    creatorId: u.creator_id, partnerVerified: u.partner_verified, displayName: u.display_name,
+    planId: u.plan_id, planStatus: u.plan_status, planExpiresAt: u.plan_expires_at, deletionPending: u.deletion_pending
+  }))
+  return { users, total: count ?? users.length, page, pageSize }
 })

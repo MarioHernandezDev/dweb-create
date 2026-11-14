@@ -11,7 +11,7 @@ export default defineEventHandler(async (event) => {
   const range = String(getQuery(event).range ?? '12m')
   const since = sinceForRange(range)
 
-  const data = await loadMetricsData(client, { categoriesOf: 'creator', limit: 5000 })
+  const data = await loadMetricsData(client, { categoriesOf: 'creator', limit: 5000, since })
   const { data: ratings } = await client.from('collaboration_ratings').select('ratee_profile_id, stars').limit(10000)
   data.ratings = ((ratings ?? []) as { ratee_profile_id: string; stars: number }[]).map((r) => ({ rateeProfileId: r.ratee_profile_id, stars: r.stars }))
 

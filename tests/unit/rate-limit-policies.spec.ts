@@ -88,7 +88,7 @@ describe('server/api: guarda estática', () => {
   it('todo endpoint de /admin comprueba la sesión de admin', () => {
     const adminFiles = endpoints.filter((f) => rel(f).startsWith('admin/'))
     expect(adminFiles.length).toBeGreaterThan(0)
-    const unguarded = adminFiles.filter((f) => !/adminSession|requireAdmin/.test(read(f))).map(rel)
+    const unguarded = adminFiles.filter((f) => !/adminSession|requireAdmin|getAdminActor/.test(read(f))).map(rel)
     expect(unguarded).toEqual([])
   })
 })

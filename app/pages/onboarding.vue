@@ -29,15 +29,24 @@ const orgName = ref('') // nombre de empresa — solo partner
 const detail = ref('') // niche/industry, opcional
 const email = ref('')
 const password = ref('')
+const passwordRepeat = ref('')
 const acceptedTerms = ref(false)
 const loading = ref(false)
 const error = ref('')
+const repeatTouched = ref(false)
+const { sending: resending, sent: resent, error: resendError, cooldown, resend } = useResendConfirmation()
+const passwordMismatch = computed(() => (repeatTouched.value || passwordRepeat.value.length > 0) && password.value !== passwordRepeat.value)
 
 const needsOrgName = computed(() => selectedRole.value === 'partner')
 const detailLabel = computed(() => (selectedRole.value === 'partner' ? 'Sector' : 'Nicho'))
 
 async function register() {
   if (!selectedRole.value) return
+  if (password.value !== passwordRepeat.value) {
+    error.value = ''
+    repeatTouched.value = true
+    return
+  }
   if (!acceptedTerms.value) {
     error.value = 'Tienes que aceptar los términos y la política de privacidad para crear la cuenta.'
     return
@@ -127,6 +136,9 @@ async function register() {
           <BaseField label="Contraseña" hint="Al menos 8 caracteres." :error="error" v-slot="f">
             <BaseInput v-bind="f" v-model="password" type="password" required minlength="8" autocomplete="new-password" />
           </BaseField>
+          <BaseField label="Repite la contraseña" :error="passwordMismatch ? 'Las contraseñas no coinciden.' : ''" v-slot="f">
+            <BaseInput v-bind="f" v-model="passwordRepeat" type="password" required minlength="8" autocomplete="new-password" data-password-repeat />
+          </BaseField>
 
           <label class="proposal__check text-[var(--text-muted)]" data-terms-check>
             <input v-model="acceptedTerms" type="checkbox" required>
@@ -155,7 +167,14 @@ async function register() {
         <p class="auth__sub">
           Te hemos enviado un enlace a <strong class="text-[var(--text-strong)]">{{ email }}</strong> para confirmar tu cuenta. En cuanto lo confirmes, ya puedes entrar con tu email y contraseña.
         </p>
-        <BaseButton to="/login" variant="secondary" size="lg" icon="ph:arrow-left-bold" class="mt-7">Volver a acceder</BaseButton>
+        <div class="grid gap-2 mt-6" data-resend-confirmation>
+          <BaseButton type="button" variant="outline" size="md" icon="ph:envelope-simple-bold" :loading="resending" :disabled="cooldown > 0" @click="resend(email)">
+            {{ cooldown > 0 ? `Reenviar en ${cooldown} s` : '¿No te ha llegado? Reenviar el correo' }}
+          </BaseButton>
+          <p v-if="resent" class="text-sm text-[var(--text-muted)]" role="status">Listo, te lo hemos enviado otra vez. Mira también el spam.</p>
+          <p v-if="resendError" class="text-sm text-[var(--color-danger)]" role="alert">{{ resendError }}</p>
+        </div>
+        <BaseButton to="/login" variant="secondary" size="lg" icon="ph:arrow-left-bold" class="mt-4">Volver a acceder</BaseButton>
       </div>
     </Transition>
 

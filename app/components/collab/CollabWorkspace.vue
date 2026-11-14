@@ -207,6 +207,22 @@ async function handleDecline() {
     actionError.value = errorMessage(e, 'No se ha podido rechazar la solicitud. Inténtalo de nuevo.')
   }
 }
+async function handleWithdraw() {
+  const ok = await confirm({
+    title: '¿Retirar la solicitud?',
+    message: `${view.value?.counterpartName ?? 'La otra parte'} dejará de verla y se le avisará de que la has retirado. Podrás enviarle otra más adelante.`,
+    confirmLabel: 'Sí, retirarla'
+  })
+  if (!ok) return
+  actionError.value = ''
+  try {
+    await (isPartner ? partnerSide.withdraw(props.id) : creatorSide.withdraw(props.id))
+    toast.success('Solicitud retirada')
+    await router.push(`/${props.role}/requests`)
+  } catch (e) {
+    actionError.value = errorMessage(e, 'No se ha podido retirar la solicitud. Inténtalo de nuevo.')
+  }
+}
 async function handleMarkCompleted() {
   const ok = await confirm({
     title: '¿Marcar como completada?',
@@ -319,6 +335,12 @@ useHead({ title: computed(() => (view.value ? `Colaboración con ${view.value.co
                 :my-role="role" :initiated-by="view.initiatedBy"
                 @accept="handleAccept" @decline="handleDecline"
               />
+              <BaseButton
+                v-if="view.status === 'requested' && view.initiatedBy === role"
+                variant="outline" block icon="ph:arrow-u-up-left-bold" :loading="acting === view.id" data-withdraw-request @click="handleWithdraw"
+              >
+                Retirar mi solicitud
+              </BaseButton>
 
               <template v-if="isPartner">
                 <p v-if="view.paidAt" class="collab-paid"><Icon name="ph:check-circle-fill" class="size-4" /> Cobrado el {{ relativeTime(view.paidAt) }}</p>

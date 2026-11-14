@@ -11,7 +11,7 @@ interface BlockBody {
  * sitio del código.
  */
 export default defineEventHandler(async (event) => {
-  await requireAdmin(event)
+  const actor = await requireAdmin(event, 'moderator')
 
   const id = getRouterParam(event, 'id')
   if (!id) throw createError({ statusCode: 400, statusMessage: 'Falta el id de usuario.' })
@@ -33,5 +33,6 @@ export default defineEventHandler(async (event) => {
   })
   if (error) throw createError({ statusCode: 500, statusMessage: error.message })
 
+  await logAdminAction(event, actor, { action: body.banned ? 'bloqueó la cuenta' : 'desbloqueó la cuenta', targetType: 'user', targetId: id, targetLabel: await accountLabel(event, id) })
   return { ok: true }
 })

@@ -9,6 +9,8 @@ const { role, ensureRole } = useMyRole()
 const { resolveMyProfileId } = useMyProfileId()
 const router = useRouter()
 const account = useAccountState()
+// La bienvenida de inicio de sesión (animación y aviso) va primero; el recorrido espera su turno.
+const { active: welcomeActive } = useLoginWelcome()
 
 const primaryBtn = ref<{ $el: HTMLElement } | null>(null)
 
@@ -30,8 +32,10 @@ watch(open, async (isOpen) => {
 
 onMounted(async () => {
   const [id, myRole, acc] = await Promise.all([resolveMyProfileId(), ensureRole(), account.ensureLoaded()])
-  // Ya visto en otra sesión o dispositivo: queda anotado en la cuenta y no vuelve a salir solo.
-  if (id && myRole) maybeAutoStart(id, myRole, !!acc?.onboarding_completed_at)
+  if (!id || !myRole) return
+  maybeAutoStart(id, myRole, { accountRead: !!acc, completedAt: acc?.onboarding_completed_at ?? null, createdAt: acc?.created_at ?? null })
+  // Se anota en la cuenta al abrirlo, no al cerrarlo: así no vuelve a salir aunque se recargue con él abierto.
+  if (open.value) account.markOnboardingDone()
 })
 
 onUnmounted(() => {
@@ -52,7 +56,7 @@ function goToAction() {
       leave-active-class="transition-opacity duration-150 ease-[var(--ease-spring)]" leave-to-class="opacity-0"
     >
       <div
-        v-if="open && current" class="fixed inset-0 z-[90] flex items-center justify-center p-5 bg-black/55 backdrop-blur-[2px]"
+        v-if="open && current && !welcomeActive" class="fixed inset-0 z-[90] flex items-center justify-center p-5 bg-black/55 backdrop-blur-[2px]"
         role="dialog" aria-modal="true" aria-labelledby="tour-title"
       >
         <div class="w-full max-w-md rounded-[var(--radius-lg)] bg-[var(--color-ink-raised)] border border-[var(--color-hairline)] shadow-[var(--shadow-float)] p-6">

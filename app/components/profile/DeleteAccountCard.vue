@@ -4,9 +4,65 @@
  * server/utils/account-deletion.ts) la cuenta se borra al momento o queda una
  * solicitud pendiente que se puede retirar desde aquí.
  */
+interface Blocker {
+  id: string
+  status: 'requested' | 'accepted' | 'in_progress'
+  title: string
+  counterpart: string
+  action: 'withdraw' | 'respond' | 'close'
+  hint: string
+  href: string
+}
+
 const client = useSupabaseClient()
 const { resolveMyProfileId } = useMyProfileId()
+const { role, ensureRole } = useMyRole()
+const { confirm } = useConfirm()
 const toast = useToast()
+
+/** Colaboraciones abiertas que impiden eliminar la cuenta, con lo que hay que hacer en cada una. */
+const blockers = ref<Blocker[]>([])
+const checking = ref(false)
+const withdrawing = ref<string | null>(null)
+
+async function loadBlockers() {
+  checking.value = true
+  try {
+    blockers.value = (await $fetch<{ blockers: Blocker[] }>('/api/account/delete')).blockers
+  } catch {
+    // Si no se puede comprobar, se deja el formulario: el servidor vuelve a comprobarlo al enviar.
+    blockers.value = []
+  } finally {
+    checking.value = false
+  }
+}
+
+async function openForm() {
+  open.value = true
+  await loadBlockers()
+}
+
+async function withdraw(b: Blocker) {
+  if (withdrawing.value) return
+  const ok = await confirm({
+    title: '¿Retirar la solicitud?',
+    message: `${b.counterpart} dejará de verla y se le avisará de que la has retirado.`,
+    confirmLabel: 'Sí, retirarla'
+  })
+  if (!ok) return
+  withdrawing.value = b.id
+  error.value = ''
+  try {
+    await ensureRole()
+    await (role.value === 'partner' ? useMyCollaborations() : useCollabRequests()).withdraw(b.id)
+    toast.success('Solicitud retirada')
+    await loadBlockers()
+  } catch (e) {
+    error.value = (e as { message?: string })?.message || 'No se ha podido retirar la solicitud.'
+  } finally {
+    withdrawing.value = null
+  }
+}
 
 const pending = ref<{ created_at: string } | null>(null)
 const open = ref(false)
@@ -46,7 +102,9 @@ async function submit() {
     await loadRequest()
     toast.success('Solicitud registrada: revisaremos la eliminación de tu cuenta')
   } catch (e) {
-    error.value = message(e, 'No se ha podido procesar. Inténtalo de nuevo.')
+    const found = (e as { data?: { data?: { blockers?: Blocker[] } } })?.data?.data?.blockers
+    if (found?.length) blockers.value = found
+    else error.value = message(e, 'No se ha podido procesar. Inténtalo de nuevo.')
   } finally {
     busy.value = false
   }
@@ -77,8 +135,37 @@ async function cancelRequest() {
     </template>
     <template v-else-if="!open">
       <p class="setting-row__meta mb-3">Borra tu cuenta y tus datos. No se puede deshacer. Antes puedes descargar una copia desde «Tus datos».</p>
-      <BaseButton variant="destructive" size="sm" data-delete-open @click="open = true">Eliminar mi cuenta</BaseButton>
+      <BaseButton variant="destructive" size="sm" data-delete-open @click="openForm">Eliminar mi cuenta</BaseButton>
     </template>
+    <p v-else-if="checking" class="setting-row__meta" role="status">Comprobando tus colaboraciones…</p>
+    <div v-else-if="blockers.length" class="grid gap-3" data-delete-blockers>
+      <div>
+        <p class="setting-row__label">Antes de eliminar tu cuenta, cierra {{ blockers.length === 1 ? 'esta colaboración' : `estas ${blockers.length} colaboraciones` }}</p>
+        <p class="setting-row__meta">Están abiertas con otras personas y borrar la cuenta ahora las dejaría a medias. Cuando las cierres, vuelve aquí.</p>
+      </div>
+      <ul class="grid gap-2.5">
+        <li
+          v-for="b in blockers" :key="b.id" data-delete-blocker
+          class="grid gap-2.5 rounded-[var(--radius-lg)] border border-[var(--color-hairline)] bg-[var(--color-ink-raised)] p-4"
+        >
+          <div class="flex items-start justify-between gap-3">
+            <div class="min-w-0">
+              <p class="font-semibold text-[var(--color-text)] break-words">{{ b.title }}</p>
+              <p class="text-sm text-[var(--color-text-muted)]">con {{ b.counterpart }}</p>
+            </div>
+            <CollabStatus :status="b.status" compact class="shrink-0" />
+          </div>
+          <p class="text-sm text-[var(--color-text-muted)] leading-relaxed">{{ b.hint }}</p>
+          <div class="flex flex-wrap gap-2">
+            <BaseButton v-if="b.action === 'withdraw'" variant="destructive" size="sm" icon="ph:arrow-u-up-left-bold" :loading="withdrawing === b.id" data-delete-withdraw @click="withdraw(b)">Retirar solicitud</BaseButton>
+            <BaseButton :to="b.href" variant="outline" size="sm" icon="ph:arrow-square-out-bold" data-delete-open-collab>{{ b.action === 'respond' ? 'Responder' : 'Abrir colaboración' }}</BaseButton>
+          </div>
+        </li>
+      </ul>
+      <div class="flex justify-end">
+        <BaseButton variant="ghost" size="sm" @click="open = false">Volver</BaseButton>
+      </div>
+    </div>
     <form v-else class="grid gap-3" @submit.prevent="submit">
       <p class="setting-row__meta">Si tienes colaboraciones abiertas, ciérralas o cancélalas antes. Si ya tienes colaboraciones terminadas, la eliminación queda pendiente de revisión para no borrar los registros de la otra parte.</p>
       <BaseField label="Escribe el email de tu cuenta para confirmar" v-slot="f">

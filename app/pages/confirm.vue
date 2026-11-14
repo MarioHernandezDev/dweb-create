@@ -16,6 +16,7 @@ onMounted(async () => {
     error.value = 'No hemos podido confirmar tu cuenta. Si el problema sigue, contacta con el equipo.'
     return
   }
+  useLoginWelcome().announce()
   await navigateTo(roleMeta[role].home)
 })
 </script>

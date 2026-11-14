@@ -20,7 +20,7 @@ describe('terminación por incumplimiento', () => {
   it('el evento se pinta en la cronología y la denuncia tiene etiqueta en el panel de admin', () => {
     expect(read('app', 'components', 'collab', 'CollabTimeline.vue')).toContain("case 'terminated':")
     expect(sql).toMatch(/'other', 'breach'/)
-    expect(read('app', 'pages', 'admin', 'index.vue')).toMatch(/breach:\s*'/)
+    expect(read('app', 'utils', 'admin-labels.ts')).toMatch(/breach:\s*'/)
   })
   it('«terminada» tiene etiqueta, no es activa, no tiene fase y no es cobrable', () => {
     expect(collaborationStatusMeta.terminated.label).toMatch(/incumplimiento/)

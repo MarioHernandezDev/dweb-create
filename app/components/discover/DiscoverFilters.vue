@@ -17,6 +17,8 @@ const props = defineProps<{
   budgetLabel: string
   /** Solo al explorar marcas: tipo de colaboración y «solo verificadas». */
   brandFilters?: boolean
+  /** Dentro de la hoja inferior el título ya lo pone la hoja: aquí no se repite. */
+  hideTitle?: boolean
 }>()
 defineEmits<{ clear: [] }>()
 const categories = defineModel<string[]>('categories', { required: true })
@@ -67,7 +69,8 @@ const responseOptions: { value: ResponseFilter; label: string }[] = [
 <template>
   <div class="dfilters">
     <div class="dfilters__head">
-      <h2 class="dfilters__title">Filtros</h2>
+      <h2 v-if="!hideTitle" class="dfilters__title">Filtros</h2>
+      <span v-else />
       <button v-if="active" type="button" class="dfilters__clear" @click="$emit('clear')">Limpiar</button>
     </div>
 

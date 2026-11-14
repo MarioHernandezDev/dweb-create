@@ -1,0 +1,105 @@
+/* ==========================================================================
+   Componente · Bienvenida al iniciar sesión (LoginWelcome.vue)
+   Pantalla oscura con el símbolo de CIBERAN (AnimatedMark: barrido, destello y
+   ondas), halo que se expande y dos arcos que giran como en la portada de
+   acceso. Todo transform/opacity. Con movimiento reducido: fundido simple.
+   ========================================================================== */
+
+@layer components {
+  .lw {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    cursor: pointer;
+    background: var(--color-tinta-950);
+    animation: lw-bg 0.35s var(--ease-out) both;
+  }
+
+  .lw__glow {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 120vmax;
+    height: 120vmax;
+    margin: -60vmax 0 0 -60vmax;
+    background: radial-gradient(circle at center, rgb(216 247 127 / 22%) 0, rgb(216 247 127 / 7%) 18%, transparent 38%);
+    animation: lw-glow 2.4s var(--ease-out) both;
+  }
+
+  .lw__arc {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: min(78vmin, 560px);
+    aspect-ratio: 1;
+    margin: calc(min(78vmin, 560px) / -2) 0 0 calc(min(78vmin, 560px) / -2);
+    border: 1px solid rgb(216 247 127 / 22%);
+    border-radius: 50%;
+    border-left-color: transparent;
+    border-bottom-color: transparent;
+    animation: lw-arc 2.6s var(--ease-out) both, lw-spin 14s linear infinite;
+  }
+  .lw__arc--2 {
+    width: min(112vmin, 800px);
+    margin: calc(min(112vmin, 800px) / -2) 0 0 calc(min(112vmin, 800px) / -2);
+    border-color: rgb(255 255 255 / 10%);
+    border-right-color: transparent;
+    border-top-color: transparent;
+    animation: lw-arc 2.6s var(--ease-out) 0.15s both, lw-spin 22s linear infinite reverse;
+  }
+
+  .lw__stage {
+    position: relative;
+    display: grid;
+    justify-items: center;
+    gap: 14px;
+    color: #fff;
+    text-align: center;
+  }
+
+  .lw__brand {
+    margin-top: 6px;
+    font-family: var(--font-display);
+    font-size: clamp(2rem, 6vw, 2.75rem);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1;
+    animation: lw-rise 0.7s var(--ease-out) 0.95s both;
+  }
+
+  .lw__hello {
+    font-size: 1rem;
+    color: rgb(255 255 255 / 66%);
+    animation: lw-rise 0.7s var(--ease-out) 1.25s both;
+  }
+
+  .lw__skip {
+    position: absolute;
+    right: 20px;
+    bottom: 20px;
+    padding: 8px 14px;
+    border-radius: var(--radius-pill);
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: rgb(255 255 255 / 70%);
+    animation: lw-rise 0.5s var(--ease-out) 0.8s both;
+  }
+  .lw__skip:hover { color: #fff; }
+
+  .lw-leave-active { transition: opacity 0.55s var(--ease-out), transform 0.55s var(--ease-out); }
+  .lw-leave-to { opacity: 0; transform: scale(1.06); }
+}
+
+@keyframes lw-bg { from { opacity: 0; } }
+@keyframes lw-glow { from { opacity: 0; transform: scale(0.35); } }
+@keyframes lw-arc { from { opacity: 0; transform: scale(0.6); } }
+@keyframes lw-spin { to { rotate: 360deg; } }
+@keyframes lw-rise { from { opacity: 0; transform: translateY(12px); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .lw__arc, .lw__arc--2, .lw__glow, .lw__brand, .lw__hello, .lw__skip { animation: none; }
+  .lw__arc, .lw__arc--2 { display: none; }
+}

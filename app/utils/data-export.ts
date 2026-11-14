@@ -43,24 +43,164 @@ export function exportQueriesFor(role: 'creator' | 'partner'): ExportQuery[] {
 }
 
 export function exportFilename(now = new Date()): string {
-  return `ciberan-mis-datos-${now.toISOString().slice(0, 10)}.json`
+  return `ciberan-mis-datos-${now.toISOString().slice(0, 10)}.zip`
 }
 
-export interface ExportFile {
-  generado: string
-  aviso: string
-  cuenta: Record<string, unknown>
-  datos: Record<string, unknown[]>
-  /** Secciones que no se han podido leer (el resto del archivo es válido). */
-  incompleto: string[]
+/** Separador de columnas: «;» es el que abre bien en Excel con configuración regional española (LibreOffice y Google Sheets lo detectan solos). */
+export const CSV_SEPARATOR = ';'
+
+/** Columnas de las secciones que no salen de `EXPORT_QUERIES`. */
+const EXTRA_SECTION_COLUMNS: Record<string, string[]> = {
+  redes_conectadas: ['platform', 'handle', 'followers_count', 'connected_at', 'status', 'is_verified']
 }
 
-export function buildExportFile(cuenta: Record<string, unknown>, datos: Record<string, unknown[]>, incompleto: string[], now = new Date()): ExportFile {
-  return {
-    generado: now.toISOString(),
-    aviso: 'Copia de los datos de tu cuenta de CIBERAN. No incluye credenciales de redes sociales ni datos de pago, que no se guardan de forma legible.',
-    cuenta,
-    datos,
-    incompleto
+/** Una celda CSV (RFC 4180 con «;»): fechas tal cual, listas separadas por coma, objetos como JSON y protección frente a fórmulas de hoja de cálculo. */
+export function csvCell(value: unknown): string {
+  if (value === null || value === undefined) return ''
+  let text: string
+  if (typeof value === 'string') text = value
+  else if (Array.isArray(value) && value.every((v) => typeof v === 'string' || typeof v === 'number')) text = value.join(', ')
+  else if (typeof value === 'object') text = JSON.stringify(value)
+  else text = String(value)
+  // Un texto que empiece por = + - @ se interpretaría como fórmula al abrirlo en Excel: se antepone una comilla.
+  if (/^[=+\-@\t\r]/.test(text)) text = `'${text}`
+  return /[";\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text
+}
+
+export function toCsv(columns: string[], rows: Record<string, unknown>[]): string {
+  const header = columns.map(csvCell).join(CSV_SEPARATOR)
+  const lines = rows.map((row) => columns.map((c) => csvCell(row[c])).join(CSV_SEPARATOR))
+  return [header, ...lines].join('\r\n') + '\r\n'
+}
+
+export interface ExportEntry {
+  name: string
+  content: string
+}
+
+/** Columnas de una sección: las pedidas a la base y, si hay filas con más claves, también esas. */
+export function sectionColumns(section: string, rows: Record<string, unknown>[]): string[] {
+  const query = EXPORT_QUERIES.find((q) => q.section === section)
+  const base = query ? query.columns.split(',') : EXTRA_SECTION_COLUMNS[section] ?? []
+  const extra = new Set<string>()
+  for (const row of rows) for (const key of Object.keys(row)) if (!base.includes(key)) extra.add(key)
+  return [...base, ...extra]
+}
+
+/** Archivos de texto que van dentro del ZIP: un LEEME, los datos de la cuenta y un CSV por sección. */
+export function buildExportEntries(cuenta: Record<string, unknown>, datos: Record<string, unknown[]>, incompleto: string[], now = new Date()): ExportEntry[] {
+  const accountRows: Record<string, unknown>[] = []
+  for (const [group, value] of Object.entries(cuenta)) {
+    if (value && typeof value === 'object' && !Array.isArray(value)) {
+      for (const [field, v] of Object.entries(value as Record<string, unknown>)) accountRows.push({ grupo: group, campo: field, valor: v })
+    } else accountRows.push({ grupo: group, campo: group, valor: value })
   }
+  const sections = Object.keys(datos).sort()
+  const readme = [
+    'COPIA DE LOS DATOS DE TU CUENTA DE CIBERAN',
+    `Generada el ${now.toISOString().slice(0, 10)}.`,
+    '',
+    'Qué hay dentro:',
+    '- cuenta.csv: tu email, tu perfil y tu ficha pública (una fila por campo).',
+    ...sections.map((s) => `- ${s}.csv: ${(datos[s] as unknown[]).length} fila(s).`),
+    '',
+    'Cómo abrirlo: cada archivo .csv se abre con Excel, LibreOffice o Google Sheets. Están en UTF-8 y con las columnas separadas por «;».',
+    'Las fechas van en formato ISO (año-mes-día y hora UTC). Las listas se separan con comas.',
+    '',
+    'No incluye credenciales de redes sociales ni datos de pago, que no se guardan de forma legible.',
+    ...(incompleto.length ? ['', `Atención: no se han podido leer estas secciones, así que salen vacías: ${incompleto.join(', ')}.`] : [])
+  ].join('\r\n') + '\r\n'
+  return [
+    { name: 'LEEME.txt', content: readme },
+    { name: 'cuenta.csv', content: toCsv(['grupo', 'campo', 'valor'], accountRows) },
+    ...sections.map((section) => {
+      const rows = datos[section] as Record<string, unknown>[]
+      return { name: `${section}.csv`, content: toCsv(sectionColumns(section, rows), rows) }
+    })
+  ]
+}
+
+const CRC_TABLE = (() => {
+  const table = new Uint32Array(256)
+  for (let n = 0; n < 256; n++) {
+    let c = n
+    for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1
+    table[n] = c >>> 0
+  }
+  return table
+})()
+
+export function crc32(bytes: Uint8Array): number {
+  let crc = 0xffffffff
+  for (const byte of bytes) crc = CRC_TABLE[(crc ^ byte) & 0xff]! ^ (crc >>> 8)
+  return (crc ^ 0xffffffff) >>> 0
+}
+
+/**
+ * ZIP sin compresión («stored»), con nombres en UTF-8. Los CSV son pequeños y así no hace falta ninguna
+ * librería. Los CSV llevan BOM para que Excel reconozca los acentos.
+ */
+export function buildZip(entries: ExportEntry[], now = new Date()): Uint8Array {
+  const encoder = new TextEncoder()
+  const dosTime = (now.getUTCHours() << 11) | (now.getUTCMinutes() << 5) | (now.getUTCSeconds() >> 1)
+  const dosDate = ((Math.max(now.getUTCFullYear(), 1980) - 1980) << 9) | ((now.getUTCMonth() + 1) << 5) | now.getUTCDate()
+  const chunks: Uint8Array[] = []
+  const central: Uint8Array[] = []
+  let offset = 0
+
+  for (const entry of entries) {
+    const name = encoder.encode(entry.name)
+    const body = encoder.encode((entry.name.endsWith('.csv') ? '﻿' : '') + entry.content)
+    const crc = crc32(body)
+
+    const local = new Uint8Array(30 + name.length)
+    const lv = new DataView(local.buffer)
+    lv.setUint32(0, 0x04034b50, true)
+    lv.setUint16(4, 20, true)
+    lv.setUint16(6, 0x0800, true)
+    lv.setUint16(8, 0, true)
+    lv.setUint16(10, dosTime, true)
+    lv.setUint16(12, dosDate, true)
+    lv.setUint32(14, crc, true)
+    lv.setUint32(18, body.length, true)
+    lv.setUint32(22, body.length, true)
+    lv.setUint16(26, name.length, true)
+    lv.setUint16(28, 0, true)
+    local.set(name, 30)
+
+    const dir = new Uint8Array(46 + name.length)
+    const dv = new DataView(dir.buffer)
+    dv.setUint32(0, 0x02014b50, true)
+    dv.setUint16(4, 20, true)
+    dv.setUint16(6, 20, true)
+    dv.setUint16(8, 0x0800, true)
+    dv.setUint16(10, 0, true)
+    dv.setUint16(12, dosTime, true)
+    dv.setUint16(14, dosDate, true)
+    dv.setUint32(16, crc, true)
+    dv.setUint32(20, body.length, true)
+    dv.setUint32(24, body.length, true)
+    dv.setUint16(28, name.length, true)
+    dv.setUint32(42, offset, true)
+    dir.set(name, 46)
+
+    chunks.push(local, body)
+    central.push(dir)
+    offset += local.length + body.length
+  }
+
+  const centralSize = central.reduce((n, c) => n + c.length, 0)
+  const end = new Uint8Array(22)
+  const ev = new DataView(end.buffer)
+  ev.setUint32(0, 0x06054b50, true)
+  ev.setUint16(8, entries.length, true)
+  ev.setUint16(10, entries.length, true)
+  ev.setUint32(12, centralSize, true)
+  ev.setUint32(16, offset, true)
+
+  const all = [...chunks, ...central, end]
+  const out = new Uint8Array(all.reduce((n, c) => n + c.length, 0))
+  let pos = 0
+  for (const chunk of all) { out.set(chunk, pos); pos += chunk.length }
+  return out
 }

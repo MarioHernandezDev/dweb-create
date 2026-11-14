@@ -4,6 +4,7 @@ interface AccountStateRow {
   terms_version: string | null
   terms_accepted_at: string | null
   onboarding_completed_at: string | null
+  created_at: string | null
 }
 
 /**
@@ -22,7 +23,7 @@ export function useAccountState() {
     if (loaded.value) return state.value
     const id = await resolveMyProfileId()
     if (!id) return null
-    const { data, error } = await client.from('profiles').select('terms_version, terms_accepted_at, onboarding_completed_at').eq('id', id).maybeSingle<AccountStateRow>()
+    const { data, error } = await client.from('profiles').select('terms_version, terms_accepted_at, onboarding_completed_at, created_at').eq('id', id).maybeSingle<AccountStateRow>()
     if (error) {
       console.error('[cuenta] no se pudo leer el estado de la cuenta:', error.message)
       return null
@@ -41,7 +42,7 @@ export function useAccountState() {
       console.error('[cuenta] no se pudo registrar la aceptación:', error.message)
       return false
     }
-    state.value = { terms_version: TERMS_VERSION, terms_accepted_at: (data as string | null) ?? new Date().toISOString(), onboarding_completed_at: state.value?.onboarding_completed_at ?? null }
+    state.value = { terms_version: TERMS_VERSION, terms_accepted_at: (data as string | null) ?? new Date().toISOString(), onboarding_completed_at: state.value?.onboarding_completed_at ?? null, created_at: state.value?.created_at ?? null }
     return true
   }
 
@@ -51,7 +52,8 @@ export function useAccountState() {
     if (!id || state.value?.onboarding_completed_at) return
     const now = new Date().toISOString()
     const { error } = await client.from('profiles').update({ onboarding_completed_at: now } as never).eq('id', id)
-    if (!error && state.value) state.value = { ...state.value, onboarding_completed_at: now }
+    if (error) console.error('[cuenta] no se pudo anotar el recorrido como visto:', error.message)
+    else if (state.value) state.value = { ...state.value, onboarding_completed_at: now }
   }
 
   function reset() {

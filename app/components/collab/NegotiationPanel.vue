@@ -161,7 +161,7 @@ async function sendReport() {
       <button v-if="!reportOpen && !reportSent" type="button" class="text-micro text-[var(--color-text-muted)] hover:text-[var(--color-status-alert)] transition-colors" @click="reportOpen = true">
         Reportar esta solicitud
       </button>
-      <p v-else-if="reportSent" class="text-micro text-[var(--color-text-muted)]">Gracias, la revisaremos.</p>
+      <p v-else-if="reportSent" class="text-micro text-[var(--color-text-muted)]">Gracias, la revisaremos. Podemos actuar sobre la cuenta, pero no podemos reclamar ni recuperar importes ni emprender acciones legales.</p>
       <div v-else class="flex flex-col gap-2.5">
         <select
           v-model="reportReason"
@@ -173,6 +173,7 @@ async function sendReport() {
           v-model="reportDetail" rows="2" placeholder="Detalles (opcional)…"
           class="textarea w-full resize-none"
         />
+        <p class="text-micro text-[var(--color-text-muted)]">Revisamos los reportes y podemos avisar o bloquear cuentas, pero no podemos reclamar importes ni emprender acciones legales. Ante un fraude, acude a las autoridades.</p>
         <div class="flex gap-2.5">
           <BaseButton variant="secondary" size="sm" class="flex-1" @click="reportOpen = false">Cancelar</BaseButton>
           <BaseButton variant="danger" size="sm" class="flex-1" :disabled="reporting" :icon-spin="reporting" @click="sendReport">

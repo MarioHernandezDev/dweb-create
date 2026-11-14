@@ -259,11 +259,12 @@ const chunk = <T>(list: T[], size: number) => Array.from({ length: Math.ceil(lis
  * `categoriesOf` decide de quién son las categorías con las que se reparte.
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export async function loadMetricsData(client: any, opts: { scope?: { column: 'creator_id' | 'partner_id'; id: string }; categoriesOf: 'creator' | 'partner'; limit?: number }): Promise<LoadedMetricsData> {
+export async function loadMetricsData(client: any, opts: { scope?: { column: 'creator_id' | 'partner_id'; id: string }; categoriesOf: 'creator' | 'partner'; limit?: number; since?: Date | null }): Promise<LoadedMetricsData> {
   let q = client.from('collaborations')
     .select('id, status, created_at, budget_cents, initiated_by, terminated_by, creators(profile_id, categories, display_name), partners(profile_id, categories, company_name)')
     .order('created_at', { ascending: false }).limit(opts.limit ?? 2000)
   if (opts.scope) q = q.eq(opts.scope.column, opts.scope.id)
+  if (opts.since) q = q.gte('created_at', opts.since.toISOString())
   const { data: rows, error } = await q
   if (error) throw createError({ statusCode: 500, statusMessage: 'Error', message: 'No se han podido leer las colaboraciones.' })
 

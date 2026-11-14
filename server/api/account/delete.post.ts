@@ -1,5 +1,5 @@
 import { serverSupabaseServiceRole, serverSupabaseUser } from '#supabase/server'
-import { emailMatches, planAccountDeletion } from '../../utils/account-deletion'
+import { emailMatches, loadDeletionBlockers, planAccountDeletion } from '../../utils/account-deletion'
 
 /**
  * POST /api/account/delete — el usuario pide eliminar SU cuenta.
@@ -35,7 +35,12 @@ export default defineEventHandler(async (event) => {
 
   const plan = planAccountDeletion(statuses)
   if (plan === 'blocked') {
-    throw createError({ statusCode: 409, statusMessage: 'Colaboraciones abiertas', message: 'Tienes colaboraciones abiertas o solicitudes pendientes. Ciérralas o cancélalas antes de eliminar la cuenta.' })
+    const blockers = await loadDeletionBlockers(client, user.sub)
+    throw createError({
+      statusCode: 409, statusMessage: 'Colaboraciones abiertas',
+      message: 'Tienes colaboraciones abiertas o solicitudes pendientes. Ciérralas o cancélalas antes de eliminar la cuenta.',
+      data: { blockers: blockers ?? [] }
+    })
   }
 
   if (plan === 'delete_now') {

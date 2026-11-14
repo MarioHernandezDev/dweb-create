@@ -14,7 +14,7 @@ const { partner, ensurePartner, updateFicha, uploadCoverPhoto, removeCoverPhoto 
 const user = useSupabaseUser()
 const { logout } = useLogout()
 const { resolveMyProfileId } = useMyProfileId()
-const { avatarUrl, uploadAvatar, removeAvatar } = useMyAvatar()
+const { avatarUrl, info: myAvatarInfo, uploadAvatar, removeAvatar } = useMyAvatar()
 
 // `user.value?.id` puede seguir vacío justo al cargar la página (ver
 // role-guard.global.ts) — se resuelve de forma fiable con useMyProfileId.
@@ -212,6 +212,13 @@ const fichaTexts = {
 // Vista previa en vivo — usa el MISMO componente que pinta /profile/[role]/[id].
 // Lee los campos sin guardar a propósito, para que se note el cambio al escribir.
 const previewSheetOpen = ref(false)
+// La empresa es la ficha pública; la persona es quien lleva la cuenta (la ven los dos nombres para no confundirlos).
+const accountOwnerLine = computed(() => {
+  const owner = myAvatarInfo.value?.fullName
+  const email = user.value?.email
+  if (!owner || owner === 'Usuario') return email ?? 'Cuenta de partner'
+  return `Cuenta de ${owner}`
+})
 const previewName = computed(() => partner.value?.name || user.value?.email || 'Tu empresa')
 function rangeText(min: number | string | null, max: number | string | null) {
   const a = Number(min) || 0
@@ -247,7 +254,7 @@ const heroRange = computed(() => rangeText(
   <AppShell role="partner" title="Perfil" full-width>
     <div class="settings">
       <ProfileHero
-        :name="partner?.name || 'Tu empresa'" :subtitle="user?.email ?? 'Cuenta de partner'"
+        :name="partner?.name || 'Tu empresa'" :subtitle="accountOwnerLine"
         :cover-url="partner?.coverUrl ?? null" :cover-seed="partner?.id ?? 'partner'"
         :avatar-url="avatarUrl" :initials="initialsFromName(partner?.name ?? '?')" :hue="hueFromString(partner?.name ?? '')"
         :upload="uploadAvatar" :remove="removeAvatar"

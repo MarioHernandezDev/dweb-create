@@ -12,6 +12,9 @@ const password = ref('')
 const loading = ref(false)
 const activeDemo = ref('')
 const error = ref('')
+// Cuenta creada pero sin confirmar: se ofrece reenviar el correo.
+const unconfirmed = ref(false)
+const { sending: resending, sent: resent, error: resendError, cooldown, resend } = useResendConfirmation()
 
 const isDev = import.meta.dev
 
@@ -34,6 +37,7 @@ if (import.meta.dev) {
 async function login(loginEmail: string, loginPassword: string) {
   loading.value = true
   error.value = ''
+  unconfirmed.value = false
   // Las cuentas de demo cambian de rol con un clic, sin pasar por «Cerrar
   // sesión»: hay que tirar toda la caché de la cuenta anterior aquí también.
   resetAccountCaches()
@@ -41,6 +45,7 @@ async function login(loginEmail: string, loginPassword: string) {
   const { data, error: signInError } = await supabase.auth.signInWithPassword({ email: loginEmail, password: loginPassword })
   if (signInError) {
     error.value = translateAuthError(signInError.message)
+    unconfirmed.value = /email not confirmed/i.test(signInError.message)
     loading.value = false
     return
   }
@@ -51,6 +56,7 @@ async function login(loginEmail: string, loginPassword: string) {
     loading.value = false
     return
   }
+  useLoginWelcome().announce()
   await navigateTo(roleMeta[role].home)
 }
 
@@ -94,6 +100,13 @@ function loginAsDemo(demoEmail: string) {
       <BaseField label="Contraseña" :error="error" v-slot="f">
         <BaseInput v-bind="f" v-model="password" type="password" required autocomplete="current-password" />
       </BaseField>
+      <div v-if="unconfirmed" class="grid gap-2 -mt-1" data-resend-confirmation>
+        <BaseButton type="button" variant="secondary" size="md" icon="ph:envelope-simple-bold" :loading="resending" :disabled="cooldown > 0" @click="resend(email)">
+          {{ cooldown > 0 ? `Reenviar en ${cooldown} s` : 'Reenviar correo de confirmación' }}
+        </BaseButton>
+        <p v-if="resent" class="text-sm text-[var(--text-muted)]" role="status">Si hay una cuenta pendiente con ese email, te hemos enviado el correo otra vez. Mira también el spam.</p>
+        <p v-if="resendError" class="text-sm text-[var(--color-danger)]" role="alert">{{ resendError }}</p>
+      </div>
       <p class="text-sm text-right -mt-2"><NuxtLink to="/forgot-password" class="text-[var(--text-muted)] hover:underline" data-forgot-link>¿Olvidaste tu contraseña?</NuxtLink></p>
 
       <BaseButton type="submit" variant="primary" size="lg" block :loading="loading">

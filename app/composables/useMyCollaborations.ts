@@ -148,6 +148,18 @@ export function useMyCollaborations() {
     }
   }
 
+  /** Retira una solicitud que envié y que la otra parte aún no ha respondido (se borra; ver withdraw_collaboration_request). */
+  async function withdraw(id: string) {
+    acting.value = id
+    try {
+      const { error } = await client.rpc('withdraw_collaboration_request' as never, { p_collaboration_id: id } as never)
+      if (error) throw error
+      await refresh()
+    } finally {
+      acting.value = null
+    }
+  }
+
   async function decline(id: string) {
     acting.value = id
     try {
@@ -213,5 +225,5 @@ export function useMyCollaborations() {
     }
   }
 
-  return { collaborations, loaded, paying, acting, payError, activeCount, pendingCount, awaitingMyResponseCount, refresh, ensureLoaded, payForCollaboration, accept, decline, completeBrief, markCompleted }
+  return { collaborations, loaded, paying, acting, payError, activeCount, pendingCount, awaitingMyResponseCount, refresh, ensureLoaded, payForCollaboration, accept, decline, withdraw, completeBrief, markCompleted }
 }

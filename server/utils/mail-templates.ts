@@ -132,6 +132,24 @@ export function notificationDigestMail(items: DigestItem[], appUrl: string | und
   return { subject, text, html }
 }
 
+/** Aviso al equipo con las alertas del panel de admin (reportes sin atender, picos…). */
+export function adminAlertsMail(alerts: { title: string; detail: string }[], appUrl: string | undefined): RenderedMail {
+  const n = alerts.length
+  const heading = n === 1 ? 'Hay 1 alerta en el panel' : `Hay ${n} alertas en el panel`
+  const link = absoluteAppLink(appUrl, '/admin')
+  const text = `${heading} de Ciberan:\n\n${alerts.map((a) => `· ${a.title}\n  ${a.detail}`).join('\n\n')}${link ? `\n\nAbrir el panel: ${link}` : ''}\n\nRecibes este correo porque tu dirección está en ADMIN_ALERT_EMAIL.`
+  const bodyHtml = alerts.map((a) => paragraph(`<strong style="color:${C.ink}">${escapeHtml(a.title)}</strong><br><span style="font-size:14px;color:${C.ink500}">${escapeHtml(a.detail)}</span>`)).join('')
+  return {
+    subject: n === 1 ? `Alerta del panel: ${alerts[0]!.title}` : `${n} alertas en el panel de Ciberan`,
+    text,
+    html: mailLayout({
+      preheader: alerts.map((a) => a.title).slice(0, 2).join(' · '), eyebrow: 'Panel de admin', title: heading, bodyHtml,
+      cta: link ? { label: 'Abrir el panel', href: escapeHtml(link) } : undefined,
+      footerHtml: 'Recibes este correo porque tu dirección está en ADMIN_ALERT_EMAIL.'
+    })
+  }
+}
+
 export function testMail(): RenderedMail {
   const footer = 'Correo de prueba enviado desde el panel de administración de Ciberan.'
   return {

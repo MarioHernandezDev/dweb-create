@@ -8,6 +8,10 @@
  */
 const { state, resolve } = useConfirm()
 
+// Con etiquetas largas («Marcar como completada», «Guardar y pedir nueva aprobación») dos botones
+// lado a lado no caben: se apilan, con la acción principal arriba.
+const stacked = computed(() => state.value.cancelLabel.length + state.value.confirmLabel.length > 24)
+
 // Mismo criterio de foco que BottomSheet.vue: Escape cancela (como pulsar
 // el botón "Cancelar"), y al abrirse el foco entra en "Cancelar" — nunca en
 // la acción que confirma, para que un Enter/Espacio accidental no dispare
@@ -66,9 +70,9 @@ onUnmounted(() => {
                 <p v-if="state.message" class="text-sm text-[var(--color-text-muted)] mt-1.5 leading-relaxed">{{ state.message }}</p>
               </div>
             </div>
-            <div class="flex items-center gap-2.5">
-              <BaseButton ref="cancelBtn" variant="secondary" size="md" class="flex-1" @click="resolve(false)">{{ state.cancelLabel }}</BaseButton>
-              <BaseButton :variant="state.tone === 'danger' ? 'danger' : 'primary'" size="md" class="flex-1" @click="resolve(true)">
+            <div class="flex gap-2.5" :class="stacked ? 'flex-col-reverse' : 'items-center'">
+              <BaseButton ref="cancelBtn" variant="secondary" size="md" :class="stacked ? undefined : 'flex-1'" :block="stacked" @click="resolve(false)">{{ state.cancelLabel }}</BaseButton>
+              <BaseButton :variant="state.tone === 'danger' ? 'danger' : 'primary'" size="md" :class="stacked ? undefined : 'flex-1'" :block="stacked" @click="resolve(true)">
                 {{ state.confirmLabel }}
               </BaseButton>
             </div>

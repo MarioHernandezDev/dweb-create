@@ -46,6 +46,7 @@
 @import "./components/platform.css";
 @import "./components/loading.css";
 @import "./components/animated-mark.css";
+@import "./components/login-welcome.css";
 @import "./components/chart-home.css";
 @import "./components/prose.css";
 @import "./components/cover-art.css";

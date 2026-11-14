@@ -21,7 +21,7 @@ describe('revisión de reportes por el equipo', () => {
   it('los endpoints de revisión exigen sesión de admin antes de nada', () => {
     for (const f of ['server/api/admin/reports/[id].patch.ts', 'server/api/admin/deletion-requests.get.ts', 'server/api/admin/deletion-requests/[id].patch.ts', 'server/api/admin/reports.get.ts']) {
       const src = readFileSync(path.join(process.cwd(), f), 'utf8')
-      const guard = src.indexOf('await requireAdmin(event)')
+      const guard = src.search(/await requireAdmin\(event[,)]/)
       expect(guard, f).toBeGreaterThan(-1)
       expect(guard, f).toBeLessThan(src.indexOf('serverSupabaseServiceRole(event)'))
     }

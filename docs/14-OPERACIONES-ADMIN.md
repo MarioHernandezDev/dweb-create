@@ -24,9 +24,10 @@ El usuario la pide en Perfil → Privacidad → «Eliminar cuenta», escribiendo
 
 Atender una solicitud (pendiente de criterio legal sobre conservación):
 1. Confirmar con la persona por email que sigue queriendo eliminarla.
-2. Opción A, **anonimizar** (recomendada si la otra parte necesita conservar el registro): vaciar nombre, bio, foto, portada, redes, paquetes y contenido propio, y bloquear el acceso. Hoy se hace a mano en el panel de Supabase; no hay botón.
-3. Opción B, **borrar** del todo desde Supabase → Authentication → Users: se pierden también las colaboraciones compartidas. Solo si la otra parte no las necesita.
-4. Marcar la solicitud como **atendida** en el panel.
+2. Abrir la ficha de la persona (Admin → Eliminaciones de cuenta → «Abrir ficha», o Usuarios) y usar **Eliminar cuenta** (solo administración; hay que escribir su correo).
+3. Opción A, **anonimizar** (recomendada si la otra parte necesita conservar el registro): vacía nombre, bio, foto, portada, redes, paquetes y contenido propio sin colaboración, y bloquea el acceso. Conserva las colaboraciones, chats y reportes. El correo queda libre: la persona puede crear una cuenta nueva con él.
+4. Opción B, **borrar del todo**: elimina la cuenta, sus archivos y, si tiene historial, también sus colaboraciones compartidas con los chats y valoraciones (el panel pide reconocerlo). Solo si la otra parte no las necesita.
+5. La solicitud queda marcada como **atendida** sola. Todo queda en el historial («Acciones del equipo»), a nombre de quien lo hizo.
 
 ## 3. Datos de prueba antes de lanzar
 Las 21 cuentas actuales son ficticias (dominios `@feedma.test` y similares). Antes de abrir a usuarios reales:
@@ -37,3 +38,7 @@ Las 21 cuentas actuales son ficticias (dominios `@feedma.test` y similares). Ant
 
 ## 4. Versión de los términos
 `TERMS_VERSION` en `app/utils/legal.ts`. Al cambiar el texto legal, subir la fecha: cada cuenta verá el aviso de aceptación al entrar y quedará registrado qué versión aceptó y cuándo (`profiles.terms_version`, `profiles.terms_accepted_at`).
+
+## Alertas por correo (opcional)
+
+El workflow `.github/workflows/admin-alerts.yml` llama de lunes a viernes a `POST /api/notifications/admin-alerts` y envía un correo a `ADMIN_ALERT_EMAIL` solo si hay algo pendiente. Está apagado por defecto. Para encenderlo tras desplegar: variables `ALERTS_ENABLED=true` y `APP_URL` en GitHub Actions, secreto `SYNC_CRON_SECRET` (el mismo del servidor), y en el servidor `ADMIN_ALERT_EMAIL` más el SMTP. Se puede probar a mano con «Run workflow».

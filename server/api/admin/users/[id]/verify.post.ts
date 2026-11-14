@@ -6,7 +6,7 @@ import { serverSupabaseServiceRole } from '#supabase/server'
  * El id es el del perfil, igual que en block y grant-pro.
  */
 export default defineEventHandler(async (event) => {
-  await requireAdmin(event)
+  const actor = await requireAdmin(event, 'admin')
 
   const profileId = getRouterParam(event, 'id')
   if (!profileId) throw createError({ statusCode: 400, statusMessage: 'Falta el id de usuario.' })
@@ -23,5 +23,6 @@ export default defineEventHandler(async (event) => {
   if (error) throw createError({ statusCode: 500, statusMessage: error.message })
   if (!data) throw createError({ statusCode: 404, statusMessage: 'La verificación solo se puede dar a cuentas de marca (partner).' })
 
+  await logAdminAction(event, actor, { action: body.verified ? 'verificó la marca' : 'quitó la verificación a la marca', targetType: 'user', targetId: profileId, targetLabel: await accountLabel(event, profileId) })
   return { ok: true, verifiedAt: data.verified_at }
 })

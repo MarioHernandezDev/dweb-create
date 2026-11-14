@@ -16,7 +16,7 @@ interface GrantProBody {
  * los meses regalados.
  */
 export default defineEventHandler(async (event) => {
-  await requireAdmin(event)
+  const actor = await requireAdmin(event, 'admin')
 
   const profileId = getRouterParam(event, 'id')
   if (!profileId) throw createError({ statusCode: 400, statusMessage: 'Falta el id de usuario.' })
@@ -64,5 +64,6 @@ export default defineEventHandler(async (event) => {
   } as never)
   if (creditError) throw createError({ statusCode: 500, statusMessage: creditError.message })
 
+  await logAdminAction(event, actor, { action: `regaló ${months} mes${months === 1 ? '' : 'es'} de Pro`, targetType: 'user', targetId: profileId, targetLabel: await accountLabel(event, profileId), detail: { months } })
   return { ok: true, planExpiresAt: periodEnd.toISOString() }
 })

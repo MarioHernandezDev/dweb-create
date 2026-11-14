@@ -1,5 +1,5 @@
 import type { Role } from '~/types'
-import { tourSteps } from '~/utils/onboarding-steps'
+import { type TourAutoStartInput, shouldAutoStartTour, tourSteps } from '~/utils/onboarding-steps'
 
 // Versión en la clave: si el recorrido cambia mucho, subirla lo vuelve a mostrar.
 const storageKey = (userId: string) => `ciberan:tour:v1:${userId}`
@@ -7,10 +7,12 @@ const storageKey = (userId: string) => `ciberan:tour:v1:${userId}`
 /**
  * Recorrido de bienvenida (M-O1). El progreso se guarda en `localStorage`
  * por usuario y, además, en la cuenta (`profiles.onboarding_completed_at`,
- * vía useAccountState) para que no reaparezca en otro dispositivo: ver o saltar el recorrido lo deja
- * cerrado en los siguientes inicios de sesión de ESE navegador. En otro
- * dispositivo volvería a salir una vez; si molesta, el paso siguiente es una
- * columna `profiles.onboarding_completed_at`.
+ * vía useAccountState), que es lo que vale en cualquier dispositivo.
+ *
+ * Solo se abre solo la primera vez de una cuenta recién creada (ver
+ * `shouldAutoStartTour`) y se anota como visto en el momento de abrirlo, no al
+ * cerrarlo: recargar, navegar o cerrar la pestaña con él abierto no lo trae de
+ * vuelta. Después solo se abre con «Ver el recorrido de bienvenida».
  *
  * Si `localStorage` falla (modo privado, bloqueado), el recorrido no se
  * muestra solo — es preferible no mostrarlo a que reaparezca en cada visita.
@@ -44,19 +46,20 @@ export function useOnboardingTour() {
     }
   }
 
-  /** Decide, una sola vez por pestaña, si hay que abrirlo solo (primera vez). */
-  function maybeAutoStart(id: string, userRole: Role, seenInAccount = false) {
+  /** Decide, una sola vez por pestaña, si hay que abrirlo solo (primera vez de una cuenta nueva). */
+  function maybeAutoStart(id: string, userRole: Role, account: Omit<TourAutoStartInput, 'seenLocally' | 'now'>) {
     if (decided.value) return
     decided.value = true
     userId.value = id
     role.value = userRole
-    if (seenInAccount) {
+    if (account.completedAt) {
       markSeen()
       return
     }
-    if (!wasSeen(id)) {
+    if (shouldAutoStartTour({ ...account, seenLocally: wasSeen(id) })) {
       stepIndex.value = 0
       open.value = true
+      markSeen()
     }
   }
 

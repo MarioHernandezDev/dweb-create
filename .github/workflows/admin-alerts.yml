@@ -1,0 +1,47 @@
+name: Alertas del panel de admin
+
+# Llama a POST /api/notifications/admin-alerts cada día laborable por la mañana.
+# El endpoint envía un correo a ADMIN_ALERT_EMAIL solo si hay algo pendiente
+# (reportes sin atender, eliminaciones, puntos calientes, picos). Sin SMTP o sin
+# ADMIN_ALERT_EMAIL en el servidor no hace nada.
+#
+# DESACTIVADO por defecto. Para activarlo, tras desplegar (mismas variables que sync-social):
+#   1. Settings > Secrets and variables > Actions > Variables:
+#        ALERTS_ENABLED = true
+#        APP_URL        = https://tu-dominio   (sin barra final; HTTPS)
+#   2. Secrets:
+#        SYNC_CRON_SECRET = el mismo valor que SYNC_CRON_SECRET del servidor
+#   3. En el servidor: ADMIN_ALERT_EMAIL=correo@del-equipo y el SMTP configurado.
+on:
+  schedule:
+    # 07:43 UTC de lunes a viernes (08:43 / 09:43 en España)
+    - cron: '43 7 * * 1-5'
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  alerts:
+    if: ${{ vars.ALERTS_ENABLED == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Llamar a admin-alerts
+        env:
+          APP_URL: ${{ vars.APP_URL }}
+          SYNC_CRON_SECRET: ${{ secrets.SYNC_CRON_SECRET }}
+        run: |
+          set -euo pipefail
+          if [ -z "${APP_URL}" ] || [ -z "${SYNC_CRON_SECRET}" ]; then
+            echo "::error::Falta la variable APP_URL o el secreto SYNC_CRON_SECRET."
+            exit 1
+          fi
+          case "${APP_URL}" in https://*) ;; *) echo "::error::APP_URL debe empezar por https://"; exit 1 ;; esac
+          status=$(curl -sS -o response.json -w '%{http_code}' --max-time 60 \
+            -X POST "${APP_URL%/}/api/notifications/admin-alerts" \
+            -H "Authorization: Bearer ${SYNC_CRON_SECRET}")
+          if [ "$status" != "200" ]; then
+            echo "::error::admin-alerts respondió HTTP ${status}"
+            exit 1
+          fi
+          echo "Respuesta: $(jq -c . response.json)"

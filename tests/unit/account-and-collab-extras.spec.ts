@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { ACTIVITY_NOTIFICATION_TYPES, MUTABLE_NOTIFICATION_TYPES, NOTIFICATION_PREFERENCE_GROUPS, isGroupEnabled, toggleGroup } from '../../app/utils/notifications'
-import { EXPORT_QUERIES, buildExportFile, exportFilename, exportQueriesFor } from '../../app/utils/data-export'
+import { EXPORT_QUERIES, buildExportEntries, buildZip, crc32, csvCell, exportFilename, exportQueriesFor, toCsv } from '../../app/utils/data-export'
 import { COLLAB_FILE_MAX_BYTES, COLLAB_FILE_TYPES, collabFilePath, collabFileProblem, fileIcon, formatFileSize, safeFileName } from '../../app/utils/collab-files'
 import { agreementCanonicalText, agreementFingerprint, agreementRows, buildAgreementHtml, type AgreementData } from '../../app/utils/agreement-summary'
 import { buildIcs } from '../../app/utils/ics'
@@ -76,13 +76,33 @@ describe('descargar mis datos', () => {
     expect(new Set(creator).size).toBe(creator.length)
     expect(new Set(partner).size).toBe(partner.length)
   })
-  it('el archivo lleva fecha, aviso y la lista de secciones incompletas', () => {
+  it('el archivo es un ZIP con fecha en el nombre y un LEEME que lista las secciones incompletas', () => {
     const now = new Date('2026-11-10T12:00:00Z')
-    expect(exportFilename(now)).toBe('ciberan-mis-datos-2026-11-10.json')
-    const f = buildExportFile({ email: 'a@b.c' }, { avisos: [] }, ['mensajes_enviados'], now)
-    expect(f.generado).toBe('2026-11-10T12:00:00.000Z')
-    expect(f.incompleto).toEqual(['mensajes_enviados'])
-    expect(f.aviso).toMatch(/credenciales/)
+    expect(exportFilename(now)).toBe('ciberan-mis-datos-2026-11-10.zip')
+    const entries = buildExportEntries({ email: 'a@b.c', perfil: { full_name: 'Ana' } }, { avisos: [], mensajes_enviados: [] }, ['mensajes_enviados'], now)
+    expect(entries.map((e) => e.name)).toEqual(['LEEME.txt', 'cuenta.csv', 'avisos.csv', 'mensajes_enviados.csv'])
+    const readme = entries[0]!.content
+    expect(readme).toMatch(/2026-11-10/)
+    expect(readme).toMatch(/credenciales/)
+    expect(readme).toMatch(/mensajes_enviados/)
+    expect(entries[1]!.content).toContain('perfil;full_name;Ana')
+  })
+  it('las hojas CSV escapan comillas, saltos de línea y fórmulas, y conservan la cabecera aunque no haya filas', () => {
+    expect(csvCell('hola; "mundo"\nfin')).toBe('"hola; ""mundo""\nfin"')
+    expect(csvCell(['moda', 'fitness'])).toBe('moda, fitness')
+    expect(csvCell(null)).toBe('')
+    expect(csvCell('=SUMA(A1:A2)')).toBe("'=SUMA(A1:A2)")
+    expect(csvCell(12)).toBe('12')
+    expect(toCsv(['id', 'title'], [])).toBe('id;title\r\n')
+    expect(toCsv(['id', 'title'], [{ id: 1, title: 'a;b' }])).toBe('id;title\r\n1;"a;b"\r\n')
+  })
+  it('el ZIP tiene una firma válida, un CRC por archivo y los nombres en UTF-8', () => {
+    expect(crc32(new TextEncoder().encode('123456789'))).toBe(0xcbf43926)
+    const zip = buildZip([{ name: 'avisos.csv', content: 'id\r\n1\r\n' }, { name: 'LEEME.txt', content: 'hola' }], new Date('2026-11-10T12:00:00Z'))
+    const view = new DataView(zip.buffer)
+    expect(view.getUint32(0, true)).toBe(0x04034b50)
+    expect(view.getUint32(zip.length - 22, true)).toBe(0x06054b50)
+    expect(view.getUint16(zip.length - 22 + 10, true)).toBe(2)
   })
 })
 

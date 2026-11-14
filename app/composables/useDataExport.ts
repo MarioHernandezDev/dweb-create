@@ -1,6 +1,6 @@
-import { buildExportFile, exportFilename, exportQueriesFor } from '~/utils/data-export'
+import { buildExportEntries, buildZip, exportFilename, exportQueriesFor } from '~/utils/data-export'
 
-/** Reúne los datos de la cuenta y los descarga como un archivo JSON. Todo se lee con la sesión del usuario. */
+/** Reúne los datos de la cuenta y los descarga en un ZIP con un CSV por sección. Todo se lee con la sesión del usuario. */
 export function useDataExport() {
   const client = useSupabaseClient()
   const { resolveMyProfileId } = useMyProfileId()
@@ -54,11 +54,11 @@ export function useDataExport() {
         datos.redes_conectadas = data ?? []
       }
 
-      const file = buildExportFile(
+      const entries = buildExportEntries(
         { email: authData.user?.email ?? null, alta: authData.user?.created_at ?? null, perfil: profile ?? null, ficha: ficha ?? null },
         datos, incompleto.sort()
       )
-      const url = URL.createObjectURL(new Blob([JSON.stringify(file, null, 2)], { type: 'application/json;charset=utf-8' }))
+      const url = URL.createObjectURL(new Blob([buildZip(entries) as BlobPart], { type: 'application/zip' }))
       const a = document.createElement('a')
       a.href = url
       a.download = exportFilename()

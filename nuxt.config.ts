@@ -152,6 +152,9 @@ export default defineNuxtConfig({
     // server/utils/admin-session.ts). `adminSessionSecret` solo cifra la
     // cookie de sesión, nunca se compara con nada que escriba un humano.
     adminPassword: process.env.ADMIN_PASSWORD,
+    // Con ADMIN_DISABLE_SHARED_LOGIN=1 la contraseña compartida deja de valer y solo se entra con cuenta personal.
+    adminAlertEmail: process.env.ADMIN_ALERT_EMAIL,
+    adminSharedLoginDisabled: process.env.ADMIN_DISABLE_SHARED_LOGIN === '1',
     adminSessionSecret: process.env.ADMIN_SESSION_SECRET,
     public: {
       // Pública a propósito: la usa el navegador para cargar Stripe.js antes

@@ -28,8 +28,10 @@
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
-    height: var(--btn-h);
-    padding-inline: var(--btn-px);
+    /* Altura mínima, no fija: una etiqueta larga pasa a dos líneas en vez de salirse del botón. */
+    min-height: var(--btn-h);
+    max-width: 100%;
+    padding: 0.5rem var(--btn-px);
     border: 1px solid var(--btn-bd);
     border-radius: var(--radius-pill);
     background: var(--btn-bg);
@@ -37,8 +39,10 @@
     font-family: var(--font-sans);
     font-size: var(--btn-fs);
     font-weight: 600;
-    line-height: 1;
-    white-space: nowrap;
+    line-height: 1.2;
+    text-align: center;
+    white-space: normal;
+    text-wrap: balance;
     text-decoration: none;
     cursor: pointer;
     user-select: none;
@@ -77,7 +81,7 @@
     &.btn--lg { --btn-h: var(--control-lg); --btn-px: 1.75rem; --btn-icon: 1.25rem; }
     &.btn--block { width: 100%; }
     /* Solo icono: cuadrado con el alto del tamaño elegido. */
-    &.btn--icon { width: var(--btn-h); padding: 0; }
+    &.btn--icon { width: var(--btn-h); height: var(--btn-h); padding: 0; }
 
     /* ---- Variantes (cada una redefine solo variables) ---- */
     /* Acción principal: tinta → se rellena de voltio. */
@@ -132,6 +136,8 @@
       --btn-fg-hover: var(--color-tinta-950);
     }
   }
+
+  .btn > span { min-width: 0; }
 
   .btn__icon {
     width: var(--btn-icon);

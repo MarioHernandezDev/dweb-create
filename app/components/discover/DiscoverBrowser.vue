@@ -327,7 +327,7 @@ useIntersectionObserver(sentinel, ([entry]) => { if (entry?.isIntersecting && ha
     <BottomSheet v-model="filtersOpen" title="Filtros">
       <DiscoverFilters
         v-model:categories="selectedCategories" v-model:min="minEuros" v-model:max="maxEuros" v-model:platforms="platforms" v-model:response="response" v-model:types="types" v-model:verified-only="verifiedOnly" :brand-filters="kind === 'partner'"
-        :active="hasActiveFilters" :platform-counts="platformCounts" :budget-label="noun.budget" @clear="clearFilters"
+        :active="hasActiveFilters" :platform-counts="platformCounts" :budget-label="noun.budget" hide-title @clear="clearFilters"
       />
       <BaseButton variant="primary" size="lg" block class="mt-5" @click="filtersOpen = false">Ver {{ filtered.length }} {{ filtered.length === 1 ? noun.one : noun.many }}</BaseButton>
     </BottomSheet>

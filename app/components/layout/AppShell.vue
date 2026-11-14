@@ -21,6 +21,7 @@ const { collapsed } = useRailState()
     <BottomTabBar :role="role" />
     <ConfirmDialogHost />
     <ToastHost />
+    <LoginWelcome />
     <OnboardingTour />
     <TermsGate />
   </div>
