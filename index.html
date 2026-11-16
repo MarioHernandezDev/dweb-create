@@ -39,8 +39,8 @@
       line-height: 1.55;
       -webkit-font-smoothing: antialiased;
     }
-    main { width: 100%; max-width: 40rem; text-align: center; }
-    .mark { width: clamp(96px, 22vw, 144px); height: auto; margin: 0 auto 1.5rem; display: block; }
+    main { width: 100%; max-width: 40rem; text-align: center; display: flex; flex-direction: column; align-items: center; padding-block: 2rem; }
+    .mark { width: clamp(96px, 22vw, 144px); height: auto; margin: 0 0 1.25rem; display: block; }
     .brand {
       font-family: var(--font-display);
       font-weight: 800;
@@ -48,11 +48,13 @@
       line-height: .95;
       letter-spacing: -.02em;
       margin: 0;
+      color: var(--hueso-50);
+      text-align: center;
     }
     .brand span { color: var(--voltio-400); }
     .pill {
       display: inline-flex; align-items: center; gap: .5rem;
-      margin: 1.75rem 0 1rem;
+      margin: 2rem 0 1.5rem;
       padding: .4rem .9rem;
       border: 1px solid var(--tinta-800);
       border-radius: 999px;
@@ -66,10 +68,12 @@
       font-weight: 500;
       font-size: clamp(1.5rem, 1.1rem + 1.6vw, 2.125rem);
       line-height: 1.15;
-      margin: 0 0 .75rem;
+      margin: 0 0 1rem;
+      max-width: 24ch;
+      text-wrap: balance;
     }
-    p { margin: 0 auto; max-width: 30rem; color: var(--hueso-300); }
-    .domains { margin-top: 2rem; display: flex; gap: .75rem; justify-content: center; flex-wrap: wrap; }
+    .lead { margin: 0 auto; max-width: 28rem; color: var(--hueso-300); text-wrap: balance; }
+    .domains { margin-top: 2.5rem; display: flex; gap: .75rem; justify-content: center; flex-wrap: wrap; }
     .domains span {
       font-family: var(--font-display); font-weight: 800; font-size: 1.125rem;
       padding: .5rem 1rem; border-radius: .75rem;
@@ -82,10 +86,10 @@
 <body>
   <main>
     <img class="mark" src="/img/mark-512.png" alt="" width="144" height="144">
-    <p class="brand" aria-label="CIBERAN">CIBERAN<span>.</span></p>
+    <div class="brand" aria-label="CIBERAN">CIBERAN<span>.</span></div>
     <div class="pill"><i class="dot"></i> En construcción</div>
     <h1>¡Estamos desarrollando en CIBERAN.es y CIBERAN.com!</h1>
-    <p>Estamos preparando algo para creadores y marcas. Muy pronto podrás verlo aquí.</p>
+    <p class="lead">Estamos preparando algo para creadores y marcas. Muy pronto podrás verlo aquí.</p>
     <div class="domains"><span>ciberan.es</span><span>ciberan.com</span></div>
   </main>
 </body>
