@@ -74,6 +74,7 @@
     & .rail__link { justify-content: center; gap: 0; padding-inline: 0; }
     & .rail__account { justify-content: center; gap: 0; padding-inline: 0; }
     & .rail__link .badge { position: absolute; top: 0.25rem; right: 0.5rem; margin-left: 0; }
+    & .rail__link .soon-tag { display: none; }
   }
   .rail__nav { display: flex; flex-direction: column; gap: 0.25rem; }
   .rail__link {

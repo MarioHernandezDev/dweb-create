@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import draggable from 'vuedraggable'
-import { coverArtFromString } from '~/utils/avatar'
 import { formatEuros } from '~/utils/mock-data'
 import { firstFichaError, validateFicha } from '~/utils/profile-ficha'
 import { audienceError, audienceFromDb, audienceToDb } from '~/utils/audience'
@@ -284,17 +283,16 @@ async function saveWeeklyTarget() {
         :name="creator?.displayName || 'Tu cuenta'" :subtitle="user?.email ?? 'Creador de contenido'"
         :cover-url="creator?.coverUrl ?? null" :cover-seed="creator?.id ?? 'creator'"
         :avatar-url="avatarUrl" :initials="myInitials" :hue="myHue" :upload="uploadAvatar" :remove="removeAvatar"
+        :upload-cover="uploadCoverPhoto" :remove-cover="removeCoverPhoto"
         :percent="completionPercent" :items="completionItems" @select-tab="selectTab"
       >
         <template #actions>
-          <BaseButton v-if="creator" :to="`/profile/creator/${creator.id}`" variant="outline" size="sm" icon="ph:eye-fill">Ver perfil público</BaseButton>
-          <BaseButton
-            v-if="creator" variant="ghost" size="sm" :icon="profileLinkCopied ? 'ph:check-bold' : 'ph:link-simple-bold'"
-            :aria-label="profileLinkCopied ? 'Enlace copiado' : 'Copiar enlace de tu perfil'" data-copy-link @click="copyMyProfileLink"
-          >
-            {{ profileLinkCopied ? 'Copiado' : 'Copiar enlace' }}
-          </BaseButton>
           <BaseButton variant="primary" size="sm" icon="ph:pencil-simple-bold" data-edit-ficha @click="selectTab('ficha')">Editar ficha</BaseButton>
+          <BaseButton v-if="creator" :to="`/profile/creator/${creator.id}`" variant="outline" size="sm" icon="ph:eye-fill">Ver perfil público</BaseButton>
+          <IconButton
+            v-if="creator" :icon="profileLinkCopied ? 'ph:check-bold' : 'ph:link-simple-bold'" size="sm"
+            :label="profileLinkCopied ? 'Enlace copiado' : 'Copiar enlace de tu perfil'" data-copy-link @click="copyMyProfileLink"
+          />
         </template>
         <template #facts>
           <Chip v-if="creator?.niche && !heroCategories.includes(creator.niche)" outline data-fact="niche">{{ creator.niche }}</Chip>
@@ -368,12 +366,6 @@ async function saveWeeklyTarget() {
               <BaseButton variant="secondary" size="sm" icon="ph:eye-fill" block class="ficha-preview-btn" @click="previewSheetOpen = true">Ver vista previa</BaseButton>
               <BaseCard radius="lg" padding="lg">
                 <ProfileFichaForm :ficha="ficha" :errors="fichaErrors" :texts="fichaTexts">
-                  <template #cover>
-                    <CoverPhotoUploader
-                      :cover-url="creator?.coverUrl ?? null" :cover-art="coverArtFromString(creator?.id ?? 'creator')" icon="ph:image-fill"
-                      :upload="uploadCoverPhoto" :remove="removeCoverPhoto"
-                    />
-                  </template>
                   <template #extra>
                     <ProfileAudienceEditor v-model="ficha.audience" />
                     <ProfileShowcasePicker />

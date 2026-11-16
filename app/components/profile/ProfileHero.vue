@@ -22,21 +22,31 @@ const props = defineProps<{
   hue: number
   upload: (file: File) => Promise<string>
   remove?: () => Promise<void>
+  /** Si se pasan, aparecen los controles para cambiar la portada encima de ella. */
+  uploadCover?: (file: File) => Promise<string>
+  removeCover?: () => Promise<void>
   percent: number
   items: HeroCompletionItem[]
 }>()
 const emit = defineEmits<{ 'select-tab': [tab: string] }>()
 
 const pending = computed(() => props.items.filter((i) => !i.done))
+// Para no abrumar, solo se enseñan los tres primeros pendientes; el resto va en «y N más».
+const PENDING_SHOWN = 3
+const pendingShown = computed(() => pending.value.slice(0, PENDING_SHOWN))
+const pendingHidden = computed(() => Math.max(0, pending.value.length - PENDING_SHOWN))
 </script>
 
 <template>
   <!-- A sangre: el banner toca los bordes superior y laterales del contenedor
        (compensa el relleno de la página con márgenes negativos). -->
   <section class="profile-hero yt-reveal" data-profile-hero>
-    <div class="profile-hero__cover" aria-hidden="true">
-      <SmartImage v-if="coverUrl" :src="coverUrl" :width="1200" :height="360" priority class="profile-hero__img" />
-      <CoverArt v-else :seed="coverSeed" />
+    <div class="profile-hero__cover">
+      <div class="profile-hero__art" aria-hidden="true">
+        <SmartImage v-if="coverUrl" :src="coverUrl" :width="1600" :height="480" priority class="profile-hero__img" />
+        <CoverArt v-else :seed="coverSeed" />
+      </div>
+      <ProfileCoverEdit v-if="uploadCover" :cover-url="coverUrl" :upload="uploadCover" :remove="removeCover" />
     </div>
 
     <div class="profile-hero__body">
@@ -58,26 +68,22 @@ const pending = computed(() => props.items.filter((i) => !i.done))
           <slot name="facts" />
         </div>
 
-        <div data-hero-completion>
-          <div class="flex items-center justify-between mb-1.5">
-            <p class="text-sm font-medium text-[var(--text-muted)]">
-              Ficha completa al <span class="font-semibold text-[var(--text-strong)]">{{ percent }}%</span>
+        <div class="profile-hero__progress" data-hero-completion>
+          <div class="profile-hero__progress-head">
+            <p class="profile-hero__progress-label">
+              Ficha completa al <span class="profile-hero__progress-pct">{{ percent }}%</span>
             </p>
             <Icon v-if="percent >= 100" name="ph:check-circle-fill" class="size-4 text-[var(--color-phase-published)]" />
           </div>
-          <div class="h-2 rounded-full bg-[var(--surface-sunken)] overflow-hidden" role="progressbar" :aria-valuenow="percent" aria-valuemin="0" aria-valuemax="100" aria-label="Ficha completa">
-            <div
-              class="h-full rounded-full transition-[width] duration-700 ease-[var(--ease-out)]"
-              :class="percent >= 100 ? 'bg-[var(--color-phase-published)]' : 'bg-[var(--color-tinta-950)]'"
-              :style="{ width: `${percent}%` }"
-            />
+          <div class="profile-hero__bar" role="progressbar" :aria-valuenow="percent" aria-valuemin="0" aria-valuemax="100" aria-label="Ficha completa">
+            <div class="profile-hero__bar-fill" :class="percent >= 100 && 'is-done'" :style="{ '--progress': `${percent}%` }" />
           </div>
-          <p v-if="pending.length" class="mt-2 text-sm text-[var(--text-muted)]">
+          <p v-if="pending.length" class="profile-hero__pending">
             Te falta:
-            <template v-for="(p, i) in pending" :key="p.label">
-              <button v-if="p.tab" type="button" class="underline hover:text-[var(--text-strong)]" data-pending-link @click="emit('select-tab', p.tab)">{{ p.label }}</button>
-              <span v-else>{{ p.label }}</span><span v-if="i < pending.length - 1">, </span>
-            </template>.
+            <template v-for="(p, i) in pendingShown" :key="p.label">
+              <button v-if="p.tab" type="button" class="profile-hero__pending-link" data-pending-link @click="emit('select-tab', p.tab)">{{ p.label }}</button>
+              <span v-else>{{ p.label }}</span><span v-if="i < pendingShown.length - 1">, </span>
+            </template><template v-if="pendingHidden"> y {{ pendingHidden }} más</template>.
           </p>
         </div>
       </div>

@@ -2,44 +2,54 @@
    Componente · Cabecera de perfil (ProfileHero.vue)
    El banner llega a los bordes del contenedor (superior y laterales) usando el
    relleno de la página (--content-pad, ver patterns/shell.css) con márgenes
-   negativos. El avatar mide el doble que antes y se superpone al 50 % sobre el
-   banner: su mitad superior queda sobre la imagen, la inferior sobre la ficha.
+   negativos. Portada alta y limpia; el avatar se superpone ~45 % sobre ella.
+   Los controles de portada (ProfileCoverEdit) viven dentro del banner.
    ========================================================================== */
 
 @layer components {
   .profile-hero {
-    --avatar-d: 6.5rem;
+    --avatar-d: 6rem;
 
     margin: calc(-1 * var(--content-pad, 1.25rem)) calc(-1 * var(--content-pad, 1.25rem)) 0;
     background: var(--surface-raised);
     border-bottom: 1px solid var(--line);
-    @media (width >= 48rem) { --avatar-d: 9.5rem; }
+    @media (width >= 48rem) { --avatar-d: 8.5rem; }
   }
-  .profile-hero__cover { position: relative; height: 9rem; overflow: hidden; background: var(--surface-sunken); @media (width >= 48rem) { height: 14rem; } }
+
+  /* Portada: alta, con una proporción panorámica en pantallas grandes. */
+  .profile-hero__cover {
+    position: relative;
+    height: 12rem;
+    overflow: hidden;
+    background: var(--surface-sunken);
+    @media (width >= 48rem) { height: 16rem; }
+    @media (width >= 80rem) { height: 18rem; }
+  }
+  .profile-hero__art { position: absolute; inset: 0; }
   .profile-hero__img { width: 100%; height: 100%; object-fit: cover; }
 
   .profile-hero__body { padding: 0 var(--content-pad, 1.25rem) 1.5rem; }
   .profile-hero__row {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: flex-end;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: end;
     gap: 0.75rem 1.25rem;
+    @media (width >= 48rem) { grid-template-columns: auto minmax(0, 1fr) auto; }
   }
   .profile-hero__avatar {
     --uploader-size: var(--avatar-d);
 
     position: relative;   /* por encima del banner, que también está posicionado */
     z-index: 1;
-    flex-shrink: 0;
     width: var(--avatar-d);
     height: var(--avatar-d);
-    margin-top: calc(var(--avatar-d) / -2);   /* 50 % sobre el banner */
+    margin-top: calc(var(--avatar-d) * -0.45);
     border: 5px solid var(--surface-raised);
     border-radius: var(--radius-pill);
     background: var(--surface-raised);
     box-sizing: content-box;
   }
-  .profile-hero__who { flex: 1; min-width: 0; padding-bottom: 0.25rem; }
+  .profile-hero__who { min-width: 0; padding-top: 0.75rem; align-self: end; }
   .profile-hero__name {
     font-family: var(--font-display);
     font-size: var(--text-headline);
@@ -50,13 +60,80 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-  .profile-hero__sub { color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .profile-hero__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; padding-bottom: 0.25rem; }
+  .profile-hero__sub { margin-top: 0.125rem; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  /* Acciones: en móvil ocupan su propia fila, a todo el ancho. */
+  .profile-hero__actions {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    @media (width >= 48rem) { grid-column: auto; padding-bottom: 0.125rem; }
+    & > .btn:not(.btn--icon) { flex: 1; @media (width >= 48rem) { flex: none; } }
+  }
 
   .profile-hero__meta {
     display: grid;
     gap: 1.25rem;
     margin-top: 1.25rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--line);
     @media (width >= 64rem) { grid-template-columns: minmax(0, 1fr) minmax(0, 22rem); align-items: start; }
+  }
+
+  /* Estado de la ficha: una línea, una barra fina y como mucho tres pendientes. */
+  .profile-hero__progress { display: grid; gap: 0.5rem; }
+  .profile-hero__progress-head { display: flex; align-items: center; justify-content: space-between; }
+  .profile-hero__progress-label { font-size: var(--text-sm); font-weight: 500; color: var(--text-muted); }
+  .profile-hero__progress-pct { font-weight: 700; color: var(--text-strong); }
+  .profile-hero__bar { height: 0.375rem; border-radius: var(--radius-pill); background: var(--surface-sunken); overflow: hidden; }
+  .profile-hero__bar-fill {
+    width: var(--progress, 0%);
+    height: 100%;
+    border-radius: inherit;
+    background: var(--color-tinta-950);
+    transition: width 0.7s var(--ease-out);
+    &.is-done { background: var(--color-phase-published); }
+  }
+  .profile-hero__pending { font-size: var(--text-sm); color: var(--text-muted); }
+  .profile-hero__pending-link { text-decoration: underline; text-underline-offset: 2px; &:hover { color: var(--text-strong); } }
+
+  /* ---- Controles de portada (ProfileCoverEdit.vue) ---------------------- */
+  .cover-edit {
+    position: absolute;
+    right: var(--content-pad, 1.25rem);
+    bottom: 0.875rem;
+    display: grid;
+    justify-items: end;
+    gap: 0.5rem;
+  }
+  .cover-edit__buttons { display: flex; gap: 0.5rem; }
+  .cover-edit__btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    height: 2.25rem;
+    padding: 0 0.875rem;
+    border-radius: var(--radius-pill);
+    background: rgb(255 255 255 / 92%);
+    color: var(--color-tinta-950);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    box-shadow: 0 1px 2px rgb(18 16 25 / 14%);
+    backdrop-filter: blur(6px);
+    transition: background-color var(--dur, 0.15s) var(--ease-out);
+    &:hover { background: #fff; }
+    &:disabled { opacity: 0.7; cursor: progress; }
+    &:focus-visible { outline: 2px solid var(--color-tinta-950); outline-offset: 2px; }
+  }
+  .cover-edit__btn--icon { width: 2.25rem; padding: 0; justify-content: center; }
+  .cover-edit__error {
+    max-width: min(22rem, 80vw);
+    padding: 0.375rem 0.625rem;
+    border-radius: var(--radius-md);
+    background: rgb(255 255 255 / 95%);
+    color: var(--color-danger);
+    font-size: var(--text-sm);
+    font-weight: 600;
   }
 }

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import draggable from 'vuedraggable'
-import { initialsFromName, hueFromString, coverArtFromString } from '~/utils/avatar'
+import { initialsFromName, hueFromString } from '~/utils/avatar'
 import { formatEuros } from '~/utils/mock-data'
 import { firstFichaError, validateFicha } from '~/utils/profile-ficha'
 import type { Package } from '~/composables/usePackages'
@@ -258,17 +258,16 @@ const heroRange = computed(() => rangeText(
         :cover-url="partner?.coverUrl ?? null" :cover-seed="partner?.id ?? 'partner'"
         :avatar-url="avatarUrl" :initials="initialsFromName(partner?.name ?? '?')" :hue="hueFromString(partner?.name ?? '')"
         :upload="uploadAvatar" :remove="removeAvatar"
+        :upload-cover="uploadCoverPhoto" :remove-cover="removeCoverPhoto"
         :percent="completionPercent" :items="completionItems" @select-tab="selectTab"
       >
         <template #actions>
-          <BaseButton v-if="partner" :to="`/profile/partner/${partner.id}`" variant="outline" size="sm" icon="ph:eye-fill">Ver perfil público</BaseButton>
-          <BaseButton
-            v-if="partner" variant="ghost" size="sm" :icon="profileLinkCopied ? 'ph:check-bold' : 'ph:link-simple-bold'"
-            :aria-label="profileLinkCopied ? 'Enlace copiado' : 'Copiar enlace de tu perfil'" data-copy-link @click="copyMyProfileLink"
-          >
-            {{ profileLinkCopied ? 'Copiado' : 'Copiar enlace' }}
-          </BaseButton>
           <BaseButton variant="primary" size="sm" icon="ph:pencil-simple-bold" data-edit-ficha @click="selectTab('ficha')">Editar ficha</BaseButton>
+          <BaseButton v-if="partner" :to="`/profile/partner/${partner.id}`" variant="outline" size="sm" icon="ph:eye-fill">Ver perfil público</BaseButton>
+          <IconButton
+            v-if="partner" :icon="profileLinkCopied ? 'ph:check-bold' : 'ph:link-simple-bold'" size="sm"
+            :label="profileLinkCopied ? 'Enlace copiado' : 'Copiar enlace de tu perfil'" data-copy-link @click="copyMyProfileLink"
+          />
         </template>
         <template #facts>
           <Chip v-if="partner?.industry && !heroCategories.includes(partner.industry)" outline data-fact="industry">{{ partner.industry }}</Chip>
@@ -340,12 +339,6 @@ const heroRange = computed(() => rangeText(
                         >{{ t.label }}</Chip>
                       </div>
                     </div>
-                  </template>
-                  <template #cover>
-                    <CoverPhotoUploader
-                      :cover-url="partner?.coverUrl ?? null" :cover-art="coverArtFromString(partner?.id ?? 'partner')" icon="ph:storefront-fill"
-                      :upload="uploadCoverPhoto" :remove="removeCoverPhoto"
-                    />
                   </template>
                 </ProfileFichaForm>
               </BaseCard>

@@ -51,7 +51,10 @@ function toggleCategory(cat: string) {
 
     <div class="ficha-form__cols">
       <section class="ficha-form__section" aria-labelledby="ficha-sec-identity">
-        <h3 id="ficha-sec-identity" class="ficha-form__title">Presentación</h3>
+        <header class="ficha-form__head">
+          <h3 id="ficha-sec-identity" class="ficha-form__title">Presentación</h3>
+          <p class="ficha-form__desc">Lo primero que se ve al abrir tu perfil.</p>
+        </header>
         <div class="field">
           <div class="field__row">
             <label class="field__label" for="ficha-headline">Frase de presentación</label>
@@ -91,7 +94,10 @@ function toggleCategory(cat: string) {
       </section>
 
       <section class="ficha-form__section" aria-labelledby="ficha-sec-collab">
-        <h3 id="ficha-sec-collab" class="ficha-form__title">Colaboración</h3>
+        <header class="ficha-form__head">
+          <h3 id="ficha-sec-collab" class="ficha-form__title">Colaboración</h3>
+          <p class="ficha-form__desc">Con qué condiciones trabajas y qué buscas.</p>
+        </header>
         <fieldset class="field">
           <legend class="field__label">{{ texts.rangeLabel }}</legend>
           <div class="ficha-form__pair">

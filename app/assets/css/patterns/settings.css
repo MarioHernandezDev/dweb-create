@@ -136,7 +136,7 @@
 
   /* ---- Ficha pública: formulario + vista previa ---- */
   .ficha-layout { display: grid; gap: var(--gap-loose); align-items: start; @media (width >= 80rem) { grid-template-columns: minmax(0, 1fr) 24rem; } }
-  .ficha-intro { margin-bottom: 0.75rem; color: var(--text-muted); }
+  .ficha-intro { margin-bottom: 1rem; color: var(--text-muted); max-width: 40rem; }
   .ficha-preview { display: none; @media (width >= 80rem) { display: block; position: sticky; top: 6rem; } }
   .ficha-preview__title { margin-bottom: 0.625rem; font-size: var(--text-sm); font-weight: 600; color: var(--text-muted); }
   .ficha-preview-btn { margin-bottom: 1rem; @media (width >= 80rem) { display: none; } }
@@ -205,8 +205,10 @@
 
   /* ---- Formulario de la ficha ---- */
   .ficha-form { display: grid; gap: var(--gap-loose); }
-  .ficha-form__cols { display: grid; gap: var(--gap-loose); @media (width >= 64rem) { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-  .ficha-form__section { display: grid; gap: var(--gap); align-content: start; }
+  .ficha-form__head { display: grid; gap: 0.125rem; padding-bottom: 0.25rem; }
+  .ficha-form__desc { color: var(--text-muted); font-size: var(--text-sm); }
+  .ficha-form__cols { display: grid; gap: 2rem; @media (width >= 64rem) { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 3rem; } }
+  .ficha-form__section { display: grid; gap: 1.25rem; align-content: start; & + & { padding-top: 2rem; border-top: 1px solid var(--line); @media (width >= 64rem) { padding-top: 0; border-top: 0; } } }
   .ficha-form__title { font-family: var(--font-display); font-size: var(--text-lg); font-weight: 700; letter-spacing: -0.015em; }
   .ficha-form__chips { display: flex; flex-wrap: wrap; gap: 0.375rem; margin-top: 0.5rem; }
   .ficha-form__pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem; margin-top: 0.5rem; }
