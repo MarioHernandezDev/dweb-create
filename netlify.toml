@@ -1,0 +1,4 @@
+# Rama "desarrollo": pagina estatica de "en construccion". Sin build.
+[build]
+  publish = "."
+  command = ""

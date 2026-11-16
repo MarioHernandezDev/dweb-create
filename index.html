@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>CIBERAN · Estamos en desarrollo</title>
+  <meta name="description" content="Estamos desarrollando CIBERAN. Muy pronto en ciberan.com y ciberan.es.">
+  <meta name="theme-color" content="#121019">
+  <meta name="robots" content="noindex">
+  <link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48">
+  <link rel="icon" type="image/png" sizes="32x32" href="/img/icon-32.png">
+  <link rel="apple-touch-icon" href="/img/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,800&family=Hanken+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --tinta-950: #121019;
+      --tinta-800: #2a2633;
+      --hueso-50: #fbf9f5;
+      --hueso-300: #ddd5c7;
+      --voltio-400: #c6f24e;
+      --font-display: "Bricolage Grotesque", "Hanken Grotesk", ui-sans-serif, system-ui, sans-serif;
+      --font-sans: "Hanken Grotesk", ui-sans-serif, system-ui, sans-serif;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; }
+    body {
+      min-height: 100dvh;
+      display: grid;
+      place-items: center;
+      padding: 24px 16px;
+      background:
+        radial-gradient(60rem 36rem at 50% -10%, rgba(198, 242, 78, .14), transparent 60%),
+        var(--tinta-950);
+      color: var(--hueso-50);
+      font-family: var(--font-sans);
+      font-size: 1rem;
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+    }
+    main { width: 100%; max-width: 40rem; text-align: center; }
+    .mark { width: clamp(96px, 22vw, 144px); height: auto; margin: 0 auto 1.5rem; display: block; }
+    .brand {
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: clamp(3rem, 1rem + 9vw, 6.5rem);
+      line-height: .95;
+      letter-spacing: -.02em;
+      margin: 0;
+    }
+    .brand span { color: var(--voltio-400); }
+    .pill {
+      display: inline-flex; align-items: center; gap: .5rem;
+      margin: 1.75rem 0 1rem;
+      padding: .4rem .9rem;
+      border: 1px solid var(--tinta-800);
+      border-radius: 999px;
+      background: rgba(255,255,255,.03);
+      font-size: .875rem; font-weight: 600;
+      color: var(--hueso-300);
+    }
+    .dot { width: .5rem; height: .5rem; border-radius: 50%; background: var(--voltio-400); animation: pulse 2s ease-in-out infinite; }
+    h1 {
+      font-family: var(--font-display);
+      font-weight: 500;
+      font-size: clamp(1.5rem, 1.1rem + 1.6vw, 2.125rem);
+      line-height: 1.15;
+      margin: 0 0 .75rem;
+    }
+    p { margin: 0 auto; max-width: 30rem; color: var(--hueso-300); }
+    .domains { margin-top: 2rem; display: flex; gap: .75rem; justify-content: center; flex-wrap: wrap; }
+    .domains span {
+      font-family: var(--font-display); font-weight: 800; font-size: 1.125rem;
+      padding: .5rem 1rem; border-radius: .75rem;
+      background: var(--voltio-400); color: var(--tinta-950);
+    }
+    @keyframes pulse { 50% { opacity: .35; transform: scale(.8); } }
+    @media (prefers-reduced-motion: reduce) { .dot { animation: none; } }
+  </style>
+</head>
+<body>
+  <main>
+    <img class="mark" src="/img/mark-512.png" alt="" width="144" height="144">
+    <p class="brand" aria-label="CIBERAN">CIBERAN<span>.</span></p>
+    <div class="pill"><i class="dot"></i> En construcción</div>
+    <h1>¡Estamos desarrollando en CIBERAN.es y CIBERAN.com!</h1>
+    <p>Estamos preparando algo para creadores y marcas. Muy pronto podrás verlo aquí.</p>
+    <div class="domains"><span>ciberan.es</span><span>ciberan.com</span></div>
+  </main>
+</body>
+</html>
