@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>CIBERAN · Muy pronto</title>
-  <meta name="description" content="CIBERAN llega pronto: el sitio donde creadores y marcas se encuentran, acuerdan las condiciones y gestionan las entregas. Cuéntanos qué necesitas.">
+  <meta name="description" content="CIBERAN llega pronto: el sitio donde creadores y marcas se encuentran, acuerdan las condiciones y gestionan las entregas.">
   <meta name="theme-color" content="#121019">
   <link rel="canonical" href="https://ciberan.com/">
   <link rel="icon" href="/favicon.ico" sizes="any">
@@ -35,7 +35,7 @@
         <img src="/img/mark-small.webp" width="38" height="38" alt="">
         <span class="brand__word" aria-hidden="true">ciberan</span>
       </a>
-      <a class="pill pill--accent pill--header" href="#ideas"><span class="dot" aria-hidden="true"></span>Muy pronto</a>
+      <span class="pill pill--accent pill--header"><span class="dot" aria-hidden="true"></span>Muy pronto</span>
     </div>
   </header>
 
@@ -47,8 +47,7 @@
           <h1>Creadores y marcas, de la primera oferta a la <span class="accent">publicación</span>.</h1>
           <p class="hero__lead">Encuentra con quién colaborar, acordad las condiciones y gestionad las entregas, todo en un mismo sitio. CIBERAN abre muy pronto.</p>
           <div class="hero__cta">
-            <a class="btn btn--primary" href="#ideas">Cuéntanos qué necesitas</a>
-            <a class="btn btn--ghost" href="#que-es">Ver qué es CIBERAN</a>
+            <a class="btn btn--primary" href="#que-es">Ver qué es CIBERAN</a>
           </div>
         </div>
         <div class="hero__art" aria-hidden="true">
@@ -139,61 +138,11 @@
       </div>
     </section>
 
-    <section class="section" id="ideas">
-      <div class="container ideas">
-        <div>
-          <p class="kicker">Ayúdanos a darle forma</p>
-          <h2>¿Qué te gustaría que hiciera CIBERAN?</h2>
-          <p class="section__intro">Todavía lo estamos construyendo y queremos hacerlo con quienes lo van a usar. Cuéntanos qué echas en falta, qué te estorba hoy al colaborar o qué te gustaría poder hacer. Leemos todo.</p>
-        </div>
-
-        <form class="form" name="ideas" method="POST" action="/gracias.html" data-netlify="true" netlify-honeypot="bot-field">
-          <input type="hidden" name="form-name" value="ideas">
-          <p class="hp" aria-hidden="true">
-            <label>No rellenes este campo: <input name="bot-field" tabindex="-1" autocomplete="off"></label>
-          </p>
-
-          <div class="field">
-            <label for="rol">Soy…</label>
-            <select id="rol" name="rol">
-              <option value="">Prefiero no decirlo</option>
-              <option value="creador">Creador o creadora de contenido</option>
-              <option value="marca">Marca o agencia</option>
-              <option value="otro">Otra cosa</option>
-            </select>
-          </div>
-
-          <div class="field">
-            <label for="idea">Tu idea o sugerencia</label>
-            <textarea id="idea" name="idea" required maxlength="1500" placeholder="Por ejemplo: me gustaría poder…"></textarea>
-          </div>
-
-          <div class="field">
-            <label for="email">Tu email <span class="hint">(opcional)</span></label>
-            <input id="email" name="email" type="email" autocomplete="email" maxlength="200" placeholder="tu@correo.com">
-            <span class="hint">Solo lo usaremos para responderte sobre tu sugerencia.</span>
-          </div>
-
-          <div class="field field--check">
-            <input id="privacidad" name="privacidad" type="checkbox" required>
-            <label for="privacidad">He leído la <a href="/privacidad.html">política de privacidad</a> y acepto que se trate mi sugerencia para este fin.</label>
-          </div>
-
-          <button class="btn btn--primary" type="submit">Enviar sugerencia</button>
-          <p class="form__status" id="form-status" role="status" aria-live="polite"></p>
-          <p class="form__small">No usamos cookies ni analítica en esta página.</p>
-        </form>
-      </div>
-    </section>
   </main>
 
   <footer class="site-footer">
     <div class="container site-footer__inner">
       <span>© <span id="year">2026</span> CIBERAN</span>
-      <nav aria-label="Información legal">
-        <a href="/aviso-legal.html">Aviso legal</a>
-        <a href="/privacidad.html">Privacidad</a>
-      </nav>
     </div>
   </footer>
 
