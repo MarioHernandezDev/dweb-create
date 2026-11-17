@@ -699,7 +699,47 @@ a {
 }
 .consent__actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.75rem;
+}
+.consent {
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
+}
+.consent__panel {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+.consent__panel[hidden] {
+  display: none;
+}
+.consent__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+.consent__row strong {
+  display: block;
+  color: var(--text);
+}
+.consent__row span {
+  font-size: 0.88rem;
+}
+.consent__switch {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  white-space: nowrap;
+  min-height: 44px;
+}
+.consent__switch input {
+  width: 1.25rem;
+  height: 1.25rem;
+  accent-color: var(--voltio-300);
 }
 .consent__btn {
   min-height: 44px;
