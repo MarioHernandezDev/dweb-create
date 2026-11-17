@@ -150,6 +150,19 @@ const filtered = computed(() => sortResults(
   byName.value.filter((r) => matchesClientFilters(r, { platforms: platforms.value, response: response.value, types: types.value, verifiedOnly: verifiedOnly.value })),
   sort.value
 ))
+// Paquetes de cada resultado («3 paquetes · desde 150 €»): una sola consulta para los visibles, solo en el navegador y
+// sin repetir los ya pedidos. Si falla, las tarjetas simplemente no lo enseñan.
+const { summarizePackagesOf } = usePackages()
+const pkgSummary = ref<Record<string, { count: number; minCents: number }>>({})
+const pkgAsked = new Set<string>()
+async function loadPackageSummaries() {
+  const ids = filtered.value.slice(0, 60).map((r) => r.profileId).filter((id) => id && !pkgAsked.has(id))
+  if (!ids.length) return
+  ids.forEach((id) => pkgAsked.add(id))
+  pkgSummary.value = { ...pkgSummary.value, ...(await summarizePackagesOf(ids)) }
+}
+onMounted(loadPackageSummaries)
+watch(filtered, () => { if (import.meta.client) loadPackageSummaries() })
 const sortOptions = computed(() => (Object.keys(SORT_LABELS) as DiscoverSort[]).map((k) => ({ value: k, label: SORT_LABELS[k] })))
 const countNote = computed(() => (sort.value === 'affinity'
   ? (scoreMeaningful.value ? 'ordenados por afinidad' : 'sin criterio de afinidad todavía')
@@ -255,7 +268,7 @@ useIntersectionObserver(sentinel, ([entry]) => { if (entry?.isIntersecting && ha
               <Icon name="ph:caret-down-bold" class="size-3.5" />
             </label>
             <div class="discover__savewrap">
-              <BaseButton variant="brand" icon="ph:heart" :disabled="!canSaveSearch" :title="canSaveSearch ? 'Guarda estos filtros en tu cuenta' : 'Elige algún filtro o escribe un nombre para guardar la búsqueda'" @click="saveSearch">Guardar búsqueda</BaseButton>
+              <BaseButton variant="outline" icon="ph:heart" :disabled="!canSaveSearch" :title="canSaveSearch ? 'Guarda estos filtros en tu cuenta' : 'Elige algún filtro o escribe un nombre para guardar la búsqueda'" @click="saveSearch">Guardar búsqueda</BaseButton>
               <BaseButton v-if="savedSearches.length" variant="ghost" icon="ph:clock-counter-clockwise" :aria-expanded="savedMenuOpen" @click="savedMenuOpen = !savedMenuOpen">
                 Mis búsquedas<span class="badge badge--on-light ml-1">{{ savedSearches.length }}</span>
               </BaseButton>
@@ -304,7 +317,7 @@ useIntersectionObserver(sentinel, ([entry]) => { if (entry?.isIntersecting && ha
             <div class="discover__featured-grid">
               <DiscoveryCard
                 v-for="(r, i) in featured" :key="r.id" :result="r" :kind="kind" :cta-label="ctaLabel" featured show-score :priority="i < 3"
-                :is-pending="pendingIds.includes(r.id)" @contact="emit('contact', r)"
+                :is-pending="pendingIds.includes(r.id)" :packages="pkgSummary[r.profileId] ?? null" @contact="emit('contact', r)"
               />
             </div>
           </section>
@@ -313,7 +326,7 @@ useIntersectionObserver(sentinel, ([entry]) => { if (entry?.isIntersecting && ha
           <div class="discover__grid">
             <DiscoveryCard
               v-for="(r, i) in visibleRest" :key="r.id" :result="r" :kind="kind" :cta-label="ctaLabel" :show-score="scoreMeaningful"
-              :priority="!featured.length && i < 4" :is-pending="pendingIds.includes(r.id)" @contact="emit('contact', r)"
+              :priority="!featured.length && i < 4" :is-pending="pendingIds.includes(r.id)" :packages="pkgSummary[r.profileId] ?? null" @contact="emit('contact', r)"
             />
           </div>
 

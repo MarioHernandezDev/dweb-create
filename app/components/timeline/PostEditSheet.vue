@@ -83,15 +83,17 @@ async function onVisibility(open: boolean) {
       <div class="pdetail__grid pdetail__grid--sheet">
         <div class="pdetail__col">
           <section class="psection">
-            <CoverUploader
-              :post-id="post.id" :media-url="post.mediaUrl" :cover="post.cover" :icon="contentTypeMeta[post.contentType].icon"
-              @update:media-url="(url) => { if (post) post.mediaUrl = url }"
-            />
-            <PostContentFields
-              v-model:title="title" v-model:caption="caption" v-model:hashtags="hashtagsText" :rows="4"
-              :title-error="titleError" :caption-error="captionError" :caption-length="captionLength" :caption-max="captionMax"
-              :parsed-hashtags="parsedHashtags" :copied="copied" :can-copy="!!caption.trim() || !!parsedHashtags.length" @copy="copyText"
-            />
+            <div class="pcontent">
+              <CoverUploader
+                :post-id="post.id" :media-url="post.mediaUrl" :cover="post.cover" :icon="contentTypeMeta[post.contentType].icon"
+                @update:media-url="(url) => { if (post) post.mediaUrl = url }"
+              />
+              <PostContentFields
+                v-model:title="title" v-model:caption="caption" v-model:hashtags="hashtagsText" :rows="4"
+                :title-error="titleError" :caption-error="captionError" :caption-length="captionLength" :caption-max="captionMax"
+                :parsed-hashtags="parsedHashtags" :copied="copied" :can-copy="!!caption.trim() || !!parsedHashtags.length" @copy="copyText"
+              />
+            </div>
           </section>
 
           <section v-if="revisionNotes.length" class="psection">
@@ -104,7 +106,7 @@ async function onVisibility(open: boolean) {
           <section class="psection">
             <h3 class="psection__title">Planificación</h3>
             <BaseField v-slot="f" label="Fecha de entrega">
-              <BaseInput v-bind="f" v-model="dueDate" type="date" />
+              <DatePicker v-bind="f" v-model="dueDate" />
             </BaseField>
           </section>
 

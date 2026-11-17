@@ -86,11 +86,11 @@ async function onRemove(post: Post) {
 <template>
   <AppShell
     role="creator" title="Publicaciones" full-width
-    :subtitle="view === 'tablero' ? 'Arrastra una card para cambiarla de fase' : view === 'calendario' ? 'Arrastra una entrega a otro día para reprogramarla' : 'Busca, ordena y gestiona todas tus publicaciones'"
+    :subtitle="view === 'tablero' ? 'Arrastra una tarjeta para cambiarla de fase' : view === 'calendario' ? 'Arrastra una entrega a otro día para reprogramarla' : 'Busca, ordena y gestiona todas tus publicaciones'"
   >
     <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
       <SegmentedTabs :model-value="view" :options="viewOptions" label="Vista de las publicaciones" @update:model-value="setView" />
-      <BaseButton variant="brand" icon="ph:plus-bold" class="hidden md:inline-flex" data-new-post @click="composerOpen = true">Publicación</BaseButton>
+      <BaseButton variant="brand" icon="ph:plus-bold" class="hidden md:inline-flex" data-new-post @click="composerOpen = true">Nueva publicación</BaseButton>
       <p v-if="activeCollab" class="inline-flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-[var(--color-text-muted)]" data-project-stats>
         <span class="font-medium text-[var(--color-text)]">{{ activeCollab.partnerName }}</span>
         <span>{{ stats.total }} entrega{{ stats.total === 1 ? '' : 's' }}</span>
@@ -103,7 +103,7 @@ async function onRemove(post: Post) {
 
     <PostSummary v-if="view !== 'lista' && posts.length" :posts="visiblePosts" @open="openEdit" />
 
-    <PhaseBoard v-if="view === 'tablero'" v-model:filters="filters" />
+    <PhaseBoard v-if="view === 'tablero'" v-model:filters="filters" @create="composerOpen = true" />
 
     <template v-else-if="view === 'calendario'">
       <PostFilterBar v-if="posts.length" v-model:filters="filters" :collabs="collabRequests" :posts="posts" class="mb-4" />

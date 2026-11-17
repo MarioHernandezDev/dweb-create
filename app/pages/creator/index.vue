@@ -3,10 +3,11 @@ import { formatEuros } from '~/utils/mock-data'
 import { isFichaIncomplete } from '~/utils/ficha'
 import { relativeTime, isPostOverdue } from '~/utils/status'
 import { publishedThisWeek as countPublishedThisWeek } from '~/utils/post-library'
+import type { FirstStep } from '~/components/onboarding/FirstSteps.vue'
 
 import { weekDays, overdueCount, phaseShares } from '~/utils/home-charts'
 
-useHead({ title: 'Hoy' })
+useHead({ title: 'Inicio' })
 
 const { posts, ensureLoaded, loadUntilDue } = useMyPosts()
 const { requests, pendingCount: pendingRequests, activeCount: activeCollaborations, ensureLoaded: ensureRequestsLoaded } = useCollabRequests()
@@ -146,22 +147,24 @@ const statusLine = computed(() => {
   return parts.length ? parts.join(' · ') : 'Todo al día por ahora.'
 })
 
-const tips = computed(() => {
-  const list: { icon: string; text: string; cta: string; to: string }[] = []
-  if (fichaIncomplete.value) {
-    list.push({ icon: 'ph:identification-card-fill', text: 'Completa tu ficha pública para que las marcas te encuentren en Descubrir.', cta: 'Completar', to: '/creator/profile' })
-  } else if (hasNoPackages.value) {
-    list.push({ icon: 'ph:package-fill', text: 'Publica tu primer paquete para que puedan hacerte una oferta desde el chat.', cta: 'Publicar', to: '/creator/profile' })
-  }
-  return list
-})
+// Primeros pasos: cada uno se marca solo con datos reales de la cuenta (ver FirstSteps.vue).
+const firstSteps = computed<FirstStep[]>(() => [
+  { label: 'Completa tu ficha pública', hint: 'Las marcas te encuentran en Descubrir por tu ficha.', done: !fichaIncomplete.value, to: '/creator/profile' },
+  { label: 'Publica tu primer paquete', hint: 'Así pueden hacerte una oferta desde el chat.', done: !hasNoPackages.value, to: '/creator/profile?tab=packages&nuevo=1' },
+  { label: 'Contacta con una marca', hint: 'Elige una en Descubrir y envíale una propuesta.', done: requests.value.length > 0, to: '/creator/discover' },
+  { label: 'Crea tu primera publicación', hint: 'Organiza el contenido en el tablero, de la idea a publicarlo.', done: posts.value.length > 0, to: '/creator/timeline?nueva=1' }
+])
 </script>
 
 <template>
-  <AppShell role="creator" title="Hoy">
+  <AppShell role="creator" title="Inicio">
     <section class="home-greeting">
-      <h1 class="home-greeting__title">¡Hola! ¿Qué tienes entre manos hoy?</h1>
-      <p class="home-greeting__status">{{ statusLine }}</p>
+      <div>
+        <h2 class="home-greeting__title">¡Hola! ¿Qué tienes entre manos hoy?</h2>
+        <p class="home-greeting__status">{{ statusLine }}</p>
+      </div>
+      <!-- En escritorio la acción vive en la cabecera (el botón flotante tapaba contenido); en móvil sigue el flotante. -->
+      <BaseButton variant="brand" icon="ph:plus-bold" class="home-greeting__action" data-new-post @click="composerOpen = true">Nueva publicación</BaseButton>
     </section>
 
     <section class="home-stats">
@@ -190,7 +193,7 @@ const tips = computed(() => {
 
         <section v-if="discoverLoading || discoverError || suggestedPartners.length">
           <SectionTitle title="Marcas que podrían interesarte" class="mb-3">
-            <NuxtLink to="/creator/discover" class="text-sm font-semibold text-[var(--text-muted)] hover:text-[var(--text-strong)]">Ver todo</NuxtLink>
+            <NuxtLink to="/creator/discover" class="inline-flex items-center min-h-[var(--control-md)] px-1 text-sm font-semibold text-[var(--text-muted)] hover:text-[var(--text-strong)]">Ver todo</NuxtLink>
           </SectionTitle>
           <p v-if="discoverError" class="text-sm text-[var(--text-muted)]">No se han podido cargar sugerencias ahora mismo.</p>
           <div v-else class="grid sm:grid-cols-3 gap-3">
@@ -224,19 +227,32 @@ const tips = computed(() => {
           </div>
         </PanelCard>
 
-        <BaseCard v-if="tips.length" tone="overlay" radius="lg">
-          <SectionTitle title="Para sacarle más partido" as="h2" class="mb-3" />
-          <div v-for="(tip, i) in tips" :key="i" class="tip">
-            <Icon :name="tip.icon" class="size-5 shrink-0 mt-0.5" />
-            <p class="min-w-0 flex-1">
-              {{ tip.text }} <NuxtLink :to="tip.to" class="font-semibold underline">{{ tip.cta }}</NuxtLink>
-            </p>
+        <!-- Tus paquetes: lo que permite que te hagan ofertas. Visible desde Inicio y creable en un clic. -->
+        <PanelCard title="Tus paquetes" padding="sm" data-home-packages>
+          <div v-if="myPackages?.length" class="activity">
+            <NuxtLink v-for="p in myPackages.slice(0, 3)" :key="p.id" to="/creator/profile?tab=packages" class="activity__row">
+              <span class="activity__icon"><Icon name="ph:package-fill" class="size-4" /></span>
+              <div class="min-w-0 flex-1">
+                <p class="activity__title truncate">{{ p.title }}</p>
+                <p class="activity__sub truncate">{{ formatEuros(p.priceCents) }}<template v-if="!p.active"> · en pausa</template></p>
+              </div>
+            </NuxtLink>
+            <div class="home-packages__foot">
+              <BaseButton to="/creator/profile?tab=packages&nuevo=1" variant="secondary" size="sm" icon="ph:plus-bold">Nuevo paquete</BaseButton>
+              <NuxtLink v-if="myPackages.length > 3" to="/creator/profile?tab=packages" class="home-packages__more">Ver los {{ myPackages.length }}</NuxtLink>
+            </div>
           </div>
-        </BaseCard>
+          <div v-else class="home-packages__empty">
+            <p>Los paquetes son lo primero que ven las marcas: qué haces y a qué precio. Con una plantilla lo tienes en un minuto.</p>
+            <BaseButton to="/creator/profile?tab=packages&nuevo=1" variant="primary" size="sm" icon="ph:plus-bold" data-home-create-package>Crear mi primer paquete</BaseButton>
+          </div>
+        </PanelCard>
+
+        <FirstSteps role="creator" :steps="firstSteps" />
       </div>
     </div>
 
-    <Fab :active="composerOpen" @click="composerOpen = true" />
+    <div class="md:hidden"><Fab :active="composerOpen" @click="composerOpen = true" /></div>
     <PostComposerSheet v-model="composerOpen" />
   </AppShell>
 </template>

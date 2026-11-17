@@ -198,24 +198,24 @@ async function logout() {
           <BarChart v-if="analytics" :labels="analytics.labels" :series="proSeries" :format-value="formatIntValue" />
         </BaseCard>
 
-        <p class="font-display text-[1.0625rem] text-[var(--color-text)] -mb-2">Descubrir — qué pide la gente</p>
+        <p class="font-display text-lg text-[var(--color-text)] -mb-2">Descubrir — qué pide la gente</p>
 
         <div v-if="discoveryAnalytics" class="grid grid-cols-2 gap-3">
           <BaseCard radius="lg" padding="md">
             <p class="text-micro text-[var(--color-text-faint)] mb-1">Búsquedas (8 semanas)</p>
-            <p class="font-display text-[1.375rem] text-[var(--color-text)]">{{ discoveryAnalytics.totalSearches }}</p>
+            <p class="font-display text-title text-[var(--color-text)]">{{ discoveryAnalytics.totalSearches }}</p>
           </BaseCard>
           <BaseCard radius="lg" padding="md">
             <p class="text-micro text-[var(--color-text-faint)] mb-1">Sin ningún resultado</p>
-            <p class="font-display text-[1.375rem] text-[var(--color-text)]">{{ discoveryAnalytics.zeroResultCount }}</p>
+            <p class="font-display text-title text-[var(--color-text)]">{{ discoveryAnalytics.zeroResultCount }}</p>
           </BaseCard>
           <BaseCard radius="lg" padding="md">
             <p class="text-micro text-[var(--color-text-faint)] mb-1">Filtros vs. IA</p>
-            <p class="font-display text-[1.0625rem] text-[var(--color-text)]">{{ discoveryAnalytics.byMode.filters }} / {{ discoveryAnalytics.byMode.ai }}</p>
+            <p class="font-display text-lg text-[var(--color-text)]">{{ discoveryAnalytics.byMode.filters }} / {{ discoveryAnalytics.byMode.ai }}</p>
           </BaseCard>
           <BaseCard radius="lg" padding="md">
             <p class="text-micro text-[var(--color-text-faint)] mb-1">Creadores vs. partners</p>
-            <p class="font-display text-[1.0625rem] text-[var(--color-text)]">{{ discoveryAnalytics.byRole.creator }} / {{ discoveryAnalytics.byRole.partner }}</p>
+            <p class="font-display text-lg text-[var(--color-text)]">{{ discoveryAnalytics.byRole.creator }} / {{ discoveryAnalytics.byRole.partner }}</p>
           </BaseCard>
         </div>
 

@@ -1,6 +1,11 @@
 <script setup lang="ts">
 import type { CoverArt } from '~/types'
 
+/**
+ * Imagen de la publicación. Un marco vertical (4:5, como se ve en Instagram) de tamaño contenido, no una banda a todo
+ * el ancho: con foto la muestra entera; sin ella es una zona de «añadir imagen» con arrastrar y soltar. La acción
+ * sigue siendo la misma de siempre (subir, con la confirmación de volver a pedir aprobación si ya estaba aprobada).
+ */
 const props = defineProps<{
   postId: string
   mediaUrl?: string | null
@@ -14,10 +19,10 @@ const { uploadCover, posts, refresh } = useMyPosts()
 const { confirm } = useConfirm()
 const inputEl = ref<HTMLInputElement | null>(null)
 const uploading = ref(false)
+const dragging = ref(false)
 const error = ref('')
 
-async function onChange(event: Event) {
-  const file = (event.target as HTMLInputElement).files?.[0]
+async function handleFile(file: File | undefined) {
   if (!file) return
 
   // Cambiar la imagen de una pieza ya aprobada de una colaboración invalida la aprobación (Fase 2).
@@ -49,31 +54,33 @@ async function onChange(event: Event) {
     if (inputEl.value) inputEl.value.value = ''
   }
 }
+function onChange(event: Event) { handleFile((event.target as HTMLInputElement).files?.[0]) }
+function onDrop(event: DragEvent) { dragging.value = false; handleFile(event.dataTransfer?.files?.[0]) }
 </script>
 
 <template>
-  <div>
+  <div class="cover" data-cover-uploader>
     <button
-      type="button"
-      class="group relative h-40 w-full rounded-[var(--radius-lg)] overflow-hidden flex items-center justify-center"
-      :style="!mediaUrl ? { background: `linear-gradient(${cover.angle}deg, ${cover.from}, ${cover.to})` } : undefined"
-      :disabled="uploading"
-      @click="inputEl?.click()"
+      type="button" class="cover__frame" :class="[mediaUrl ? 'cover__frame--filled' : 'cover__frame--empty', dragging && 'is-dragging']"
+      :disabled="uploading" :aria-label="mediaUrl ? 'Cambiar la imagen de la publicación' : 'Añadir una imagen a la publicación'"
+      @click="inputEl?.click()" @dragover.prevent="dragging = true" @dragleave="dragging = false" @drop.prevent="onDrop"
     >
-      <img v-if="mediaUrl" :src="mediaUrl" alt="" class="absolute inset-0 size-full object-cover">
-      <Icon v-else :name="icon" class="size-10 text-white/90" />
+      <img v-if="mediaUrl" :src="mediaUrl" alt="" class="cover__img">
+      <span v-else class="cover__empty">
+        <span class="cover__icon"><Icon :name="icon" class="size-6" /></span>
+        <strong>Añade una imagen</strong>
+        <small>Arrástrala aquí o pulsa para elegirla</small>
+        <small class="cover__hint">JPG, PNG o WebP · máx. 8 MB</small>
+      </span>
 
-      <div
-        class="absolute inset-0 flex items-center justify-center gap-2 bg-black/0 text-white opacity-0 transition-[background-color,opacity] duration-200"
-        :class="uploading ? 'bg-black/45 opacity-100' : 'group-hover:bg-black/45 group-hover:opacity-100'"
-      >
+      <span class="cover__overlay" :data-busy="uploading">
         <Icon :name="uploading ? 'ph:circle-notch-bold' : 'ph:camera-plus-fill'" class="size-5" :class="uploading && 'animate-spin'" />
-        <span class="text-sm font-medium">{{ uploading ? 'Subiendo…' : mediaUrl ? 'Cambiar foto' : 'Añadir foto' }}</span>
-      </div>
+        {{ uploading ? 'Subiendo…' : mediaUrl ? 'Cambiar imagen' : 'Elegir imagen' }}
+      </span>
     </button>
 
     <input ref="inputEl" type="file" accept="image/jpeg,image/png,image/webp" class="hidden" @change="onChange">
 
-    <p v-if="error" class="text-sm text-[var(--color-status-alert)] mt-2">{{ error }}</p>
+    <p v-if="error" class="cover__error" role="alert">{{ error }}</p>
   </div>
 </template>

@@ -5,11 +5,14 @@ useHead({ title: 'Creadores y marcas' })
 <template>
   <div>
     <LandingNav />
-    <LandingHero />
-    <LandingPipeline />
-    <LandingBento />
-    <LandingRoles />
-    <LandingCta />
+    <!-- Región principal para lectores de pantalla y «saltar al contenido» (antes la portada no tenía ninguna). -->
+    <main id="contenido">
+      <LandingHero />
+      <LandingPipeline />
+      <LandingBento />
+      <LandingRoles />
+      <LandingCta />
+    </main>
     <LandingFooter />
   </div>
 </template>

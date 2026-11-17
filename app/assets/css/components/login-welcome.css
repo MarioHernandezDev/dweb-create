@@ -91,6 +91,38 @@
 
   .lw-leave-active { transition: opacity 0.55s var(--ease-out), transform 0.55s var(--ease-out); }
   .lw-leave-to { opacity: 0; transform: scale(1.06); }
+
+  /* ---- Recorrido de bienvenida (OnboardingTour.vue): foco sobre el elemento real + tarjeta ---- */
+  .tour { position: fixed; inset: 0; z-index: 90; }
+  .tour__veil { position: absolute; inset: 0; background: rgb(18 16 25 / 52%); }
+  /* El foco es un hueco: su sombra enorme oscurece el resto de la pantalla y deja ver el elemento. */
+  .tour__spot { position: fixed; border-radius: var(--radius-sm); box-shadow: 0 0 0 100vmax rgb(18 16 25 / 62%), 0 0 0 3px var(--color-voltio-400); pointer-events: none; transition: top var(--dur-slow) var(--ease-out), left var(--dur-slow) var(--ease-out), width var(--dur-slow) var(--ease-out), height var(--dur-slow) var(--ease-out); }
+  .tour__card { position: fixed; display: grid; gap: 0.75rem; padding: 1.25rem; max-height: calc(100dvh - 2rem); overflow-y: auto; background: var(--surface-raised); border: 1px solid var(--line-strong); border-radius: var(--radius-lg); box-shadow: var(--shadow-3); transition: top var(--dur-slow) var(--ease-out), left var(--dur-slow) var(--ease-out); }
+  .tour__card--center { top: 50%; left: 50%; width: min(26rem, calc(100vw - 2rem)); transform: translate(-50%, -50%); }
+  .tour__head { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; }
+  .tour__step { font-size: var(--text-sm); font-weight: 700; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+  .tour__skip { min-height: var(--control-sm); padding-inline: 0.5rem; font-size: var(--text-sm); font-weight: 600; color: var(--text-muted); text-decoration: underline; &:hover { color: var(--text-strong); } }
+  .tour__icon { display: grid; place-items: center; width: 2.5rem; height: 2.5rem; border-radius: var(--radius-pill); background: var(--color-tinta-950); color: var(--color-voltio-400); }
+  .tour__title { font-family: var(--font-display); font-size: var(--text-title); font-weight: 700; letter-spacing: -0.02em; line-height: 1.2; text-wrap: balance; }
+  .tour__body { color: var(--text-muted); }
+  .tour__dots { display: flex; gap: 0.375rem; & > span { width: 0.375rem; height: 0.375rem; border-radius: var(--radius-pill); background: var(--line-strong); transition: width var(--dur) var(--ease-out), background-color var(--dur) var(--ease-out); &[data-on="true"] { width: 1.5rem; background: var(--color-tinta-950); } } }
+  .tour__actions { display: flex; gap: 0.5rem; margin-top: 0.25rem; }
+  .tour-enter-active, .tour-leave-active { transition: opacity var(--dur) var(--ease-out); }
+  .tour-enter-from, .tour-leave-to { opacity: 0; }
+
+  /* Aviso de lanzamiento gratuito: tarjeta en la esquina, sin velo ni bloqueo de la pantalla. */
+  .launch-notice {
+    position: fixed; z-index: 60; display: flex; gap: 0.75rem; padding: 1rem 1.25rem;
+    top: 4.5rem; left: 0.75rem; right: 0.75rem;
+    background: var(--surface-raised); border: 1px solid var(--line-strong); border-radius: var(--radius-md); box-shadow: var(--shadow-3);
+    /* En pantallas con columna lateral va abajo a la derecha (no tapa cifras ni cabecera, y el botón flotante ya no existe ahí). */
+    @media (width >= 48rem) { top: auto; bottom: 2rem; left: auto; right: 2rem; width: 26rem; }
+  }
+  .launch-notice__icon { display: grid; place-items: center; flex-shrink: 0; width: 2.25rem; height: 2.25rem; border-radius: var(--radius-pill); background: var(--color-voltio-200); color: var(--color-tinta-950); }
+  .launch-notice__body { display: grid; gap: 0.5rem; min-width: 0; }
+  .launch-notice__title { font-family: var(--font-display); font-size: var(--text-lg); font-weight: 700; letter-spacing: -0.015em; line-height: 1.25; }
+  .launch-notice__text { color: var(--text-muted); font-size: var(--text-sm); }
+  .launch-notice__foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem 1rem; margin-top: 0.25rem; font-size: var(--text-sm); }
 }
 
 @keyframes lw-bg { from { opacity: 0; } }

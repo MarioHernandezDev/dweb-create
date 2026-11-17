@@ -1,0 +1,114 @@
+/* ==========================================================================
+   Componente · Elección visual (ChoiceChips.vue) y selector de fecha (DatePicker.vue)
+   Chips con icono para elegir una opción entre pocas (red, formato, tipo), y el
+   calendario propio de CIBERAN: mismos radios, bordes y voltio que el resto.
+   ========================================================================== */
+
+@layer components {
+  /* ---- Chips de elección única ---- */
+  .choice { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0; padding: 0; border: 0; }
+  .choice__item {
+    display: inline-flex; align-items: center; gap: 0.5rem; min-height: var(--control-md); padding: 0.375rem 1rem 0.375rem 0.75rem;
+    border: 1px solid var(--line-strong); border-radius: var(--radius-pill); background: var(--surface-raised);
+    font-size: var(--text-sm); font-weight: 600; color: var(--text-strong); cursor: pointer;
+    transition: background-color var(--dur) var(--ease-out), border-color var(--dur) var(--ease-out), color var(--dur) var(--ease-out), transform var(--dur-fast) var(--ease-out);
+    &:hover { border-color: var(--color-tinta-950); }
+    &:active { transform: scale(0.97); }
+    &:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+    &[aria-checked="true"] { background: var(--color-tinta-950); border-color: var(--color-tinta-950); color: var(--color-hueso-50); }
+    &[aria-checked="true"] .choice__icon { color: var(--color-voltio-400); }
+  }
+  .choice__icon { width: 1.25rem; height: 1.25rem; flex-shrink: 0; color: var(--text-muted); }
+
+  /* ---- Selector de fecha ---- */
+  .dpick { position: relative; min-width: 0; }
+  .dpick__trigger {
+    display: flex; align-items: center; gap: 0.75rem; width: 100%; min-height: var(--field-height); padding: 0 1rem;
+    border: 1px solid var(--line-strong); border-radius: var(--radius-sm); background: var(--surface-raised);
+    font: inherit; font-weight: 500; color: var(--text-strong); text-align: left; cursor: pointer;
+    transition: border-color var(--dur) var(--ease-out), box-shadow var(--dur) var(--ease-out);
+    &:hover { border-color: var(--color-tinta-950); }
+    &:focus-visible, &[aria-expanded="true"] { outline: none; border-color: var(--color-tinta-950); box-shadow: 0 0 0 3px var(--color-voltio-300); }
+    &[data-empty="true"] .dpick__value { color: var(--text-muted); font-weight: 400; }
+  }
+  .dpick__value { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .dpick__caret { color: var(--text-muted); transition: transform var(--dur) var(--ease-out); .dpick__trigger[aria-expanded="true"] & { transform: rotate(180deg); } }
+
+  .dpick__panel { display: grid; gap: 0.75rem; margin-top: 0.5rem; padding: 1rem; border: 1px solid var(--line-strong); border-radius: var(--radius-md); background: var(--surface-raised); }
+  .dpick__quick { display: flex; flex-wrap: wrap; gap: 0.375rem; }
+  .dpick__chip {
+    min-height: var(--control-sm); padding: 0 0.875rem; border: 1px solid var(--line); border-radius: var(--radius-pill); background: var(--surface-sunken);
+    font-size: var(--text-sm); font-weight: 600; color: var(--text-strong); cursor: pointer;
+    &:hover { border-color: var(--color-tinta-950); }
+    &[data-on="true"] { background: var(--color-tinta-950); border-color: var(--color-tinta-950); color: var(--color-hueso-50); }
+    &:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+  }
+  .dpick__nav { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
+  .dpick__month { font-family: var(--font-display); font-size: var(--text-lg); font-weight: 700; letter-spacing: -0.015em; }
+  .dpick__step {
+    display: grid; place-items: center; width: var(--control-sm); height: var(--control-sm); border-radius: var(--radius-pill); border: 1px solid var(--line); background: var(--surface-raised); cursor: pointer;
+    &:hover:not(:disabled) { background: var(--color-tinta-950); border-color: var(--color-tinta-950); color: var(--color-hueso-50); }
+    &:disabled { opacity: 0.35; cursor: not-allowed; }
+    &:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+  }
+  .dpick__grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 0.25rem; }
+  .dpick__wd { display: grid; place-items: center; height: 1.75rem; font-size: var(--text-micro); font-weight: 700; color: var(--text-muted); }
+  .dpick__day {
+    display: grid; place-items: center; aspect-ratio: 1; min-height: 2.25rem; border-radius: var(--radius-pill); border: 0; background: transparent;
+    font: inherit; font-size: var(--text-sm); font-weight: 600; font-variant-numeric: tabular-nums; color: var(--text-strong); cursor: pointer;
+    transition: background-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out);
+    &:hover:not(:disabled) { background: var(--surface-sunken); }
+    &[data-other="true"] { color: var(--text-faint); font-weight: 500; }
+    &[data-today="true"] { box-shadow: inset 0 0 0 2px var(--color-voltio-400); }
+    &[data-selected="true"] { background: var(--color-tinta-950); color: var(--color-voltio-400); box-shadow: none; }
+    &:disabled { opacity: 0.3; cursor: not-allowed; }
+    &:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+  }
+}
+
+/* ---- Formulario de nueva publicación (PostComposerSheet.vue) ---- */
+@layer components {
+  .composer { display: grid; gap: 1.25rem; }
+  .composer__lead { display: flex; align-items: flex-start; gap: 0.625rem; padding: 0.75rem 1rem; border-radius: var(--radius-sm); background: var(--color-voltio-200); color: var(--color-tinta-950); font-size: var(--text-sm); font-weight: 500; }
+  .composer__cols { display: grid; gap: 1.5rem; @media (width >= 48rem) { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 2rem; } }
+  .composer__col { display: grid; align-content: start; gap: 1.25rem; min-width: 0; }
+  .composer__col--side { @media (width >= 48rem) { padding-left: 2rem; border-left: 1px solid var(--line); } }
+  .composer__group { display: grid; gap: 0.625rem; }
+  .composer__legend { font-size: var(--text-sm); font-weight: 600; color: var(--text-strong); }
+  .composer__note { display: flex; align-items: flex-start; gap: 0.5rem; font-size: var(--text-sm); color: var(--text-muted); & svg { margin-top: 0.125rem; } }
+  .composer__error { color: var(--color-danger); font-size: var(--text-sm); font-weight: 600; }
+  .composer__foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem 1rem; padding-top: 1rem; border-top: 1px solid var(--line); }
+  .composer__credits { flex: 1 1 14rem; font-size: var(--text-sm); color: var(--text-muted); }
+  .composer__actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-left: auto; @media (width < 40rem) { width: 100%; & > * { flex: 1 1 100%; } } }
+}
+
+/* ---- Imagen de la publicación (CoverUploader.vue) y cuerpo de contenido ---- */
+@layer components {
+  .cover { width: 100%; max-width: 15rem; min-width: 0; margin-inline: auto; }
+  .cover__frame {
+    position: relative; display: block; width: 100%; aspect-ratio: 4 / 5; overflow: hidden; padding: 0; cursor: pointer;
+    border-radius: var(--radius-md); background: var(--surface-sunken);
+    transition: border-color var(--dur) var(--ease-out), background-color var(--dur) var(--ease-out), box-shadow var(--dur) var(--ease-out);
+    &.cover__frame--empty { border: 2px dashed var(--line-strong); &:hover, &.is-dragging { border-color: var(--color-tinta-950); background: var(--color-voltio-200); } }
+    &.cover__frame--filled { border: 1px solid var(--line); &:hover { box-shadow: var(--shadow-2); } }
+    &:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 3px; }
+    &:disabled { cursor: progress; }
+  }
+  .cover__img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .cover__empty { position: absolute; inset: 0; display: grid; align-content: center; justify-items: center; gap: 0.25rem; padding: 1rem; text-align: center;
+    & strong { margin-top: 0.5rem; font-size: var(--text-base); } & small { font-size: var(--text-sm); color: var(--text-muted); text-wrap: balance; } & .cover__hint { font-size: var(--text-micro); color: var(--text-faint); }
+  }
+  .cover__icon { display: grid; place-items: center; width: 3.25rem; height: 3.25rem; border-radius: var(--radius-pill); background: var(--color-tinta-950); color: var(--color-voltio-400); }
+  .cover__overlay { position: absolute; inset: auto 0 0 0; display: flex; align-items: center; justify-content: center; gap: 0.5rem; min-height: 2.75rem; background: color-mix(in srgb, var(--color-tinta-950) 82%, transparent); color: var(--color-hueso-50); font-size: var(--text-sm); font-weight: 600; opacity: 0; transform: translateY(100%); transition: opacity var(--dur) var(--ease-out), transform var(--dur) var(--ease-out);
+    .cover__frame--filled:hover &, .cover__frame--filled:focus-visible &, &[data-busy="true"] { opacity: 1; transform: none; }
+    .cover__frame--empty & { display: none; }
+    .cover__frame--empty &[data-busy="true"] { display: flex; }
+  }
+  .cover__error { margin-top: 0.5rem; font-size: var(--text-sm); color: var(--color-danger); }
+
+  /* Contenido de la publicación: imagen a la izquierda y campos a la derecha. Se apilan solos cuando el contenedor
+     (la página o la hoja lateral) no da para los dos: por eso es flex con salto de línea y no una media query. */
+  .pcontent { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 1.25rem 1.5rem; }
+  .pcontent > .cover { flex: 0 0 min(15rem, 100%); }
+  .pcontent > .pdetail__fields { flex: 1 1 20rem; min-width: 0; margin-top: 0; }
+}

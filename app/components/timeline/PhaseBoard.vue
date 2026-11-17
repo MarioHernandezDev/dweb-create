@@ -26,6 +26,7 @@ const phases: PostStatus[] = ['idea', 'in_production', 'ready_for_review', 'sche
 // Filtros compartidos con la Lista (los posee la página, ver timeline.vue y
 // utils/post-library.ts): cambiar de vista no pierde lo filtrado.
 const filters = defineModel<PostFilters>('filters', { required: true })
+const emit = defineEmits<{ create: [] }>()
 const hasFilters = computed(() => hasActiveFilters(filters.value, { ignoreStatus: true }))
 
 function clearFilters() {
@@ -233,8 +234,10 @@ async function bulkDelete() {
     <EmptyState
       v-if="!posts.length"
       icon="ph:kanban-bold" title="Aquí irán todas tus publicaciones"
-      description="Una publicación es cualquier pieza de contenido que gestionas en CIBERAN: puede ser propia (solo tú la ves) o el entregable de una colaboración (el partner la ve y la aprueba). Crea la primera con el botón + de abajo — luego la vas moviendo de columna a medida que avanza: de Idea a En producción, Para revisar, Programado y Publicado."
-    />
+      description="Una publicación es una pieza de contenido: propia (solo la ves tú) o el entregable de una colaboración (la marca la revisa y la aprueba). Va avanzando de columna: Idea, En producción, Para revisar, Programado y Publicado."
+    >
+      <BaseButton variant="primary" size="sm" icon="ph:plus-bold" data-empty-create @click="emit('create')">Crear mi primera publicación</BaseButton>
+    </EmptyState>
     <EmptyState
       v-else-if="hasFilters && !filteredPosts.length"
       icon="ph:funnel" title="Ningún resultado con estos filtros"

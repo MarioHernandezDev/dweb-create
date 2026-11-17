@@ -36,9 +36,12 @@ describe('bienvenida al iniciar sesión', () => {
     expect(comp).toContain("e.key !== 'Escape'")
   })
 
-  it('el recorrido de bienvenida espera a que termine', () => {
+  it('el recorrido de bienvenida espera a que termine la animación inicial, pero no al aviso de lanzamiento', () => {
     const tour = read('app/components/onboarding/OnboardingTour.vue')
-    expect(tour).toContain('!welcomeActive')
+    expect(tour).toContain('!welcomeBlocking')
+    expect(tour).toMatch(/welcomePhase\.value === 'intro'/)
+    // El aviso es una tarjeta que no bloquea: ya no hace esperar al recorrido.
+    expect(tour).not.toContain('welcomeActive')
   })
 })
 

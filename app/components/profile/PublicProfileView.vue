@@ -65,11 +65,19 @@ const tabs = computed(() => {
     : [{ value: 'content', label: 'Contenido' }, { value: 'audience', label: 'Audiencia' }]
   // Sin sesión solo se enseña lo público: ni audiencia, ni catálogo con precios, ni colaboraciones.
   if (props.guest) return t.filter((x) => x.value !== 'audience')
-  if (!props.isOwnProfile || props.packages.length) t.push({ value: 'packages', label: isPartner.value ? 'Necesidades' : 'Catálogo' })
+  if (!props.isOwnProfile || props.packages.length) {
+    // Los paquetes son lo que permite colaborar: cuando existen van PRIMERO (y son la pestaña con la que se abre el
+    // perfil), no escondidos como una pestaña más detrás del contenido.
+    const pkgTab = { value: 'packages' as Tab, label: `${isPartner.value ? 'Necesidades' : 'Paquetes'}${props.packages.length ? ` (${props.packages.length})` : ''}` }
+    if (props.packages.length) t.unshift(pkgTab)
+    else t.push(pkgTab)
+  }
   t.push({ value: 'collabs', label: isPartner.value ? 'Creadores colaboradores' : 'Marcas colaboradoras' })
   t.push({ value: 'similar', label: isPartner.value ? 'Marcas similares' : 'Creadores similares' })
   return t
 })
+// Resumen para la tarjeta lateral: cuántos paquetes y desde cuánto.
+const packagesFrom = computed(() => (props.packages.length ? Math.min(...props.packages.map((p) => p.priceCents)) : null))
 const route = useRoute()
 const router = useRouter()
 const tab = ref<Tab>(tabs.value.find((t) => t.value === route.query.seccion)?.value ?? tabs.value[0]!.value)
@@ -123,6 +131,7 @@ const websiteHost = computed(() => { try { return new URL(props.profile.website 
           <div v-if="response"><dt><Icon name="ph:clock" class="size-4" />Responde en</dt><dd>{{ response }}</dd></div>
           <div v-if="activity.collabCount"><dt><Icon name="ph:check-bold" class="size-4" />Colaboraciones</dt><dd>{{ activity.collabCount }}</dd></div>
           <div v-if="rangeLabel"><dt><Icon name="ph:currency-eur" class="size-4" />{{ isPartner ? 'Presupuesto' : 'Tarifa' }}</dt><dd>{{ rangeLabel }}</dd></div>
+          <div v-if="packages.length" data-fact="packages"><dt><Icon name="ph:package" class="size-4" />{{ isPartner ? 'Necesidades' : 'Paquetes' }}</dt><dd>{{ packages.length }}<template v-if="packagesFrom !== null"> · desde {{ formatEuros(packagesFrom) }}</template></dd></div>
           <div data-section="reputation">
             <dt><Icon name="ph:star" class="size-4" />Valoración</dt>
             <dd v-if="ratingSummary.ratingCount > 0" class="pp__stars" :title="formatRatingSummary(ratingSummary)"><RatingStars v-if="hasEnoughRatingsToShowAverage(ratingSummary.ratingCount)" :model-value="Math.round(ratingSummary.avgStars)" readonly size="sm" /><span>{{ hasEnoughRatingsToShowAverage(ratingSummary.ratingCount) ? `${String(Math.round(ratingSummary.avgStars * 10) / 10).replace('.', ',')} (${ratingSummary.ratingCount})` : `${ratingSummary.ratingCount} valoración${ratingSummary.ratingCount === 1 ? '' : 'es'}` }}</span></dd>
@@ -216,7 +225,9 @@ const websiteHost = computed(() => { try { return new URL(props.profile.website 
         <!-- Paquetes / necesidades -->
         <template v-else-if="tab === 'packages'">
           <section data-section="packages">
-            <EmptyState v-if="!packages.length" icon="ph:package" title="Sin paquetes publicados" :description="`Todavía no se le puede hacer una oferta — ${isPartner ? 'la marca' : 'el creador'} no ha publicado ningún paquete.`" />
+            <EmptyState v-if="!packages.length" icon="ph:package" :title="isOwnProfile ? 'Aún no has publicado ningún paquete' : 'Sin paquetes publicados'" :description="isOwnProfile ? 'Los paquetes son lo que permite que te hagan ofertas directas: crea el primero en un minuto, con una plantilla.' : `Todavía no se le puede hacer una oferta — ${isPartner ? 'la marca' : 'el creador'} no ha publicado ningún paquete.`">
+              <BaseButton v-if="isOwnProfile" :to="`/${profile.role}/profile?tab=${isPartner ? 'needs' : 'packages'}&nuevo=1`" variant="primary" size="sm" icon="ph:plus-bold">{{ isPartner ? 'Crear una necesidad' : 'Crear mi primer paquete' }}</BaseButton>
+            </EmptyState>
             <div v-else class="pub__packages"><PackageCard v-for="pkg in packages" :key="pkg.id" :pkg="pkg" @offer="emit('offer', $event)" /></div>
           </section>
         </template>

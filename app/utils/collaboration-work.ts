@@ -133,6 +133,18 @@ export function collaborationHref(role: WorkRole, collaborationId: string, query
 }
 
 /**
+ * En una solicitud pendiente, ¿la última propuesta de precio es mía (y por tanto espero respuesta)? Los turnos se
+ * alternan: quien inició propone primero y cada contraoferta pasa la pelota. Antes se miraba solo quién inició, así
+ * que tras una contraoferta las dos partes seguían viendo el mismo «siguiente paso» que antes de ella (el panel de
+ * negociación sí lo tenía bien). Usa los eventos ya registrados; sin contraofertas, vale quien inició.
+ */
+export function iProposedLast(role: WorkRole, collab: Pick<WorkCollab, 'id' | 'initiatedBy'>, events: WorkEvent[], myProfileId: string | null): boolean {
+  const last = [...events].reverse().find((e) => e.collaborationId === collab.id && e.kind === 'counteroffer')
+  if (!last) return collab.initiatedBy === role
+  return !!myProfileId && last.actorProfileId === myProfileId
+}
+
+/**
  * Tareas (acciones que dependen de mí) y, si no hay ninguna, a qué espera la
  * colaboración. Solo contempla colaboraciones vivas o recién completadas.
  */
@@ -154,12 +166,12 @@ export function collaborationWork(
   if (collab.status === 'requested') {
     if (expiryState(collab.status, collab.expiresAt).expired) {
       waitingText = `La propuesta con ${who} ha caducado`
-    } else if (collab.initiatedBy === role) {
+    } else if (iProposedLast(role, collab, events, myProfileId)) {
       waitingText = `Esperando la respuesta de ${who}`
     } else {
       tasks.push({
         ...base, id: `respond:${collab.id}`, kind: 'respond_request', priority: 10,
-        title: `Responde a la solicitud de ${who}`,
+        title: collab.initiatedBy === role ? `${who} te ha respondido con otro presupuesto` : `Responde a la solicitud de ${who}`,
         detail: collab.brief ? `«${clip(collab.brief, 70)}» · acepta, rechaza o propón otro presupuesto.` : 'Acepta, rechaza o propón otro presupuesto.',
         cta: 'Responder', to: collaborationHref(role, collab.id) + '#respuesta'
       })
@@ -264,7 +276,8 @@ export function collaborationWork(
         tasks.push({
           ...base, id: `start:${collab.id}`, kind: 'start_deliverable', priority: 35,
           title: `Crea la primera publicación para ${who}`, detail: 'Aún no hay ninguna publicación vinculada a esta colaboración.',
-          cta: 'Abrir Studio', to: '/creator/timeline'
+          // Abre el formulario de nueva publicación con esta colaboración ya elegida (lo lee timeline.vue).
+          cta: 'Crear publicación', to: `/creator/timeline?nueva=1&colaboracion=${collab.id}`
         })
       }
       if (role === 'partner' && !mine.length) waitingText ??= `${who} aún no ha creado ninguna publicación`

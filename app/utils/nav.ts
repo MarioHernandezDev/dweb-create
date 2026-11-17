@@ -32,7 +32,7 @@ export const roleMeta: Record<Role, { label: string; description: string; home: 
 // sección interna, "Tu calendario", no cambia). Ningún `to` cambia de ruta.
 export const roleNav: Record<Role, NavItem[]> = {
   creator: [
-    { to: '/creator', label: 'Hoy', icon: 'ph:house-fill' },
+    { to: '/creator', label: 'Inicio', icon: 'ph:house-fill' },
     { to: '/creator/timeline', label: 'Publicaciones', icon: 'ph:kanban-fill' },
     { to: '/creator/discover', label: 'Descubrir', icon: 'ph:compass-fill' },
     { to: '/creator/requests', label: 'Colaboraciones', icon: 'ph:handshake-fill' },

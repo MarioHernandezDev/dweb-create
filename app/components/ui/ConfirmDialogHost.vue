@@ -66,7 +66,7 @@ onUnmounted(() => {
                 <Icon :name="state.icon" class="size-5" :class="state.tone === 'danger' ? 'text-[var(--color-status-alert)]' : 'text-[var(--color-primary-500)]'" />
               </span>
               <div class="min-w-0 pt-1">
-                <p class="font-display text-[1.0625rem] text-[var(--color-text)]">{{ state.title }}</p>
+                <p class="font-display text-lg text-[var(--color-text)]">{{ state.title }}</p>
                 <p v-if="state.message" class="text-sm text-[var(--color-text-muted)] mt-1.5 leading-relaxed">{{ state.message }}</p>
               </div>
             </div>

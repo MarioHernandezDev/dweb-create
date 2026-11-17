@@ -104,11 +104,7 @@ const doneCount = computed(() => checklistItems.value.filter((i) => i.done).leng
 
       <div class="pdetail__grid">
         <div class="pdetail__col">
-          <PanelCard title="Contenido" description="Lo que vas a publicar. La portada y el título te sirven para reconocerla en el tablero.">
-            <CoverUploader
-              :post-id="post.id" :media-url="post.mediaUrl" :cover="post.cover" :icon="contentTypeMeta[post.contentType].icon"
-              @update:media-url="(url) => { if (post) post.mediaUrl = url }"
-            />
+          <PanelCard title="Contenido" description="Lo que vas a publicar: el título te sirve para reconocerla en el tablero.">
             <PostContentFields
               v-model:title="title" v-model:caption="caption" v-model:hashtags="hashtagsText"
               :title-error="titleError" :caption-error="captionError" :caption-length="captionLength" :caption-max="captionMax"
@@ -122,9 +118,16 @@ const doneCount = computed(() => checklistItems.value.filter((i) => i.done).leng
         </div>
 
         <aside class="pdetail__col">
+          <PanelCard title="Imagen" description="Se ve en el tablero y es lo que revisa la marca.">
+            <CoverUploader
+              :post-id="post.id" :media-url="post.mediaUrl" :cover="post.cover" :icon="contentTypeMeta[post.contentType].icon"
+              @update:media-url="(url) => { if (post) post.mediaUrl = url }"
+            />
+          </PanelCard>
+
           <PanelCard title="Planificación">
             <BaseField v-slot="f" label="Fecha de entrega">
-              <BaseInput v-bind="f" v-model="dueDate" type="date" />
+              <DatePicker v-bind="f" v-model="dueDate" />
             </BaseField>
             <dl class="pfacts">
               <div class="pfacts__row">

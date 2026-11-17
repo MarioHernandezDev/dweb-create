@@ -54,6 +54,8 @@ function openNewPackage() {
   editingPackage.value = null
   packageSheetOpen.value = true
 }
+// `?tab=packages&nuevo=1` abre directamente el formulario de nueva necesidad.
+onMounted(() => { if (route.query.nuevo === '1') { activeTab.value = 'needs'; openNewPackage() } })
 
 function openEditPackage(pkg: Package) {
   editingPackage.value = pkg

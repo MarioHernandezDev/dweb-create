@@ -33,6 +33,8 @@ const passwordRepeat = ref('')
 const acceptedTerms = ref(false)
 const loading = ref(false)
 const error = ref('')
+// El email ya tiene cuenta: el aviso va junto al campo de email (no bajo la contraseña) y con enlace para acceder.
+const existingAccount = ref(false)
 const repeatTouched = ref(false)
 const { sending: resending, sent: resent, error: resendError, cooldown, resend } = useResendConfirmation()
 const passwordMismatch = computed(() => (repeatTouched.value || passwordRepeat.value.length > 0) && password.value !== passwordRepeat.value)
@@ -53,10 +55,11 @@ async function register() {
   }
   loading.value = true
   error.value = ''
+  existingAccount.value = false
 
   resetAccountCaches()
 
-  const { error: signUpError } = await supabase.auth.signUp({
+  const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
     email: email.value,
     password: password.value,
     options: {
@@ -76,6 +79,15 @@ async function register() {
   loading.value = false
   if (signUpError) {
     error.value = translateAuthError(signUpError.message)
+    return
+  }
+
+  // Con un email que ya tiene cuenta confirmada, Supabase responde «éxito» sin enviar nada (para no revelar qué
+  // emails existen) y devuelve el usuario sin identidades. Antes la pantalla decía «Revisa tu email» y el correo
+  // nunca llegaba: ahora se avisa. Una cuenta pendiente de confirmar sí conserva su identidad (se reenvía el correo).
+  if (signUpData.user && Array.isArray(signUpData.user.identities) && signUpData.user.identities.length === 0) {
+    error.value = 'Ya existe una cuenta con ese email. Accede con ella, o usa otro email (con Gmail vale una variante tipo tunombre+marca@gmail.com).'
+    existingAccount.value = true
     return
   }
 
@@ -130,10 +142,11 @@ async function register() {
           <BaseField :label="detailLabel" optional v-slot="f">
             <BaseInput v-bind="f" v-model="detail" />
           </BaseField>
-          <BaseField label="Email" v-slot="f">
+          <BaseField label="Email" :error="existingAccount ? error : ''" v-slot="f">
             <BaseInput v-bind="f" v-model="email" type="email" required autocomplete="email" />
           </BaseField>
-          <BaseField label="Contraseña" hint="Al menos 8 caracteres." :error="error" v-slot="f">
+          <p v-if="existingAccount" class="text-sm -mt-2" data-existing-account><NuxtLink to="/login" class="font-semibold underline">Ir a acceder</NuxtLink></p>
+          <BaseField label="Contraseña" hint="Al menos 8 caracteres." :error="existingAccount ? '' : error" v-slot="f">
             <BaseInput v-bind="f" v-model="password" type="password" required minlength="8" autocomplete="new-password" />
           </BaseField>
           <BaseField label="Repite la contraseña" :error="passwordMismatch ? 'Las contraseñas no coinciden.' : ''" v-slot="f">

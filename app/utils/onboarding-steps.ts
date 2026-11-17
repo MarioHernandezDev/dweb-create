@@ -4,47 +4,57 @@ export interface TourStep {
   icon: string
   title: string
   body: string
+  /**
+   * Elemento real de la interfaz que se ilumina en este paso (`data-tour="…"`: `nav:<ruta>` para el menú, `account`
+   * para el bloque de la cuenta). Si no existe o no se ve (p. ej. el menú de escritorio en móvil), el paso sale
+   * centrado, sin señalar nada: el texto se entiende igual.
+   */
+  target?: string
   /** Acción recomendada en este paso: lleva a esa pantalla al pulsarla. */
   action?: { label: string; to: string }
 }
 
 /**
- * Contenido del recorrido de bienvenida (M-O1). Los textos hablan de los
- * apartados del menú (rutas estables de `roleNav`), no de la estructura
- * interna de cada pantalla, que cambia a menudo. Cada rol cierra con una
- * primera acción recomendada.
+ * Contenido del recorrido de bienvenida (M-O1). Cada paso señala el apartado real del menú del que habla, en el
+ * orden en que se usa la aplicación, y cada rol cierra con una primera acción recomendada. El tono es práctico:
+ * qué se hace ahí y por qué importa. Rutas estables de `roleNav`.
  */
 export const tourSteps: Record<Role, TourStep[]> = {
   creator: [
     {
       icon: 'ph:hand-waving-fill',
       title: 'Te damos la bienvenida a CIBERAN',
-      body: 'Aquí gestionas tus publicaciones y tus colaboraciones con marcas en un solo sitio, y durante el lanzamiento es gratis. Te enseñamos lo esencial en un minuto.'
+      body: 'Aquí gestionas tus publicaciones y tus colaboraciones con marcas en un solo sitio, y durante el lanzamiento es gratis. Te señalamos lo esencial en un minuto; puedes saltarlo cuando quieras.'
     },
     {
-      icon: 'ph:kanban-fill',
-      title: 'Hoy y Publicaciones',
-      body: 'En Hoy ves lo que toca esta semana. En Publicaciones organizas cada pieza en un tablero, un calendario o una lista, desde la idea hasta que se publica: arrastra una tarjeta para cambiarla de fase o de día.'
+      icon: 'ph:house-fill',
+      title: 'Inicio: tu resumen',
+      body: 'Lo que toca esta semana, las solicitudes por responder y tus primeros pasos. Si no sabes por dónde seguir, empieza siempre por aquí.',
+      target: 'nav:/creator'
     },
     {
       icon: 'ph:compass-fill',
-      title: 'Descubrir',
-      body: 'Encuentra marcas y agencias que encajan contigo: filtra por categoría, presupuesto o formato, guarda tus búsquedas y envía una propuesta con una plantilla.'
+      title: 'Descubrir: encuentra marcas',
+      body: 'Busca marcas y agencias que encajan contigo y envíales una propuesta. Filtra por categoría o presupuesto y guarda tus búsquedas.',
+      target: 'nav:/creator/discover'
     },
     {
       icon: 'ph:handshake-fill',
-      title: 'Colaboraciones',
-      body: 'Cada colaboración tiene su propio espacio con Resumen, Entregables, Acuerdo y archivos, Chat y Actividad. Allí acordáis las condiciones, compartís archivos y, si hace falta, cancelar de común acuerdo.'
+      title: 'Colaboraciones: cada acuerdo, en un sitio',
+      body: 'Cada colaboración tiene su espacio con el siguiente paso, los entregables, el acuerdo, el chat y la actividad. Siempre sabrás a quién le toca mover ficha.',
+      target: 'nav:/creator/requests'
     },
     {
-      icon: 'ph:chart-bar-fill',
-      title: 'Resultados',
-      body: 'En Resultados tienes cómo van tus colaboraciones dentro de CIBERAN: plazos, respuestas y valoraciones. Las métricas de tus redes llegarán más adelante.'
+      icon: 'ph:kanban-fill',
+      title: 'Publicaciones: tu contenido, de la idea a publicarlo',
+      body: 'Organiza cada pieza en un tablero, un calendario o una lista. Arrastra una tarjeta para cambiarla de fase o de día, y vincúlala a una colaboración para que la marca la revise.',
+      target: 'nav:/creator/timeline'
     },
     {
-      icon: 'ph:user-circle-fill',
-      title: 'Empieza por tu perfil',
-      body: 'Una ficha completa es lo que hace que las marcas te encuentren y confíen en ti. En «Privacidad y cuenta» eliges quién puede escribirte y qué avisos recibes. Puedes volver a ver este recorrido desde ahí.',
+      icon: 'ph:package-fill',
+      title: 'Tu perfil y tus paquetes: lo primero que ven las marcas',
+      body: 'Una ficha completa y unos paquetes claros (qué haces y a qué precio) son lo que hace que te elijan en Descubrir y te hagan ofertas directas. Empieza por aquí.',
+      target: 'account',
       action: { label: 'Ir a mi perfil', to: '/creator/profile' }
     }
   ],
@@ -52,27 +62,31 @@ export const tourSteps: Record<Role, TourStep[]> = {
     {
       icon: 'ph:hand-waving-fill',
       title: 'Te damos la bienvenida a CIBERAN',
-      body: 'Aquí encuentras creadores, acuerdas colaboraciones y revisas su contenido antes de que se publique, y durante el lanzamiento es gratis. Te enseñamos lo esencial en un minuto.'
-    },
-    {
-      icon: 'ph:compass-fill',
-      title: 'Descubrir',
-      body: 'Busca creadores por categoría, presupuesto, red o tiempo de respuesta, o descríbelos con tus palabras y deja que la IA te sugiera los que mejor encajan. Guarda tus búsquedas para repetirlas.'
-    },
-    {
-      icon: 'ph:handshake-fill',
-      title: 'Colaboraciones',
-      body: 'Contacta a un creador y acordad el alcance, el precio y las entregas. Cada colaboración tiene su espacio con Resumen, Entregables, Acuerdo y archivos, Chat y Actividad, y desde ahí apruebas el contenido o pides cambios.'
+      body: 'Aquí encuentras creadores, acuerdas colaboraciones y revisas su contenido antes de que se publique, y durante el lanzamiento es gratis. Te señalamos lo esencial en un minuto; puedes saltarlo cuando quieras.'
     },
     {
       icon: 'ph:house-fill',
-      title: 'Inicio y Resultados',
-      body: 'Tu panel resume lo que está en marcha y el contenido pendiente de tu aprobación. En Resultados ves plazos, respuestas y valoraciones de tus colaboraciones.'
+      title: 'Inicio: lo que necesita tu decisión',
+      body: 'Un resumen de lo que está en marcha y del contenido pendiente de tu aprobación, con tus primeros pasos. Empieza siempre por aquí.',
+      target: 'nav:/partner'
+    },
+    {
+      icon: 'ph:compass-fill',
+      title: 'Descubrir: encuentra creadores',
+      body: 'Busca creadores por categoría, tarifa, red o tiempo de respuesta, o descríbelos con tus palabras y deja que la IA te sugiera los que mejor encajan. Mira sus paquetes y contacta.',
+      target: 'nav:/partner/discover'
+    },
+    {
+      icon: 'ph:handshake-fill',
+      title: 'Colaboraciones: de la solicitud a la publicación',
+      body: 'Acordad el alcance, el precio y las entregas. Cada colaboración tiene su espacio, y desde ahí apruebas el contenido o pides cambios.',
+      target: 'nav:/partner/requests'
     },
     {
       icon: 'ph:user-circle-fill',
-      title: 'Empieza por tu perfil',
-      body: 'Cuéntales a los creadores quién eres y qué buscas: así las propuestas que recibas serán las adecuadas. En «Privacidad y cuenta» eliges quién puede escribirte y qué avisos recibes. Puedes volver a ver este recorrido desde ahí.',
+      title: 'Tu perfil: cuéntales quién eres',
+      body: 'Cuéntales a los creadores quién eres y qué buscas: así las propuestas que recibas serán las adecuadas. Puedes volver a ver este recorrido desde ahí.',
+      target: 'account',
       action: { label: 'Ir a mi perfil', to: '/partner/profile' }
     }
   ]

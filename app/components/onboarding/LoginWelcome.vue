@@ -7,6 +7,8 @@
  */
 const { pending, phase, noticeHidden, hideNoticeForever } = useLoginWelcome()
 const { resolveMyProfileId } = useMyProfileId()
+// Mientras el recorrido está abierto, el aviso espera (reaparece al cerrarlo) para no tener dos cosas a la vez.
+const { open: tourOpen } = useOnboardingTour()
 
 const INTRO_MS = 2600
 const INTRO_REDUCED_MS = 900
@@ -83,29 +85,22 @@ onUnmounted(() => {
       leave-active-class="transition-opacity duration-150 ease-[var(--ease-spring)]" leave-to-class="opacity-0"
     >
       <div
-        v-if="phase === 'notice'" class="fixed inset-0 z-[92] flex items-center justify-center p-5 bg-black/55 backdrop-blur-[2px]"
-        role="dialog" aria-modal="true" aria-labelledby="launch-notice-title" data-launch-notice
+        v-if="phase === 'notice' && !tourOpen" class="launch-notice" role="status" aria-labelledby="launch-notice-title" data-launch-notice
       >
-        <div class="w-full max-w-md rounded-[var(--radius-lg)] bg-[var(--color-ink-raised)] border border-[var(--color-hairline)] shadow-[var(--shadow-float)] p-6">
-          <span class="inline-flex size-12 items-center justify-center rounded-full bg-[var(--color-voltio-200)] text-[var(--color-tinta-950)] mb-4">
-            <Icon name="ph:gift-bold" class="size-6" />
-          </span>
-          <h2 id="launch-notice-title" class="font-display text-[1.375rem] leading-tight text-[var(--color-text)] mb-2">
-            CIBERAN es gratis durante el lanzamiento
-          </h2>
-          <p class="text-base text-[var(--color-text-muted)] leading-relaxed mb-3">
-            Estamos empezando, y por eso puedes usar toda la plataforma sin pagar nada: sin cuotas y sin comisiones mientras dure el lanzamiento.
+        <!-- Ya no es un diálogo que bloquea la pantalla: es un aviso en la esquina que se puede ignorar o cerrar. -->
+        <span class="launch-notice__icon"><Icon name="ph:gift-bold" class="size-5" /></span>
+        <div class="launch-notice__body">
+          <h2 id="launch-notice-title" class="launch-notice__title">CIBERAN es gratis durante el lanzamiento</h2>
+          <p class="launch-notice__text">
+            Puedes usar toda la plataforma sin cuotas ni comisiones mientras dure. Si más adelante añadimos planes de pago, te avisaremos con tiempo y no se cobrará nada sin que lo aceptes.
           </p>
-          <p class="text-base text-[var(--color-text-muted)] leading-relaxed mb-5">
-            Si más adelante añadimos planes de pago, te avisaremos con tiempo y no se cobrará nada sin que lo aceptes.
-          </p>
-
-          <label class="proposal__check text-[var(--text-muted)] mb-5" data-launch-notice-hide>
-            <input v-model="dontShowAgain" type="checkbox">
-            <span>No volver a mostrar</span>
-          </label>
-
-          <BaseButton variant="primary" size="lg" block data-launch-notice-close @click="closeNotice">Entendido</BaseButton>
+          <div class="launch-notice__foot">
+            <label class="proposal__check text-[var(--text-muted)]" data-launch-notice-hide>
+              <input v-model="dontShowAgain" type="checkbox">
+              <span>No volver a mostrar</span>
+            </label>
+            <BaseButton variant="primary" size="sm" data-launch-notice-close @click="closeNotice">Entendido</BaseButton>
+          </div>
         </div>
       </div>
     </Transition>

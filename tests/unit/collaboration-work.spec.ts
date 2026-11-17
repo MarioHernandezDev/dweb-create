@@ -31,6 +31,17 @@ describe('collaborationWork · partner', () => {
     expect(r.tasks).toEqual([])
     expect(r.waiting?.text).toContain('Lía')
   })
+  it('tras una contraoferta la pelota cambia de lado: quien la hizo espera, quien la recibe responde', () => {
+    // El partner inició y el creador contraofertó (actor distinto de «me»): ahora le toca al partner.
+    const counter = ev('counteroffer', { postId: null, actorProfileId: 'other' })
+    const mine = collaborationWork('partner', collab({ status: 'requested', initiatedBy: 'partner' }), [], [counter], 'me')
+    expect(kinds(mine)).toEqual(['respond_request'])
+    expect(mine.tasks[0]!.title).toContain('otro presupuesto')
+    // Si la última contraoferta es mía, espero aunque yo no iniciara.
+    const waiting = collaborationWork('partner', collab({ status: 'requested', initiatedBy: 'creator' }), [], [ev('counteroffer', { postId: null, actorProfileId: 'me' })], 'me')
+    expect(waiting.tasks).toEqual([])
+    expect(waiting.waiting?.text).toContain('Esperando')
+  })
   it('entrega en revisión: revisar, y antes que completar el brief', () => {
     const r = collaborationWork('partner', collab({ campaignGoal: null }), [post({ status: 'ready_for_review' })], [], 'me')
     expect(kinds(r)).toEqual(['review_deliverable', 'complete_brief'])

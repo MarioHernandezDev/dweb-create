@@ -143,23 +143,22 @@ async function sendReport() {
           <BaseButton variant="danger" size="sm" @click="$emit('decline')">Sí, rechazar</BaseButton>
         </div>
 
+        <!-- Jerarquía: aceptar (principal) → contraoferta (secundaria) → rechazar (poco frecuente, sin peso visual). -->
         <div v-else class="flex flex-col gap-2.5 mb-4">
-          <div class="flex gap-2.5">
-            <BaseButton variant="secondary" size="sm" class="flex-1" @click="confirmingDecline = true">Rechazar</BaseButton>
-            <BaseButton variant="primary" size="sm" class="flex-1" @click="$emit('accept', currentAmount)">
-              Aceptar{{ currentAmount ? ` · ${formatEuros(currentAmount)}` : '' }}
-            </BaseButton>
-          </div>
-          <button type="button" class="text-sm font-medium text-[var(--color-primary-500)] hover:text-[var(--color-primary-600)] transition-colors" @click="countering = true">
-            Hacer contraoferta
+          <BaseButton variant="primary" block @click="$emit('accept', currentAmount)">
+            Aceptar{{ currentAmount ? ` · ${formatEuros(currentAmount)}` : '' }}
+          </BaseButton>
+          <BaseButton variant="outline" block data-counter-open @click="countering = true">Hacer contraoferta</BaseButton>
+          <button type="button" class="mx-auto min-h-[var(--control-md)] px-3 text-sm font-medium text-[var(--text-muted)] hover:text-[var(--color-danger)] transition-colors" data-decline-open @click="confirmingDecline = true">
+            Rechazar solicitud
           </button>
         </div>
       </template>
     </template>
 
     <div class="pt-3 mt-1 border-t border-[var(--color-hairline)]">
-      <button v-if="!reportOpen && !reportSent" type="button" class="text-micro text-[var(--color-text-muted)] hover:text-[var(--color-status-alert)] transition-colors" @click="reportOpen = true">
-        Reportar esta solicitud
+      <button v-if="!reportOpen && !reportSent" type="button" class="inline-flex items-center gap-1.5 min-h-[var(--control-sm)] text-sm font-medium text-[var(--text-muted)] hover:text-[var(--color-danger)] transition-colors" @click="reportOpen = true">
+        <Icon name="ph:flag-bold" class="size-4" /> Reportar esta solicitud
       </button>
       <p v-else-if="reportSent" class="text-micro text-[var(--color-text-muted)]">Gracias, la revisaremos. Podemos actuar sobre la cuenta, pero no podemos reclamar ni recuperar importes ni emprender acciones legales.</p>
       <div v-else class="flex flex-col gap-2.5">

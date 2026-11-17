@@ -50,7 +50,7 @@ async function confirmLogout() {
     <ul class="tabbar__list">
       <li v-for="item in visibleItems" :key="item.to">
         <NuxtLink
-          :to="item.to" class="tabbar__item" :class="isActive(item.to) && 'is-active'"
+          :to="item.to" class="tabbar__item" :class="isActive(item.to) && 'is-active'" :data-tour="`nav:${item.to}`"
           :aria-current="isActive(item.to) ? 'page' : undefined"
         >
           <Icon :name="item.icon" class="tabbar__icon" />
@@ -60,7 +60,7 @@ async function confirmLogout() {
       </li>
       <li>
         <button
-          type="button" class="tabbar__item" :class="moreActive && 'is-active'"
+          type="button" class="tabbar__item" :class="moreActive && 'is-active'" data-tour="account"
           aria-haspopup="true" :aria-expanded="moreOpen" @click="moreOpen = true"
         >
           <Icon name="ph:dots-three-bold" class="tabbar__icon" />

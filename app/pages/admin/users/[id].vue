@@ -53,7 +53,7 @@ const actionLabel = (a: Detail['audit'][number]) => a.action
         <BaseCard radius="lg" padding="lg">
           <div class="flex flex-wrap items-start justify-between gap-3">
             <div class="min-w-0">
-              <h1 class="font-display text-[1.375rem] text-[var(--color-text)] break-words">{{ name }}</h1>
+              <h1 class="font-display text-title text-[var(--color-text)] break-words">{{ name }}</h1>
               <p class="text-sm text-[var(--color-text-muted)] break-all">{{ detail.account.email }}</p>
             </div>
             <div class="flex flex-wrap gap-1.5">

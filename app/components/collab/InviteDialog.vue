@@ -182,6 +182,10 @@ async function send() {
           </span>
           <p class="text-base text-[var(--color-text)]">Solicitud enviada a {{ target?.name }}</p>
           <p class="text-sm text-[var(--color-text-muted)]">Te avisamos en cuanto responda.</p>
+          <div class="flex flex-wrap justify-center gap-2 mt-2">
+            <BaseButton variant="secondary" @click="sheetOpen = false">Cerrar</BaseButton>
+            <BaseButton to="/partner/requests?vista=solicitudes" variant="outline">Ver mis solicitudes</BaseButton>
+          </div>
         </div>
       </template>
     </BottomSheet>

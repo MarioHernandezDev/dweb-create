@@ -25,6 +25,8 @@ const props = defineProps<{
   showScore?: boolean
   /** Primeras tarjetas: la foto se carga ya, con prioridad. */
   priority?: boolean
+  /** Paquetes activos del perfil (cuántos y desde cuánto), si se han cargado. */
+  packages?: { count: number; minCents: number } | null
 }>()
 
 defineEmits<{ contact: [] }>()
@@ -42,6 +44,9 @@ const budgetLabel = computed(() => {
 const budgetCaption = computed(() => (props.kind === 'partner' ? 'Presupuesto' : 'Tarifa'))
 const response = computed(() => responseLabel(props.result.responseHours))
 const initial = computed(() => (props.result.name.trim()[0] ?? '?').toUpperCase())
+// Ficha casi vacía (sin foto, texto, categorías ni importes): una tarjeta más baja, para que no ocupe tanto
+// espacio ni parezca rota entre las completas.
+const sparse = computed(() => !props.result.coverUrl && !props.result.bio && !props.result.categories.length && !budgetLabel.value)
 const imageFailed = ref(false)
 
 // «Enviar mensaje»: la misma RPC que «Iniciar chat» del perfil (respeta la privacidad del chat).
@@ -63,7 +68,7 @@ async function message() {
 </script>
 
 <template>
-  <article class="dcard" :class="featured && 'dcard--featured'">
+  <article class="dcard" :class="[featured && 'dcard--featured', sparse && 'dcard--sparse']">
     <div class="dcard__media">
       <CoverArt :seed="result.id" />
       <span class="dcard__initial" aria-hidden="true">{{ initial }}</span>
@@ -94,7 +99,7 @@ async function message() {
 
       <p v-if="featured && result.reason" class="dcard__reason"><Icon name="ph:lightbulb-fill" class="size-4 shrink-0 mt-0.5" />{{ result.reason }}</p>
       <p v-else-if="result.bio" class="dcard__bio">{{ result.bio }}</p>
-      <p v-else class="dcard__bio dcard__bio--empty">Ficha en construcción</p>
+      <p v-else class="dcard__bio dcard__bio--empty">Aún no ha completado su ficha</p>
 
       <ul v-if="response || result.collabCount" class="dcard__facts">
         <li v-if="response"><Icon name="ph:clock" class="size-4" />Responde en {{ response }}</li>
@@ -105,7 +110,13 @@ async function message() {
         <span v-for="p in result.platforms" :key="p" class="dcard__platform">{{ PLATFORM_SHORT[p] ?? p }}</span>
       </div>
 
+      <p v-if="packages" class="dcard__pkgs" data-card-packages>
+        <Icon name="ph:package-fill" class="size-4 shrink-0" />
+        <span>{{ packages.count }} {{ kind === 'partner' ? (packages.count === 1 ? 'necesidad' : 'necesidades') : (packages.count === 1 ? 'paquete' : 'paquetes') }} · desde {{ formatEuros(packages.minCents) }}</span>
+      </p>
+      <!-- Siempre hay línea de importe: así las tarjetas se comparan fila a fila, también las que no lo indican. -->
       <p v-if="budgetLabel" class="dcard__budget"><span>{{ budgetCaption }}</span><strong>{{ budgetLabel }}</strong></p>
+      <p v-else class="dcard__budget dcard__budget--none"><span>{{ budgetCaption }}</span><span>Sin indicar</span></p>
     </div>
 
     <div class="dcard__foot">

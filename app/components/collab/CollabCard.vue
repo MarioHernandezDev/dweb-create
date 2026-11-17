@@ -45,9 +45,12 @@ const expiry = computed(() => expiryState(props.status, props.expiresAt))
       <span class="collab-card__count">{{ progress.done }} de {{ progress.total }} entregables</span>
     </span>
     <span class="collab-card__foot">
-      <CollabStatus :status="status" />
+      <span v-if="hint && hintTone" class="collab-card__turn" :data-tone="hintTone">{{ hintTone === 'action' ? 'Te toca' : 'En espera' }}</span>
+      <!-- Una solicitud pendiente ya se explica con «Te toca / En espera» + la frase: repetir «Pendiente de respuesta» era ruido. -->
+      <CollabStatus v-if="!(hintTone && status === 'requested')" :status="status" />
       <span v-if="expiry.label" class="collab-card__expiry" :data-expired="expiry.expired">{{ expiry.label }}</span>
       <span v-if="hint" class="collab-card__hint" :data-tone="hintTone">{{ hint }}</span>
+      <span v-if="hintTone === 'action'" class="collab-card__go" aria-hidden="true">Abrir <Icon name="ph:arrow-right-bold" class="size-4" /></span>
     </span>
   </button>
 </template>

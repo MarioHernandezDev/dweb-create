@@ -10,36 +10,16 @@ const { ensureRole } = useMyRole()
 const email = ref('')
 const password = ref('')
 const loading = ref(false)
-const activeDemo = ref('')
 const error = ref('')
 // Cuenta creada pero sin confirmar: se ofrece reenviar el correo.
 const unconfirmed = ref(false)
 const { sending: resending, sent: resent, error: resendError, cooldown, resend } = useResendConfirmation()
 
-const isDev = import.meta.dev
-
-// `v-if="isDev"` ya ocultaba el botón en producción, pero el email y la
-// contraseña de las cuentas de demo seguían viajando como texto plano
-// dentro del bundle de cliente (confirmado leyendo el bundle real de
-// `.output/` tras `npm run build`). `import.meta.dev` lo sustituye Vite por
-// un booleano literal en tiempo de compilación; con el valor dentro de este
-// `if`, el minificador elimina la rama entera (y las cadenas) en producción.
-let demoAccounts: { label: string; email: string; icon: string }[] = []
-let demoPassword = ''
-if (import.meta.dev) {
-  demoAccounts = [
-    { label: 'Creador de contenido', email: 'creator@feedma.test', icon: 'ph:sparkle-fill' },
-    { label: 'Partner', email: 'partner@feedma.test', icon: 'ph:user-circle-fill' }
-  ]
-  demoPassword = 'feedma-demo-2026'
-}
-
 async function login(loginEmail: string, loginPassword: string) {
   loading.value = true
   error.value = ''
   unconfirmed.value = false
-  // Las cuentas de demo cambian de rol con un clic, sin pasar por «Cerrar
-  // sesión»: hay que tirar toda la caché de la cuenta anterior aquí también.
+  // Al cambiar de cuenta sin pasar por «Cerrar sesión» hay que tirar toda la caché de la cuenta anterior.
   resetAccountCaches()
 
   const { data, error: signInError } = await supabase.auth.signInWithPassword({ email: loginEmail, password: loginPassword })
@@ -80,12 +60,6 @@ function submit() {
   login(email.value, password.value)
 }
 
-function loginAsDemo(demoEmail: string) {
-  email.value = demoEmail
-  password.value = demoPassword
-  activeDemo.value = demoEmail
-  login(demoEmail, demoPassword)
-}
 </script>
 
 <template>
@@ -121,19 +95,5 @@ function loginAsDemo(demoEmail: string) {
     <p class="auth__alt">
       ¿No tienes cuenta todavía? <NuxtLink to="/onboarding">Crea una cuenta</NuxtLink>
     </p>
-
-    <!-- Solo en desarrollo: en producción esto era una contraseña compartida en
-         texto plano, visible en el bundle, para entrar como demo con un clic. -->
-    <div v-if="isDev" class="mt-10 pt-6 border-t border-[var(--line)]">
-      <p class="text-sm text-[var(--text-muted)] mb-3">Cuentas de prueba (equipo): un clic y dentro.</p>
-      <div class="grid grid-cols-2 gap-2">
-        <BaseButton
-          v-for="demo in demoAccounts" :key="demo.email" variant="outline" :icon="demo.icon"
-          :loading="activeDemo === demo.email && loading" :disabled="loading" @click="loginAsDemo(demo.email)"
-        >
-          {{ demo.label }}
-        </BaseButton>
-      </div>
-    </div>
   </AuthShell>
 </template>

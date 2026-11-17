@@ -18,9 +18,27 @@
   }
 
   /* ---- Columna lateral ---- */
+  /* La columna se describe con variables: la versión plegada solo cambia sus valores
+     (no repite reglas). Hay tres estados (data-rail): «open», «collapsed» y «auto»
+     (por defecto), que se pliega sola en tablet (48–72 rem), donde 16 rem de columna
+     dejaban el contenido de cada pantalla con menos de 30 rem. */
   .shell__rail {
     --rail-w: 16rem;
     --rail-pad: 1.25rem;
+    --rail-label-max: 14rem;
+    --rail-label-opacity: 1;
+    --rail-word-max: 10rem;
+    --rail-head-dir: row;
+    --rail-head-justify: space-between;
+    --rail-head-gap: 0.5rem;
+    --rail-brand-pad: 0.375rem;
+    --rail-link-justify: flex-start;
+    --rail-link-gap: 0.75rem;
+    --rail-link-pad: 0.875rem;
+    --rail-account-pad: 0.5rem;
+    --rail-soon-display: inline-block;
+    --rail-badge-pos: static;
+    --rail-toggle-rot: 0deg;
 
     display: none;
     width: var(--rail-w);
@@ -28,9 +46,20 @@
     background: var(--surface-inverse);
     transition: width var(--dur-slow) var(--ease-out);
     @media (width >= 48rem) { display: block; }
-
-    /* Plegada: solo iconos. */
-    .shell[data-rail="collapsed"] & { --rail-w: 5rem; --rail-pad: 0.75rem; }
+  }
+  .shell[data-rail="collapsed"] .shell__rail {
+    --rail-w: 5rem; --rail-pad: 0.75rem; --rail-label-max: 0; --rail-label-opacity: 0; --rail-word-max: 0;
+    --rail-head-dir: column; --rail-head-justify: center; --rail-head-gap: 0.75rem; --rail-brand-pad: 0; --rail-link-justify: center;
+    --rail-link-gap: 0; --rail-link-pad: 0; --rail-account-pad: 0; --rail-soon-display: none;
+    --rail-badge-pos: absolute; --rail-toggle-rot: 180deg;
+  }
+  @media (width >= 48rem) and (width < 72rem) {
+    .shell[data-rail="auto"] .shell__rail {
+      --rail-w: 5rem; --rail-pad: 0.75rem; --rail-label-max: 0; --rail-label-opacity: 0; --rail-word-max: 0;
+      --rail-head-dir: column; --rail-head-justify: center; --rail-head-gap: 0.75rem; --rail-brand-pad: 0; --rail-link-justify: center;
+      --rail-link-gap: 0; --rail-link-pad: 0; --rail-account-pad: 0; --rail-soon-display: none;
+      --rail-badge-pos: absolute; --rail-toggle-rot: 180deg;
+    }
   }
   .rail {
     position: sticky;
@@ -43,47 +72,41 @@
     color: var(--text-on-inverse);
     transition: padding var(--dur-slow) var(--ease-out);
   }
-  .rail__head { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; margin-bottom: 2rem; min-height: 2.5rem; }
-  .rail__brand { display: inline-flex; padding-inline: 0.375rem; min-width: 0; }
+  .rail__head { display: flex; flex-direction: var(--rail-head-dir); align-items: center; justify-content: var(--rail-head-justify); gap: var(--rail-head-gap); margin-bottom: 2rem; min-height: 2.5rem; }
+  .rail__brand { display: inline-flex; padding-inline: var(--rail-brand-pad); min-width: 0; }
   .rail__toggle {
     display: grid; place-items: center; width: 2.25rem; height: 2.25rem; flex-shrink: 0;
     border-radius: var(--radius-pill); color: var(--text-on-inverse-muted); cursor: pointer;
     transition: background-color var(--dur) var(--ease-out), color var(--dur) var(--ease-out);
     &:hover { background: rgb(245 241 234 / 10%); color: var(--color-hueso-50); }
   }
-  .rail__toggle-icon { width: 1.125rem; height: 1.125rem; transition: transform var(--dur-slow) var(--ease-out); }
-  .shell[data-rail="collapsed"] .rail__toggle-icon { transform: rotate(180deg); }
+  .rail__toggle-icon { width: 1.125rem; height: 1.125rem; transform: rotate(var(--rail-toggle-rot)); transition: transform var(--dur-slow) var(--ease-out); }
 
   /* Textos que se pliegan con la columna: se recortan y desvanecen, sin saltos. */
   .rail__label,
   .rail__text {
     min-width: 0;
-    max-width: 14rem;
+    max-width: var(--rail-label-max);
+    opacity: var(--rail-label-opacity);
     overflow: hidden;
     white-space: nowrap;
     transition: max-width var(--dur-slow) var(--ease-out), opacity var(--dur) var(--ease-out);
   }
   .rail .brand-mark { transition: gap var(--dur-slow) var(--ease-out); }
-  .rail .brand-mark__word { max-width: 10rem; overflow: hidden; transition: max-width var(--dur-slow) var(--ease-out), opacity var(--dur) var(--ease-out); }
-  .shell[data-rail="collapsed"] {
-    & .rail__label, & .rail__text { max-width: 0; opacity: 0; }
-    & .rail .brand-mark { gap: 0; }
-    & .rail .brand-mark__word { max-width: 0; opacity: 0; }
-    & .rail__head { flex-direction: column; justify-content: center; gap: 0.75rem; }
-    & .rail__brand { padding-inline: 0; }
-    & .rail__link { justify-content: center; gap: 0; padding-inline: 0; }
-    & .rail__account { justify-content: center; gap: 0; padding-inline: 0; }
-    & .rail__link .badge { position: absolute; top: 0.25rem; right: 0.5rem; margin-left: 0; }
-    & .rail__link .soon-tag { display: none; }
-  }
+  .shell[data-rail="collapsed"] .rail .brand-mark { gap: 0; }
+  @media (width >= 48rem) and (width < 72rem) { .shell[data-rail="auto"] .rail .brand-mark { gap: 0; } }
+  .rail .brand-mark__word { max-width: var(--rail-word-max); opacity: var(--rail-label-opacity); overflow: hidden; transition: max-width var(--dur-slow) var(--ease-out), opacity var(--dur) var(--ease-out); }
+  .rail__link .badge { position: var(--rail-badge-pos); top: 0.25rem; right: 0.5rem; }
+  .rail__link .soon-tag { display: var(--rail-soon-display); }
   .rail__nav { display: flex; flex-direction: column; gap: 0.25rem; }
   .rail__link {
     position: relative;
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    justify-content: var(--rail-link-justify);
+    gap: var(--rail-link-gap);
     height: 2.75rem;
-    padding-inline: 0.875rem;
+    padding-inline: var(--rail-link-pad);
     border-radius: var(--radius-sm);
     color: var(--text-on-inverse-muted);
     font-weight: 600;
@@ -117,8 +140,9 @@
   .rail__account {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    padding: 0.5rem;
+    justify-content: var(--rail-link-justify);
+    gap: var(--rail-link-gap);
+    padding: 0.5rem var(--rail-account-pad);
     border-radius: var(--radius-sm);
     text-decoration: none;
     transition: background-color var(--dur) var(--ease-out);
@@ -171,7 +195,11 @@
     text-overflow: ellipsis;
     @media (width >= 48rem) { font-size: var(--text-headline); line-height: 1.15; }
   }
-  .topbar__subtitle { display: none; font-size: var(--text-sm); color: var(--text-muted); @media (width >= 48rem) { display: block; } }
+  /* Hasta dos líneas: antes se cortaba con «…» a anchos medios y la frase que explica la pantalla se perdía. */
+  .topbar__subtitle {
+    display: none; font-size: var(--text-sm); line-height: 1.35; color: var(--text-muted); text-wrap: pretty;
+    @media (width >= 48rem) { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; }
+  }
 
   .icon-link {
     position: relative;

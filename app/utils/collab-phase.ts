@@ -55,6 +55,27 @@ export function collabTitle(c: { packageTitle?: string | null; brief: string }, 
   return base.length > max ? `${base.slice(0, max - 1).trimEnd()}…` : base
 }
 
+/**
+ * Nombre con el que se reconoce una colaboración en su página: el del paquete aceptado; si no hay, la primera frase
+ * del brief solo si es corta y entera (nunca cortada con «…»); y si tampoco, «Colaboración con {persona}». El texto
+ * completo del brief se enseña aparte (`collabBriefExcerpt`), así que el título deja de depender de una frase truncada.
+ * No hay un campo «nombre de campaña» en la base de datos: añadirlo exigiría una migración.
+ */
+export function collabDisplayName(c: { packageTitle?: string | null; brief: string }, counterpart: string, max = 48): string {
+  const pkg = c.packageTitle?.trim()
+  if (pkg) return pkg
+  const first = (c.brief.trim().split(/(?<=[.!?])\s|\n/)[0] ?? '').trim().replace(/\.$/, '')
+  if (first && first.length <= max && first.length >= 6) return first
+  return counterpart ? `Colaboración con ${counterpart}` : 'Colaboración'
+}
+
+/** Brief para enseñar bajo el título, solo si el título no es ya ese mismo texto. */
+export function collabBriefExcerpt(c: { brief: string }, title: string, max = 160): string | null {
+  const brief = c.brief.trim().replace(/\s+/g, ' ')
+  if (!brief || brief.replace(/[.:]$/, '') === title) return null
+  return brief.length > max ? `${brief.slice(0, max - 1).trimEnd()}…` : brief
+}
+
 /** Importe en euros; a diferencia de `formatEuros`, un 0 se escribe «0 €» (no «Sin presupuesto»). */
 export function formatMoney(cents: number): string {
   return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(cents / 100)

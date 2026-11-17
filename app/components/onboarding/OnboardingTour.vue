@@ -1,34 +1,77 @@
 <script setup lang="ts">
 /**
- * Diálogo del recorrido de bienvenida (M-O1), montado una sola vez en
- * AppShell.vue — mismo criterio que ConfirmDialogHost.vue: un componente fijo
- * que decide solo si mostrarse. Saltable en cualquier paso, nunca bloquea la app.
+ * Recorrido de bienvenida (M-O1), montado una sola vez en AppShell.vue. Ya no es un diálogo de solo texto: cada paso
+ * ilumina el apartado real del menú del que habla (`data-tour` en SideRail/BottomTabBar) y coloca la explicación al
+ * lado. Si el elemento no se ve (p. ej. el menú de escritorio en móvil), el paso sale centrado. Se salta en cualquier
+ * paso (botón o Escape) y nunca vuelve solo una vez visto o saltado.
  */
 const { open, stepIndex, steps, current, isLast, maybeAutoStart, next, back, close } = useOnboardingTour()
 const { role, ensureRole } = useMyRole()
 const { resolveMyProfileId } = useMyProfileId()
 const router = useRouter()
 const account = useAccountState()
-// La bienvenida de inicio de sesión (animación y aviso) va primero; el recorrido espera su turno.
-const { active: welcomeActive } = useLoginWelcome()
+// Solo la animación inicial le pasa por delante: el aviso de lanzamiento es una tarjeta que no bloquea.
+const { pending: welcomePending, phase: welcomePhase } = useLoginWelcome()
+const welcomeBlocking = computed(() => welcomePending.value || welcomePhase.value === 'intro')
+const visible = computed(() => open.value && !!current.value && !welcomeBlocking.value)
 
 const primaryBtn = ref<{ $el: HTMLElement } | null>(null)
+
+// ---- Dónde está el elemento señalado ----
+interface Box { top: number; left: number; width: number; height: number }
+const box = ref<Box | null>(null)
+const viewport = ref({ w: 0, h: 0 })
+const PAD = 6
+
+function findTarget(key?: string): HTMLElement | null {
+  if (!key) return null
+  const els = [...document.querySelectorAll<HTMLElement>(`[data-tour="${key}"]`)]
+  return els.find((e) => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0 }) ?? null
+}
+function measure() {
+  if (!import.meta.client) return
+  viewport.value = { w: window.innerWidth, h: window.innerHeight }
+  const el = visible.value ? findTarget(current.value?.target) : null
+  if (!el) { box.value = null; return }
+  const r = el.getBoundingClientRect()
+  box.value = { top: r.top - PAD, left: r.left - PAD, width: r.width + PAD * 2, height: r.height + PAD * 2 }
+}
+
+// Tarjeta junto al elemento: a su derecha si cabe (menú lateral), si no encima o debajo según dónde esté.
+const cardStyle = computed(() => {
+  const b = box.value
+  if (!b) return undefined
+  const { w, h } = viewport.value
+  const cw = Math.min(352, w - 32)
+  const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(v, hi))
+  if (b.left + b.width + 16 + cw <= w - 16) return { width: `${cw}px`, left: `${b.left + b.width + 16}px`, top: `${clamp(b.top + b.height / 2 - 120, 16, Math.max(16, h - 340))}px` }
+  const left = `${clamp(b.left + b.width / 2 - cw / 2, 16, w - cw - 16)}px`
+  if (b.top > h / 2) return { width: `${cw}px`, left, bottom: `${h - b.top + 14}px` }
+  return { width: `${cw}px`, left, top: `${b.top + b.height + 14}px` }
+})
 
 function onKeydown(e: KeyboardEvent) {
   if (e.key === 'Escape') close()
 }
 
-watch(open, async (isOpen) => {
+watch(visible, async (isVisible) => {
   if (!import.meta.client) return
-  if (!isOpen) account.markOnboardingDone()
-  if (isOpen) {
+  if (isVisible) {
     document.addEventListener('keydown', onKeydown)
+    window.addEventListener('resize', measure)
+    window.addEventListener('scroll', measure, true)
     await nextTick()
+    measure()
     primaryBtn.value?.$el?.focus?.()
   } else {
     document.removeEventListener('keydown', onKeydown)
+    window.removeEventListener('resize', measure)
+    window.removeEventListener('scroll', measure, true)
+    box.value = null
   }
 })
+watch(stepIndex, async () => { await nextTick(); measure(); primaryBtn.value?.$el?.focus?.() })
+watch(open, (isOpen) => { if (!import.meta.client) return; if (!isOpen) account.markOnboardingDone() })
 
 onMounted(async () => {
   const [id, myRole, acc] = await Promise.all([resolveMyProfileId(), ensureRole(), account.ensureLoaded()])
@@ -39,7 +82,10 @@ onMounted(async () => {
 })
 
 onUnmounted(() => {
-  if (import.meta.client) document.removeEventListener('keydown', onKeydown)
+  if (!import.meta.client) return
+  document.removeEventListener('keydown', onKeydown)
+  window.removeEventListener('resize', measure)
+  window.removeEventListener('scroll', measure, true)
 })
 
 function goToAction() {
@@ -51,48 +97,31 @@ function goToAction() {
 
 <template>
   <Teleport to="body">
-    <Transition
-      enter-active-class="transition-opacity duration-200 ease-[var(--ease-spring)]" enter-from-class="opacity-0"
-      leave-active-class="transition-opacity duration-150 ease-[var(--ease-spring)]" leave-to-class="opacity-0"
-    >
-      <div
-        v-if="open && current && !welcomeActive" class="fixed inset-0 z-[90] flex items-center justify-center p-5 bg-black/55 backdrop-blur-[2px]"
-        role="dialog" aria-modal="true" aria-labelledby="tour-title"
-      >
-        <div class="w-full max-w-md rounded-[var(--radius-lg)] bg-[var(--color-ink-raised)] border border-[var(--color-hairline)] shadow-[var(--shadow-float)] p-6">
-          <div class="flex items-center justify-between mb-5">
-            <p class="text-micro font-medium text-[var(--color-text-faint)]" aria-live="polite">
-              Paso {{ stepIndex + 1 }} de {{ steps.length }}
-            </p>
-            <button type="button" class="text-sm font-medium text-[var(--color-text-muted)] hover:text-[var(--color-text)]" @click="close">
-              Saltar
-            </button>
+    <Transition name="tour">
+      <div v-if="visible && current" class="tour" role="dialog" aria-modal="true" aria-labelledby="tour-title" data-onboarding-tour>
+        <!-- Con elemento señalado: un foco que oscurece todo menos él. Sin él: velo suave. -->
+        <span v-if="box" class="tour__spot" aria-hidden="true" :style="{ top: `${box.top}px`, left: `${box.left}px`, width: `${box.width}px`, height: `${box.height}px` }" />
+        <span v-else class="tour__veil" aria-hidden="true" />
+
+        <div class="tour__card" :class="!box && 'tour__card--center'" :style="cardStyle">
+          <div class="tour__head">
+            <p class="tour__step" aria-live="polite">Paso {{ stepIndex + 1 }} de {{ steps.length }}</p>
+            <button type="button" class="tour__skip" data-tour-skip @click="close">Saltar recorrido</button>
           </div>
 
-          <span class="inline-flex size-12 items-center justify-center rounded-full bg-[var(--color-primary-500)]/12 text-[var(--color-primary-500)] mb-4">
-            <Icon :name="current.icon" class="size-6" />
-          </span>
-          <h2 id="tour-title" class="font-display text-[1.375rem] leading-tight text-[var(--color-text)] mb-2">{{ current.title }}</h2>
-          <p class="text-base text-[var(--color-text-muted)] leading-relaxed mb-6">{{ current.body }}</p>
+          <span class="tour__icon"><Icon :name="current.icon" class="size-5" /></span>
+          <h2 id="tour-title" class="tour__title">{{ current.title }}</h2>
+          <p class="tour__body">{{ current.body }}</p>
 
-          <div class="flex items-center gap-1.5 mb-6" aria-hidden="true">
-            <span
-              v-for="(_, i) in steps" :key="i" class="h-1.5 rounded-full transition-all"
-              :class="i === stepIndex ? 'w-6 bg-[var(--color-primary-500)]' : 'w-1.5 bg-[var(--color-hairline-strong)]'"
-            />
+          <div class="tour__dots" aria-hidden="true">
+            <span v-for="(_, i) in steps" :key="i" :data-on="i === stepIndex" />
           </div>
 
-          <div class="flex items-center gap-2.5">
+          <div class="tour__actions">
             <BaseButton v-if="stepIndex > 0" variant="secondary" size="md" @click="back">Atrás</BaseButton>
             <BaseButton v-if="isLast && current.action" variant="secondary" size="md" class="flex-1" @click="close">Luego</BaseButton>
-            <BaseButton
-              v-if="isLast && current.action" ref="primaryBtn" variant="primary" size="md" class="flex-1" @click="goToAction"
-            >
-              {{ current.action.label }}
-            </BaseButton>
-            <BaseButton v-else ref="primaryBtn" variant="primary" size="md" class="flex-1" @click="next">
-              {{ isLast ? 'Terminar' : 'Siguiente' }}
-            </BaseButton>
+            <BaseButton v-if="isLast && current.action" ref="primaryBtn" variant="primary" size="md" class="flex-1" @click="goToAction">{{ current.action.label }}</BaseButton>
+            <BaseButton v-else ref="primaryBtn" variant="primary" size="md" class="flex-1" @click="next">{{ isLast ? 'Terminar' : 'Siguiente' }}</BaseButton>
           </div>
         </div>
       </div>

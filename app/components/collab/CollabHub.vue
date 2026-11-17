@@ -138,18 +138,13 @@ function exportCsv() {
 <template>
   <div class="hub">
     <!-- Cabecera: las colaboraciones en marcha de un vistazo -->
-    <section class="hub__head" aria-label="Resumen">
+    <!-- Solo con colaboraciones en marcha y fuera de «Solicitudes»: antes decía «activas · en curso» incluso con
+         el listado vacío o sobre la pestaña de solicitudes pendientes, y escondía aquí el filtro por marca/creador. -->
+    <section v-if="view !== 'solicitudes' && active.length" class="hub__head" aria-label="Resumen">
       <span class="hub__icon" aria-hidden="true"><Icon name="ph:handshake-fill" class="size-6" /></span>
       <div class="hub__title">
         <h2>Colaboraciones activas <span class="hub__chip">En curso</span></h2>
-        <label class="hub__select">
-          <span class="sr-only">Filtrar por {{ who.one }}</span>
-          <select v-model="counterpartFilter" :aria-label="`Filtrar por ${who.one}`">
-            <option value="">{{ who.all }}</option>
-            <option v-for="c in counterparts" :key="c" :value="c">{{ c }}</option>
-          </select>
-          <Icon name="ph:caret-down-bold" class="size-3.5" />
-        </label>
+        <p class="hub__sub">{{ inProgress.length }} en marcha<template v-if="active.length > inProgress.length"> · {{ active.length - inProgress.length }} completada{{ active.length - inProgress.length === 1 ? '' : 's' }}</template></p>
       </div>
       <div v-if="people.length" class="hub__people" :aria-label="`${people.length} ${who.one === 'marca' ? 'marcas' : 'creadores'} en curso`">
         <BaseAvatar v-for="n in people.slice(0, 4)" :key="n" :initials="initialsFromName(n)" :hue="hueFromString(n)" size="sm" :title="n" />
@@ -168,6 +163,14 @@ function exportCsv() {
           <Icon name="ph:magnifying-glass-bold" class="size-4" />
           <span class="sr-only">Buscar colaboración</span>
           <input v-model="search" type="search" placeholder="Buscar colaboración…">
+        </label>
+        <label v-if="counterparts.length > 1" class="hub__select hub__select--pill">
+          <span class="sr-only">Filtrar por {{ who.one }}</span>
+          <select v-model="counterpartFilter" :aria-label="`Filtrar por ${who.one}`" data-counterpart-filter>
+            <option value="">{{ who.all }}</option>
+            <option v-for="c in counterparts" :key="c" :value="c">{{ c }}</option>
+          </select>
+          <Icon name="ph:caret-down-bold" class="size-3.5" />
         </label>
         <label v-if="view !== 'solicitudes' && view !== 'calendario'" class="hub__select hub__select--pill">
           <span class="sr-only">Ordenar</span>

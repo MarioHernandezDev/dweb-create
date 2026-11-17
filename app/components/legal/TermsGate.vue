@@ -37,7 +37,7 @@ async function accept() {
   <Teleport to="body">
     <div v-if="show" class="fixed inset-0 z-[95] flex items-center justify-center p-5 bg-black/55 backdrop-blur-[2px]" role="dialog" aria-modal="true" aria-labelledby="terms-gate-title" data-terms-gate>
       <div class="w-full max-w-md rounded-[var(--radius-lg)] bg-[var(--color-ink-raised)] border border-[var(--color-hairline)] shadow-[var(--shadow-float)] p-6">
-        <h2 id="terms-gate-title" class="font-display text-[1.375rem] leading-tight text-[var(--color-text)] mb-2">Términos y privacidad</h2>
+        <h2 id="terms-gate-title" class="font-display text-title leading-tight text-[var(--color-text)] mb-2">Términos y privacidad</h2>
         <p class="text-base text-[var(--color-text-muted)] leading-relaxed mb-4">
           Para seguir usando CIBERAN necesitamos que aceptes los
           <NuxtLink to="/terminos" target="_blank" class="underline font-semibold">términos de uso</NuxtLink>

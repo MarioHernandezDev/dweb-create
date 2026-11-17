@@ -36,6 +36,45 @@
   .package__state { font-size: var(--text-sm); color: var(--text-muted); }
   .package__actions { display: flex; align-items: center; gap: 0.375rem; margin-left: auto; }
 
+  /* ---- Escaparate (lo que ven los demás): portada grande, precio protagonista ---- */
+  .package--showcase { gap: 0; padding: 0; overflow: hidden; transition: box-shadow var(--dur) var(--ease-out), border-color var(--dur) var(--ease-out);
+    &:hover { border-color: var(--line-strong); box-shadow: var(--shadow-2); }
+  }
+  .package__banner { position: relative; aspect-ratio: 16 / 9; overflow: hidden; background: var(--surface-sunken); }
+  .package__price--badge { position: absolute; right: 0.75rem; bottom: 0.75rem; padding: 0.25rem 0.875rem; border-radius: var(--radius-pill); background: var(--color-voltio-400); color: var(--color-tinta-950); box-shadow: 0 0 0 1px var(--color-tinta-950); }
+  .package__body { display: grid; gap: 0.75rem; padding: var(--card-padding); }
+  .package__desc--open { display: block; -webkit-line-clamp: unset; overflow: visible; margin-top: 0; }
+  .package--showcase .package__foot { margin-top: 0; padding: 0 var(--card-padding) var(--card-padding); border-top: 0; }
+
+  /* ---- Formulario de paquete (PackageFormSheet.vue) ---- */
+  .pform { display: grid; gap: 1.5rem; @media (width >= 48rem) { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 2rem; } }
+  .pform__main { display: grid; align-content: start; gap: 1.25rem; min-width: 0; }
+  .pform__preview { display: grid; align-content: start; gap: 0.75rem; min-width: 0; @media (width >= 48rem) { position: sticky; top: 0; padding-left: 2rem; border-left: 1px solid var(--line); } }
+  .pform__legend { font-size: var(--text-sm); font-weight: 600; & span { font-weight: 400; color: var(--text-muted); } }
+  .pform__group { display: grid; gap: 0.5rem; }
+  .pform__templates { display: grid; gap: 0.5rem; padding: 0.875rem 1rem; border-radius: var(--radius-md); background: var(--color-voltio-200); }
+  .pform__chips { display: flex; flex-wrap: wrap; gap: 0.375rem; }
+  .pform__tpl, .pform__sugg {
+    display: inline-flex; align-items: center; gap: 0.25rem; min-height: var(--control-sm); padding: 0 0.875rem; border: 1px solid var(--color-tinta-950); border-radius: var(--radius-pill); background: var(--surface-raised);
+    font-size: var(--text-sm); font-weight: 600; color: var(--text-strong); cursor: pointer; transition: background-color var(--dur) var(--ease-out), color var(--dur) var(--ease-out);
+    &:hover { background: var(--color-tinta-950); color: var(--color-hueso-50); }
+    &:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+    &[data-on="true"] { background: var(--color-tinta-950); color: var(--color-voltio-400); }
+  }
+  .pform__sugg { border-color: var(--line-strong); background: var(--surface-sunken); font-weight: 500; }
+  .pform__tags { display: flex; flex-wrap: wrap; align-items: center; gap: 0.375rem; min-height: var(--field-height); padding: 0.375rem 0.75rem; border: 1px solid var(--line-strong); border-radius: var(--radius-sm); background: var(--surface-raised);
+    &:focus-within { border-color: var(--color-tinta-950); box-shadow: 0 0 0 3px var(--color-voltio-300); }
+  }
+  .pform__tag { display: inline-flex; align-items: center; gap: 0.375rem; height: 1.75rem; padding: 0 0.375rem 0 0.75rem; border-radius: var(--radius-pill); background: var(--color-tinta-950); color: var(--color-hueso-50); font-size: var(--text-sm); font-weight: 600;
+    & button { display: grid; place-items: center; width: 1.25rem; height: 1.25rem; border-radius: var(--radius-pill); &:hover { background: rgb(245 241 234 / 20%); } }
+  }
+  .pform__input { flex: 1; min-width: 8rem; height: 1.75rem; background: transparent; border: 0; font: inherit; font-size: var(--text-sm); color: var(--text-strong); &:focus { outline: none; } &::placeholder { color: var(--text-muted); } }
+  .pform__cover { position: relative; display: flex; align-items: center; justify-content: center; gap: 0.5rem; width: 100%; min-height: 5.5rem; overflow: hidden; border: 2px dashed var(--line-strong); border-radius: var(--radius-md); background: var(--surface-sunken); font-size: var(--text-sm); font-weight: 600; color: var(--text-muted); cursor: pointer;
+    &:hover { border-color: var(--color-tinta-950); color: var(--text-strong); } &:disabled { cursor: progress; } &:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+    & > span { position: relative; padding: 0.25rem 0.75rem; border-radius: var(--radius-pill); background: color-mix(in srgb, var(--surface-raised) 88%, transparent); }
+  }
+  .pform__cover-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+
   /* ---- Interruptor ---- */
   .switch {
     position: relative;

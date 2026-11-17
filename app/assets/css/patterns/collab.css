@@ -39,11 +39,14 @@
   .collab-card__count { color: var(--text-muted); font-size: var(--text-sm); font-variant-numeric: tabular-nums; }
   .collab-card__expiry { font-size: var(--text-sm); font-weight: 600; color: var(--text-muted); &[data-expired="true"] { color: var(--color-danger); } }
   .collab-card__hint { color: var(--text-muted); font-size: var(--text-sm); font-weight: 600; overflow-wrap: anywhere;
-    /* Lo que me toca a mí lleva el punto de la firma; lo que espera a la otra parte, sin él. */
-    &[data-tone="action"] { display: inline-flex; align-items: center; gap: 0.5rem; color: var(--text-strong);
-      &::before { content: ""; flex-shrink: 0; width: 0.5rem; height: 0.5rem; border-radius: var(--radius-pill); background: var(--color-voltio-400); box-shadow: 0 0 0 1px var(--color-tinta-950); }
-    }
+    &[data-tone="action"] { color: var(--text-strong); }
   }
+  /* Quién tiene la pelota: «Te toca» (voltio, con peso) frente a «En espera» (neutro). Va antes del estado para leerse primero. */
+  .collab-card__turn { padding: 0.125rem 0.625rem; border-radius: var(--radius-pill); font-size: var(--text-sm); font-weight: 700; white-space: nowrap;
+    &[data-tone="action"] { background: var(--color-voltio-400); color: var(--color-tinta-950); box-shadow: 0 0 0 1px var(--color-tinta-950); }
+    &[data-tone="waiting"] { background: var(--surface-sunken); color: var(--text-muted); }
+  }
+  .collab-card__go { margin-left: auto; display: inline-flex; align-items: center; gap: 0.25rem; font-size: var(--text-sm); font-weight: 700; color: var(--text-strong); }
 
   .pay-notice { display: flex; align-items: center; gap: 0.75rem; margin-bottom: var(--gap-loose); }
 

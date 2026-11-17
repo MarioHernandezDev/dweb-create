@@ -13,7 +13,10 @@
   .discover__bar { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 0.75rem 1rem; }
   .discover__search { flex: 1 1 18rem; min-width: 0; max-width: 40rem; &.discover__search--ai { display: flex; align-items: flex-end; gap: 0.75rem; max-width: 52rem; } }
   .discover__field { flex: 1; }
-  .discover__actions { display: flex; align-items: center; gap: 0.5rem; margin-left: auto; }
+  .discover__actions { display: flex; align-items: center; gap: 0.5rem; margin-left: auto;
+    /* En móvil, dos botones iguales a todo el ancho (antes quedaban pegados a la derecha con un hueco a la izquierda). */
+    @media (width < 40rem) { width: 100%; margin-left: 0; & > * { flex: 1 1 0; min-width: 0; } }
+  }
   .discover__filters-btn { @media (width >= 64rem) { display: none; } }
   .discover__error { color: var(--color-danger); font-weight: 600; }
 
@@ -32,8 +35,8 @@
   .discover__tools { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem; }
   .discover__view { margin-left: auto; }
   .discover__sort {
-    position: relative; display: inline-flex; align-items: center;
-    & select { appearance: none; height: 2.75rem; padding: 0 2.25rem 0 1rem; border-radius: var(--radius-md); background: var(--surface-raised); border: 1px solid var(--line); font-weight: 600; font-size: var(--text-sm); color: var(--text-strong); cursor: pointer; &:hover { border-color: var(--line-strong); } &:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; } }
+    position: relative; display: inline-flex; align-items: center; flex: 1 1 11rem; max-width: 18rem;
+    & select { width: 100%; appearance: none; height: 2.75rem; padding: 0 2.25rem 0 1rem; border-radius: var(--radius-md); background: var(--surface-raised); border: 1px solid var(--line); font-weight: 600; font-size: var(--text-sm); color: var(--text-strong); cursor: pointer; &:hover { border-color: var(--line-strong); } &:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; } }
     & > svg { position: absolute; right: 0.875rem; pointer-events: none; }
   }
   /* En móvil los dos botones no caben en una línea: saltan en vez de salirse de la pantalla. */
@@ -89,6 +92,15 @@
   .dcheck__label { flex: 1; }
   .dcheck__count { color: var(--text-muted); font-variant-numeric: tabular-nums; }
   .dfilters__chips { display: flex; flex-wrap: wrap; gap: 0.375rem; }
+  .dfilters__more { margin-top: 0.625rem; min-height: var(--control-sm); font-size: var(--text-sm); font-weight: 600; color: var(--text-muted); text-decoration: underline; &:hover { color: var(--text-strong); } }
+  /* Filtros secundarios plegados: solo se abren por defecto si alguno está activo. */
+  .dfilters__advanced { border-top: 1px solid var(--line); padding-top: 0.25rem;
+    & > summary { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; min-height: var(--control-md); list-style: none; cursor: pointer; font-size: var(--text-sm); font-weight: 700; &::-webkit-details-marker { display: none; } }
+    & > summary::after { content: ""; width: 0.5rem; height: 0.5rem; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(45deg); transition: transform var(--dur) var(--ease-out); }
+    &[open] > summary::after { transform: rotate(-135deg); }
+    & > .dfilters__advanced-body { display: grid; gap: 1.5rem; padding-top: 1rem; }
+  }
+  .dfilters__badge { margin-left: 0.5rem; }
 
   /* ---- Tarjeta ---- */
   .dcard {
@@ -141,6 +153,11 @@
   .dcard__foot { position: relative; z-index: 2; display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1.25rem 1.25rem; }
   .dcard__cta { flex: 1; }
   .dcard__msg { display: grid; place-items: center; flex: none; width: 2.75rem; height: 2.75rem; border: 1px solid var(--color-tinta-950); border-radius: var(--radius-pill); background: var(--surface-raised); transition: background-color var(--dur) var(--ease-out); &:hover { background: var(--surface-sunken); } &:disabled { opacity: 0.6; } &:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; } }
+  .dcard__pkgs { display: flex; align-items: center; gap: 0.5rem; padding: 0.375rem 0.75rem; border-radius: var(--radius-sm); background: var(--color-voltio-200); color: var(--color-tinta-950); font-size: var(--text-sm); font-weight: 600; }
+  .dcard__budget--none { color: var(--text-faint); }
+  /* Ficha vacía: portada baja y sin inicial gigante. */
+  .dcard--sparse .dcard__media { aspect-ratio: 16 / 5; }
+  .dcard--sparse .dcard__initial { font-size: 3rem; }
   .dcard--featured .dcard__media { aspect-ratio: 16 / 10; }
   .dcard--featured .dcard__name { font-size: var(--text-title); }
 }

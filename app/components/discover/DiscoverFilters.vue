@@ -59,6 +59,19 @@ const platformOptions = computed(() => Object.entries(platformMeta)
   .map(([value, meta]) => ({ value, label: meta.label, count: props.platformCounts[value] ?? 0 }))
   .filter((o) => o.count > 0 || platforms.value.includes(o.value)))
 
+// Categorías: se ven las más habituales y el resto bajo «Ver todas»; las elegidas se ven siempre, aunque
+// caigan en la parte plegada. Antes eran más de 20 chips seguidos antes del presupuesto.
+const CATEGORY_PREVIEW = 10
+const showAllCategories = ref(false)
+const visibleCategories = computed(() => (showAllCategories.value
+  ? DISCOVERY_CATEGORIES
+  : DISCOVERY_CATEGORIES.filter((c, i) => i < CATEGORY_PREVIEW || categories.value.includes(c))))
+const hiddenCategoryCount = computed(() => DISCOVERY_CATEGORIES.length - visibleCategories.value.length)
+
+// Criterios secundarios (red, tipo, respuesta, verificadas) plegados en «Más filtros»; abiertos si ya hay alguno aplicado.
+const advancedActiveCount = computed(() => platforms.value.length + types.value.length + (response.value !== 'any' ? 1 : 0) + (verifiedOnly.value ? 1 : 0))
+const advancedOpen = ref(advancedActiveCount.value > 0)
+
 const responseOptions: { value: ResponseFilter; label: string }[] = [
   { value: 'any', label: 'Cualquiera' },
   { value: '24', label: 'En menos de 24 h' },
@@ -77,8 +90,11 @@ const responseOptions: { value: ResponseFilter; label: string }[] = [
     <fieldset class="dfilters__group">
       <legend class="dfilters__legend">Categorías</legend>
       <div class="dfilters__chips">
-        <Chip v-for="cat in DISCOVERY_CATEGORIES" :key="cat" :selected="categories.includes(cat)" @click="toggle(cat)">{{ cat }}</Chip>
+        <Chip v-for="cat in visibleCategories" :key="cat" :selected="categories.includes(cat)" @click="toggle(cat)">{{ cat }}</Chip>
       </div>
+      <button v-if="hiddenCategoryCount > 0 || showAllCategories" type="button" class="dfilters__more" :aria-expanded="showAllCategories" data-categories-toggle @click="showAllCategories = !showAllCategories">
+        {{ showAllCategories ? 'Ver menos' : `Ver todas (+${hiddenCategoryCount})` }}
+      </button>
     </fieldset>
 
     <fieldset class="dfilters__group">
@@ -97,6 +113,9 @@ const responseOptions: { value: ResponseFilter; label: string }[] = [
       </div>
     </fieldset>
 
+    <details class="dfilters__advanced" :open="advancedOpen" data-advanced-filters @toggle="advancedOpen = ($event.target as HTMLDetailsElement).open">
+      <summary>Más filtros<span v-if="advancedActiveCount" class="badge badge--on-light dfilters__badge">{{ advancedActiveCount }}</span></summary>
+      <div class="dfilters__advanced-body">
     <fieldset v-if="platformOptions.length" class="dfilters__group">
       <legend class="dfilters__legend">Plataforma</legend>
       <label v-for="o in platformOptions" :key="o.value" class="dcheck">
@@ -130,5 +149,7 @@ const responseOptions: { value: ResponseFilter; label: string }[] = [
       <input v-model="verifiedOnly" type="checkbox" role="switch">
       <span class="dswitch__track" aria-hidden="true"><span class="dswitch__thumb" /></span>
     </label>
+      </div>
+    </details>
   </div>
 </template>

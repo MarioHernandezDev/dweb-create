@@ -100,7 +100,7 @@ async function declineWithConfirm() {
     </div>
 
     <p v-if="!offer.packageId" class="mt-1 text-micro text-[var(--color-text-faint)]" data-package-gone>Este paquete ya no está disponible.</p>
-    <p class="mt-2 font-display text-[1.375rem] leading-none text-[var(--color-text)]">{{ formatEuros(offer.proposedPriceCents) }}</p>
+    <p class="mt-2 font-display text-title leading-none text-[var(--color-text)]">{{ formatEuros(offer.proposedPriceCents) }}</p>
     <p v-if="offer.message" class="mt-2 whitespace-pre-wrap break-words text-sm text-[var(--color-text-muted)]">{{ offer.message }}</p>
 
     <p class="mt-3 text-sm text-[var(--color-text-muted)]" data-offer-consequence>{{ copy.consequence }}</p>

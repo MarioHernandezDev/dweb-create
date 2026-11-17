@@ -98,10 +98,15 @@ const takeBack = () => act(() => withdraw(), 'Propuesta retirada', 'No se ha pod
         </div>
       </div>
 
-      <div v-if="form === 'none'" class="ccancel__sep">
-        <BaseButton v-if="!pending && !paidAt" variant="ghost" size="sm" icon="ph:prohibit-bold" block data-cancel-open @click="show('cancel')">Proponer cancelar de común acuerdo</BaseButton>
-        <BaseButton variant="ghost" size="sm" icon="ph:warning-octagon-bold" block data-breach-open @click="show('breach')">Dar por terminada por incumplimiento</BaseButton>
-      </div>
+      <!-- Cancelar y dar por incumplida son poco frecuentes e irreversibles: van plegadas bajo «Más acciones» para no
+           competir con la acción principal. Si el formulario está abierto, se enseña directamente. -->
+      <details v-if="form === 'none'" class="ccancel__more" data-more-actions>
+        <summary>Más acciones</summary>
+        <div class="ccancel__sep">
+          <BaseButton v-if="!pending && !paidAt" variant="ghost" size="sm" icon="ph:prohibit-bold" block data-cancel-open @click="show('cancel')">Proponer cancelar de común acuerdo</BaseButton>
+          <BaseButton variant="ghost" size="sm" icon="ph:warning-octagon-bold" block data-breach-open @click="show('breach')">Dar por terminada por incumplimiento</BaseButton>
+        </div>
+      </details>
       <form v-else class="note-form__form ccancel__sep" @submit.prevent="send">
         <label class="ccancel__label" for="cancel-reason">{{ form === 'breach' ? 'Qué se ha incumplido' : 'Motivo de la cancelación' }}</label>
         <textarea

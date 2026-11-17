@@ -65,6 +65,8 @@ function openNewPackage() {
   editingPackage.value = null
   packageSheetOpen.value = true
 }
+// `?tab=packages&nuevo=1` (desde Inicio, el recorrido o el perfil público) abre directamente el formulario de nuevo paquete.
+onMounted(() => { if (route.query.nuevo === '1') { activeTab.value = 'packages'; openNewPackage() } })
 
 function openEditPackage(pkg: Package) {
   editingPackage.value = pkg
@@ -326,7 +328,7 @@ async function saveWeeklyTarget() {
                   <div class="setting-row">
                     <div class="setting-row__text">
                       <p class="setting-row__label">Objetivo semanal</p>
-                      <p class="setting-row__meta">Publicaciones por semana que ves en «Hoy»</p>
+                      <p class="setting-row__meta">Publicaciones por semana que ves en «Inicio»</p>
                     </div>
                     <div class="setting-row__control">
                       <label class="sr-only" for="weekly-target">Publicaciones por semana</label>

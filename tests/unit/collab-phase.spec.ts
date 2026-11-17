@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { collabPhase, collabTitle, paymentState } from '../../app/utils/collab-phase'
+import { collabBriefExcerpt, collabDisplayName, collabPhase, collabTitle, paymentState } from '../../app/utils/collab-phase'
 
 const c = (o: Partial<{ status: string; paidAt: string | null }> = {}) => ({ status: 'accepted', paidAt: null, ...o })
 
@@ -35,5 +35,20 @@ describe('pago y título', () => {
     expect(collabTitle({ packageTitle: 'Pack reels', brief: 'x' })).toBe('Pack reels')
     expect(collabTitle({ brief: 'Dos reels con el kit. Más detalles aquí.' })).toBe('Dos reels con el kit')
     expect(collabTitle({ brief: 'a'.repeat(100) }, 20)).toHaveLength(20)
+  })
+  it('el nombre de la colaboración nunca es una frase cortada con «…»', () => {
+    expect(collabDisplayName({ packageTitle: 'Pack reels', brief: 'x' }, 'Alma')).toBe('Pack reels')
+    expect(collabDisplayName({ brief: 'Dos reels con el kit. Más detalles aquí.' }, 'Alma')).toBe('Dos reels con el kit')
+    // Primera frase demasiado larga → «Colaboración con …» y el brief se enseña aparte.
+    const long = 'Necesitamos una campaña de lanzamiento muy completa con varios reels, stories y un directo durante dos semanas.'
+    expect(collabDisplayName({ brief: long }, 'Alma Beauty')).toBe('Colaboración con Alma Beauty')
+    // Las propuestas con paquete empiezan por «Propuesta: …»: el nombre conserva ese detalle, no solo «Propuesta».
+    expect(collabDisplayName({ brief: 'Propuesta: 1 reel/vídeo.' }, 'Alma')).toBe('Propuesta: 1 reel/vídeo')
+    expect(collabDisplayName({ brief: '' }, '')).toBe('Colaboración')
+  })
+  it('el brief solo se repite bajo el título si no es ya el título', () => {
+    expect(collabBriefExcerpt({ brief: 'Dos reels con el kit.' }, 'Dos reels con el kit')).toBeNull()
+    expect(collabBriefExcerpt({ brief: 'Dos reels con el kit. Más detalles aquí.' }, 'Dos reels con el kit')).toBe('Dos reels con el kit. Más detalles aquí.')
+    expect(collabBriefExcerpt({ brief: 'x'.repeat(300) }, 'T')).toHaveLength(160)
   })
 })

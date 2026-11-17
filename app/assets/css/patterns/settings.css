@@ -7,10 +7,14 @@
 
 @layer components {
   .settings { display: grid; gap: var(--gap-loose); }
+  /* Tarjetas de ajustes. En pantalla ancha van en columnas que se rellenan de arriba abajo (estilo «masonry»), no en
+     una rejilla por filas: con tarjetas de distinta altura, una fila alta dejaba un hueco enorme bajo la corta
+     (p. ej. entre «Visibilidad del perfil» y «Tus datos»). Cada tarjeta se mantiene entera dentro de su columna. */
   .settings-grid { display: grid; gap: var(--gap-loose); align-items: start;
-    @media (width >= 64rem) { grid-template-columns: repeat(var(--cols, 3), minmax(0, 1fr)); }
+    @media (width >= 64rem) { display: block; column-count: var(--cols, 3); column-gap: var(--gap-loose); }
+    & > * { @media (width >= 64rem) { break-inside: avoid; margin-bottom: var(--gap-loose); } }
   }
-  .settings-grid--wide-first { @media (width >= 64rem) { grid-template-columns: minmax(0, 1fr) minmax(0, 22rem); } }
+  .settings-grid--wide-first { @media (width >= 64rem) { --cols: 2; } }
 
   /* ---- Datos de la cabecera ---- */
   .hero-facts-empty { color: var(--text-muted); font-size: var(--text-sm); }

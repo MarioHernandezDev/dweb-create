@@ -6,7 +6,7 @@ import { collaborationWork, deliverableState, hasRated, type DeliverableState, t
 import type { CollaborationTerms } from '~/utils/collaboration-terms'
 import type { CollaborationStatus } from '~/types'
 import { expiryState } from '~/utils/collab-expiry'
-import { collabPhase, collabTitle, paymentState, COLLAB_PHASES } from '~/utils/collab-phase'
+import { collabPhase, collabDisplayName, collabBriefExcerpt, paymentState, COLLAB_PHASES } from '~/utils/collab-phase'
 import { collaborationStatusMeta } from '~/utils/status'
 import { agreementFingerprint, buildAgreementHtml, printHtml, type AgreementData } from '~/utils/agreement-summary'
 import { buildIcs, downloadIcs } from '~/utils/ics'
@@ -92,7 +92,8 @@ const expiry = computed(() => expiryState(view.value?.status ?? '', view.value?.
 // Fase, título y resumen de lo acordado (todo deducido de datos reales; ver utils/collab-phase.ts).
 const phase = computed(() => (view.value ? collabPhase(view.value, collabPosts.value) : null))
 const phaseLabel = computed(() => COLLAB_PHASES.find((p) => p.value === phase.value)?.label ?? null)
-const title = computed(() => (view.value ? collabTitle(view.value) : ''))
+const title = computed(() => (view.value ? collabDisplayName(view.value, view.value.counterpartName) : ''))
+const briefExcerpt = computed(() => (view.value ? collabBriefExcerpt(view.value, title.value) : null))
 const { paymentsEnabled } = useLaunchMode()
 const payment = computed(() => (view.value ? paymentState(view.value, paymentsEnabled) : 'none' as const))
 const payLabel = isPartner ? 'Pago' : 'Cobro'
@@ -125,6 +126,12 @@ const stateLabel: Record<DeliverableState, string> = {
 }
 const collabDeliverables = computed(() => deliverablesByCollab.value[props.id] ?? [])
 const enforceableOpen = computed(() => collabDeliverables.value.filter((d) => d.enforceable && !d.resolved).length)
+// «Marcar como completada» solo se ofrece cuando se puede de verdad: sin entregables exigibles por resolver y con
+// trabajo hecho dentro de CIBERAN (alguna publicación vinculada o algún entregable resuelto). Antes salía siempre,
+// incluso recién aceptada la colaboración y sin ninguna publicación. La regla de negocio del servidor no cambia.
+const isLive = computed(() => view.value?.status === 'accepted' || view.value?.status === 'in_progress')
+const hasWork = computed(() => collabPosts.value.length > 0 || collabDeliverables.value.some((d) => d.resolved))
+const canComplete = computed(() => isLive.value && enforceableOpen.value === 0 && hasWork.value)
 // Publicaciones que se pueden asignar a un hueco (creador) o previsualizar: las de esta colaboración y, para asignar, las libres.
 const deliverablePosts = computed(() => posts.value.filter((p) => !p.collaborationId || p.collaborationId === props.id))
 const work = computed(() => {
@@ -308,7 +315,7 @@ useHead({ title: computed(() => (view.value ? `Colaboración con ${view.value.co
       </BaseCard>
 
       <CollabHeader
-        :role="role" :counterpart="view.counterpartName" :title="title" :status="view.status" :phase-label="phaseLabel"
+        :role="role" :counterpart="view.counterpartName" :title="title" :brief="briefExcerpt" :status="view.status" :phase-label="phaseLabel"
         :meta="finalDue ? `Entrega final ${new Date(`${finalDue}T00:00:00`).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }).replace('.', '')}` : undefined"
       >
         <CollaborationChatButton :counterpart-profile-id="view.counterpartProfileId" :counterpart-name="view.counterpartName" />
@@ -321,7 +328,10 @@ useHead({ title: computed(() => (view.value ? `Colaboración con ${view.value.co
         {{ expiry.expired ? 'Esta propuesta ha caducado: ya no se puede aceptar. Puedes rechazarla o pedir que te la envíen de nuevo.' : `${expiry.label}: pasado ese plazo ya no se podrá aceptar.` }}
       </p>
 
-      <CollabNextStep :tasks="work.tasks" :waiting="work.waiting" :closed-text="closedText" @go="goTask" />
+      <CollabNextStep
+        :tasks="work.tasks" :waiting="work.waiting" :closed-text="closedText"
+        :inline-kinds="section === 'resumen' ? ['respond_request', 'close_collaboration'] : []" @go="goTask"
+      />
 
       <SegmentedTabs :model-value="section" :options="sections" label="Secciones de la colaboración" class="cwork__tabs" data-collab-sections @update:model-value="setSection" />
 
@@ -362,13 +372,16 @@ useHead({ title: computed(() => (view.value ? `Colaboración con ${view.value.co
               </p>
 
               <BaseButton
-                v-if="view.status === 'accepted' || view.status === 'in_progress'"
-                variant="secondary" block :loading="acting === view.id" data-mark-completed @click="handleMarkCompleted"
+                v-if="canComplete"
+                variant="primary" block :loading="acting === view.id" data-mark-completed @click="handleMarkCompleted"
               >
                 Marcar como completada
               </BaseButton>
-              <p v-if="(view.status === 'accepted' || view.status === 'in_progress') && enforceableOpen" class="cwork__close-note" data-close-note>
+              <p v-else-if="isLive && enforceableOpen" class="cwork__close-note" data-close-note>
                 {{ enforceableOpen }} entregable{{ enforceableOpen === 1 ? '' : 's' }} sin resolver: {{ isPartner ? 'resuélvelos (aprobar, aceptar sin aprobación o renunciar, con motivo) antes de completar.' : `tienen que estar aprobados o resueltos por ${view.counterpartName} antes de completar.` }}
+              </p>
+              <p v-else-if="isLive" class="cwork__close-note" data-close-note>
+                Podrás marcarla como completada cuando haya al menos una publicación vinculada y el trabajo esté entregado.
               </p>
               <RatingPrompt
                 v-else-if="view.status === 'completed'"
@@ -394,9 +407,14 @@ useHead({ title: computed(() => (view.value ? `Colaboración con ${view.value.co
                 v-if="!deliverables.length"
                 icon="ph:image-square"
                 title="Todavía no hay publicaciones"
-                :description="isPartner ? `Cuando ${view.counterpartName} cree y vincule una publicación, aparecerá aquí para que la revises.` : 'Crea una publicación en Studio y vincúlala a esta colaboración para que la otra parte pueda revisarla.'"
+                :description="isPartner ? `Cuando ${view.counterpartName} cree y vincule una publicación, aparecerá aquí para que la revises.` : 'Crea una publicación vinculada a esta colaboración para que la otra parte pueda revisarla.'"
               >
-                <BaseButton v-if="!isPartner && (view.status === 'accepted' || view.status === 'in_progress')" to="/creator/timeline" variant="primary" size="sm">Abrir Studio</BaseButton>
+                <!-- Una sola vía: «Siguiente paso» (arriba) ya lleva a crear la publicación con esta colaboración elegida;
+                     solo se repite aquí si el siguiente paso es otro (p. ej. hay una solicitud pendiente de responder). -->
+                <BaseButton
+                  v-if="!isPartner && (view.status === 'accepted' || view.status === 'in_progress') && work.tasks[0]?.kind !== 'start_deliverable'"
+                  :to="`/creator/timeline?nueva=1&colaboracion=${view.id}`" variant="primary" size="sm"
+                >Crear publicación</BaseButton>
               </EmptyState>
               <ul v-else class="deliv">
                 <li v-for="{ post, state } in deliverables" :key="post.id" class="deliv__item">

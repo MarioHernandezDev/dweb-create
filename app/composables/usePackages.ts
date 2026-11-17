@@ -215,11 +215,32 @@ export function usePackages() {
     myPackages.value = (myPackages.value ?? []).filter((p) => p.id !== id)
   }
 
+  /**
+   * Resumen de los paquetes activos de varios perfiles de una sola vez (cuántos y desde cuánto), para enseñarlo en las
+   * tarjetas de Descubrir sin una consulta por tarjeta. Solo lectura; los perfiles sin paquetes no aparecen.
+   */
+  async function summarizePackagesOf(profileIds: string[]): Promise<Record<string, { count: number; minCents: number }>> {
+    const ids = [...new Set(profileIds)].filter(Boolean)
+    if (!ids.length) return {}
+    const { data, error } = await client.from('packages').select('profile_id, price_cents').in('profile_id', ids).eq('active', true)
+    if (error) {
+      console.error('[usePackages] fallo al resumir paquetes:', error.message)
+      return {}
+    }
+    const out: Record<string, { count: number; minCents: number }> = {}
+    for (const row of data as { profile_id: string; price_cents: number }[]) {
+      const cur = out[row.profile_id]
+      out[row.profile_id] = cur ? { count: cur.count + 1, minCents: Math.min(cur.minCents, row.price_cents) } : { count: 1, minCents: row.price_cents }
+    }
+    return out
+  }
+
   return {
     myPackages,
     saving,
     ensureMyPackages,
     listPackagesOf,
+    summarizePackagesOf,
     createPackage,
     duplicatePackage,
     updatePackage,

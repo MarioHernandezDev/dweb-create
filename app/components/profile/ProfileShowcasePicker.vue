@@ -44,7 +44,7 @@ async function toggle(row: Row) {
     <h3 id="showcase-title" class="ficha-form__title">Contenido destacado <span class="showcase__count">{{ featuredCount }}/{{ MAX }}</span></h3>
     <p class="field__hint">Elige qué publicaciones tuyas ya publicadas ve quien visite tu perfil. Se guarda al marcar.</p>
     <p v-if="loading" class="field__hint">Cargando tus publicaciones…</p>
-    <p v-else-if="!rows.length" class="field__hint" data-showcase-empty>Todavía no tienes publicaciones publicadas. Cuando publiques alguna en Studio, podrás destacarla aquí.</p>
+    <p v-else-if="!rows.length" class="field__hint" data-showcase-empty>Todavía no tienes publicaciones publicadas. Cuando publiques alguna, podrás destacarla aquí.</p>
     <ul v-else class="showcase__list">
       <li v-for="r in rows" :key="r.id">
         <label class="showcase__item" :class="r.featured_on_profile && 'is-on'">

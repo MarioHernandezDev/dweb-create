@@ -43,8 +43,15 @@ function defaultDueDate(): string {
 const todayIso = new Date().toISOString().slice(0, 10)
 const dueDate = ref(defaultDueDate())
 
-const contentTypes = Object.keys(contentTypeMeta) as ContentType[]
-const platforms = Object.entries(platformMeta).map(([value, meta]) => ({ value: value as Platform, label: meta.label }))
+// Red y formato se eligen a la vista, con su logotipo o icono, no en dos desplegables.
+const formatOptions = (Object.keys(contentTypeMeta) as ContentType[]).map((t) => ({ value: t, label: contentTypeMeta[t].label, icon: contentTypeMeta[t].icon }))
+const networkOptions = Object.entries(platformMeta).map(([value, meta]) => ({ value, label: meta.label, icon: meta.icon }))
+// «¿Para quién es?»: propia (solo tú) o para una de tus colaboraciones aceptadas.
+const ownershipOptions = [{ value: 'own', label: 'Contenido propio' }, { value: 'collab', label: 'Para una colaboración' }]
+const ownership = computed({
+  get: () => (collaborationId.value ? 'collab' : 'own'),
+  set: (v: string) => { collaborationId.value = v === 'own' ? '' : (collaborationId.value || activeCollaborations.value[0]?.id || '') }
+})
 
 type Stage = 'draft' | 'predicting' | 'saving' | 'result'
 const stage = ref<Stage>('draft')
@@ -169,6 +176,9 @@ watch(open, (value) => {
   }
   if (value) {
     navigated.value = false
+    // Llegar desde una colaboración («Crear publicación») debe dejarla ya elegida: antes el valor
+    // solo se aplicaba al cerrar la hoja, así que la primera vez salía «Contenido propio».
+    if (props.collaborationId) collaborationId.value = props.collaborationId
     if (props.presetDate) dueDate.value = props.presetDate
     ensureCreditsLoaded()
     ensureCollabRequestsLoaded()
@@ -193,103 +203,89 @@ watch(open, (value) => {
 </script>
 
 <template>
-  <BottomSheet v-model="open" title="Nueva publicación">
+  <BottomSheet v-model="open" title="Nueva publicación" wide>
     <Transition name="nx-fade-slide" mode="out-in">
-      <div v-if="stage !== 'result'" key="draft" class="flex flex-col gap-4">
-        <div>
-          <label class="block text-sm font-medium text-[var(--color-text-muted)] mb-1.5" for="post-title">Título interno</label>
-          <input
-            id="post-title" v-model="title" type="text" placeholder="Reel: rutina de escritorio"
-            class="input w-full h-11"
-          >
-        </div>
-
-        <div>
-          <label class="block text-sm font-medium text-[var(--color-text-muted)] mb-1.5" for="post-caption">Caption</label>
-          <textarea
-            id="post-caption" v-model="caption" rows="3" placeholder="Escribe el texto que acompaña tu publicación…"
-            class="textarea w-full resize-none"
-          />
-        </div>
-
-        <div v-if="activeCollaborations.length">
-          <label class="block text-sm font-medium text-[var(--color-text-muted)] mb-1.5" for="post-collab">Colaboración</label>
-          <select
-            id="post-collab" v-model="collaborationId"
-            class="select w-full h-11"
-          >
-            <option value="">Contenido propio</option>
-            <option v-for="c in activeCollaborations" :key="c.id" :value="c.id">{{ c.partnerName }}</option>
-          </select>
-          <p class="text-micro text-[var(--color-text-faint)] mt-1.5 leading-relaxed">
-            <template v-if="collaborationId">
-              {{ activeCollaborations.find((c) => c.id === collaborationId)?.partnerName }} podrá ver su progreso (checklist y fase) y, cuando la marques "Para revisar", aprobarla o pedirte cambios.
-            </template>
-            <template v-else>
-              Solo tú la verás — no se comparte con ningún partner ni cuenta como entregable de ninguna colaboración.
-            </template>
-          </p>
-        </div>
-
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <p class="block text-sm font-medium text-[var(--color-text-muted)] mb-1.5">Formato</p>
-            <select v-model="contentType" class="select w-full h-11">
-              <option v-for="t in contentTypes" :key="t" :value="t">{{ contentTypeMeta[t].label }}</option>
-            </select>
-          </div>
-          <div>
-            <p class="block text-sm font-medium text-[var(--color-text-muted)] mb-1.5">Red</p>
-            <select v-model="platform" class="select w-full h-11">
-              <option v-for="p in platforms" :key="p.value" :value="p.value">{{ p.label }}</option>
-            </select>
-          </div>
-        </div>
-
-        <div>
-          <label class="block text-sm font-medium text-[var(--color-text-muted)] mb-1.5" for="post-due-date">Fecha de entrega</label>
-          <input
-            id="post-due-date" v-model="dueDate" type="date" :min="todayIso"
-            class="input w-full h-11"
-          >
-        </div>
-
-        <div>
-          <label class="block text-sm font-medium text-[var(--color-text-muted)] mb-1.5" for="post-hashtags">Hashtags</label>
-          <input
-            id="post-hashtags" v-model="hashtagsInput" type="text" placeholder="#rutina #escritorio #productividad"
-            class="input w-full h-11"
-          >
-        </div>
-
-        <p v-if="error" class="text-sm text-[var(--color-status-alert)] -mt-1">{{ error }}</p>
-
-        <BaseButton
-          v-if="predictionsEnabled" variant="primary" size="lg"
-          :icon="stage === 'predicting' ? 'ph:circle-notch-bold' : 'ph:sparkle-fill'" :icon-spin="stage === 'predicting'"
-          class="w-full mt-1"
-          :disabled="!title || stage === 'predicting' || stage === 'saving' || creditBalance === 0" @click="predict"
-        >
-          {{ stage === 'predicting' ? 'Analizando…' : 'Predecir éxito' }}
-        </BaseButton>
-        <p v-if="predictionsEnabled" class="text-center text-micro text-[var(--color-text-faint)] -mt-2">
-          <template v-if="creditBalance === 0 && !paymentsEnabled">Sin créditos: durante el lanzamiento no se pueden ampliar.</template>
-          <template v-else-if="creditBalance === 0">
-            Sin créditos —
-            <NuxtLink to="/creator/profile?tab=billing" class="text-[var(--color-primary-500)] hover:text-[var(--color-primary-600)] underline underline-offset-2">mejora tu plan</NuxtLink>
-            para seguir prediciendo
-          </template>
-          <template v-else>Consume 1 crédito · te quedan {{ creditBalance ?? '…' }}</template>
+      <div v-if="stage !== 'result'" key="draft" class="composer">
+        <p class="composer__lead">
+          <Icon name="ph:lightbulb-fill" class="size-5 shrink-0" />
+          Empieza por lo básico: podrás completar el resto, añadir la imagen y planificarla después en su ficha.
         </p>
 
-        <BaseButton
-          :variant="predictionsEnabled ? 'secondary' : 'primary'" size="lg"
-          :icon="stage === 'saving' ? 'ph:circle-notch-bold' : 'ph:note-pencil-fill'" :icon-spin="stage === 'saving'"
-          class="w-full"
-          :disabled="!title || stage === 'predicting' || stage === 'saving'" @click="saveOnly"
-        >
-          {{ stage === 'saving' ? 'Guardando…' : predictionsEnabled ? 'Guardar sin predecir' : 'Guardar publicación' }}
-        </BaseButton>
+        <div class="composer__cols">
+          <section class="composer__col" aria-label="Contenido">
+            <BaseField label="Título interno" hint="Solo para reconocerla en tu tablero." v-slot="f">
+              <BaseInput v-bind="f" v-model="title" placeholder="Reel: rutina de escritorio" maxlength="120" autofocus />
+            </BaseField>
+            <BaseField label="Texto de la publicación" optional :count="caption.length" :max="2200" v-slot="f">
+              <BaseTextarea v-bind="f" v-model="caption" rows="5" placeholder="Escribe el texto que acompañará a tu publicación…" maxlength="2200" />
+            </BaseField>
+            <BaseField label="Hashtags" optional hint="Separados por espacios o comas; la almohadilla se pone sola." v-slot="f">
+              <BaseInput v-bind="f" v-model="hashtagsInput" placeholder="#rutina #escritorio #productividad" />
+            </BaseField>
+          </section>
+
+          <section class="composer__col composer__col--side" aria-label="Dónde y cuándo">
+            <div v-if="activeCollaborations.length" class="composer__group">
+              <p class="composer__legend">¿Para quién es?</p>
+              <SegmentedTabs :model-value="ownership" :options="ownershipOptions" label="Para quién es la publicación" @update:model-value="ownership = $event" />
+              <BaseField v-if="collaborationId" label="Colaboración" v-slot="f">
+                <BaseSelect v-bind="f" v-model="collaborationId">
+                  <option v-for="c in activeCollaborations" :key="c.id" :value="c.id">{{ c.partnerName }}</option>
+                </BaseSelect>
+              </BaseField>
+              <p class="composer__note">
+                <Icon :name="collaborationId ? 'ph:eye-bold' : 'ph:lock-simple-bold'" class="size-4 shrink-0" />
+                <template v-if="collaborationId">
+                  {{ activeCollaborations.find((c) => c.id === collaborationId)?.partnerName }} verá su progreso (checklist y fase) y, cuando la marques «Para revisar», podrá aprobarla o pedirte cambios.
+                </template>
+                <template v-else>Solo tú la verás: no se comparte con ninguna marca ni cuenta como entregable.</template>
+              </p>
+            </div>
+
+            <div class="composer__group">
+              <p id="composer-network" class="composer__legend">Red donde se publicará</p>
+              <ChoiceChips :model-value="platform" :options="networkOptions" label="Red donde se publicará" @update:model-value="platform = $event as Platform" />
+            </div>
+            <div class="composer__group">
+              <p class="composer__legend">Formato</p>
+              <ChoiceChips :model-value="contentType" :options="formatOptions" label="Formato" @update:model-value="contentType = $event as ContentType" />
+            </div>
+
+            <BaseField label="Fecha de entrega" v-slot="f">
+              <DatePicker v-bind="f" v-model="dueDate" :min="todayIso" />
+            </BaseField>
+          </section>
+        </div>
+
+        <p v-if="error" class="composer__error" role="alert">{{ error }}</p>
+
+        <div class="composer__foot">
+          <p v-if="predictionsEnabled" class="composer__credits">
+            <template v-if="creditBalance === 0 && !paymentsEnabled">Sin créditos: durante el lanzamiento no se pueden ampliar.</template>
+            <template v-else-if="creditBalance === 0">
+              Sin créditos —
+              <NuxtLink to="/creator/profile?tab=billing" class="underline underline-offset-2">mejora tu plan</NuxtLink>
+              para seguir prediciendo
+            </template>
+            <template v-else>Predecir consume 1 crédito · te quedan {{ creditBalance ?? '…' }}</template>
+          </p>
+          <div class="composer__actions">
+            <BaseButton
+              :variant="predictionsEnabled ? 'secondary' : 'primary'" size="lg"
+              :icon="stage === 'saving' ? 'ph:circle-notch-bold' : 'ph:note-pencil-fill'" :icon-spin="stage === 'saving'"
+              :disabled="!title || stage === 'predicting' || stage === 'saving'" @click="saveOnly"
+            >
+              {{ stage === 'saving' ? 'Guardando…' : predictionsEnabled ? 'Guardar sin predecir' : 'Guardar publicación' }}
+            </BaseButton>
+            <BaseButton
+              v-if="predictionsEnabled" variant="primary" size="lg"
+              :icon="stage === 'predicting' ? 'ph:circle-notch-bold' : 'ph:sparkle-fill'" :icon-spin="stage === 'predicting'"
+              :disabled="!title || stage === 'predicting' || stage === 'saving' || creditBalance === 0" @click="predict"
+            >
+              {{ stage === 'predicting' ? 'Analizando…' : 'Predecir éxito' }}
+            </BaseButton>
+          </div>
+        </div>
       </div>
 
       <div v-else-if="result" key="result">

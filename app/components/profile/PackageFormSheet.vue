@@ -1,36 +1,67 @@
 <script setup lang="ts">
 import type { Package } from '~/composables/usePackages'
 import type { Role } from '~/types'
+import { PACKAGE_TEMPLATES, DELIVERABLE_SUGGESTIONS, type PackageTemplate } from '~/utils/package-templates'
 
+/**
+ * Crear o editar un paquete (creador) o una necesidad (marca). Pensado para hacerlo en un minuto: plantillas de partida,
+ * entregables con sugerencias de un clic, portada elegible desde el principio y una vista previa de cómo lo verán los
+ * demás. Los datos que se guardan son los de siempre (título, descripción, precio y entregables).
+ */
 const props = defineProps<{ modelValue: boolean; profileId: string; role: Role; editing?: Package | null }>()
 const emit = defineEmits<{ 'update:modelValue': [value: boolean]; saved: [] }>()
 
 const { saving, createPackage, updatePackage, uploadPackageCover } = usePackages()
 
+const isCreator = computed(() => props.role === 'creator')
+const noun = computed(() => (isCreator.value ? 'paquete' : 'necesidad'))
+const templates = computed(() => PACKAGE_TEMPLATES[props.role])
+
 const title = ref('')
 const description = ref('')
-const priceEuros = ref<number | null>(null)
+// El campo numérico entrega texto: se guarda tal cual y de él sale el importe en euros (o null si no vale).
+const priceInput = ref<string | number | null>(null)
+const priceEuros = computed(() => { const n = Number(priceInput.value); return priceInput.value !== null && priceInput.value !== '' && Number.isFinite(n) && n > 0 ? n : null })
 const deliverables = ref<string[]>([])
 const deliverableInput = ref('')
 const errorMsg = ref('')
+const templateId = ref('')
+// Portada elegida antes de guardar (se sube justo después de crear, cuando ya hay id); al editar se sube al momento.
+const pendingCover = ref<File | null>(null)
+const pendingCoverUrl = ref<string | null>(null)
+
+function releasePendingCover() {
+  if (pendingCoverUrl.value) URL.revokeObjectURL(pendingCoverUrl.value)
+  pendingCover.value = null
+  pendingCoverUrl.value = null
+}
 
 watch(
   () => props.modelValue,
   (open) => {
-    if (!open) return
+    if (!open) { releasePendingCover(); return }
     title.value = props.editing?.title ?? ''
     description.value = props.editing?.description ?? ''
-    priceEuros.value = props.editing ? props.editing.priceCents / 100 : null
+    priceInput.value = props.editing ? props.editing.priceCents / 100 : null
     deliverables.value = props.editing ? [...props.editing.deliverables] : []
     deliverableInput.value = ''
     errorMsg.value = ''
+    templateId.value = ''
+    releasePendingCover()
   }
 )
+onUnmounted(releasePendingCover)
 
-function addDeliverable() {
-  const v = deliverableInput.value.trim()
+function applyTemplate(t: PackageTemplate) {
+  templateId.value = t.id
+  title.value = t.title
+  description.value = t.description
+  deliverables.value = [...t.deliverables]
+}
+function addDeliverable(value?: string) {
+  const v = (value ?? deliverableInput.value).trim()
   if (v && !deliverables.value.includes(v)) deliverables.value.push(v)
-  deliverableInput.value = ''
+  if (value === undefined) deliverableInput.value = ''
 }
 function onDeliverableKeydown(e: KeyboardEvent) {
   if (e.key === ',') {
@@ -40,22 +71,24 @@ function onDeliverableKeydown(e: KeyboardEvent) {
     deliverables.value.pop()
   }
 }
+const suggestions = computed(() => DELIVERABLE_SUGGESTIONS.filter((s) => !deliverables.value.includes(s)))
 
-const sheetTitle = computed(() => {
-  if (props.editing) return props.role === 'creator' ? 'Editar paquete' : 'Editar necesidad'
-  return props.role === 'creator' ? 'Nuevo paquete' : 'Nueva necesidad'
-})
+const sheetTitle = computed(() => (props.editing ? `Editar ${noun.value}` : `Nuevo ${noun.value}`))
 
-// La portada solo se puede subir editando un paquete que ya existe (hace
-// falta su id para la ruta en Storage) — mismo criterio que la portada de
-// un post del tablero, que tampoco se pide al crear.
+// ---- Portada ----
 const coverInputEl = ref<HTMLInputElement | null>(null)
 const coverUploading = ref(false)
 const coverError = ref('')
 async function onCoverChange(event: Event) {
   const file = (event.target as HTMLInputElement).files?.[0]
-  if (!file || !props.editing) return
+  if (!file) return
   coverError.value = ''
+  if (!props.editing) {
+    releasePendingCover()
+    pendingCover.value = file
+    pendingCoverUrl.value = URL.createObjectURL(file)
+    return
+  }
   coverUploading.value = true
   try {
     const url = await uploadPackageCover(props.editing.id, file)
@@ -65,8 +98,24 @@ async function onCoverChange(event: Event) {
     coverError.value = 'No se ha podido subir. Prueba con otra imagen (JPG/PNG/WebP).'
   } finally {
     coverUploading.value = false
+    if (coverInputEl.value) coverInputEl.value.value = ''
   }
 }
+const coverShown = computed(() => pendingCoverUrl.value ?? props.editing?.coverUrl ?? null)
+
+// Vista previa: el mismo componente que verán los demás, con lo que se va escribiendo.
+const preview = computed<Package>(() => ({
+  id: props.editing?.id ?? 'preview',
+  profileId: props.profileId,
+  title: title.value.trim() || (isCreator.value ? 'Título de tu paquete' : 'Título de tu necesidad'),
+  description: description.value.trim() || null,
+  priceCents: Math.round((priceEuros.value ?? 0) * 100),
+  deliverables: deliverables.value,
+  active: true,
+  coverUrl: coverShown.value,
+  sortOrder: 0,
+  createdAt: ''
+}))
 
 async function save() {
   if (!title.value || !priceEuros.value) return
@@ -82,13 +131,18 @@ async function save() {
         deliverables: deliverables.value
       })
     } else {
-      await createPackage({
+      const created = await createPackage({
         profileId: props.profileId,
         title: title.value,
         description: description.value || null,
         priceCents: Math.round(priceEuros.value * 100),
         deliverables: deliverables.value
       })
+      // La portada elegida antes de guardar se sube ahora que el paquete ya tiene id. Si falla, el paquete ya existe
+      // y se puede añadir después editándolo: no se pierde nada.
+      if (pendingCover.value) {
+        try { created.coverUrl = await uploadPackageCover(created.id, pendingCover.value) } catch { /* se añade luego al editar */ }
+      }
     }
     emit('saved')
     emit('update:modelValue', false)
@@ -99,68 +153,67 @@ async function save() {
 </script>
 
 <template>
-  <BottomSheet :model-value="modelValue" :title="sheetTitle" @update:model-value="$emit('update:modelValue', $event)">
-    <div v-if="editing" class="mb-4">
-      <button
-        type="button"
-        class="group relative h-28 w-full rounded-[var(--radius-md)] overflow-hidden flex items-center justify-center bg-[var(--color-ink-overlay)]"
-        :disabled="coverUploading"
-        @click="coverInputEl?.click()"
-      >
-        <img v-if="editing.coverUrl" :src="editing.coverUrl" alt="" class="absolute inset-0 size-full object-cover">
-        <Icon v-else name="ph:image-fill" class="size-7 text-[var(--color-text-faint)]" />
-        <div
-          class="absolute inset-0 flex items-center justify-center gap-2 bg-black/0 text-white opacity-0 transition-[background-color,opacity] duration-200"
-          :class="coverUploading ? 'bg-black/45 opacity-100' : 'group-hover:bg-black/45 group-hover:opacity-100'"
-        >
-          <Icon :name="coverUploading ? 'ph:circle-notch-bold' : 'ph:camera-plus-fill'" class="size-5" :class="coverUploading && 'animate-spin'" />
-          <span class="text-sm font-medium">{{ coverUploading ? 'Subiendo…' : editing.coverUrl ? 'Cambiar portada' : 'Añadir portada' }}</span>
+  <BottomSheet :model-value="modelValue" :title="sheetTitle" wide @update:model-value="$emit('update:modelValue', $event)">
+    <div class="pform">
+      <div class="pform__main">
+        <section v-if="!editing" class="pform__templates" aria-label="Plantillas">
+          <p class="pform__legend">Empieza con una plantilla <span>(luego lo editas todo)</span></p>
+          <div class="pform__chips">
+            <button v-for="t in templates" :key="t.id" type="button" class="pform__tpl" :data-on="templateId === t.id" data-package-template @click="applyTemplate(t)">{{ t.label }}</button>
+          </div>
+        </section>
+
+        <BaseField label="Título" v-slot="f">
+          <BaseInput v-bind="f" v-model="title" :placeholder="isCreator ? 'Ej. 1 Reel + 3 Stories' : 'Ej. Lanzamiento de producto'" maxlength="80" />
+        </BaseField>
+
+        <BaseField label="Descripción" optional hint="Qué incluye y cómo trabajas: es lo que decide a quien lo lee." v-slot="f">
+          <BaseTextarea v-bind="f" v-model="description" rows="3" placeholder="Qué incluye…" maxlength="400" />
+        </BaseField>
+
+        <div class="pform__group">
+          <label class="field__label" for="pkg-deliverables">Entregables</label>
+          <div class="pform__tags">
+            <span v-for="(d, i) in deliverables" :key="d" class="pform__tag">
+              {{ d }}
+              <button type="button" :aria-label="`Quitar ${d}`" @click="deliverables.splice(i, 1)"><Icon name="ph:x-bold" class="size-3" /></button>
+            </span>
+            <input
+              id="pkg-deliverables" v-model="deliverableInput" type="text" placeholder="Escribe uno y pulsa Enter…" class="pform__input"
+              @keydown.enter.prevent="addDeliverable()" @keydown="onDeliverableKeydown" @blur="addDeliverable()"
+            >
+          </div>
+          <div v-if="suggestions.length" class="pform__chips" aria-label="Sugerencias de entregables">
+            <button v-for="s in suggestions" :key="s" type="button" class="pform__sugg" @click="addDeliverable(s)"><Icon name="ph:plus-bold" class="size-3" /> {{ s }}</button>
+          </div>
         </div>
-      </button>
-      <input ref="coverInputEl" type="file" accept="image/jpeg,image/png,image/webp" class="hidden" @change="onCoverChange">
-      <p v-if="coverError" class="text-micro text-[var(--color-status-alert)] mt-1.5">{{ coverError }}</p>
+
+        <BaseField :label="isCreator ? 'Precio del paquete' : 'Presupuesto'" :hint="isCreator ? 'Lo que cobras por el paquete completo.' : 'Lo que estás dispuesto a invertir.'" v-slot="f">
+          <BaseInput v-bind="f" v-model="priceInput" type="number" min="1" step="1" suffix="€" placeholder="300" />
+        </BaseField>
+
+        <div class="pform__group">
+          <p class="field__label">Portada <span class="field__optional">(opcional)</span></p>
+          <button type="button" class="pform__cover" :disabled="coverUploading" @click="coverInputEl?.click()">
+            <img v-if="coverShown" :src="coverShown" alt="" class="pform__cover-img">
+            <Icon v-else name="ph:image-fill" class="size-6" />
+            <span>{{ coverUploading ? 'Subiendo…' : coverShown ? 'Cambiar imagen' : 'Añadir una imagen' }}</span>
+          </button>
+          <input ref="coverInputEl" type="file" accept="image/jpeg,image/png,image/webp" class="hidden" @change="onCoverChange">
+          <p v-if="coverError" class="field__error" role="alert">{{ coverError }}</p>
+        </div>
+
+        <p v-if="errorMsg" class="field__error" role="alert">{{ errorMsg }}</p>
+
+        <BaseButton variant="primary" size="lg" block :loading="saving" :disabled="!title || !priceEuros || saving" data-save-package @click="save">
+          {{ saving ? 'Guardando…' : editing ? 'Guardar cambios' : `Publicar ${noun}` }}
+        </BaseButton>
+      </div>
+
+      <aside class="pform__preview" aria-label="Vista previa">
+        <p class="pform__legend">Así lo verán {{ isCreator ? 'las marcas' : 'los creadores' }}</p>
+        <PackageCard :pkg="preview" showcase />
+      </aside>
     </div>
-
-    <label class="block text-sm font-medium text-[var(--color-text-muted)] mb-1.5" for="pkg-title">Título</label>
-    <input
-      id="pkg-title" v-model="title" type="text" :placeholder="role === 'creator' ? 'Ej. 1 Reel + 3 Stories' : 'Ej. Lanzamiento de producto'"
-      class="input w-full mb-4 h-11"
-    >
-
-    <label class="block text-sm font-medium text-[var(--color-text-muted)] mb-1.5" for="pkg-description">Descripción</label>
-    <textarea
-      id="pkg-description" v-model="description" rows="3" placeholder="Qué incluye…"
-      class="textarea w-full resize-none mb-4"
-    />
-
-    <label class="block text-sm font-medium text-[var(--color-text-muted)] mb-1.5" for="pkg-deliverables">Entregables</label>
-    <div class="w-full px-2.5 py-2 rounded-[var(--radius-sm)] bg-[var(--color-ink-overlay)] border border-[var(--color-hairline)] mb-4 flex flex-wrap gap-1.5 items-center focus-within:border-[var(--color-primary-500)]/60">
-      <span
-        v-for="(d, i) in deliverables" :key="i"
-        class="inline-flex items-center gap-1 pl-2.5 pr-1.5 h-7 rounded-full bg-[var(--color-ink-raised)] border border-[var(--color-hairline-strong)] text-sm text-[var(--color-text)]"
-      >
-        {{ d }}
-        <button type="button" aria-label="Quitar" class="size-4 flex items-center justify-center rounded-full hover:bg-[var(--color-hairline-strong)]" @click="deliverables.splice(i, 1)">
-          <Icon name="ph:x-bold" class="size-2.5" />
-        </button>
-      </span>
-      <input
-        id="pkg-deliverables" v-model="deliverableInput" type="text" placeholder="Escribe uno y pulsa Enter…"
-        class="flex-1 min-w-[8rem] h-7 bg-transparent text-sm text-[var(--color-text)] placeholder:text-[var(--color-text-faint)] focus:outline-none"
-        @keydown.enter.prevent="addDeliverable" @keydown="onDeliverableKeydown" @blur="addDeliverable"
-      >
-    </div>
-
-    <label class="block text-sm font-medium text-[var(--color-text-muted)] mb-1.5" for="pkg-price">{{ role === 'creator' ? 'Precio (€)' : 'Presupuesto (€)' }}</label>
-    <input
-      id="pkg-price" v-model.number="priceEuros" type="number" min="1" step="1" placeholder="Ej. 300"
-      class="input w-full h-11"
-    >
-
-    <p v-if="errorMsg" class="text-sm text-[var(--color-status-alert)] mt-3">{{ errorMsg }}</p>
-
-    <BaseButton variant="primary" size="lg" class="w-full mt-5" :icon-spin="saving" :disabled="!title || !priceEuros || saving" @click="save">
-      {{ saving ? 'Guardando…' : 'Guardar' }}
-    </BaseButton>
   </BottomSheet>
 </template>

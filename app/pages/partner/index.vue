@@ -4,6 +4,7 @@ import { formatEuros } from '~/utils/mock-data'
 import { isFichaIncomplete } from '~/utils/ficha'
 import { relativeTime, isUnresolvedCollaborationStatus } from '~/utils/status'
 import type { Creator, Post } from '~/types'
+import type { FirstStep } from '~/components/onboarding/FirstSteps.vue'
 
 import { weekDays, overdueCount, phaseShares } from '~/utils/home-charts'
 
@@ -150,20 +151,21 @@ const statusLine = computed(() => {
   return parts.length ? parts.join(' · ') : 'Todo al día por ahora.'
 })
 
-const tips = computed(() => {
-  const list: { icon: string; text: string; cta: string; to: string }[] = []
-  if (fichaIncomplete.value) {
-    list.push({ icon: 'ph:identification-card-fill', text: 'Completa tu ficha pública para que los creadores te encuentren en Descubrir.', cta: 'Completar', to: '/partner/profile' })
-  }
-  return list
-})
+// Primeros pasos: cada uno se marca solo con datos reales de la cuenta (ver FirstSteps.vue).
+const firstSteps = computed<FirstStep[]>(() => [
+  { label: 'Completa tu ficha pública', hint: 'Los creadores te encuentran en Descubrir por tu ficha.', done: !fichaIncomplete.value, to: '/partner/profile' },
+  { label: 'Contacta con un creador', hint: 'Elige uno en Descubrir y envíale una solicitud.', done: collaborations.value.length > 0, to: '/partner/discover' },
+  { label: 'Acordad la colaboración', hint: 'Cuando acepte, acordáis alcance, precio y entregas.', done: collaborations.value.some((c) => ['accepted', 'in_progress', 'completed'].includes(c.status)), to: '/partner/requests' }
+])
 </script>
 
 <template>
   <AppShell role="partner" title="Inicio" :subtitle="partner?.name">
     <section class="home-greeting">
-      <h1 class="home-greeting__title">¡Bienvenido! Organiza tus colaboraciones</h1>
-      <p class="home-greeting__status">{{ statusLine }}</p>
+      <div>
+        <h2 class="home-greeting__title">¡Bienvenido! Organiza tus colaboraciones</h2>
+        <p class="home-greeting__status">{{ statusLine }}</p>
+      </div>
     </section>
 
     <section class="home-stats">
@@ -207,7 +209,7 @@ const tips = computed(() => {
 
         <section v-if="discoverLoading || discoverError || suggestedCreators.length">
           <SectionTitle title="Creadores que podrían encajar" class="mb-3">
-            <NuxtLink to="/partner/discover" class="text-sm font-semibold text-[var(--text-muted)] hover:text-[var(--text-strong)]">Ver todo</NuxtLink>
+            <NuxtLink to="/partner/discover" class="inline-flex items-center min-h-[var(--control-md)] px-1 text-sm font-semibold text-[var(--text-muted)] hover:text-[var(--text-strong)]">Ver todo</NuxtLink>
           </SectionTitle>
           <p v-if="discoverError" class="text-sm text-[var(--text-muted)]">No se han podido cargar sugerencias ahora mismo.</p>
           <div v-else class="grid sm:grid-cols-3 gap-3">
@@ -242,15 +244,7 @@ const tips = computed(() => {
           </div>
         </PanelCard>
 
-        <BaseCard v-if="tips.length" tone="overlay" radius="lg">
-          <SectionTitle title="Para sacarle más partido" as="h2" class="mb-3" />
-          <div v-for="(tip, i) in tips" :key="i" class="tip">
-            <Icon :name="tip.icon" class="size-5 shrink-0 mt-0.5" />
-            <p class="min-w-0 flex-1">
-              {{ tip.text }} <NuxtLink :to="tip.to" class="font-semibold underline">{{ tip.cta }}</NuxtLink>
-            </p>
-          </div>
-        </BaseCard>
+        <FirstSteps role="partner" :steps="firstSteps" />
       </div>
     </div>
 

@@ -83,7 +83,7 @@ onUnmounted(() => {
         <div class="bg-[var(--color-ink-raised)] rounded-t-[var(--radius-lg)] md:rounded-[var(--radius-lg)] w-full md:mx-auto border border-[var(--color-hairline)] shadow-[var(--shadow-float)] max-h-[88dvh] flex flex-col" :class="wide ? 'md:max-w-4xl' : 'md:max-w-md'">
           <div class="flex items-center justify-between px-5 pt-4 pb-3 border-b border-[var(--color-hairline)] shrink-0">
             <span class="mx-auto md:hidden h-1 w-9 rounded-full bg-[var(--color-hairline-strong)] absolute top-2 left-1/2 -translate-x-1/2" />
-            <h2 class="font-display text-[1.0625rem] text-[var(--color-text)]">{{ title }}</h2>
+            <h2 class="font-display text-lg text-[var(--color-text)]">{{ title }}</h2>
             <button type="button" aria-label="Cerrar" class="size-8 flex items-center justify-center rounded-full text-[var(--color-text-muted)] hover:bg-[var(--color-ink-overlay)]" @click="close">
               <Icon name="ph:x-bold" class="size-4" />
             </button>

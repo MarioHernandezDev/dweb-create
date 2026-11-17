@@ -84,9 +84,9 @@ const select = 'h-9 px-3 max-w-full min-w-0 truncate rounded-full bg-[var(--colo
       </select>
     </template>
 
-    <label class="sr-only" for="post-filter-project">Proyecto</label>
+    <label class="sr-only" for="post-filter-project">Colaboración</label>
     <select id="post-filter-project" :class="select" :value="filters.project" @change="patch({ project: ($event.target as HTMLSelectElement).value })">
-      <option value="">Todos los proyectos</option>
+      <option value="">Todas las publicaciones</option>
       <option :value="OWN_PROJECT">Contenido propio</option>
       <option v-for="c in collabs" :key="c.id" :value="c.id">
         {{ c.partnerName }} · {{ c.budgetCents ? formatEuros(c.budgetCents) : 'Sin presupuesto' }} · {{ collaborationStatusMeta[c.status].label }}
