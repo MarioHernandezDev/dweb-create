@@ -752,6 +752,34 @@ code {
   font-size: 0.9em;
 }
 
+.site-nav {
+  display: flex;
+  gap: 1.25rem;
+  margin-left: auto;
+  margin-right: 1rem;
+}
+.site-nav a {
+  white-space: nowrap;
+  color: var(--text-muted);
+  text-decoration: none;
+  padding: 0.5rem 0;
+}
+.site-nav a:hover,
+.site-nav a[aria-current="page"] {
+  color: var(--text);
+}
+@media (max-width: 640px) {
+  .site-nav {
+    gap: 0.6rem;
+    font-size: 0.85rem;
+    margin-right: 0;
+    white-space: nowrap;
+  }
+  .pill--header {
+    display: none;
+  }
+}
+
 /* ---------- Adaptación ---------- */
 @media (max-width: 960px) {
   .hero__grid,
