@@ -18,6 +18,7 @@ export interface CollabRequest extends CollaborationTerms {
   expiresAt: string | null
   initiatedBy: 'creator' | 'partner'
   packageTitle: string | null
+  campaignName: string | null
   packageDescription: string | null
   packageDeliverables: string[] | null
 }
@@ -41,6 +42,7 @@ interface CollabRequestRow {
   target_audience: string | null
   tone: string | null
   package_title: string | null
+  campaign_name: string | null
   package_description: string | null
   package_deliverables: string[] | null
   partners: { company_name: string; profile_id: string } | null
@@ -68,6 +70,7 @@ function mapRow(row: CollabRequestRow): CollabRequest {
     targetAudience: row.target_audience,
     tone: row.tone,
     packageTitle: row.package_title,
+    campaignName: row.campaign_name,
     packageDescription: row.package_description,
     packageDeliverables: row.package_deliverables
   }
@@ -93,7 +96,7 @@ export function useCollabRequests() {
 
     const { data, error } = await client
       .from('collaborations')
-      .select('id, status, brief, budget_cents, paid_at, partner_id, created_at, updated_at, expires_at, initiated_by, scope_notes, revisions_included, exclusivity, usage_rights, campaign_goal, target_audience, tone, package_title, package_description, package_deliverables, partners(company_name, profile_id)')
+      .select('id, status, brief, budget_cents, paid_at, partner_id, created_at, updated_at, expires_at, initiated_by, scope_notes, revisions_included, exclusivity, usage_rights, campaign_goal, target_audience, tone, campaign_name, package_title, package_description, package_deliverables, partners(company_name, profile_id)')
       .eq('creator_id', me.id)
       .order('created_at', { ascending: false })
       .limit(300)

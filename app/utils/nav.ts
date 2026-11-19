@@ -35,6 +35,8 @@ export const roleNav: Record<Role, NavItem[]> = {
     { to: '/creator', label: 'Inicio', icon: 'ph:house-fill' },
     { to: '/creator/timeline', label: 'Publicaciones', icon: 'ph:kanban-fill' },
     { to: '/creator/discover', label: 'Descubrir', icon: 'ph:compass-fill' },
+    { to: '/creator/packages', label: 'Paquetes', icon: 'ph:package-fill' },
+    { to: '/creator/library', label: 'Biblioteca', icon: 'ph:images-fill' },
     { to: '/creator/requests', label: 'Colaboraciones', icon: 'ph:handshake-fill' },
     { to: '/creator/insights', label: 'Resultados', icon: 'ph:chart-bar-fill' },
     { to: '/creator/metrics', label: 'Métricas', icon: 'ph:chart-line-up-fill', soon: true }
@@ -43,6 +45,7 @@ export const roleNav: Record<Role, NavItem[]> = {
     { to: '/partner', label: 'Inicio', icon: 'ph:house-fill' },
     { to: '/partner/discover', label: 'Descubrir', icon: 'ph:compass-fill' },
     { to: '/partner/requests', label: 'Colaboraciones', icon: 'ph:handshake-fill' },
+    { to: '/partner/packages', label: 'Necesidades', icon: 'ph:package-fill' },
     { to: '/partner/insights', label: 'Resultados', icon: 'ph:chart-bar-fill' }
   ]
 }

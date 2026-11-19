@@ -25,9 +25,28 @@ export function translateAuthError(message: string): string {
   if (/rate limit/i.test(msg) || /you can only request this after/i.test(msg)) {
     return 'Demasiados intentos seguidos — espera un momento y vuelve a intentarlo.'
   }
+  // Fallo del servidor de correo (SMTP rechazado, caído o sin configurar): el correo NO ha salido.
+  if (/error sending .*email|smtp|username and password not accepted|\b535\b|unexpected_failure/i.test(msg)) {
+    return 'No hemos podido enviar el correo ahora mismo. Inténtalo de nuevo en unos minutos; si sigue pasando, escríbenos y lo resolvemos.'
+  }
   if (/email not confirmed/i.test(msg)) {
     return 'Todavía no has confirmado tu email — revisa tu bandeja de entrada.'
   }
 
   return msg
+}
+
+export type AuthLinkProblem = 'expired' | 'invalid' | null
+
+/**
+ * Lee el resultado de un enlace de correo de Supabase (confirmar cuenta, etc.). Cuando falla, Supabase redirige con
+ * `#error=access_denied&error_code=otp_expired&error_description=…` (o en la query). `otp_expired` es el enlace
+ * caducado o ya usado; cualquier otro error del enlace se trata como inválido. Sin error devuelve null.
+ */
+export function parseAuthLinkProblem(hash: string, search: string): AuthLinkProblem {
+  const params = new URLSearchParams(`${search.replace(/^\?/, '')}&${hash.replace(/^#/, '')}`)
+  const code = params.get('error_code') ?? ''
+  const error = params.get('error') ?? ''
+  if (!code && !error) return null
+  return code === 'otp_expired' || /expired/i.test(params.get('error_description') ?? '') ? 'expired' : 'invalid'
 }

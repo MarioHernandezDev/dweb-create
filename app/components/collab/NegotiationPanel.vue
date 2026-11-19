@@ -12,7 +12,7 @@ const props = defineProps<{
   initiatedBy: Role
 }>()
 
-const emit = defineEmits<{ accept: [budgetCents: number | null]; decline: [] }>()
+const emit = defineEmits<{ accept: [budgetCents: number | null]; decline: []; countered: [] }>()
 
 const { offersByCollaboration, posting, ensureOffers, proposeOffer } = useCollaborationOffers()
 const { reporting, reportCollaboration } = useReports()
@@ -32,8 +32,8 @@ const currentAmount = computed(() => {
 })
 const currentProposer = computed<Role>(() => offers.value.at(-1)?.proposedBy ?? props.initiatedBy)
 const myTurn = computed(() => props.status === 'requested' && currentProposer.value !== props.myRole)
-const otherRoleLabel = computed(() => (props.myRole === 'creator' ? 'del partner' : 'del creador'))
-const initiatorLabel = computed(() => (props.initiatedBy === 'partner' ? 'partner' : 'creador'))
+const otherRoleLabel = computed(() => (props.myRole === 'creator' ? 'de la marca' : 'del creador'))
+const initiatorLabel = computed(() => (props.initiatedBy === 'partner' ? 'marca' : 'creador'))
 
 // Tras aceptar, la cifra de `collaborations.budget_cents` ya es el precio ACORDADO,
 // no la propuesta inicial (C-03 de docs/audit/08_COLLABORATION_FLOW_AUDIT.md).
@@ -62,6 +62,8 @@ async function sendCounter() {
     countering.value = false
     counterEuros.value = null
     counterMessage.value = ''
+    // Avisa a la página: el «Siguiente paso» y el turno se calculan con los eventos, que hay que refrescar.
+    emit('countered')
   } catch (e) {
     counterError.value = e instanceof Error ? e.message : 'No se ha podido enviar la contraoferta. Inténtalo de nuevo.'
   }

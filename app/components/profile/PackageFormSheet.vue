@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { Package } from '~/composables/usePackages'
+import type { LibraryItem } from '~/utils/media-library'
 import type { Role } from '~/types'
 import { PACKAGE_TEMPLATES, DELIVERABLE_SUGGESTIONS, type PackageTemplate } from '~/utils/package-templates'
 
@@ -79,9 +80,11 @@ const sheetTitle = computed(() => (props.editing ? `Editar ${noun.value}` : `Nue
 const coverInputEl = ref<HTMLInputElement | null>(null)
 const coverUploading = ref(false)
 const coverError = ref('')
-async function onCoverChange(event: Event) {
+function onCoverChange(event: Event) {
   const file = (event.target as HTMLInputElement).files?.[0]
-  if (!file) return
+  if (file) applyCoverFile(file)
+}
+async function applyCoverFile(file: File) {
   coverError.value = ''
   if (!props.editing) {
     releasePendingCover()
@@ -101,11 +104,23 @@ async function onCoverChange(event: Event) {
     if (coverInputEl.value) coverInputEl.value.value = ''
   }
 }
+// Biblioteca de archivos (solo creador): la imagen elegida se copia como portada, igual que una subida desde el equipo.
+const libraryOpen = ref(false)
+const { toFile: libraryFile } = useMediaLibrary()
+async function onLibraryPick(item: LibraryItem) {
+  try {
+    await applyCoverFile(await libraryFile(item))
+  } catch (err) {
+    console.error('[PackageFormSheet] fallo al usar la imagen de la biblioteca:', err)
+    coverError.value = 'No se ha podido usar esa imagen. Inténtalo de nuevo.'
+  }
+}
 const coverShown = computed(() => pendingCoverUrl.value ?? props.editing?.coverUrl ?? null)
 
 // Vista previa: el mismo componente que verán los demás, con lo que se va escribiendo.
 const preview = computed<Package>(() => ({
   id: props.editing?.id ?? 'preview',
+  isFeatured: props.editing?.isFeatured ?? false,
   profileId: props.profileId,
   title: title.value.trim() || (isCreator.value ? 'Título de tu paquete' : 'Título de tu necesidad'),
   description: description.value.trim() || null,
@@ -200,6 +215,8 @@ async function save() {
             <span>{{ coverUploading ? 'Subiendo…' : coverShown ? 'Cambiar imagen' : 'Añadir una imagen' }}</span>
           </button>
           <input ref="coverInputEl" type="file" accept="image/jpeg,image/png,image/webp" class="hidden" @change="onCoverChange">
+          <BaseButton v-if="isCreator" variant="ghost" size="sm" icon="ph:images-bold" type="button" class="mt-2" data-pick-library @click="libraryOpen = true">Elegir de la biblioteca</BaseButton>
+          <MediaPicker v-if="isCreator" v-model="libraryOpen" @pick="onLibraryPick" />
           <p v-if="coverError" class="field__error" role="alert">{{ coverError }}</p>
         </div>
 

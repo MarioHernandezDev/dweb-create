@@ -3,11 +3,12 @@
  * repite de una propuesta a otra; al aplicarla se rellenan los campos y se puede retocar antes de enviar.
  *  - `proposal`: la propuesta de un creador a una marca (ProposalDialog).
  *  - `invite`: la invitación de una marca a un creador (InviteDialog).
+ *  - `post`: una publicación del creador (PostComposerSheet; ver utils/post-templates.ts).
  * Lo guardado es JSON: al leerlo se valida campo a campo, sin fiarse de su forma.
  */
 import { USAGE_OPTIONS, type UsageOption } from './proposal'
 
-export type TemplateKind = 'proposal' | 'invite'
+export type TemplateKind = 'proposal' | 'invite' | 'post'
 export const TEMPLATE_MAX = 15
 export const TEMPLATE_NAME_MAX = 80
 

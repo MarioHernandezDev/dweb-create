@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { collabContextLabel } from '~/utils/collab-phase'
 import { emptyFilters, filterPosts, projectStats, type PostFilters, type PostSort } from '~/utils/post-library'
 import type { Post, PostStatus } from '~/types'
 
@@ -58,7 +59,7 @@ watch(() => filters.value.project, (project) => {
 
 function projectNameOf(post: Post): string | null {
   if (!post.collaborationId) return null
-  return collabRequests.value.find((c) => c.id === post.collaborationId)?.partnerName ?? 'Colaboración'
+  return collabContextLabel(collabRequests.value.find((c) => c.id === post.collaborationId))
 }
 
 // Indicadores del proyecto activo (cálculo local sobre lo ya cargado).

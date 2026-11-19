@@ -6,7 +6,7 @@ const metrics = localPhotos.metrics
 </script>
 
 <template>
-  <section class="band band--sunken">
+  <section class="band band--sunken" data-companion data-companion-mood="wow" data-companion-say="Ofertas, chat, archivos y revisión: todo en un sitio.">
     <div class="container">
       <div class="band__head reveal">
         <h2 class="band__title">Una entrega, cuatro miradas.</h2>

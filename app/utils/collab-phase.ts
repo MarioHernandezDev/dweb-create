@@ -50,8 +50,8 @@ export function paymentState(c: PhaseSubject & { budgetCents: number | null }, p
 }
 
 /** Título corto de una colaboración: el del paquete aceptado o la primera frase del brief. */
-export function collabTitle(c: { packageTitle?: string | null; brief: string }, max = 60): string {
-  const base = (c.packageTitle?.trim() || c.brief.trim().split(/(?<=[.!?])\s|\n/)[0] || 'Colaboración').trim().replace(/\.$/, '')
+export function collabTitle(c: { campaignName?: string | null; packageTitle?: string | null; brief: string }, max = 60): string {
+  const base = (c.campaignName?.trim() || c.packageTitle?.trim() || c.brief.trim().split(/(?<=[.!?])\s|\n/)[0] || 'Colaboración').trim().replace(/\.$/, '')
   return base.length > max ? `${base.slice(0, max - 1).trimEnd()}…` : base
 }
 
@@ -59,9 +59,11 @@ export function collabTitle(c: { packageTitle?: string | null; brief: string }, 
  * Nombre con el que se reconoce una colaboración en su página: el del paquete aceptado; si no hay, la primera frase
  * del brief solo si es corta y entera (nunca cortada con «…»); y si tampoco, «Colaboración con {persona}». El texto
  * completo del brief se enseña aparte (`collabBriefExcerpt`), así que el título deja de depender de una frase truncada.
- * No hay un campo «nombre de campaña» en la base de datos: añadirlo exigiría una migración.
+ * Si quien creó la solicitud puso «nombre de la campaña» (`campaign_name`), manda ese nombre.
  */
-export function collabDisplayName(c: { packageTitle?: string | null; brief: string }, counterpart: string, max = 48): string {
+export function collabDisplayName(c: { campaignName?: string | null; packageTitle?: string | null; brief: string }, counterpart: string, max = 48): string {
+  const named = c.campaignName?.trim()
+  if (named) return named
   const pkg = c.packageTitle?.trim()
   if (pkg) return pkg
   const first = (c.brief.trim().split(/(?<=[.!?])\s|\n/)[0] ?? '').trim().replace(/\.$/, '')
@@ -79,4 +81,13 @@ export function collabBriefExcerpt(c: { brief: string }, title: string, max = 16
 /** Importe en euros; a diferencia de `formatEuros`, un 0 se escribe «0 €» (no «Sin presupuesto»). */
 export function formatMoney(cents: number): string {
   return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(cents / 100)
+}
+
+/**
+ * Nombre con el que se reconoce una colaboración en contexto (chips, filtros, tarjetas del tablero): el nombre de la
+ * campaña si quien envió la solicitud lo puso; si no, el de la marca (o `fallback`). Campaña ≠ marca ≠ creador: la
+ * marca sigue saliendo donde se habla de la marca (p. ej. «tienes una colaboración activa con …»).
+ */
+export function collabContextLabel(c: { campaignName?: string | null; partnerName?: string | null } | null | undefined, fallback = 'Colaboración'): string {
+  return c?.campaignName?.trim() || c?.partnerName?.trim() || fallback
 }

@@ -5,7 +5,7 @@ const phases: PostStatus[] = ['idea', 'in_production', 'ready_for_review', 'sche
 </script>
 
 <template>
-  <section class="hero">
+  <section class="hero" data-companion data-companion-mood="happy" data-companion-tone="dark" data-companion-say="Soy Raya. Te acompaño por la portada.">
     <div class="container">
       <div class="hero__grid">
         <div>

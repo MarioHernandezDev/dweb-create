@@ -1,3 +1,6 @@
+/** Resumen de los paquetes activos de un perfil: cuántos, desde cuánto y cuál es el destacado (si lo hay). */
+export interface PackageSummary { count: number; minCents: number; featured: { title: string; priceCents: number } | null }
+
 export interface Package {
   id: string
   profileId: string
@@ -8,6 +11,8 @@ export interface Package {
   active: boolean
   coverUrl: string | null
   sortOrder: number
+  /** Paquete principal del perfil (uno como máximo): sale primero. */
+  isFeatured: boolean
   createdAt: string
 }
 
@@ -21,10 +26,11 @@ interface PackageRow {
   active: boolean
   cover_url: string | null
   sort_order: number
+  is_featured: boolean | null
   created_at: string
 }
 
-const PACKAGE_SELECT = 'id, profile_id, title, description, price_cents, deliverables, active, cover_url, sort_order, created_at'
+const PACKAGE_SELECT = 'id, profile_id, title, description, price_cents, deliverables, active, cover_url, sort_order, is_featured, created_at'
 
 function mapRow(row: PackageRow): Package {
   return {
@@ -37,6 +43,7 @@ function mapRow(row: PackageRow): Package {
     active: row.active,
     coverUrl: row.cover_url,
     sortOrder: row.sort_order,
+    isFeatured: !!row.is_featured,
     createdAt: row.created_at
   }
 }
@@ -59,6 +66,7 @@ export function usePackages() {
   // tocar nada. En cuanto alguien reordena con reorderPackages(), esos
   // valores explícitos mandan.
   const ORDER = [
+    { column: 'is_featured', ascending: false },
     { column: 'sort_order', ascending: true },
     { column: 'created_at', ascending: false }
   ] as const
@@ -204,6 +212,18 @@ export function usePackages() {
     }
   }
 
+  /** Marca un paquete como principal (o quita la marca con `null`). Atómico en la base: solo uno por perfil. */
+  async function setFeaturedPackage(id: string | null) {
+    const { error } = await client.rpc('set_featured_package' as never, { p_package_id: id } as never)
+    if (error) {
+      console.error('[usePackages] fallo al destacar el paquete:', error.message)
+      throw error
+    }
+    const current = myPackages.value ?? []
+    const next = current.map((p) => ({ ...p, isFeatured: p.id === id }))
+    myPackages.value = [...next.filter((p) => p.isFeatured), ...next.filter((p) => !p.isFeatured)]
+  }
+
   async function deletePackage(id: string) {
     const { error } = await client.from('packages').delete().eq('id', id)
     if (error) {
@@ -219,18 +239,21 @@ export function usePackages() {
    * Resumen de los paquetes activos de varios perfiles de una sola vez (cuántos y desde cuánto), para enseñarlo en las
    * tarjetas de Descubrir sin una consulta por tarjeta. Solo lectura; los perfiles sin paquetes no aparecen.
    */
-  async function summarizePackagesOf(profileIds: string[]): Promise<Record<string, { count: number; minCents: number }>> {
+  async function summarizePackagesOf(profileIds: string[]): Promise<Record<string, PackageSummary>> {
     const ids = [...new Set(profileIds)].filter(Boolean)
     if (!ids.length) return {}
-    const { data, error } = await client.from('packages').select('profile_id, price_cents').in('profile_id', ids).eq('active', true)
+    const { data, error } = await client.from('packages').select('profile_id, title, price_cents, is_featured').in('profile_id', ids).eq('active', true)
     if (error) {
       console.error('[usePackages] fallo al resumir paquetes:', error.message)
       return {}
     }
-    const out: Record<string, { count: number; minCents: number }> = {}
-    for (const row of data as { profile_id: string; price_cents: number }[]) {
+    const out: Record<string, PackageSummary> = {}
+    for (const row of data as { profile_id: string; title: string; price_cents: number; is_featured: boolean | null }[]) {
       const cur = out[row.profile_id]
-      out[row.profile_id] = cur ? { count: cur.count + 1, minCents: Math.min(cur.minCents, row.price_cents) } : { count: 1, minCents: row.price_cents }
+      const featured = row.is_featured ? { title: row.title, priceCents: row.price_cents } : (cur?.featured ?? null)
+      out[row.profile_id] = cur
+        ? { count: cur.count + 1, minCents: Math.min(cur.minCents, row.price_cents), featured }
+        : { count: 1, minCents: row.price_cents, featured }
     }
     return out
   }
@@ -246,6 +269,7 @@ export function usePackages() {
     updatePackage,
     uploadPackageCover,
     reorderPackages,
+    setFeaturedPackage,
     deletePackage
   }
 }

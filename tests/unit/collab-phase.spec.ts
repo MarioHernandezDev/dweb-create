@@ -33,6 +33,8 @@ describe('pago y título', () => {
   })
   it('el título sale del paquete o de la primera frase del brief', () => {
     expect(collabTitle({ packageTitle: 'Pack reels', brief: 'x' })).toBe('Pack reels')
+    expect(collabTitle({ campaignName: 'Primavera', packageTitle: 'Pack reels', brief: 'x' })).toBe('Primavera')
+    expect(collabDisplayName({ campaignName: ' Primavera ', packageTitle: 'Pack', brief: 'Texto largo de ejemplo.' }, 'Ana')).toBe('Primavera')
     expect(collabTitle({ brief: 'Dos reels con el kit. Más detalles aquí.' })).toBe('Dos reels con el kit')
     expect(collabTitle({ brief: 'a'.repeat(100) }, 20)).toHaveLength(20)
   })
@@ -50,5 +52,14 @@ describe('pago y título', () => {
     expect(collabBriefExcerpt({ brief: 'Dos reels con el kit.' }, 'Dos reels con el kit')).toBeNull()
     expect(collabBriefExcerpt({ brief: 'Dos reels con el kit. Más detalles aquí.' }, 'Dos reels con el kit')).toBe('Dos reels con el kit. Más detalles aquí.')
     expect(collabBriefExcerpt({ brief: 'x'.repeat(300) }, 'T')).toHaveLength(160)
+  })
+})
+
+import { collabContextLabel } from '../../app/utils/collab-phase'
+describe('collabContextLabel', () => {
+  it('prefiere el nombre de campaña, luego la marca, luego el valor por defecto', () => {
+    expect(collabContextLabel({ campaignName: ' Primavera ', partnerName: 'mexo' })).toBe('Primavera')
+    expect(collabContextLabel({ campaignName: null, partnerName: 'mexo' })).toBe('mexo')
+    expect(collabContextLabel(undefined)).toBe('Colaboración')
   })
 })

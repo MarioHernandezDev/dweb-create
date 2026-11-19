@@ -1,4 +1,5 @@
 import { expiryState } from './collab-expiry'
+import { formatMoney } from './collab-phase'
 import type { CollaborationStatus, PostStatus } from '~/types'
 import type { CollaborationTerms } from './collaboration-terms'
 import { hasAnyBriefSpecified, hasAnyTermsSpecified } from './collaboration-terms'
@@ -19,6 +20,8 @@ export interface WorkCollab extends CollaborationTerms {
   counterpartName: string
   /** Texto del brief: sirve para distinguir tareas de varias colaboraciones con la misma persona. */
   brief?: string
+  /** Importe de la propuesta inicial (para decir «antes X €» al recibir una contraoferta). */
+  budgetCents?: number | null
   /** Caducidad de la solicitud pendiente: caducada ya no se puede aceptar, así que no es una tarea. */
   expiresAt?: string | null
 }
@@ -169,10 +172,20 @@ export function collaborationWork(
     } else if (iProposedLast(role, collab, events, myProfileId)) {
       waitingText = `Esperando la respuesta de ${who}`
     } else {
+      // Si hay contraofertas, la última es de la otra parte: el siguiente paso dice el cambio de precio real.
+      const counters = events.filter((e) => e.collaborationId === collab.id && e.kind === 'counteroffer')
+      const last = counters.at(-1)
+      const amountOf = (e?: WorkEvent) => (typeof e?.detail.budgetCents === 'number' ? (e.detail.budgetCents as number) : null)
+      const now = amountOf(last)
+      const before = counters.length > 1 ? amountOf(counters.at(-2)) : collab.budgetCents
+      const message = typeof last?.detail.message === 'string' ? (last.detail.message as string).trim() : ''
+      const counterDetail = now !== null
+        ? `Propone ${formatMoney(now)}${before != null && before !== now ? ` (antes ${formatMoney(before)})` : ''}${message ? ` · «${clip(message, 70)}»` : ''}. Acepta, rechaza o propón otro presupuesto.`
+        : null
       tasks.push({
         ...base, id: `respond:${collab.id}`, kind: 'respond_request', priority: 10,
-        title: collab.initiatedBy === role ? `${who} te ha respondido con otro presupuesto` : `Responde a la solicitud de ${who}`,
-        detail: collab.brief ? `«${clip(collab.brief, 70)}» · acepta, rechaza o propón otro presupuesto.` : 'Acepta, rechaza o propón otro presupuesto.',
+        title: last ? `${who} te ha respondido con otro presupuesto` : `Responde a la solicitud de ${who}`,
+        detail: counterDetail ?? (collab.brief ? `«${clip(collab.brief, 70)}» · acepta, rechaza o propón otro presupuesto.` : 'Acepta, rechaza o propón otro presupuesto.'),
         cta: 'Responder', to: collaborationHref(role, collab.id) + '#respuesta'
       })
     }

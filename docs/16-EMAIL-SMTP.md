@@ -100,3 +100,28 @@ Lo que depende de fuera del código:
 - [ ] Probar un registro real y una recuperación de contraseña.
 - [ ] Cambiar `ADMIN_PASSWORD` de prueba por una definitiva antes de abrir.
 - [ ] Programar `email-dispatch` cuando haya hosting y se hayan borrado los perfiles ficticios.
+
+## Diagnóstico: usuarios que no reciben el correo de verificación (2026-11-18)
+
+**Evidencia (registros de Auth de Supabase, solo lectura):**
+
+- Supabase Auth registró el error `unexpected_failure` con el mensaje de Google `535 5.7.8 Username and Password not accepted (BadCredentials)` en **5 momentos distintos**: 16/11 ≈11:04 y 17/11 ≈12:43, 12:47, 12:51 y 14:42 (UTC). Es decir, el SMTP personalizado del panel tenía una **contraseña de aplicación de Gmail rechazada**: el correo no salía aunque la solicitud de confirmación (`user_confirmation_requested`) sí quedaba registrada.
+- Desde el 17/11 ≈15:30 no hay más rechazos, pero tampoco registros reales posteriores que lo confirmen: **no está probado que hoy funcione de extremo a extremo**.
+- Hay `user_repeated_signup` (17/11 y 18/11): registros con un email que ya tiene cuenta. Supabase responde «éxito» sin enviar nada. La pantalla ya lo detecta (ver `onboarding.vue`).
+
+**Causa raíz más probable:** credenciales SMTP de Gmail inválidas o revocadas en *Authentication → Emails → SMTP Settings* (contraseña de aplicación mal copiada —con espacios—, revocada, o cuenta sin verificación en dos pasos). No es un fallo del código.
+
+**Lo que hay que comprobar en el panel (no accesible desde el código):**
+
+1. *SMTP Settings*: usuario `info.ciberan@gmail.com` y **contraseña de aplicación nueva de 16 caracteres, sin espacios**; host `smtp.gmail.com`, puerto `465`. Si se regenera, pegarla de nuevo en Supabase.
+2. *Authentication → URL Configuration*: **Site URL** hoy es `http://localhost:3000`; para usuarios reales el enlace del correo apuntaría ahí. Poner el dominio real y añadirlo a *Redirect URLs* junto con `/confirm`.
+3. *Rate limits*: con SMTP propio, subir el límite de correos por hora.
+4. *Sign In / Providers → Email → Confirm email*: debe estar activado.
+5. Probar con **una** cuenta propia (`tunombre+prueba@gmail.com`) y mirar de nuevo los registros de Auth.
+
+**Cambios de código hechos en esta ronda:**
+
+- `signUp` y `resend` pasan `emailRedirectTo = <origen de la app>/confirm`: el enlace vuelve a la app aunque el Site URL del panel sea otro (debe estar permitido en *Redirect URLs*).
+- Un fallo SMTP ya no se enseña en inglés crudo: se traduce a «No hemos podido enviar el correo ahora mismo…» y **no** se da por enviado.
+- `/confirm` entiende enlaces caducados o inválidos (`otp_expired`, `error=…`): lo explica y ofrece pedir un enlace nuevo, con cooldown.
+- Registro: «Cambiar el email» en la pantalla «Revisa tu email» para corregir una dirección mal escrita.

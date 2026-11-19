@@ -13,7 +13,7 @@ const stages: Stage[] = [
 </script>
 
 <template>
-  <section id="fases" class="band band--paper">
+  <section id="fases" class="band band--paper" data-companion data-companion-mood="swim" data-companion-say="Cada entrega pasa por cinco fases, sin perderse.">
     <div class="container">
       <div class="band__head reveal">
         <h2 class="band__title">Las cinco fases por las que pasa cada entrega.</h2>

@@ -1,5 +1,8 @@
 import type { Role } from '~/types'
 
+/** Última propuesta de precio de una solicitud (la contraoferta más reciente). */
+export interface LastProposal { by: Role; budgetCents: number; message: string | null }
+
 export interface CollabOffer {
   id: string
   collaborationId: string
@@ -82,5 +85,29 @@ export function useCollaborationOffers() {
     }
   }
 
-  return { offersByCollaboration, posting, ensureOffers, proposeOffer }
+  /**
+   * Quién hizo la última propuesta de precio de cada solicitud (una sola consulta para varias). Sirve para saber a
+   * quién le toca responder en los paneles de Inicio sin abrir cada colaboración. Las que no tienen contraofertas
+   * no aparecen: ahí manda quien inició la solicitud.
+   */
+  async function loadLastProposers(collaborationIds: string[]): Promise<Record<string, LastProposal>> {
+    const ids = [...new Set(collaborationIds)].filter(Boolean)
+    if (!ids.length) return {}
+    const { data, error } = await client
+      .from('collaboration_offers')
+      .select('collaboration_id, proposed_by, budget_cents, message, created_at')
+      .in('collaboration_id', ids)
+      .order('created_at', { ascending: true })
+    if (error) {
+      console.error('[useCollaborationOffers] fallo al cargar los turnos:', error.message)
+      return {}
+    }
+    const out: Record<string, LastProposal> = {}
+    for (const row of data as { collaboration_id: string; proposed_by: Role; budget_cents: number; message: string | null }[]) {
+      out[row.collaboration_id] = { by: row.proposed_by, budgetCents: row.budget_cents, message: row.message }
+    }
+    return out
+  }
+
+  return { offersByCollaboration, posting, ensureOffers, proposeOffer, loadLastProposers }
 }

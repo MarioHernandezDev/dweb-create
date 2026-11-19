@@ -32,6 +32,9 @@ const scoreWord = computed(() => (props.score < 45 ? 'bajo' : props.score < 72 ?
         <p class="mt-1 text-sm text-[var(--color-text-muted)]">
           {{ aiEvaluated ? 'Evaluado con IA sobre el contenido real de este borrador.' : 'Evaluado solo por la forma del borrador (longitud, hashtags) — sin IA disponible ahora mismo.' }}
         </p>
+        <p class="mt-1 text-micro text-[var(--color-text-faint)]" data-prediction-disclaimer>
+          Es una estimación orientativa para este borrador: no mide resultados reales ni garantiza cuánto alcanzará.
+        </p>
       </div>
     </div>
 

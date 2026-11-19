@@ -2,8 +2,10 @@ export type ToastTone = 'success' | 'error' | 'info'
 
 export interface ToastAction {
   label: string
-  /** Ruta interna a la que lleva el botón del aviso. */
-  to: string
+  /** Ruta interna a la que lleva el botón del aviso… */
+  to?: string
+  /** …o función que ejecuta (p. ej. «Deshacer»). Si hay `onClick`, el botón es un botón, no un enlace. */
+  onClick?: () => void
 }
 
 export interface Toast {

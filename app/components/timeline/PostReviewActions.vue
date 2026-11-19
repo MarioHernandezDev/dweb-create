@@ -20,6 +20,7 @@ const emit = defineEmits<{ done: [] }>()
 
 const { approvePost, requestChanges, applyReview, refresh } = usePartnerPosts()
 
+const toast = useToast()
 const acting = ref(false)
 const stage = ref<'idle' | 'requesting-changes'>('idle')
 const changeComment = ref('')
@@ -33,6 +34,7 @@ async function submitApprove() {
   try {
     await approvePost(props.postId, approveComment.value, props.contentVersion)
     emit('done') // antes de reflejar la fase: al cambiar, este formulario se desmonta y ya no podría avisar
+    toast.success('Publicación aprobada: queda programada y el creador lo verá.')
     applyReview(props.postId, 'scheduled')
   } catch (e) {
     changeError.value = errorMessage(e, 'No se ha podido aprobar. Inténtalo de nuevo.')
@@ -52,6 +54,7 @@ async function submitChanges() {
   try {
     await requestChanges(props.postId, changeComment.value, props.contentVersion)
     emit('done')
+    toast.success('Cambios solicitados: el creador verá tu comentario y volverá a producción.')
     applyReview(props.postId, 'in_production')
   } catch (e) {
     changeError.value = errorMessage(e, 'No se ha podido enviar. Inténtalo de nuevo.')

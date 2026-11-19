@@ -4,6 +4,7 @@ import { isFichaIncomplete } from '~/utils/ficha'
 import { relativeTime, isPostOverdue } from '~/utils/status'
 import { publishedThisWeek as countPublishedThisWeek } from '~/utils/post-library'
 import type { FirstStep } from '~/components/onboarding/FirstSteps.vue'
+import type { LastProposal } from '~/composables/useCollaborationOffers'
 
 import { weekDays, overdueCount, phaseShares } from '~/utils/home-charts'
 
@@ -73,7 +74,13 @@ const publishedThisWeek = computed(() => countPublishedThisWeek(posts.value, new
 const goalPct = computed(() => (posts.value.length ? Math.min(100, Math.round((publishedThisWeek.value / weeklyTarget.value) * 100)) : 0))
 
 const nextDeliveries = computed(() => [...today.value, ...upcoming.value].sort((a, b) => a.dueInDays - b.dueInDays))
-const pendingRequestList = computed(() => requests.value.filter((r) => r.status === 'requested'))
+// Solo las solicitudes a las que me toca responder: manda quien hizo la ÚLTIMA propuesta (la inicial o la última
+// contraoferta). Antes entraban también las que yo misma inicié y estaban esperando a la marca.
+const { loadLastProposers } = useCollaborationOffers()
+const lastProposers = ref<Record<string, LastProposal>>({})
+const requestedIds = computed(() => requests.value.filter((r) => r.status === 'requested').map((r) => r.id))
+watch(requestedIds, async (ids) => { if (import.meta.client) lastProposers.value = await loadLastProposers(ids) }, { immediate: true })
+const pendingRequestList = computed(() => requests.value.filter((r) => r.status === 'requested' && (lastProposers.value[r.id]?.by ?? r.initiatedBy) === 'partner'))
 const unreadConversations = computed(() => conversations.value.filter((c) => c.unread))
 
 // Panel destacado: un único protagonista, elegido por lo más urgente que
@@ -93,8 +100,11 @@ const hero = computed(() => {
   if (request) {
     return {
       coverUrl: null, coverSeed: request.id, icon: 'ph:handshake-fill',
-      eyebrow: 'Solicitud pendiente', title: `${request.partnerName} quiere colaborar contigo`,
-      description: request.brief, ctaLabel: 'Responder', ctaTo: '/creator/requests'
+      eyebrow: 'Solicitud pendiente',
+      title: lastProposers.value[request.id] ? `${request.partnerName} te ha respondido con otro presupuesto` : `${request.partnerName} quiere colaborar contigo`,
+      description: lastProposers.value[request.id]
+        ? `Propone ${formatEuros(lastProposers.value[request.id]!.budgetCents)}${lastProposers.value[request.id]!.message ? ` · «${lastProposers.value[request.id]!.message!.trim().slice(0, 90)}»` : ''}.`
+        : request.brief, ctaLabel: 'Responder', ctaTo: '/creator/requests'
     }
   }
   const next = nextDeliveries.value[0]
@@ -112,6 +122,10 @@ const hero = computed(() => {
     ctaLabel: 'Descubrir', ctaTo: '/creator/discover'
   }
 })
+
+// Lo que exige una acción tuya (entrega fuera de plazo, solicitud sin responder) va ARRIBA, antes que los números y los
+// gráficos; el resto del tiempo, el panel destacado se queda en su columna como sugerencia.
+const heroUrgent = computed(() => !isFresh.value && (overdue.value.length > 0 || pendingRequestList.value.length > 0))
 
 interface ActivityItem { icon: string; title: string; subtitle: string; to: string }
 const activity = computed<ActivityItem[]>(() => {
@@ -139,18 +153,27 @@ const chartOverdue = computed(() => overdueCount(posts.value))
 const chartShares = computed(() => phaseShares(posts.value))
 
 // Frase de estado: solo con lo que de verdad hay (nada inventado).
+// Contador de tareas de la bandeja (lo rellena la barra superior); aquí solo se lee.
+const taskCount = useState<number>('my-work-task-count', () => 0)
 const statusLine = computed(() => {
   const parts: string[] = []
   if (overdue.value.length) parts.push(`${overdue.value.length} ${overdue.value.length === 1 ? 'entrega fuera de plazo' : 'entregas fuera de plazo'}`)
   if (pendingRequestList.value.length) parts.push(`${pendingRequestList.value.length} ${pendingRequestList.value.length === 1 ? 'solicitud sin responder' : 'solicitudes sin responder'}`)
   if (unreadConversations.value.length) parts.push(`${unreadConversations.value.length} ${unreadConversations.value.length === 1 ? 'conversación con mensajes nuevos' : 'conversaciones con mensajes nuevos'}`)
-  return parts.length ? parts.join(' · ') : 'Todo al día por ahora.'
+  if (parts.length) return parts.join(' · ')
+  if (isFresh.value) return 'Empieza por estos pasos para que las marcas te encuentren.'
+  // «Todo al día» solo si la bandeja tampoco tiene tareas pendientes.
+  return taskCount.value > 0 ? `Tienes ${taskCount.value} ${taskCount.value === 1 ? 'tarea pendiente' : 'tareas pendientes'} en tu bandeja.` : 'Todo al día por ahora.'
 })
+
+// Cuenta sin actividad todavía (nada publicado, ni solicitudes, ni colaboraciones): el panel de números a cero y el
+// gráfico vacío no enseñan nada, así que se esconden y «Primeros pasos» pasa arriba. En cuanto hay actividad, vuelve lo normal.
+const isFresh = computed(() => !posts.value.length && !requests.value.length && activeCollaborations.value === 0)
 
 // Primeros pasos: cada uno se marca solo con datos reales de la cuenta (ver FirstSteps.vue).
 const firstSteps = computed<FirstStep[]>(() => [
   { label: 'Completa tu ficha pública', hint: 'Las marcas te encuentran en Descubrir por tu ficha.', done: !fichaIncomplete.value, to: '/creator/profile' },
-  { label: 'Publica tu primer paquete', hint: 'Así pueden hacerte una oferta desde el chat.', done: !hasNoPackages.value, to: '/creator/profile?tab=packages&nuevo=1' },
+  { label: 'Publica tu primer paquete', hint: 'Así pueden hacerte una oferta desde el chat.', done: !hasNoPackages.value, to: '/creator/packages?nuevo=1' },
   { label: 'Contacta con una marca', hint: 'Elige una en Descubrir y envíale una propuesta.', done: requests.value.length > 0, to: '/creator/discover' },
   { label: 'Crea tu primera publicación', hint: 'Organiza el contenido en el tablero, de la idea a publicarlo.', done: posts.value.length > 0, to: '/creator/timeline?nueva=1' }
 ])
@@ -167,14 +190,46 @@ const firstSteps = computed<FirstStep[]>(() => [
       <BaseButton variant="brand" icon="ph:plus-bold" class="home-greeting__action" data-new-post @click="composerOpen = true">Nueva publicación</BaseButton>
     </section>
 
-    <section class="home-stats">
+    <HomeHeroCard
+      v-if="heroUrgent" class="home-urgent"
+      :cover-url="hero.coverUrl" :icon="hero.icon"
+      :eyebrow="hero.eyebrow" :title="hero.title" :description="hero.description"
+      :cta-label="hero.ctaLabel" :cta-to="hero.ctaTo"
+    />
+
+    <FirstSteps v-if="isFresh" role="creator" :steps="firstSteps" class="home-firststeps" />
+
+    <section v-if="!isFresh" class="home-stats">
       <StatTile label="Colaboraciones activas" :value="String(activeCollaborations)" tint="menta" />
       <StatTile label="Solicitudes pendientes" :value="String(pendingRequests)" tint="mantequilla" />
       <StatTile label="Entregas próximas" :value="String(nextDeliveries.length)" tint="cielo" />
       <StatTile label="Objetivo semanal" :value="`${publishedThisWeek}/${weeklyTarget}`" tint="voltio" />
     </section>
 
-    <section class="home-charts">
+    <section class="home-packages-band">
+      <!-- Tus paquetes: lo que permite que te hagan ofertas. Visible desde Inicio y creable en un clic. -->
+      <PanelCard title="Tus paquetes" padding="sm" data-home-packages>
+        <div v-if="myPackages?.length" class="activity">
+          <NuxtLink v-for="p in myPackages.slice(0, 3)" :key="p.id" to="/creator/packages" class="activity__row">
+            <span class="activity__icon"><Icon name="ph:package-fill" class="size-4" /></span>
+            <div class="min-w-0 flex-1">
+              <p class="activity__title truncate">{{ p.title }}</p>
+              <p class="activity__sub truncate">{{ formatEuros(p.priceCents) }}<template v-if="!p.active"> · en pausa</template></p>
+            </div>
+          </NuxtLink>
+          <div class="home-packages__foot">
+            <BaseButton to="/creator/packages?nuevo=1" variant="secondary" size="sm" icon="ph:plus-bold">Nuevo paquete</BaseButton>
+            <NuxtLink v-if="myPackages.length > 3" to="/creator/packages" class="home-packages__more">Ver los {{ myPackages.length }}</NuxtLink>
+          </div>
+        </div>
+        <div v-else class="home-packages__empty">
+          <p>Los paquetes son lo primero que ven las marcas: qué haces y a qué precio. Con una plantilla lo tienes en un minuto.</p>
+          <BaseButton to="/creator/packages?nuevo=1" variant="primary" size="sm" icon="ph:plus-bold" data-home-create-package>Crear mi primer paquete</BaseButton>
+        </div>
+      </PanelCard>
+    </section>
+
+    <section v-if="!isFresh" class="home-charts">
       <PanelCard title="Entregas de los próximos 7 días" description="Pendientes y publicadas, día a día">
         <WeekColumns :days="chartDays" :overdue="chartOverdue" />
       </PanelCard>
@@ -186,6 +241,7 @@ const firstSteps = computed<FirstStep[]>(() => [
     <div class="home-grid">
       <div class="home-col">
         <HomeHeroCard
+          v-if="!heroUrgent"
           :cover-url="hero.coverUrl" :icon="hero.icon"
           :eyebrow="hero.eyebrow" :title="hero.title" :description="hero.description"
           :cta-label="hero.ctaLabel" :cta-to="hero.ctaTo"
@@ -227,28 +283,7 @@ const firstSteps = computed<FirstStep[]>(() => [
           </div>
         </PanelCard>
 
-        <!-- Tus paquetes: lo que permite que te hagan ofertas. Visible desde Inicio y creable en un clic. -->
-        <PanelCard title="Tus paquetes" padding="sm" data-home-packages>
-          <div v-if="myPackages?.length" class="activity">
-            <NuxtLink v-for="p in myPackages.slice(0, 3)" :key="p.id" to="/creator/profile?tab=packages" class="activity__row">
-              <span class="activity__icon"><Icon name="ph:package-fill" class="size-4" /></span>
-              <div class="min-w-0 flex-1">
-                <p class="activity__title truncate">{{ p.title }}</p>
-                <p class="activity__sub truncate">{{ formatEuros(p.priceCents) }}<template v-if="!p.active"> · en pausa</template></p>
-              </div>
-            </NuxtLink>
-            <div class="home-packages__foot">
-              <BaseButton to="/creator/profile?tab=packages&nuevo=1" variant="secondary" size="sm" icon="ph:plus-bold">Nuevo paquete</BaseButton>
-              <NuxtLink v-if="myPackages.length > 3" to="/creator/profile?tab=packages" class="home-packages__more">Ver los {{ myPackages.length }}</NuxtLink>
-            </div>
-          </div>
-          <div v-else class="home-packages__empty">
-            <p>Los paquetes son lo primero que ven las marcas: qué haces y a qué precio. Con una plantilla lo tienes en un minuto.</p>
-            <BaseButton to="/creator/profile?tab=packages&nuevo=1" variant="primary" size="sm" icon="ph:plus-bold" data-home-create-package>Crear mi primer paquete</BaseButton>
-          </div>
-        </PanelCard>
-
-        <FirstSteps role="creator" :steps="firstSteps" />
+        <FirstSteps v-if="!isFresh" role="creator" :steps="firstSteps" />
       </div>
     </div>
 

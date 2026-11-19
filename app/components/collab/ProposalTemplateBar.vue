@@ -6,7 +6,7 @@ import { errorMessage } from '~/utils/error-message'
  * Barra de plantillas de una propuesta: aplicar una guardada (rellena el formulario, que se puede retocar) y
  * guardar lo que hay escrito como plantilla. El formulario que la usa decide qué datos entran (`current`).
  */
-const props = defineProps<{ kind: TemplateKind; current: Record<string, unknown> }>()
+const props = withDefaults(defineProps<{ kind: TemplateKind; current: Record<string, unknown>; applyHint?: string }>(), { applyHint: 'revisa los datos antes de enviar' })
 const emit = defineEmits<{ apply: [data: unknown] }>()
 
 const { templates, load, save, remove } = useProposalTemplates(props.kind)
@@ -25,7 +25,7 @@ onMounted(() => load())
 function apply() {
   if (!selected.value) return
   emit('apply', selected.value.data)
-  toast.success(`Plantilla «${selected.value.name}» aplicada: revisa los datos antes de enviar`)
+  toast.success(`Plantilla «${selected.value.name}» aplicada: ${props.applyHint}`)
 }
 function startNaming() { naming.value = true; name.value = selected.value?.name ?? ''; error.value = '' }
 
@@ -47,7 +47,7 @@ async function saveCurrent() {
 async function removeSelected() {
   const t = selected.value
   if (!t || busy.value) return
-  if (!(await confirm({ title: '¿Borrar la plantilla?', message: `«${t.name}» dejará de estar disponible. Las propuestas ya enviadas no cambian.`, confirmLabel: 'Borrar plantilla' }))) return
+  if (!(await confirm({ title: '¿Borrar la plantilla?', message: `«${t.name}» dejará de estar disponible. Lo que ya hayas creado con ella no cambia.`, confirmLabel: 'Borrar plantilla' }))) return
   busy.value = true
   error.value = ''
   try {

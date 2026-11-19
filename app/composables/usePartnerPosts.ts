@@ -11,6 +11,8 @@ interface PostRow {
   status: PostStatus
   due_date: string
   media_url: string | null
+  draft_url?: string | null
+  result_url?: string | null
   content_version: number | null
   metadata: { hashtags?: string[] } | null
   checklist_items: { done: boolean }[] | null
@@ -41,6 +43,8 @@ function mapRow(row: PostRow, checklist?: { total: number; done: number }): Post
     hashtags: row.metadata?.hashtags ?? [],
     cover: coverFromId(row.id),
     mediaUrl: row.media_url,
+    draftUrl: row.draft_url ?? null,
+    resultUrl: row.result_url ?? null,
     contentVersion: row.content_version ?? 1,
     // Las labels se quedan fuera a propósito — son organización personal
     // del creador, no información de progreso (ver migración

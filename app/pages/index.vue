@@ -13,6 +13,7 @@ useHead({ title: 'Creadores y marcas' })
       <LandingRoles />
       <LandingCta />
     </main>
+    <LandingCompanion />
     <LandingFooter />
   </div>
 </template>

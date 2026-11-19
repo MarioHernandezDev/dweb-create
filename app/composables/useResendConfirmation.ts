@@ -33,7 +33,7 @@ export function useResendConfirmation() {
     sending.value = true
     error.value = ''
     sent.value = false
-    const { error: resendError } = await supabase.auth.resend({ type: 'signup', email: email.trim() })
+    const { error: resendError } = await supabase.auth.resend({ type: 'signup', email: email.trim(), options: { emailRedirectTo: `${window.location.origin}/confirm` } })
     sending.value = false
     if (resendError) {
       error.value = translateAuthError(resendError.message)

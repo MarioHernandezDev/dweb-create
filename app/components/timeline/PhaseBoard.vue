@@ -2,6 +2,7 @@
 import draggable from 'vuedraggable'
 import type { ComponentPublicInstance } from 'vue'
 import type { Post, PostStatus, Platform } from '~/types'
+import { collabContextLabel } from '~/utils/collab-phase'
 import { statusMeta, isPostOverdue, phaseDescription } from '~/utils/status'
 import { emptyFilters, filterPosts, hasActiveFilters, isOldPublished, RECENT_PUBLISHED_DAYS, type PostFilters } from '~/utils/post-library'
 
@@ -73,7 +74,7 @@ const isOverdue = isPostOverdue
 // Proyecto de una card = el partner de su colaboración (null si es contenido propio).
 function projectNameOf(post: Post): string | null {
   if (!post.collaborationId) return null
-  return collabRequests.value.find((c) => c.id === post.collaborationId)?.partnerName ?? 'Colaboración'
+  return collabContextLabel(collabRequests.value.find((c) => c.id === post.collaborationId))
 }
 
 // Compartida por el arrastre y el selector rápido de fase (#actions) — en
@@ -86,7 +87,14 @@ async function moveTo(post: Post, phase: PostStatus, fromDrag = false) {
 
   // La confirmación de saltarse al partner, la escritura y los avisos viven en
   // usePostActions (los comparte la Lista); aquí solo se refleja en las columnas.
-  const result = await changeStatus(post, phase)
+  // «Deshacer» devuelve la tarjeta a su columna (el tablero guarda las columnas aparte de las publicaciones).
+  const result = await changeStatus(post, phase, {
+    onUndo: (previous) => {
+      const idx = board[phase].findIndex((p) => p.id === post.id)
+      if (idx !== -1) board[phase].splice(idx, 1)
+      if (!board[previous].some((p) => p.id === post.id)) board[previous].push(post)
+    }
+  })
 
   if (result === 'ok') {
     if (!fromDrag) {

@@ -28,6 +28,7 @@ const platforms = defineModel<string[]>('platforms', { required: true })
 const response = defineModel<ResponseFilter>('response', { required: true })
 const types = defineModel<string[]>('types', { required: true })
 const verifiedOnly = defineModel<boolean>('verifiedOnly', { required: true })
+const withPackages = defineModel<boolean>('withPackages', { default: false })
 function toggleType(t: string) {
   types.value = types.value.includes(t) ? types.value.filter((x) => x !== t) : [...types.value, t]
 }
@@ -69,7 +70,7 @@ const visibleCategories = computed(() => (showAllCategories.value
 const hiddenCategoryCount = computed(() => DISCOVERY_CATEGORIES.length - visibleCategories.value.length)
 
 // Criterios secundarios (red, tipo, respuesta, verificadas) plegados en «Más filtros»; abiertos si ya hay alguno aplicado.
-const advancedActiveCount = computed(() => platforms.value.length + types.value.length + (response.value !== 'any' ? 1 : 0) + (verifiedOnly.value ? 1 : 0))
+const advancedActiveCount = computed(() => platforms.value.length + types.value.length + (response.value !== 'any' ? 1 : 0) + (verifiedOnly.value ? 1 : 0) + (withPackages.value ? 1 : 0))
 const advancedOpen = ref(advancedActiveCount.value > 0)
 
 const responseOptions: { value: ResponseFilter; label: string }[] = [
@@ -143,6 +144,12 @@ const responseOptions: { value: ResponseFilter; label: string }[] = [
       </label>
       <p class="dfilters__hint">Según lo que han tardado de verdad en contestar solicitudes. Si no hay datos, no aparecen al filtrar.</p>
     </fieldset>
+
+    <label class="dswitch" data-filter-packages>
+      <span>{{ brandFilters ? 'Solo con necesidades publicadas' : 'Solo con paquetes publicados' }}</span>
+      <input v-model="withPackages" type="checkbox" role="switch">
+      <span class="dswitch__track" aria-hidden="true"><span class="dswitch__thumb" /></span>
+    </label>
 
     <label v-if="brandFilters" class="dswitch">
       <span>Solo marcas verificadas</span>

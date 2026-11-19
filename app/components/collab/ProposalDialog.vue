@@ -31,6 +31,7 @@ const posts = ref(0)
 const stories = ref(0)
 const usage = ref<UsageOption>('none')
 const message = ref('')
+const campaignName = ref('')
 const binding = ref(false)
 
 // Detalles opcionales (las condiciones que ya existían en la propuesta).
@@ -49,6 +50,7 @@ watch(open, (isOpen) => {
   reels.value = 1; posts.value = 0; stories.value = 0
   usage.value = 'none'
   message.value = ''
+  campaignName.value = ''
   binding.value = false
   termsOpen.value = false
   campaignGoal.value = ''; targetAudience.value = ''; tone.value = ''
@@ -122,6 +124,7 @@ async function send() {
     creator_id: me.id,
     initiated_by: 'creator',
     // El mensaje es opcional: sin él, la propuesta se resume sola (el campo `brief` no admite vacío).
+    campaign_name: campaignName.value.trim() || null,
     brief: message.value.trim() || `Propuesta: ${deliverables}.`,
     budget_cents: rateCents.value,
     scope_notes: deliverables,
@@ -190,6 +193,9 @@ async function send() {
             class="proposal__chip" :class="usage === o.value && 'is-on'" @click="usage = o.value"
           >{{ o.label }}</button>
         </div>
+
+        <h3 class="proposal__h">Nombre de la campaña <span class="proposal__opt">(opcional)</span></h3>
+        <input v-model="campaignName" maxlength="80" placeholder="Ej.: Reseña de producto" class="input w-full h-11" aria-label="Nombre de la campaña">
 
         <h3 class="proposal__h">Mensaje <span class="proposal__opt">(opcional)</span></h3>
         <textarea v-model="message" rows="3" maxlength="1000" placeholder="Cuéntales qué puedes hacer por ellos y en qué formato…" class="textarea w-full resize-none" aria-label="Mensaje" />

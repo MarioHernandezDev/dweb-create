@@ -63,6 +63,8 @@ async function register() {
     email: email.value,
     password: password.value,
     options: {
+      // El enlace del correo vuelve a ESTA app (no al «Site URL» del panel, que hoy es localhost).
+      emailRedirectTo: `${window.location.origin}/confirm`,
       data: {
         role: selectedRole.value,
         full_name: fullName.value,
@@ -92,6 +94,12 @@ async function register() {
   }
 
   stage.value = 'sent'
+}
+
+// «Me equivoqué de email»: vuelve al formulario con todo lo escrito para corregirlo y crear la cuenta con la dirección buena.
+function changeEmail() {
+  stage.value = 'form'
+  error.value = ''
 }
 </script>
 
@@ -187,6 +195,7 @@ async function register() {
           <p v-if="resent" class="text-sm text-[var(--text-muted)]" role="status">Listo, te lo hemos enviado otra vez. Mira también el spam.</p>
           <p v-if="resendError" class="text-sm text-[var(--color-danger)]" role="alert">{{ resendError }}</p>
         </div>
+        <p class="text-sm text-[var(--text-muted)] mt-4">¿Te has equivocado de dirección? <button type="button" class="font-semibold underline text-[var(--text-strong)]" data-change-email @click="changeEmail">Cambiar el email</button></p>
         <BaseButton to="/login" variant="secondary" size="lg" icon="ph:arrow-left-bold" class="mt-4">Volver a acceder</BaseButton>
       </div>
     </Transition>

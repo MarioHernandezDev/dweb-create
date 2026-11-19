@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { formatEuros } from '~/utils/mock-data'
-import { PLATFORM_SHORT, responseLabel } from '~/utils/discover-view'
+import { PLATFORM_SHORT, fitSummary, responseLabel } from '~/utils/discover-view'
+import type { PackageSummary } from '~/composables/usePackages'
 import type { DiscoveryResult } from '~/composables/useDiscover'
 
 /**
@@ -26,7 +27,9 @@ const props = defineProps<{
   /** Primeras tarjetas: la foto se carga ya, con prioridad. */
   priority?: boolean
   /** Paquetes activos del perfil (cuántos y desde cuánto), si se han cargado. */
-  packages?: { count: number; minCents: number } | null
+  packages?: PackageSummary | null
+  /** Filtros activos de la búsqueda, para explicar por qué encaja esta ficha. */
+  fit?: { categories: string[]; platforms: string[] } | null
 }>()
 
 defineEmits<{ contact: [] }>()
@@ -42,6 +45,7 @@ const budgetLabel = computed(() => {
   return `${minCents ? formatEuros(minCents) : '…'} – ${maxCents ? formatEuros(maxCents) : '…'}`
 })
 const budgetCaption = computed(() => (props.kind === 'partner' ? 'Presupuesto' : 'Tarifa'))
+const fitText = computed(() => (props.fit ? fitSummary(props.result, props.fit) : null))
 const response = computed(() => responseLabel(props.result.responseHours))
 const initial = computed(() => (props.result.name.trim()[0] ?? '?').toUpperCase())
 // Ficha casi vacía (sin foto, texto, categorías ni importes): una tarjeta más baja, para que no ocupe tanto
@@ -97,6 +101,7 @@ async function message() {
         <Icon v-if="result.verified" name="ph:seal-check-fill" class="dcard__verified" title="Marca verificada por CIBERAN" aria-label="Marca verificada" />
       </h3>
 
+      <p v-if="fitText" class="dcard__fit" data-card-fit><Icon name="ph:target-bold" class="size-4 shrink-0" />{{ fitText }}</p>
       <p v-if="featured && result.reason" class="dcard__reason"><Icon name="ph:lightbulb-fill" class="size-4 shrink-0 mt-0.5" />{{ result.reason }}</p>
       <p v-else-if="result.bio" class="dcard__bio">{{ result.bio }}</p>
       <p v-else class="dcard__bio dcard__bio--empty">Aún no ha completado su ficha</p>
@@ -112,7 +117,8 @@ async function message() {
 
       <p v-if="packages" class="dcard__pkgs" data-card-packages>
         <Icon name="ph:package-fill" class="size-4 shrink-0" />
-        <span>{{ packages.count }} {{ kind === 'partner' ? (packages.count === 1 ? 'necesidad' : 'necesidades') : (packages.count === 1 ? 'paquete' : 'paquetes') }} · desde {{ formatEuros(packages.minCents) }}</span>
+        <span v-if="packages.featured" class="truncate" data-card-featured>Destacado: {{ packages.featured.title }} · {{ formatEuros(packages.featured.priceCents) }}<template v-if="packages.count > 1"> · +{{ packages.count - 1 }} más</template></span>
+        <span v-else>{{ packages.count }} {{ kind === 'partner' ? (packages.count === 1 ? 'necesidad' : 'necesidades') : (packages.count === 1 ? 'paquete' : 'paquetes') }} · desde {{ formatEuros(packages.minCents) }}</span>
       </p>
       <!-- Siempre hay línea de importe: así las tarjetas se comparan fila a fila, también las que no lo indican. -->
       <p v-if="budgetLabel" class="dcard__budget"><span>{{ budgetCaption }}</span><strong>{{ budgetLabel }}</strong></p>

@@ -5,6 +5,7 @@ import { isFichaIncomplete } from '~/utils/ficha'
 import { relativeTime, isUnresolvedCollaborationStatus } from '~/utils/status'
 import type { Creator, Post } from '~/types'
 import type { FirstStep } from '~/components/onboarding/FirstSteps.vue'
+import type { LastProposal } from '~/composables/useCollaborationOffers'
 
 import { weekDays, overdueCount, phaseShares } from '~/utils/home-charts'
 
@@ -25,6 +26,13 @@ ensureConversations()
 const { results: discoverResults, loading: discoverLoading, error: discoverError, search: runDiscoverSearch } = useDiscover()
 runDiscoverSearch('filters', '', { categories: [], minBudgetCents: null, maxBudgetCents: null })
 const suggestedCreators = computed(() => discoverResults.value.slice(0, 3))
+// Paquetes de cada sugerencia («2 paquetes · desde 150 €»): lo que de verdad decide a quién contactar.
+const { summarizePackagesOf } = usePackages()
+const suggestedPackages = ref<Record<string, { count: number; minCents: number }>>({})
+watch(suggestedCreators, async (list) => {
+  if (!import.meta.client || !list.length) return
+  suggestedPackages.value = await summarizePackagesOf(list.map((c) => c.profileId))
+}, { immediate: true })
 
 // Primera acción útil cuando todavía no hay ficha rellena (roadmap, sección
 // 12) — sin esto, un partner nuevo no aparece con nada útil en
@@ -54,7 +62,19 @@ const collaborator = computed<Creator | null>(() => {
 // Solo las que de verdad esperan una respuesta TUYA — una que tú mismo
 // propusiste y sigue 'requested' está esperando al creador, no a ti. Mismo
 // criterio que `awaitingMyResponseCount` del composable (ver utils/status.ts).
-const pendingForMe = computed(() => collaborations.value.filter((c) => isUnresolvedCollaborationStatus(c.status) && c.initiatedBy === 'creator'))
+// ¿Me toca responder? Los turnos se alternan: manda quien hizo la ÚLTIMA propuesta de precio (la inicial, o la última
+// contraoferta). Antes solo se miraba quién inició, así que una contraoferta del creador sobre una solicitud mía no contaba.
+const { loadLastProposers } = useCollaborationOffers()
+const lastProposers = ref<Record<string, LastProposal>>({})
+const unresolvedIds = computed(() => collaborations.value.filter((c) => isUnresolvedCollaborationStatus(c.status)).map((c) => c.id))
+watch(unresolvedIds, async (ids) => { if (import.meta.client) lastProposers.value = await loadLastProposers(ids) }, { immediate: true })
+/** Frase del panel destacado: si hay contraoferta, su importe y mensaje; si no, la propuesta inicial o el brief. */
+function proposalLine(id: string, initialCents: number | null, brief: string): string {
+  const last = lastProposers.value[id]
+  if (last) return `Propone ${formatEuros(last.budgetCents)}${last.message ? ` · «${last.message.trim().slice(0, 90)}»` : ''}.`
+  return initialCents ? `Propuesta de ${formatEuros(initialCents)}.` : brief
+}
+const pendingForMe = computed(() => collaborations.value.filter((c) => isUnresolvedCollaborationStatus(c.status) && (lastProposers.value[c.id]?.by ?? c.initiatedBy) === 'creator'))
 const nextDeliveries = computed(() => posts.value.filter((p) => p.dueInDays >= 0 && p.dueInDays <= 3).sort((a, b) => a.dueInDays - b.dueInDays))
 
 const pendingReview = computed(() => posts.value.filter((p) => p.status === 'ready_for_review'))
@@ -102,8 +122,9 @@ const hero = computed(() => {
   if (request) {
     return {
       coverUrl: null, coverSeed: request.id, icon: 'ph:handshake-fill',
-      eyebrow: 'Solicitud pendiente', title: `${request.creatorName ?? 'Un creador'} quiere colaborar contigo`,
-      description: request.budgetCents ? `Propuesta de ${formatEuros(request.budgetCents)}.` : request.brief,
+      eyebrow: 'Solicitud pendiente',
+      title: lastProposers.value[request.id] ? `${request.creatorName ?? 'El creador'} te ha respondido con otro presupuesto` : `${request.creatorName ?? 'Un creador'} quiere colaborar contigo`,
+      description: proposalLine(request.id, request.budgetCents, request.brief),
       ctaLabel: 'Responder', ctaTo: '/partner/requests', actionPostId: undefined
     }
   }
@@ -130,6 +151,10 @@ const hero = computed(() => {
     ctaLabel: 'Descubrir', ctaTo: '/partner/discover', actionPostId: undefined
   }
 })
+// Lo que exige una acción tuya (revisar una entrega, responder una solicitud) va ARRIBA, antes que los números y los
+// gráficos; el resto del tiempo, el panel destacado se queda en su columna como sugerencia.
+const heroUrgent = computed(() => !isFresh.value && (pendingReview.value.length > 0 || pendingForMe.value.length > 0))
+
 function onHeroClick() {
   const post = posts.value.find((p) => p.id === hero.value.actionPostId)
   if (post) openDetail(post)
@@ -143,13 +168,22 @@ const chartOverdue = computed(() => overdueCount(posts.value))
 const chartShares = computed(() => phaseShares(posts.value))
 
 // Frase de estado: solo con lo que de verdad hay (nada inventado).
+// Contador de tareas de la bandeja (lo rellena la barra superior); aquí solo se lee.
+const taskCount = useState<number>('my-work-task-count', () => 0)
 const statusLine = computed(() => {
   const parts: string[] = []
   if (pendingForMe.value.length) parts.push(`${pendingForMe.value.length} ${pendingForMe.value.length === 1 ? 'solicitud por responder' : 'solicitudes por responder'}`)
   if (pendingReview.value.length) parts.push(`${pendingReview.value.length} ${pendingReview.value.length === 1 ? 'entrega por revisar' : 'entregas por revisar'}`)
   if (unreadConversations.value.length) parts.push(`${unreadConversations.value.length} ${unreadConversations.value.length === 1 ? 'conversación con mensajes nuevos' : 'conversaciones con mensajes nuevos'}`)
-  return parts.length ? parts.join(' · ') : 'Todo al día por ahora.'
+  if (parts.length) return parts.join(' · ')
+  if (isFresh.value) return 'Empieza por estos pasos para encontrar a tu primer creador.'
+  // «Todo al día» solo si la bandeja tampoco tiene tareas (completar el brief, subir un entregable…).
+  return taskCount.value > 0 ? `Tienes ${taskCount.value} ${taskCount.value === 1 ? 'tarea pendiente' : 'tareas pendientes'} en tu bandeja.` : 'Todo al día por ahora.'
 })
+
+// Cuenta sin actividad todavía (sin colaboraciones ni publicaciones): los números a cero y los gráficos vacíos no
+// enseñan nada, así que se esconden y «Primeros pasos» pasa arriba. En cuanto hay actividad, vuelve lo normal.
+const isFresh = computed(() => !collaborations.value.length && !posts.value.length)
 
 // Primeros pasos: cada uno se marca solo con datos reales de la cuenta (ver FirstSteps.vue).
 const firstSteps = computed<FirstStep[]>(() => [
@@ -163,19 +197,31 @@ const firstSteps = computed<FirstStep[]>(() => [
   <AppShell role="partner" title="Inicio" :subtitle="partner?.name">
     <section class="home-greeting">
       <div>
-        <h2 class="home-greeting__title">¡Bienvenido! Organiza tus colaboraciones</h2>
+        <h2 class="home-greeting__title">{{ partner?.name ? `¡Hola, ${partner.name}!` : '¡Bienvenido!' }} Organiza tus colaboraciones</h2>
         <p class="home-greeting__status">{{ statusLine }}</p>
       </div>
+      <!-- Como en el creador: en escritorio y tablet la acción principal vive en la cabecera. -->
+      <BaseButton to="/partner/discover" variant="brand" icon="ph:compass-bold" class="home-greeting__action" data-discover-cta>Descubrir creadores</BaseButton>
     </section>
 
-    <section class="home-stats">
+    <HomeHeroCard
+      v-if="heroUrgent" class="home-urgent"
+      :cover-url="hero.coverUrl" :icon="hero.icon"
+      :eyebrow="hero.eyebrow" :title="hero.title" :description="hero.description"
+      :cta-label="hero.ctaLabel" :cta-to="hero.ctaTo || undefined"
+      @cta-click="onHeroClick"
+    />
+
+    <FirstSteps v-if="isFresh" role="partner" :steps="firstSteps" class="home-firststeps" />
+
+    <section v-if="!isFresh" class="home-stats">
       <StatTile label="Colaboraciones activas" :value="String(activeCollaborations)" tint="menta" />
       <StatTile label="Por responder" :value="String(pendingForMe.length)" tint="mantequilla" />
       <StatTile label="Por revisar" :value="String(pendingReview.length)" tint="rosa" />
       <StatTile label="Entregas próximas" :value="String(nextDeliveries.length)" tint="cielo" />
     </section>
 
-    <section class="home-charts">
+    <section v-if="!isFresh" class="home-charts">
       <PanelCard title="Entregas de los próximos 7 días" description="Pendientes y publicadas, día a día">
         <WeekColumns :days="chartDays" :overdue="chartOverdue" />
       </PanelCard>
@@ -187,19 +233,20 @@ const firstSteps = computed<FirstStep[]>(() => [
     <div class="home-grid">
       <div class="home-col">
         <HomeHeroCard
+          v-if="!isFresh && !heroUrgent"
           :cover-url="hero.coverUrl" :icon="hero.icon"
           :eyebrow="hero.eyebrow" :title="hero.title" :description="hero.description"
           :cta-label="hero.ctaLabel" :cta-to="hero.ctaTo || undefined"
           @cta-click="onHeroClick"
         />
 
-        <section>
+        <section v-if="!isFresh">
           <SectionTitle title="Tu calendario" class="mb-3.5">
             <span class="text-sm text-[var(--text-muted)]">{{ reviewedPct }}% revisado</span>
           </SectionTitle>
           <WeekBoard :posts="posts" @open="openDetail">
             <template #actions="{ post }">
-              <div v-if="post.status === 'ready_for_review'" class="mt-3 flex gap-2">
+              <div v-if="post.status === 'ready_for_review'" class="mt-3 flex flex-wrap gap-2">
                 <BaseButton variant="secondary" size="sm" icon="ph:arrow-counter-clockwise-bold" @click="openDetail(post)">Pedir cambios</BaseButton>
                 <BaseButton variant="primary" size="sm" icon="ph:check-bold" :disabled="!!quickApproving" :icon-spin="quickApproving === post.id" @click="quickApprove(post.id)">Aprobar</BaseButton>
               </div>
@@ -218,12 +265,22 @@ const firstSteps = computed<FirstStep[]>(() => [
             </template>
             <NuxtLink v-else v-for="c in suggestedCreators" :key="c.id" :to="`/profile/creator/${c.id}`" class="block">
               <BaseCard interactive class="h-full">
-                <p class="font-semibold truncate">{{ c.name }}</p>
-                <p v-if="c.categories.length" class="text-sm text-[var(--text-muted)] mt-0.5 truncate">{{ c.categories.slice(0, 2).join(' · ') }}</p>
-                <p v-if="c.minCents || c.maxCents" class="text-sm text-[var(--text-muted)] mt-2 inline-flex items-center gap-1">
+                <div class="flex items-center gap-3">
+                  <BaseAvatar :initials="initialsFromName(c.name)" :hue="hueFromString(c.name)" size="md" />
+                  <div class="min-w-0">
+                    <p class="font-semibold leading-tight line-clamp-2">{{ c.name }}</p>
+                    <p v-if="c.categories.length" class="text-sm text-[var(--text-muted)] truncate">{{ c.categories.slice(0, 2).join(' · ') }}</p>
+                  </div>
+                </div>
+                <p v-if="suggestedPackages[c.profileId]" class="text-sm font-semibold mt-3 inline-flex items-center gap-1.5" data-suggested-packages>
+                  <Icon name="ph:package-fill" class="size-4" />
+                  {{ suggestedPackages[c.profileId]!.count }} {{ suggestedPackages[c.profileId]!.count === 1 ? 'paquete' : 'paquetes' }} · desde {{ formatEuros(suggestedPackages[c.profileId]!.minCents) }}
+                </p>
+                <p v-else-if="c.minCents || c.maxCents" class="text-sm text-[var(--text-muted)] mt-3 inline-flex items-center gap-1">
                   <Icon name="ph:currency-eur" class="size-4" />
                   {{ c.minCents ? formatEuros(c.minCents) : '…' }}–{{ c.maxCents ? formatEuros(c.maxCents) : '…' }}
                 </p>
+                <p v-else class="text-sm text-[var(--text-muted)] mt-3">Aún sin tarifa ni paquetes publicados</p>
               </BaseCard>
             </NuxtLink>
           </div>
@@ -244,7 +301,7 @@ const firstSteps = computed<FirstStep[]>(() => [
           </div>
         </PanelCard>
 
-        <FirstSteps role="partner" :steps="firstSteps" />
+        <FirstSteps v-if="!isFresh" role="partner" :steps="firstSteps" />
       </div>
     </div>
 

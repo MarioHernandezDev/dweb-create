@@ -20,7 +20,7 @@ function onKey(e: KeyboardEvent) {
 </script>
 
 <template>
-  <div class="choice" role="radiogroup" :aria-label="label" @keydown="onKey">
+  <div class="choice-chips" role="radiogroup" :aria-label="label" @keydown="onKey">
     <button
       v-for="o in options" :key="o.value" type="button" role="radio" class="choice__item"
       :aria-checked="model === o.value" :tabindex="model === o.value ? 0 : -1" @click="model = o.value"

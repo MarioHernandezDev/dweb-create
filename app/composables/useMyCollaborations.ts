@@ -28,6 +28,7 @@ export interface MyCollaboration extends CollaborationTerms {
   initiatedBy: 'creator' | 'partner'
   /** Instantánea del paquete aceptado en el chat (null si no nació de una oferta o el paquete ya no existía). */
   packageTitle: string | null
+  campaignName: string | null
   packageDescription: string | null
   packageDeliverables: string[] | null
 }
@@ -50,6 +51,7 @@ interface CollaborationRow {
   target_audience: string | null
   tone: string | null
   package_title: string | null
+  campaign_name: string | null
   package_description: string | null
   package_deliverables: string[] | null
   creators: { display_name: string; profile_id: string } | null
@@ -76,7 +78,7 @@ export function useMyCollaborations() {
 
     const { data, error } = await client
       .from('collaborations')
-      .select('id, status, creator_id, brief, budget_cents, paid_at, created_at, expires_at, initiated_by, scope_notes, revisions_included, exclusivity, usage_rights, campaign_goal, target_audience, tone, package_title, package_description, package_deliverables, creators(display_name, profile_id)')
+      .select('id, status, creator_id, brief, budget_cents, paid_at, created_at, expires_at, initiated_by, scope_notes, revisions_included, exclusivity, usage_rights, campaign_goal, target_audience, tone, campaign_name, package_title, package_description, package_deliverables, creators(display_name, profile_id)')
       .eq('partner_id', me.id)
       .order('created_at', { ascending: false })
       .limit(300)
@@ -105,6 +107,7 @@ export function useMyCollaborations() {
       targetAudience: r.target_audience,
       tone: r.tone,
       packageTitle: r.package_title,
+      campaignName: r.campaign_name,
       packageDescription: r.package_description,
       packageDeliverables: r.package_deliverables
     }))

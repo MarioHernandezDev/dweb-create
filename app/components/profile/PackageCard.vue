@@ -8,7 +8,7 @@ import type { Package } from '~/composables/usePackages'
  * activo y las acciones de gestión. Aspecto en assets/css/components/package.css.
  */
 const props = defineProps<{ pkg: Package; editable?: boolean; pendingOffers?: number; dragHandle?: boolean; showcase?: boolean }>()
-defineEmits<{ edit: [pkg: Package]; delete: [pkg: Package]; offer: [pkg: Package]; toggleActive: [pkg: Package]; duplicate: [pkg: Package] }>()
+defineEmits<{ edit: [pkg: Package]; delete: [pkg: Package]; offer: [pkg: Package]; toggleActive: [pkg: Package]; duplicate: [pkg: Package]; feature: [pkg: Package] }>()
 // Escaparate: lo que ven los demás (perfil público y vista previa al crear). Portada grande y precio protagonista, en
 // vez de la fila compacta de gestión del propio perfil.
 const isShowcase = computed(() => props.showcase || !props.editable)
@@ -20,6 +20,7 @@ const isShowcase = computed(() => props.showcase || !props.editable)
       <CoverArt :seed="pkg.id" icon="ph:package-fill" />
       <SmartImage v-if="pkg.coverUrl && !pkg.coverUrl.startsWith('blob:')" :src="pkg.coverUrl" :width="640" :height="360" class="package__photo" />
       <img v-else-if="pkg.coverUrl" :src="pkg.coverUrl" alt="" class="package__photo">
+      <span v-if="pkg.isFeatured" class="package__featured"><Icon name="ph:star-fill" class="size-3.5" /> Destacado</span>
       <p class="package__price package__price--badge">{{ pkg.priceCents ? formatEuros(pkg.priceCents) : '— €' }}</p>
     </div>
     <div class="package__body">
@@ -45,6 +46,7 @@ const isShowcase = computed(() => props.showcase || !props.editable)
 
       <div class="package__text">
         <h3 class="package__title">{{ pkg.title }}</h3>
+        <span v-if="pkg.isFeatured" class="package__featured package__featured--inline"><Icon name="ph:star-fill" class="size-3.5" /> Destacado</span>
         <p v-if="pkg.description" class="package__desc">{{ pkg.description }}</p>
       </div>
 
@@ -68,6 +70,10 @@ const isShowcase = computed(() => props.showcase || !props.editable)
         <span v-else-if="!pkg.active" class="package__state">En pausa</span>
         <span class="package__actions">
           <BaseButton variant="secondary" size="sm" @click="$emit('edit', pkg)">Editar</BaseButton>
+          <IconButton
+            :icon="pkg.isFeatured ? 'ph:star-fill' : 'ph:star-bold'" :label="pkg.isFeatured ? 'Quitar como destacado' : 'Destacar paquete'" size="sm"
+            :aria-pressed="pkg.isFeatured" @click="$emit('feature', pkg)"
+          />
           <IconButton icon="ph:copy-bold" label="Duplicar paquete" size="sm" @click="$emit('duplicate', pkg)" />
           <BaseButton variant="destructive" size="sm" @click="$emit('delete', pkg)">Eliminar</BaseButton>
         </span>

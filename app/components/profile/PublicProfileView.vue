@@ -160,6 +160,7 @@ const websiteHost = computed(() => { try { return new URL(props.profile.website 
           <BaseButton v-if="canCollaborate" variant="primary" size="lg" block data-collaborate @click="emit('collaborate')">{{ collaborateLabel }}</BaseButton>
           <BaseButton variant="outline" size="lg" block :loading="startingChat" data-start-chat @click="emit('chat')">Enviar mensaje</BaseButton>
           <p v-if="chatError" class="pub__error" role="alert" data-chat-error>{{ chatError }}</p>
+          <p v-if="!packages.length" class="pp__muted" data-no-packages-note-side>{{ isPartner ? 'Aún no ha publicado necesidades' : 'Aún no ha publicado paquetes' }}: no se le puede hacer una oferta directa.</p>
           <p v-if="profile.chatPrivacy === 'accepted_offers_only'" class="pp__muted" data-chat-privacy>Solo acepta mensajes de texto tras una oferta aceptada: empieza con una oferta sobre uno de sus paquetes.</p>
         </div>
         <button type="button" class="pp__copy" data-copy-link @click="emit('copy')"><Icon :name="linkCopied ? 'ph:check-bold' : 'ph:link-simple-bold'" class="size-4" /> {{ linkCopied ? 'Enlace copiado' : 'Copiar enlace del perfil' }}</button>
@@ -172,6 +173,16 @@ const websiteHost = computed(() => { try { return new URL(props.profile.website 
         <p v-if="subline" class="pp__sub">{{ subline }}</p>
         <div v-if="profile.categories.length" class="pp__chips" data-public-facts>
           <span v-for="c in profile.categories" :key="c" class="pp__chip" data-fact="category">{{ c }}</span>
+        </div>
+        <!-- Tablet y móvil: las acciones principales van aquí (la tarjeta lateral pasa al final); en escritorio se ocultan y mandan las de la tarjeta. -->
+        <div v-if="guest" class="pp__cta pp__cta--head" data-guest-actions-head>
+          <BaseButton to="/onboarding" variant="brand" size="lg" block>Crear cuenta para contactar</BaseButton>
+        </div>
+        <div v-else-if="!isOwnProfile" class="pp__cta pp__cta--head" data-public-actions-head>
+          <BaseButton v-if="canCollaborate" variant="brand" size="lg" data-collaborate-head @click="emit('collaborate')">{{ collaborateLabel }}</BaseButton>
+          <BaseButton variant="outline-inverse" size="lg" :loading="startingChat" data-start-chat-head @click="emit('chat')">Enviar mensaje</BaseButton>
+          <p v-if="chatError" class="pub__error" role="alert">{{ chatError }}</p>
+          <p v-if="!packages.length" class="pp__muted pp__nopkg" data-no-packages-note>{{ isPartner ? 'Todavía no ha publicado necesidades' : 'Todavía no ha publicado paquetes' }}: aún no se le puede hacer una oferta directa, pero puedes {{ canCollaborate ? 'proponerle una colaboración o ' : '' }}escribirle.</p>
         </div>
         <SegmentedTabs :model-value="tab" :options="tabs" label="Secciones del perfil" class="pp__tabs" @update:model-value="setTab" />
       </header>
@@ -226,9 +237,9 @@ const websiteHost = computed(() => { try { return new URL(props.profile.website 
         <template v-else-if="tab === 'packages'">
           <section data-section="packages">
             <EmptyState v-if="!packages.length" icon="ph:package" :title="isOwnProfile ? 'Aún no has publicado ningún paquete' : 'Sin paquetes publicados'" :description="isOwnProfile ? 'Los paquetes son lo que permite que te hagan ofertas directas: crea el primero en un minuto, con una plantilla.' : `Todavía no se le puede hacer una oferta — ${isPartner ? 'la marca' : 'el creador'} no ha publicado ningún paquete.`">
-              <BaseButton v-if="isOwnProfile" :to="`/${profile.role}/profile?tab=${isPartner ? 'needs' : 'packages'}&nuevo=1`" variant="primary" size="sm" icon="ph:plus-bold">{{ isPartner ? 'Crear una necesidad' : 'Crear mi primer paquete' }}</BaseButton>
+              <BaseButton v-if="isOwnProfile" :to="`/${profile.role}/packages?nuevo=1`" variant="primary" size="sm" icon="ph:plus-bold">{{ isPartner ? 'Crear una necesidad' : 'Crear mi primer paquete' }}</BaseButton>
             </EmptyState>
-            <div v-else class="pub__packages"><PackageCard v-for="pkg in packages" :key="pkg.id" :pkg="pkg" @offer="emit('offer', $event)" /></div>
+            <div v-else class="pub__packages"><PackageCard v-for="pkg in packages" :key="pkg.id" :pkg="pkg" :showcase="isOwnProfile" @offer="emit('offer', $event)" /></div>
           </section>
         </template>
 

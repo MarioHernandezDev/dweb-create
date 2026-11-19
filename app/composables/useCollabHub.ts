@@ -13,6 +13,8 @@ export interface HubItem {
   initiatedBy: 'creator' | 'partner'
   brief: string
   title: string
+  /** Nombre de campaña elegido por quien envió la solicitud (si lo puso). */
+  campaignName: string | null
   budgetCents: number | null
   paidAt: string | null
   createdAt: string
@@ -60,6 +62,7 @@ export function useCollabHub(role: 'creator' | 'partner') {
         initiatedBy: c.initiatedBy,
         brief: c.brief,
         title: collabTitle(c),
+        campaignName: c.campaignName?.trim() || null,
         budgetCents: c.budgetCents,
         paidAt: c.paidAt,
         createdAt: c.createdAt,

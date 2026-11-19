@@ -15,6 +15,8 @@ const props = defineProps<{
   name: string
   status: CollaborationStatus
   brief: string
+  /** Nombre de la campaña, si quien creó la solicitud lo puso: va como título sobre el brief. */
+  campaign?: string | null
   budgetCents: number | null
   createdAt: string
   /** Caducidad de la solicitud pendiente. */
@@ -39,6 +41,7 @@ const expiry = computed(() => expiryState(props.status, props.expiresAt))
       </span>
       <span class="collab-card__price">{{ budgetCents ? formatEuros(budgetCents) : 'Sin precio' }}</span>
     </span>
+    <span v-if="campaign" class="collab-card__campaign">{{ campaign }}</span>
     <span class="collab-card__brief">{{ brief }}</span>
     <span v-if="progress" class="collab-card__progress" :aria-label="`${progress.done} de ${progress.total} entregables resueltos`">
       <span class="collab-card__bar"><span class="collab-card__bar-fill" :style="{ width: `${(progress.done / progress.total) * 100}%` }" /></span>

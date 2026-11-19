@@ -2,6 +2,7 @@
 import { suggestionsForDraft, platformMeta } from '~/utils/mock-data'
 import type { ContentType, Platform, Suggestion } from '~/types'
 import { contentTypeMeta } from '~/utils/status'
+import { sanitizePostTemplate } from '~/utils/post-templates'
 
 const { paymentsEnabled, predictionsEnabled } = useLaunchMode()
 
@@ -23,6 +24,7 @@ const toast = useToast()
 const { balance: creditBalance, ensureLoaded: ensureCreditsLoaded, setBalance: setCreditBalance } = useMyCredits()
 const { requests: collabRequests, ensureLoaded: ensureCollabRequestsLoaded } = useCollabRequests()
 const { assign: assignDeliverable } = useCollabDeliverables()
+const { addItem: addChecklistItem } = useChecklist()
 
 // Solo las colaboraciones ya aceptadas tienen sentido aquí — pedir vincular
 // una "requested" sería prometerle algo al partner que todavía no acordó.
@@ -32,8 +34,11 @@ const title = ref('')
 const caption = ref('')
 const contentType = ref<ContentType>('reel')
 const platform = ref<Platform>('instagram')
+const extraPlatforms = ref<Platform[]>([])
 const collaborationId = ref('')
 const hashtagsInput = ref('')
+// Tareas del checklist que trae una plantilla: se añaden a la publicación en cuanto se crea.
+const templateChecklist = ref<string[]>([])
 
 // Antes esto no se podía elegir en ningún sitio: todo post nacía "a 3 días"
 // a ciegas, sin forma de fijar ni editar una fecha real — ver useMyPosts.ts.
@@ -45,6 +50,13 @@ const dueDate = ref(defaultDueDate())
 
 // Red y formato se eligen a la vista, con su logotipo o icono, no en dos desplegables.
 const formatOptions = (Object.keys(contentTypeMeta) as ContentType[]).map((t) => ({ value: t, label: contentTypeMeta[t].label, icon: contentTypeMeta[t].icon }))
+function setPrimary(p: Platform) {
+  platform.value = p
+  extraPlatforms.value = extraPlatforms.value.filter((x) => x !== p)
+}
+function toggleExtra(p: Platform) {
+  extraPlatforms.value = extraPlatforms.value.includes(p) ? extraPlatforms.value.filter((x) => x !== p) : [...extraPlatforms.value, p]
+}
 const networkOptions = Object.entries(platformMeta).map(([value, meta]) => ({ value, label: meta.label, icon: meta.icon }))
 // «¿Para quién es?»: propia (solo tú) o para una de tus colaboraciones aceptadas.
 const ownershipOptions = [{ value: 'own', label: 'Contenido propio' }, { value: 'collab', label: 'Para una colaboración' }]
@@ -85,6 +97,22 @@ function parsedHashtags(): string[] {
     .map((h) => (h.startsWith('#') ? h : `#${h}`))
 }
 
+// Plantillas: lo que se guarda (y se reaplica) es lo que se repite de una publicación a otra, no la fecha ni la colaboración.
+const templateCurrent = computed(() => ({
+  title: title.value, caption: caption.value, contentType: contentType.value, platform: platform.value,
+  extraPlatforms: extraPlatforms.value, hashtags: parsedHashtags(), checklist: templateChecklist.value
+}))
+function applyTemplate(raw: unknown) {
+  const t = sanitizePostTemplate(raw)
+  title.value = t.title
+  caption.value = t.caption
+  contentType.value = t.contentType
+  platform.value = t.platform
+  extraPlatforms.value = t.extraPlatforms
+  hashtagsInput.value = t.hashtags.map((h) => (h.startsWith('#') ? h : `#${h}`)).join(' ')
+  templateChecklist.value = t.checklist
+}
+
 // `true` solo en la llamada que acaba de crear la fila (no al actualizar el mismo borrador).
 const justCreated = ref(false)
 
@@ -96,12 +124,22 @@ async function saveDraft(): Promise<string> {
       caption: caption.value,
       contentType: contentType.value,
       platform: platform.value,
+      extraPlatforms: extraPlatforms.value,
       collaborationId: collaborationId.value || null,
       hashtags: parsedHashtags(),
       dueDate: dueDate.value
     })
     createdPostId.value = created.id
     justCreated.value = true
+    // Checklist de la plantilla: una tarea tras otra (para respetar el orden); si alguna falla, la publicación ya existe.
+    if (templateChecklist.value.length) {
+      try {
+        for (const text of templateChecklist.value) await addChecklistItem(created.id, text)
+      } catch {
+        toast.error('Publicación creada, pero no se han podido añadir todas las tareas de la plantilla.')
+      }
+      templateChecklist.value = []
+    }
     // Creada desde un entregable: se asigna en el mismo paso (el servidor valida que el hueco esté libre).
     if (props.deliverableId && props.collaborationId && collaborationId.value === props.collaborationId) {
       try {
@@ -176,6 +214,7 @@ watch(open, (value) => {
   }
   if (value) {
     navigated.value = false
+    if (!createdPostId.value) templateChecklist.value = []
     // Llegar desde una colaboración («Crear publicación») debe dejarla ya elegida: antes el valor
     // solo se aplicaba al cerrar la hoja, así que la primera vez salía «Contenido propio».
     if (props.collaborationId) collaborationId.value = props.collaborationId
@@ -186,6 +225,7 @@ watch(open, (value) => {
       title.value = props.prefill.title
       contentType.value = props.prefill.contentType
       platform.value = props.prefill.platform
+      extraPlatforms.value = []
       hashtagsInput.value = props.prefill.hashtags.join(' ')
     }
     return
@@ -211,6 +251,12 @@ watch(open, (value) => {
           Empieza por lo básico: podrás completar el resto, añadir la imagen y planificarla después en su ficha.
         </p>
 
+        <ProposalTemplateBar kind="post" :current="templateCurrent" apply-hint="revisa los datos y ajusta la fecha" @apply="applyTemplate" />
+        <p v-if="templateChecklist.length" class="composer__tpl-note" data-template-checklist>
+          <Icon name="ph:list-checks-bold" class="size-4 shrink-0" />
+          La plantilla incluye {{ templateChecklist.length }} {{ templateChecklist.length === 1 ? 'tarea' : 'tareas' }} de checklist: se añadirán al crear la publicación.
+        </p>
+
         <div class="composer__cols">
           <section class="composer__col" aria-label="Contenido">
             <BaseField label="Título interno" hint="Solo para reconocerla en tu tablero." v-slot="f">
@@ -230,7 +276,7 @@ watch(open, (value) => {
               <SegmentedTabs :model-value="ownership" :options="ownershipOptions" label="Para quién es la publicación" @update:model-value="ownership = $event" />
               <BaseField v-if="collaborationId" label="Colaboración" v-slot="f">
                 <BaseSelect v-bind="f" v-model="collaborationId">
-                  <option v-for="c in activeCollaborations" :key="c.id" :value="c.id">{{ c.partnerName }}</option>
+                  <option v-for="c in activeCollaborations" :key="c.id" :value="c.id">{{ c.campaignName ? `${c.campaignName} · ${c.partnerName}` : c.partnerName }}</option>
                 </BaseSelect>
               </BaseField>
               <p class="composer__note">
@@ -244,7 +290,17 @@ watch(open, (value) => {
 
             <div class="composer__group">
               <p id="composer-network" class="composer__legend">Red donde se publicará</p>
-              <ChoiceChips :model-value="platform" :options="networkOptions" label="Red donde se publicará" @update:model-value="platform = $event as Platform" />
+              <ChoiceChips :model-value="platform" :options="networkOptions" label="Red donde se publicará" @update:model-value="setPrimary($event as Platform)" />
+              <p class="composer__legend composer__legend--sub">¿También en otras redes? <span class="font-normal">(opcional)</span></p>
+              <div class="choice-chips" role="group" aria-label="Otras redes donde se publicará">
+                <button
+                  v-for="o in networkOptions.filter((n) => n.value !== platform)" :key="o.value" type="button" class="choice__item"
+                  :aria-pressed="extraPlatforms.includes(o.value as Platform)" @click="toggleExtra(o.value as Platform)"
+                >
+                  <Icon :name="o.icon" class="choice__icon" />
+                  {{ o.label }}
+                </button>
+              </div>
             </div>
             <div class="composer__group">
               <p class="composer__legend">Formato</p>

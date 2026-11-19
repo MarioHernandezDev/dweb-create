@@ -2,6 +2,7 @@ import { LABEL_COLORS } from '~/utils/labels'
 import type { Label } from '~/composables/useLabels'
 import type { ChecklistItem } from '~/composables/useChecklist'
 import { platformMeta } from '~/utils/mock-data'
+import { parseDeliveryUrl } from '~/utils/delivery-links'
 import type { Platform, Post, PostStatus } from '~/types'
 
 /**
@@ -17,7 +18,8 @@ import type { Platform, Post, PostStatus } from '~/types'
  * verdad (edición rápida desde el tablero vs. página dedicada).
  */
 export function usePostEditorPanel(post: Ref<Post | null | undefined>) {
-  const { updatePost, deletePost, refresh: refreshPosts } = useMyPosts()
+  const { updatePost, refresh: refreshPosts } = useMyPosts()
+  const { remove: removePost } = usePostActions()
   const { balance: creditBalance, ensureLoaded: ensureCreditsLoaded, setBalance: setCreditBalance } = useMyCredits()
   const { labels, ensureLabels, createLabel, attachLabel, detachLabel } = useLabels()
   const { itemsByPost, ensureItems, addItem: addChecklistItem, toggleItem: toggleChecklistItem, deleteItem: deleteChecklistItem } = useChecklist()
@@ -33,8 +35,15 @@ export function usePostEditorPanel(post: Ref<Post | null | undefined>) {
   const parsedHashtags = computed(() => parseHashtags(hashtagsText.value))
   const hashtagsChanged = computed(() => !!post.value && parsedHashtags.value.join(' ') !== post.value.hashtags.join(' '))
 
+  /** Enlaces de entrega (texto tal cual se escribe; se normalizan al guardar). */
+  const draftUrl = ref('')
+  const resultUrl = ref('')
+  const draftUrlError = computed(() => { const r = parseDeliveryUrl(draftUrl.value); return r.ok ? '' : r.error })
+  const resultUrlError = computed(() => { const r = parseDeliveryUrl(resultUrl.value); return r.ok ? '' : r.error })
+  const linksChanged = computed(() => !!post.value && (draftUrl.value.trim() !== (post.value.draftUrl ?? '') || resultUrl.value.trim() !== (post.value.resultUrl ?? '')))
+
   const dirty = computed(
-    () => !!post.value && (title.value !== post.value.title || caption.value !== post.value.caption || dueDate.value !== post.value.dueDate || hashtagsChanged.value)
+    () => !!post.value && (title.value !== post.value.title || caption.value !== post.value.caption || dueDate.value !== post.value.dueDate || hashtagsChanged.value || linksChanged.value)
   )
   /** Vuelve a lo guardado, sin tocar el servidor. */
   function discard() {
@@ -43,6 +52,8 @@ export function usePostEditorPanel(post: Ref<Post | null | undefined>) {
     caption.value = post.value.caption
     dueDate.value = post.value.dueDate
     hashtagsText.value = post.value.hashtags.join(' ')
+    draftUrl.value = post.value.draftUrl ?? ''
+    resultUrl.value = post.value.resultUrl ?? ''
   }
   const saving = ref(false)
   async function save() {
@@ -59,13 +70,25 @@ export function usePostEditorPanel(post: Ref<Post | null | undefined>) {
       })
       if (!ok) return
     }
+    // Enlaces de entrega: se comprueban antes de enviar (el motivo, en claro y junto al campo).
+    const draftParsed = parseDeliveryUrl(draftUrl.value)
+    const resultParsed = parseDeliveryUrl(resultUrl.value)
+    if (!draftParsed.ok || !resultParsed.ok) {
+      toast.error('Revisa los enlaces: alguno no es válido.')
+      return
+    }
     saving.value = true
     try {
       const patch: Parameters<typeof updatePost>[1] = { title: title.value, caption: caption.value, dueDate: dueDate.value }
+      // Solo si cambian (no son contenido material: no invalidan ninguna aprobación).
+      if (draftParsed.value !== (post.value.draftUrl ?? null)) patch.draftUrl = draftParsed.value
+      if (resultParsed.value !== (post.value.resultUrl ?? null)) patch.resultUrl = resultParsed.value
       // Solo si cambian: los hashtags son contenido material (suben la versión).
       if (hashtagsChanged.value) patch.hashtags = parsedHashtags.value
       await updatePost(post.value.id, patch)
       hashtagsText.value = post.value.hashtags.join(' ')
+      draftUrl.value = post.value.draftUrl ?? ''
+      resultUrl.value = post.value.resultUrl ?? ''
       if (changesApprovedContent) await refreshPosts() // el servidor cambió la fase: se muestra la real
       toast.success('Cambios guardados')
     } catch (err) {
@@ -80,21 +103,10 @@ export function usePostEditorPanel(post: Ref<Post | null | undefined>) {
   /** Pide confirmación y borra — devuelve si se borró de verdad, para que cada pantalla decida qué hacer después (cerrar el panel, volver al tablero...). */
   async function remove(): Promise<boolean> {
     if (!post.value) return false
-    const ok = await confirm({
-      title: `¿Borrar "${post.value.title}"?`,
-      message: 'Se borrará permanentemente, junto con su checklist, etiquetas y predicción de éxito si las tenía.',
-      confirmLabel: 'Borrar', tone: 'danger', icon: 'ph:trash-fill'
-    })
-    if (!ok) return false
     deleting.value = true
     try {
-      await deletePost(post.value.id)
-      toast.success('Publicación borrada')
-      return true
-    } catch (err) {
-      console.error('[usePostEditorPanel] fallo al borrar:', err)
-      toast.error('No se ha podido borrar la publicación. Inténtalo de nuevo.')
-      return false
+      // Mismo borrado con «Deshacer» que el tablero y la lista (usePostActions).
+      return await removePost(post.value)
     } finally {
       deleting.value = false
     }
@@ -200,6 +212,8 @@ export function usePostEditorPanel(post: Ref<Post | null | undefined>) {
       caption.value = post.value.caption
       dueDate.value = post.value.dueDate
       hashtagsText.value = post.value.hashtags.join(' ')
+      draftUrl.value = post.value.draftUrl ?? ''
+      resultUrl.value = post.value.resultUrl ?? ''
       predictError.value = ''
       labelsPickerOpen.value = false
       newLabelName.value = ''
@@ -233,7 +247,7 @@ export function usePostEditorPanel(post: Ref<Post | null | undefined>) {
   const captionError = computed(() => (post.value && captionMax.value && captionLength.value > captionMax.value
     ? `Te pasas ${captionLength.value - captionMax.value} caracteres del límite de ${platformMeta[post.value.platform].label} (texto + hashtags).`
     : null))
-  const blockedReason = computed(() => titleError.value || captionError.value)
+  const blockedReason = computed(() => titleError.value || captionError.value || (draftUrlError.value ? `Enlace al borrador: ${draftUrlError.value}` : '') || (resultUrlError.value ? `Enlace de la publicación: ${resultUrlError.value}` : ''))
 
   const { copied, copy } = useClipboard()
   function copyText() {
@@ -244,7 +258,7 @@ export function usePostEditorPanel(post: Ref<Post | null | undefined>) {
   const { statusFlow, stepIndex, nextStatus, prevStatus, waitingForPartner, advanceLabel } = usePostFlow(post)
 
   return {
-    title, caption, dueDate, hashtagsText, parsedHashtags, dirty, discard, saving, save, deleting, remove,
+    title, caption, dueDate, hashtagsText, parsedHashtags, draftUrl, resultUrl, draftUrlError, resultUrlError, dirty, discard, saving, save, deleting, remove,
     saved, saveWithFeedback, titleError, captionMax, captionLength, captionError, blockedReason, copied, copyText,
     statusFlow, stepIndex, nextStatus, prevStatus, waitingForPartner, advanceLabel,
     predicting, predictError, predict, creditBalance,

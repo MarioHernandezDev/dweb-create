@@ -85,3 +85,28 @@ describe('Calendario y resumen semanal', () => {
     expect(map.get('2026-11-06')).toHaveLength(1)
   })
 })
+
+import { fitSummary } from '../../app/utils/discover-view'
+describe('fitSummary', () => {
+  const r = { categories: ['Moda', 'Belleza'], platforms: ['instagram'] } as never
+  it('lista las coincidencias reales', () => {
+    expect(fitSummary(r, { categories: ['moda', 'gaming'], platforms: ['instagram', 'tiktok'] })).toMatch(/^Encaja en moda, /)
+  })
+  it('sin coincidencias o sin filtros no inventa motivo', () => {
+    expect(fitSummary(r, { categories: [], platforms: [] })).toBeNull()
+    expect(fitSummary(r, { categories: ['gaming'], platforms: [] })).toBeNull()
+  })
+})
+
+describe('orden por paquete en Descubrir', () => {
+  const mk = (id: string, score: number) => ({ id, score, collabCount: 0, responseHours: null, minCents: null, maxCents: null }) as unknown as DiscoveryResult
+  const list = [mk('a', 10), mk('b', 90), mk('c', 50), mk('d', 70)]
+  const min: Record<string, number | null> = { a: 300, b: null, c: 100, d: 300 }
+  const pkgMinCents = (r: DiscoveryResult) => min[r.id] ?? null
+  it('de más barato a más caro, sin paquetes al final y empates por afinidad', () => {
+    expect(sortResults(list, 'pkg_asc', { pkgMinCents }).map((r) => r.id)).toEqual(['c', 'd', 'a', 'b'])
+  })
+  it('de más caro a más barato, sin paquetes al final', () => {
+    expect(sortResults(list, 'pkg_desc', { pkgMinCents }).map((r) => r.id)).toEqual(['d', 'a', 'c', 'b'])
+  })
+})

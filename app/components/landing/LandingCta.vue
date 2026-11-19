@@ -1,5 +1,5 @@
 <template>
-  <section class="band band--ink cta">
+  <section class="band band--ink cta" data-companion data-companion-mood="happy" data-companion-tone="dark" data-companion-say="¿Empezamos? Crear la cuenta es gratis.">
     <WaveMotif class="cta__waves" />
     <div class="container">
       <div class="cta__inner reveal">

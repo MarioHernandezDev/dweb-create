@@ -19,7 +19,7 @@ function goHome() {
   <div class="splash">
     <WaveMotif class="splash__waves" />
     <div class="splash__box">
-      <BrandMark tone="light" :size="44" label="" />
+      <RayMascot tone="light" :size="132" :mood="isNotFound ? 'wow' : 'sleepy'" />
       <p v-if="isNotFound" class="splash__code" aria-hidden="true">404</p>
       <h1 class="splash__title">{{ isNotFound ? 'Página no encontrada' : 'Algo ha ido mal' }}</h1>
       <p class="splash__text">

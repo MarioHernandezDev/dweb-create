@@ -1,9 +1,7 @@
 <script setup lang="ts">
-import draggable from 'vuedraggable'
 import { initialsFromName, hueFromString } from '~/utils/avatar'
 import { formatEuros } from '~/utils/mock-data'
 import { firstFichaError, validateFicha } from '~/utils/profile-ficha'
-import type { Package } from '~/composables/usePackages'
 import type { ChatPrivacy } from '~/types'
 
 useHead({ title: 'Perfil' })
@@ -20,7 +18,7 @@ const { avatarUrl, info: myAvatarInfo, uploadAvatar, removeAvatar } = useMyAvata
 // role-guard.global.ts) — se resuelve de forma fiable con useMyProfileId.
 const myProfileId = await resolveMyProfileId()
 
-const { myPackages, ensureMyPackages, duplicatePackage, updatePackage, reorderPackages, deletePackage } = usePackages()
+const { myPackages, ensureMyPackages } = usePackages()
 const { pendingCountByPackage, refreshPendingCounts } = useOffers()
 const { chatPrivacy, chatPrivacyError, ensureChatPrivacy, setChatPrivacy } = useChatSettings()
 
@@ -47,20 +45,8 @@ function selectTab(id: string) {
   if (tabs.some((t) => t.id === id)) activeTab.value = id as TabId
 }
 
-const packageSheetOpen = ref(false)
-const editingPackage = ref<Package | null>(null)
-
-function openNewPackage() {
-  editingPackage.value = null
-  packageSheetOpen.value = true
-}
-// `?tab=packages&nuevo=1` abre directamente el formulario de nueva necesidad.
-onMounted(() => { if (route.query.nuevo === '1') { activeTab.value = 'needs'; openNewPackage() } })
-
-function openEditPackage(pkg: Package) {
-  editingPackage.value = pkg
-  packageSheetOpen.value = true
-}
+// `?tab=needs&nuevo=1` abre la pestaña; el formulario de alta lo abre PackagesManager.
+onMounted(() => { if (route.query.nuevo === '1') activeTab.value = 'needs' })
 
 const { confirm } = useConfirm()
 
@@ -69,41 +55,6 @@ const { copied: profileLinkCopied, copy: copyLink } = useClipboard()
 function copyMyProfileLink() {
   if (!partner.value) return
   copyLink(`${window.location.origin}/profile/partner/${partner.value.id}`)
-}
-
-const packageError = ref('')
-
-async function confirmDeletePackage(pkg: Package) {
-  const ok = await confirm({
-    title: `¿Borrar "${pkg.title}"?`,
-    message: 'Se borrará permanentemente, junto con cualquier oferta que se haya hecho sobre ella.',
-    confirmLabel: 'Borrar', tone: 'danger', icon: 'ph:trash-fill'
-  })
-  if (!ok) return
-  packageError.value = ''
-  try {
-    await deletePackage(pkg.id)
-  } catch {
-    packageError.value = 'No se ha podido borrar la necesidad. Inténtalo de nuevo.'
-  }
-}
-
-async function toggleActivePackage(pkg: Package) {
-  packageError.value = ''
-  try {
-    await updatePackage(pkg.id, { active: !pkg.active })
-  } catch {
-    packageError.value = 'No se ha podido actualizar la necesidad. Inténtalo de nuevo.'
-  }
-}
-
-async function duplicateOnePackage(pkg: Package) {
-  packageError.value = ''
-  try {
-    await duplicatePackage(pkg)
-  } catch {
-    packageError.value = 'No se ha podido duplicar la necesidad. Inténtalo de nuevo.'
-  }
 }
 
 const activePackagesCount = computed(() => (myPackages.value ?? []).filter((p) => p.active).length)
@@ -376,38 +327,7 @@ const heroRange = computed(() => rangeText(
         <!-- NECESIDADES -->
         <Transition name="profile-tab">
           <div v-show="activeTab === 'needs'" id="profile-panel-needs" role="tabpanel" aria-labelledby="profile-tab-needs">
-            <div class="packages-head">
-              <div>
-                <SectionTitle title="Tus necesidades" description="Lo que buscas: un creador podrá hacer una oferta ajustándose a tu necesidad. Arrastra para reordenar." />
-                <p v-if="myPackages?.length" class="packages-summary" data-packages-summary>
-                  {{ activePackagesCount }} activa{{ activePackagesCount === 1 ? '' : 's' }}
-                  <span v-if="pendingOffersTotal"> · {{ pendingOffersTotal }} oferta{{ pendingOffersTotal > 1 ? 's' : '' }} pendiente{{ pendingOffersTotal > 1 ? 's' : '' }}</span>
-                </p>
-              </div>
-              <BaseButton variant="primary" size="sm" icon="ph:plus-bold" data-add-package @click="openNewPackage">Añadir necesidad</BaseButton>
-            </div>
-            <p v-if="packageError" class="setting-error mb-3" role="alert">{{ packageError }}</p>
-            <EmptyState
-              v-if="!myPackages?.length"
-              icon="ph:package" title="Sin necesidades todavía"
-              description="Publica qué necesitas para que un creador pueda ofertar ajustándose a ello."
-            >
-              <BaseButton variant="primary" size="sm" icon="ph:plus-bold" @click="openNewPackage">Publicar mi primera necesidad</BaseButton>
-            </EmptyState>
-            <draggable
-              v-else v-model="myPackages" item-key="id" :animation="150" :delay="150" :delay-on-touch-only="true"
-              class="packages-grid" ghost-class="nx-package-ghost"
-              @end="reorderPackages((myPackages ?? []).map((p) => p.id))"
-            >
-              <template #item="{ element }: { element: Package }">
-                <PackageCard
-                  :pkg="element" editable drag-handle :pending-offers="pendingCountByPackage[element.id]"
-                  @edit="openEditPackage" @delete="confirmDeletePackage(element)"
-                  @toggle-active="toggleActivePackage" @duplicate="duplicateOnePackage"
-                />
-              </template>
-            </draggable>
-            <PackageFormSheet v-if="myProfileId" v-model="packageSheetOpen" :profile-id="myProfileId" role="partner" :editing="editingPackage" />
+            <PackagesManager role="partner" :profile-id="myProfileId" />
           </div>
         </Transition>
 

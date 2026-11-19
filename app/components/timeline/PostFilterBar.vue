@@ -14,7 +14,7 @@ const filters = defineModel<PostFilters>('filters', { required: true })
 const sort = defineModel<PostSort>('sort')
 
 const props = defineProps<{
-  collabs: { id: string; partnerName: string; budgetCents: number | null; status: keyof typeof collaborationStatusMeta }[]
+  collabs: { id: string; partnerName: string; campaignName?: string | null; budgetCents: number | null; status: keyof typeof collaborationStatusMeta }[]
   showStatus?: boolean
   showSort?: boolean
   /** Publicaciones sobre las que se cuentan los atajos «Atrasadas» y «Esta semana». Sin ellas, no se enseña ningún número. */
@@ -89,7 +89,7 @@ const select = 'h-9 px-3 max-w-full min-w-0 truncate rounded-full bg-[var(--colo
       <option value="">Todas las publicaciones</option>
       <option :value="OWN_PROJECT">Contenido propio</option>
       <option v-for="c in collabs" :key="c.id" :value="c.id">
-        {{ c.partnerName }} · {{ c.budgetCents ? formatEuros(c.budgetCents) : 'Sin presupuesto' }} · {{ collaborationStatusMeta[c.status].label }}
+        {{ c.campaignName ? `${c.campaignName} · ${c.partnerName}` : c.partnerName }} · {{ c.budgetCents ? formatEuros(c.budgetCents) : 'Sin presupuesto' }} · {{ collaborationStatusMeta[c.status].label }}
       </option>
     </select>
 

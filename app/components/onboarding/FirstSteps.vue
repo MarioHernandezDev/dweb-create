@@ -19,7 +19,10 @@ const visible = computed(() => !hidden.value && props.steps.length > 0 && doneCo
 <template>
   <BaseCard v-if="visible" tone="overlay" radius="lg" data-first-steps>
     <div class="fsteps__head">
-      <SectionTitle title="Primeros pasos" as="h2" />
+      <div class="fsteps__title">
+        <RayMascot :size="46" :mood="doneCount === 0 ? 'swim' : 'happy'" />
+        <SectionTitle title="Primeros pasos" as="h2" />
+      </div>
       <button type="button" class="fsteps__hide" data-first-steps-hide @click="hidden = true">Ocultar</button>
     </div>
     <p class="fsteps__progress">{{ doneCount }} de {{ steps.length }} hechos</p>

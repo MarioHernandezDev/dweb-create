@@ -1,13 +1,17 @@
 <script setup lang="ts">
 import { useEventListener } from '@vueuse/core'
 import { contentTypeMeta, isPostOverdue, overdueLabel } from '~/utils/status'
+import { linkHost } from '~/utils/delivery-links'
+import { duplicateDueDate, duplicateTitle, postTemplateFrom } from '~/utils/post-templates'
+import { errorMessage } from '~/utils/error-message'
 import { platformMeta, suggestionsForDraft } from '~/utils/mock-data'
 import type { PostStatus } from '~/types'
 
 const route = useRoute()
 const { predictionsEnabled } = useLaunchMode()
 const router = useRouter()
-const { posts, ensureLoaded } = useMyPosts()
+const { posts, ensureLoaded, createPost } = useMyPosts()
+const toast = useToast()
 const { requests: collabRequests, ensureLoaded: ensureCollabRequestsLoaded } = useCollabRequests()
 
 // En paralelo, no en serie — consultas independientes.
@@ -22,7 +26,7 @@ if (!post.value) {
 useHead({ title: post.value.title })
 
 const {
-  title, caption, dueDate, hashtagsText, parsedHashtags, dirty, discard, saving, deleting, remove,
+  title, caption, dueDate, hashtagsText, parsedHashtags, draftUrl, resultUrl, draftUrlError, resultUrlError, dirty, discard, saving, deleting, remove,
   saved, saveWithFeedback, titleError, captionMax, captionLength, captionError, blockedReason, copied, copyText,
   statusFlow, stepIndex, nextStatus, prevStatus, waitingForPartner, advanceLabel,
   predicting, predictError, predict, creditBalance,
@@ -30,6 +34,55 @@ const {
   checklistItems, checklistPct, newItemText, addItem, toggleItem, deleteItem,
   revisionNotes, pendingChangeRequest
 } = usePostEditorPanel(post)
+
+// Reutilizar: duplicar la publicación (con su checklist, sin marcar) o guardar su estructura como plantilla.
+const { addItem: addChecklistItem } = useChecklist()
+const duplicating = ref(false)
+async function duplicate() {
+  const p = post.value
+  if (!p || duplicating.value) return
+  duplicating.value = true
+  try {
+    const copy = await createPost({
+      title: duplicateTitle(p.title), caption: p.caption, contentType: p.contentType, platform: p.platform,
+      extraPlatforms: p.extraPlatforms ?? [], hashtags: p.hashtags, collaborationId: p.collaborationId ?? null, dueDate: duplicateDueDate(p.dueDate)
+    })
+    let tasksFailed = false
+    try {
+      for (const item of checklistItems.value) await addChecklistItem(copy.id, item.text)
+    } catch { tasksFailed = true }
+    if (tasksFailed) toast.error('Copia creada, pero no se han podido copiar todas las tareas del checklist.')
+    else toast.success('Publicación duplicada: la copia está en «Idea», con su fecha una semana después.')
+    await router.push(`/creator/post/${copy.id}`)
+  } catch (e) {
+    toast.error(errorMessage(e, 'No se ha podido duplicar la publicación. Inténtalo de nuevo.'))
+  } finally {
+    duplicating.value = false
+  }
+}
+
+const { save: saveTemplate, load: loadTemplates } = useProposalTemplates('post')
+onMounted(() => loadTemplates())
+const naming = ref(false)
+const templateName = ref('')
+const templateBusy = ref(false)
+const templateError = ref('')
+function startTemplate() { naming.value = true; templateName.value = post.value?.title ?? ''; templateError.value = '' }
+async function saveAsTemplate() {
+  const p = post.value
+  if (!p || templateBusy.value) return
+  templateBusy.value = true
+  templateError.value = ''
+  try {
+    const result = await saveTemplate(templateName.value, postTemplateFrom(p, checklistItems.value.map((i) => i.text)))
+    toast.success(result === 'updated' ? 'Plantilla actualizada' : 'Plantilla guardada: la tienes en «Nueva publicación»')
+    naming.value = false
+  } catch (e) {
+    templateError.value = errorMessage(e, 'No se ha podido guardar la plantilla.')
+  } finally {
+    templateBusy.value = false
+  }
+}
 
 // A dónde vuelve «Volver» (y tras borrar): de dónde se vino, para no perder el contexto.
 const backTarget = computed(() => {
@@ -43,7 +96,8 @@ const backTarget = computed(() => {
 const project = computed(() => {
   const id = post.value?.collaborationId
   if (!id) return null
-  return { id, partnerName: collabRequests.value.find((c) => c.id === id)?.partnerName ?? 'Colaboración' }
+  const c = collabRequests.value.find((r) => r.id === id)
+  return { id, partnerName: c?.partnerName ?? 'Colaboración', campaignName: c?.campaignName?.trim() || null }
 })
 
 async function onRemove() {
@@ -84,10 +138,10 @@ const doneCount = computed(() => checklistItems.value.filter((i) => i.done).leng
         <p class="pdetail__meta">
           <span>
             <Icon :name="platformMeta[post.platform].icon" class="size-4" />
-            {{ platformMeta[post.platform].label }} · {{ contentTypeMeta[post.contentType].label }}
+            {{ [post.platform, ...(post.extraPlatforms ?? [])].map((p) => platformMeta[p].label).join(' + ') }} · {{ contentTypeMeta[post.contentType].label }}
           </span>
           <NuxtLink v-if="project" :to="`/creator/collaborations/${project.id}`" class="pdetail__project" data-project-chip>
-            <Icon name="ph:handshake-fill" class="size-4" /> Colaboración con {{ project.partnerName }}
+            <Icon name="ph:handshake-fill" class="size-4" /> {{ project.campaignName ? `${project.campaignName} · ${project.partnerName}` : `Colaboración con ${project.partnerName}` }}
           </NuxtLink>
           <span v-else data-project-chip><Icon name="ph:user-fill" class="size-4" /> Contenido propio</span>
           <span v-if="isPostOverdue(post)" class="pdetail__overdue">
@@ -125,6 +179,21 @@ const doneCount = computed(() => checklistItems.value.filter((i) => i.done).leng
             />
           </PanelCard>
 
+          <PanelCard title="Entrega" description="Enlaces para que la marca vea el borrador y, al final, el resultado.">
+            <BaseField class="mb-4" data-delivery-links label="Enlace al borrador (opcional)" hint="Un vídeo o archivo pesado en Drive, WeTransfer o un enlace privado. La marca lo verá al revisar." :error="draftUrlError" v-slot="f">
+              <BaseInput v-bind="f" v-model="draftUrl" type="url" inputmode="url" placeholder="Pega aquí el enlace" autocomplete="off" />
+            </BaseField>
+            <BaseField label="Enlace de la publicación" hint="Cuando esté publicada en la red, pega aquí su enlace. Queda como resultado de la colaboración." :error="resultUrlError" v-slot="f">
+              <BaseInput v-bind="f" v-model="resultUrl" type="url" inputmode="url" placeholder="Pega aquí el enlace" autocomplete="off" />
+            </BaseField>
+            <p v-if="post.resultUrl || post.draftUrl" class="mt-4 text-sm text-[var(--text-muted)]">
+              Guardado:
+              <a v-if="post.draftUrl" :href="post.draftUrl" target="_blank" rel="noopener noreferrer nofollow" class="underline font-semibold text-[var(--text-strong)]">borrador ({{ linkHost(post.draftUrl) }})</a>
+              <template v-if="post.draftUrl && post.resultUrl"> · </template>
+              <a v-if="post.resultUrl" :href="post.resultUrl" target="_blank" rel="noopener noreferrer nofollow" class="underline font-semibold text-[var(--text-strong)]">publicación ({{ linkHost(post.resultUrl) }})</a>
+            </p>
+          </PanelCard>
+
           <PanelCard title="Planificación">
             <BaseField v-slot="f" label="Fecha de entrega">
               <DatePicker v-bind="f" v-model="dueDate" />
@@ -132,7 +201,7 @@ const doneCount = computed(() => checklistItems.value.filter((i) => i.done).leng
             <dl class="pfacts">
               <div class="pfacts__row">
                 <dt>Red</dt>
-                <dd class="pfacts__platform"><Icon :name="platformMeta[post.platform].icon" class="size-4" />{{ platformMeta[post.platform].label }}</dd>
+                <dd class="pfacts__platform"><Icon :name="platformMeta[post.platform].icon" class="size-4" />{{ [post.platform, ...(post.extraPlatforms ?? [])].map((p) => platformMeta[p].label).join(' · ') }}</dd>
               </div>
               <div class="pfacts__row"><dt>Formato</dt><dd>{{ contentTypeMeta[post.contentType].label }}</dd></div>
               <div v-if="project && post.contentVersion" class="pfacts__row"><dt>Versión del contenido</dt><dd>v{{ post.contentVersion }}</dd></div>
@@ -171,6 +240,23 @@ const doneCount = computed(() => checklistItems.value.filter((i) => i.done).leng
               </BaseButton>
             </PanelCard>
           </template>
+
+          <PanelCard title="Reutilizar" description="Empieza otra pieza sin escribirlo todo de nuevo.">
+            <div class="grid gap-2" data-reuse>
+              <BaseButton variant="secondary" icon="ph:copy-bold" :loading="duplicating" :disabled="duplicating" data-duplicate-post @click="duplicate">Duplicar publicación</BaseButton>
+              <BaseButton v-if="!naming" variant="ghost" icon="ph:floppy-disk-bold" data-save-as-template @click="startTemplate">Guardar como plantilla</BaseButton>
+              <form v-else class="grid gap-2" @submit.prevent="saveAsTemplate">
+                <label class="sr-only" for="post-template-name">Nombre de la plantilla</label>
+                <input id="post-template-name" v-model="templateName" class="input w-full" maxlength="80" placeholder="Nombre: p. ej. Reseña en vídeo" autocomplete="off">
+                <div class="flex gap-2">
+                  <BaseButton variant="ghost" size="sm" type="button" @click="naming = false">Cancelar</BaseButton>
+                  <BaseButton variant="primary" size="sm" type="submit" class="flex-1" :loading="templateBusy" :disabled="!templateName.trim()">Guardar plantilla</BaseButton>
+                </div>
+                <p class="text-sm text-[var(--text-muted)]">Guarda título, texto, formato, redes, hashtags y el checklist. No la fecha, la imagen ni la colaboración.</p>
+                <p v-if="templateError" class="text-sm text-[var(--color-danger)]" role="alert">{{ templateError }}</p>
+              </form>
+            </div>
+          </PanelCard>
 
           <div class="pdetail__danger">
             <span>Borrarla es definitivo.</span>

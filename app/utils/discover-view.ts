@@ -5,7 +5,7 @@
 import type { DiscoveryResult } from '~/composables/useDiscover'
 
 export type ResponseFilter = 'any' | '24' | '2'
-export type DiscoverSort = 'affinity' | 'collabs' | 'response' | 'budget_asc' | 'budget_desc'
+export type DiscoverSort = 'affinity' | 'collabs' | 'response' | 'budget_asc' | 'budget_desc' | 'pkg_asc' | 'pkg_desc'
 
 export const SORT_LABELS: Record<DiscoverSort, string> = {
   affinity: 'Más afines',
@@ -13,6 +13,8 @@ export const SORT_LABELS: Record<DiscoverSort, string> = {
   response: 'Responden antes',
   budget_asc: 'Presupuesto: de menor a mayor',
   budget_desc: 'Presupuesto: de mayor a menor',
+  pkg_asc: 'Paquete: precio más bajo',
+  pkg_desc: 'Paquete: precio más alto',
 }
 
 /** Siglas de las redes para las etiquetas pequeñas de la tarjeta. */
@@ -51,7 +53,8 @@ export function matchesClientFilters(
   return true
 }
 
-export function sortResults(list: DiscoveryResult[], sort: DiscoverSort): DiscoveryResult[] {
+/** `extra.pkgMinCents`: precio del paquete más barato de cada perfil (null si no tiene); solo hace falta para los órdenes por paquete. */
+export function sortResults(list: DiscoveryResult[], sort: DiscoverSort, extra: { pkgMinCents?: (r: DiscoveryResult) => number | null } = {}): DiscoveryResult[] {
   const copy = [...list]
   // Los que no tienen el dato van siempre al final, no al principio.
   const nullsLast = (get: (r: DiscoveryResult) => number | null, dir: 1 | -1) => (a: DiscoveryResult, b: DiscoveryResult) => {
@@ -68,5 +71,19 @@ export function sortResults(list: DiscoveryResult[], sort: DiscoverSort): Discov
     case 'response': return copy.sort(nullsLast((r) => r.responseHours, 1))
     case 'budget_asc': return copy.sort(nullsLast((r) => r.minCents ?? r.maxCents, 1))
     case 'budget_desc': return copy.sort(nullsLast((r) => r.maxCents ?? r.minCents, -1))
+    // Sin paquetes, al final en los dos sentidos; los empates se desempatan por afinidad.
+    case 'pkg_asc': return copy.sort((a, b) => nullsLast((r) => extra.pkgMinCents?.(r) ?? null, 1)(a, b) || b.score - a.score)
+    case 'pkg_desc': return copy.sort((a, b) => nullsLast((r) => extra.pkgMinCents?.(r) ?? null, -1)(a, b) || b.score - a.score)
   }
+}
+
+/**
+ * «Por qué encaja»: coincidencias reales entre lo que se ha filtrado y la ficha (categorías en común y red social).
+ * Sin filtros activos no hay criterio, así que devuelve null: no se inventa ningún motivo.
+ */
+export function fitSummary(r: DiscoveryResult, f: { categories: string[]; platforms: string[] }): string | null {
+  const cats = f.categories.filter((c) => r.categories.some((rc) => rc.toLowerCase() === c.toLowerCase()))
+  const nets = f.platforms.filter((p) => r.platforms.includes(p)).map((p) => PLATFORM_SHORT[p] ?? p)
+  const parts = [...cats, ...nets]
+  return parts.length ? `Encaja en ${parts.join(', ')}` : null
 }

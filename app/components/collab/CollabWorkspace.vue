@@ -6,7 +6,7 @@ import { collaborationWork, deliverableState, hasRated, type DeliverableState, t
 import type { CollaborationTerms } from '~/utils/collaboration-terms'
 import type { CollaborationStatus } from '~/types'
 import { expiryState } from '~/utils/collab-expiry'
-import { collabPhase, collabDisplayName, collabBriefExcerpt, paymentState, COLLAB_PHASES } from '~/utils/collab-phase'
+import { collabPhase, collabDisplayName, collabBriefExcerpt, paymentState, formatMoney, COLLAB_PHASES } from '~/utils/collab-phase'
 import { collaborationStatusMeta } from '~/utils/status'
 import { agreementFingerprint, buildAgreementHtml, printHtml, type AgreementData } from '~/utils/agreement-summary'
 import { buildIcs, downloadIcs } from '~/utils/ics'
@@ -201,15 +201,21 @@ async function handleAccept(amount: number | null) {
   try {
     await (isPartner ? partnerSide.accept(props.id, amount) : creatorSide.accept(props.id, amount))
     await reloadEvents()
+    toast.success(`Colaboración aceptada${amount ? ` por ${formatMoney(amount)}` : ''}. Ya podéis empezar.`)
   } catch (e) {
     actionError.value = errorMessage(e, 'No se ha podido aceptar la solicitud. Inténtalo de nuevo.')
   }
+}
+async function onCountered() {
+  await reloadEvents()
+  toast.success('Contraoferta enviada: te avisaremos cuando responda.')
 }
 async function handleDecline() {
   actionError.value = ''
   try {
     await (isPartner ? partnerSide.decline(props.id) : creatorSide.decline(props.id))
     await router.push(`/${props.role}/requests`)
+    toast.success('Solicitud rechazada')
   } catch (e) {
     actionError.value = errorMessage(e, 'No se ha podido rechazar la solicitud. Inténtalo de nuevo.')
   }
@@ -295,7 +301,7 @@ function exportDates() {
   toast.success('Calendario descargado: ábrelo para añadir las fechas')
 }
 
-useHead({ title: computed(() => (view.value ? `Colaboración con ${view.value.counterpartName}` : 'Colaboración')) })
+useHead({ title: computed(() => title.value || 'Colaboración') })
 </script>
 
 <template>
@@ -343,7 +349,7 @@ useHead({ title: computed(() => (view.value ? `Colaboración con ${view.value.co
               <NegotiationPanel
                 :collaboration-id="view.id" :initial-budget-cents="view.budgetCents" :status="view.status"
                 :my-role="role" :initiated-by="view.initiatedBy"
-                @accept="handleAccept" @decline="handleDecline"
+                @accept="handleAccept" @decline="handleDecline" @countered="onCountered"
               />
               <BaseButton
                 v-if="view.status === 'requested' && view.initiatedBy === role"

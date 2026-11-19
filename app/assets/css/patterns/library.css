@@ -1,0 +1,38 @@
+/* ==========================================================================
+   Patrón · Biblioteca de archivos del creador (pages/creator/library.vue) y su selector (library/MediaPicker.vue)
+   ========================================================================== */
+
+@layer components {
+  .lib { display: grid; gap: 1rem; }
+  .lib__bar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem; }
+  .lib__search { flex: 1 1 14rem; min-width: 0; }
+  .lib__count { font-size: var(--text-sm); color: var(--text-muted); font-variant-numeric: tabular-nums; }
+  .lib__tags, .libpick__tags { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+  .lib__tag, .libpick__tag {
+    padding: 0.25rem 0.75rem; border: 1px solid var(--line-strong); border-radius: var(--radius-pill); background: var(--surface-raised);
+    font-size: var(--text-sm); font-weight: 600; color: var(--text-strong); cursor: pointer;
+    &[aria-pressed="true"] { background: var(--color-tinta-950); border-color: var(--color-tinta-950); color: var(--color-hueso-50); }
+    &:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+    & small { margin-left: 0.25rem; opacity: 0.7; }
+  }
+  .lib__errors { margin: 0; padding: 0.75rem 1rem 0.75rem 2rem; border-radius: var(--radius-md); background: var(--color-mantequilla); font-size: var(--text-sm); color: var(--color-tinta-950); }
+  .lib__msg, .libpick__msg { font-size: var(--text-sm); color: var(--text-muted); padding: 1rem 0; }
+  .lib__drop { border: 2px dashed transparent; border-radius: var(--radius-lg); padding: 0.25rem; transition: border-color var(--dur) var(--ease-out), background-color var(--dur) var(--ease-out); }
+  .lib__drop.is-dragging { border-color: var(--color-tinta-950); background: var(--color-voltio-200); }
+  .lib__grid, .libpick__grid { display: grid; gap: 0.875rem; margin: 0; padding: 0; list-style: none; grid-template-columns: repeat(2, minmax(0, 1fr)); @media (width >= 40rem) { grid-template-columns: repeat(3, minmax(0, 1fr)); } @media (width >= 64rem) { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+  .lib__tile { display: grid; gap: 0.5rem; padding: 0.5rem; border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--surface-raised); }
+  .lib__thumb { position: relative; aspect-ratio: 4 / 3; overflow: hidden; border-radius: var(--radius-sm); background: var(--surface-sunken); }
+  .lib__img, .libpick__img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .lib__meta { min-width: 0; padding-inline: 0.25rem; }
+  .lib__name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .lib__sub { font-size: var(--text-sm); color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .lib__actions { display: flex; align-items: center; justify-content: flex-end; gap: 0.25rem; }
+  .lib__hint { margin-top: 1rem; font-size: var(--text-sm); color: var(--text-muted); }
+
+  .libpick { display: grid; gap: 0.875rem; }
+  .libpick__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); @media (width >= 40rem) { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+  .libpick__tile { position: relative; display: block; aspect-ratio: 4 / 3; overflow: hidden; padding: 0; border: 2px solid transparent; border-radius: var(--radius-md); background: var(--surface-sunken); cursor: pointer;
+    &:hover { border-color: var(--color-tinta-950); } &:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; } }
+  .libpick__name { position: absolute; inset: auto 0 0 0; padding: 0.375rem 0.5rem; background: linear-gradient(transparent, rgb(18 16 25 / 75%)); color: var(--color-hueso-50); font-size: var(--text-micro); font-weight: 600; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .libpick__foot { font-size: var(--text-sm); color: var(--text-muted); }
+}

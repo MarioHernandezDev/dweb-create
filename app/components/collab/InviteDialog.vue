@@ -26,11 +26,13 @@ const scopeNotes = ref('')
 const revisionsIncluded = ref<number | null>(null)
 const exclusivity = ref(false)
 const usageRights = ref('')
+const campaignName = ref('')
 
 watch(sheetOpen, (open) => {
   if (!open) return
   sheetStage.value = 'form'
   message.value = ''
+  campaignName.value = ''
   budgetEuros.value = null
   termsOpen.value = false
   campaignGoal.value = ''
@@ -70,6 +72,7 @@ async function send() {
     creator_id: target.id,
     initiated_by: 'partner',
     brief: message.value,
+    campaign_name: campaignName.value.trim() || null,
     budget_cents: Math.round(budgetEuros.value * 100),
     campaign_goal: campaignGoal.value.trim() || null,
     target_audience: targetAudience.value.trim() || null,
@@ -94,6 +97,8 @@ async function send() {
   <BottomSheet v-model="sheetOpen" :title="target ? `Contactar a ${target.name}` : 'Contactar'">
       <template v-if="sheetStage === 'form'">
         <ProposalTemplateBar kind="invite" :current="{ ...templateData }" @apply="applyTemplate" />
+        <label class="block text-sm font-medium text-[var(--color-text-muted)] mb-1.5" for="campaign-name">Nombre de la campaña <span class="font-normal">(opcional)</span></label>
+        <input id="campaign-name" v-model="campaignName" maxlength="80" placeholder="Ej.: Lanzamiento de primavera" class="input w-full h-11 mb-4">
         <label class="block text-sm font-medium text-[var(--color-text-muted)] mb-1.5" for="brief">Cuéntales tu campaña</label>
         <textarea
           id="brief" v-model="message" rows="4" placeholder="Qué necesitas y para cuándo…"

@@ -13,17 +13,33 @@ export type ChangeStatusResult = 'ok' | 'cancelled' | 'failed'
  * reflejarlo.
  */
 export function usePostActions() {
-  const { updatePost, deletePost } = useMyPosts()
+  const { updatePost, stashPost, deletePostRemote } = useMyPosts()
   const { requests: collabRequests } = useCollabRequests()
   const { confirm } = useConfirm()
   const toast = useToast()
 
-  async function changeStatus(post: Post, phase: PostStatus): Promise<ChangeStatusResult> {
+  // Plazo para «Deshacer»: el borrado de verdad no se hace hasta que pasa (cerrar la pestaña antes lo cancela: lo seguro).
+  const UNDO_MS = 8000
+
+  /** Vuelve una publicación a la fase en la que estaba; `onUndo` deja a quien la movió (el tablero) reflejarlo. */
+  async function undoMove(post: Post, previous: PostStatus, onUndo?: (previous: PostStatus) => void) {
+    try {
+      await updatePost(post.id, { status: previous })
+      onUndo?.(previous)
+      toast.success(`«${post.title}» vuelve a ${statusMeta[previous].label}`)
+    } catch (err) {
+      console.error('[usePostActions] fallo al deshacer el cambio de fase:', err)
+      toast.error(`No se ha podido deshacer: «${post.title}» sigue en ${statusMeta[post.status].label}.`)
+    }
+  }
+
+  async function changeStatus(post: Post, phase: PostStatus, opts: { onUndo?: (previous: PostStatus) => void } = {}): Promise<ChangeStatusResult> {
     if (post.status === phase) return 'ok'
+    const previous = post.status
 
     try {
       await updatePost(post.id, { status: phase })
-      toast.success(`«${post.title}» movida a ${statusMeta[phase].label}`)
+      toast.success(`«${post.title}» movida a ${statusMeta[phase].label}`, { ms: 7000, action: { label: 'Deshacer', onClick: () => { void undoMove(post, previous, opts.onUndo) } } })
       return 'ok'
     } catch (err) {
       // Una publicación de una colaboración activa no se programa ni se publica sin la aprobación de la
@@ -54,23 +70,40 @@ export function usePostActions() {
     }
   }
 
-  /** Pide confirmación y borra; devuelve si se borró de verdad. */
-  async function remove(post: Post): Promise<boolean> {
-    const ok = await confirm({
-      title: `¿Borrar "${post.title}"?`,
-      message: 'Se borrará permanentemente, junto con su checklist, etiquetas y predicción de éxito si las tenía.',
-      confirmLabel: 'Borrar', tone: 'danger', icon: 'ph:trash-fill'
-    })
-    if (!ok) return false
-    try {
-      await deletePost(post.id)
-      toast.success('Publicación borrada')
-      return true
-    } catch (err) {
-      console.error('[usePostActions] fallo al borrar:', err)
-      toast.error('No se ha podido borrar la publicación. Inténtalo de nuevo.')
-      return false
+  /**
+   * Borra una publicación con «Deshacer». Las propias desaparecen al momento y se borran de verdad pasados unos segundos
+   * (hasta entonces se pueden recuperar); las de una colaboración piden antes confirmación, porque la marca también las ve.
+   * Devuelve si se quitó de las listas.
+   */
+  async function remove(post: Post, opts: { onUndo?: () => void } = {}): Promise<boolean> {
+    if (post.collaborationId) {
+      const ok = await confirm({
+        title: `¿Borrar "${post.title}"?`,
+        message: 'Es una pieza de una colaboración: la marca dejará de verla. Se borrará junto con su checklist, etiquetas y predicción de éxito, y podrás deshacerlo unos segundos.',
+        confirmLabel: 'Borrar', tone: 'danger', icon: 'ph:trash-fill'
+      })
+      if (!ok) return false
     }
+    const restore = stashPost(post.id)
+    if (!restore) return false
+
+    let undone = false
+    const timer = setTimeout(async () => {
+      if (undone) return
+      try {
+        await deletePostRemote(post.id)
+      } catch (err) {
+        console.error('[usePostActions] fallo al borrar:', err)
+        restore()
+        toast.error(`No se ha podido borrar «${post.title}»: vuelve a estar en tu lista.`)
+      }
+    }, UNDO_MS)
+
+    toast.info(`«${post.title}» eliminada`, {
+      ms: UNDO_MS,
+      action: { label: 'Deshacer', onClick: () => { undone = true; clearTimeout(timer); restore(); opts.onUndo?.(); toast.success(`«${post.title}» restaurada`) } }
+    })
+    return true
   }
 
   return { changeStatus, remove }

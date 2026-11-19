@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { contentTypeMeta, dueLabel, isPostOverdue, overdueLabel, partnerNextStepHint } from '~/utils/status'
+import { linkHost } from '~/utils/delivery-links'
 import { platformMeta } from '~/utils/mock-data'
 import type { Creator, Post } from '~/types'
 
@@ -23,12 +24,9 @@ watch(() => props.post?.id, (postId) => { if (postId) ensureItems(postId) }, { i
 <template>
   <BottomSheet v-model="open" :title="post?.title ?? 'Publicación'">
     <template v-if="post">
-      <div
-        class="relative h-32 rounded-[var(--radius-md)] overflow-hidden flex items-center justify-center mb-5"
-        :style="!post.mediaUrl ? { background: `linear-gradient(${post.cover.angle}deg, ${post.cover.from}, ${post.cover.to})` } : undefined"
-      >
+      <div class="relative h-32 rounded-[var(--radius-md)] overflow-hidden mb-5">
+        <CoverArt :seed="post.id" :icon="contentTypeMeta[post.contentType].icon" />
         <SmartImage v-if="post.mediaUrl" :src="post.mediaUrl" :width="640" :height="360" class="absolute inset-0 size-full object-cover" />
-        <Icon v-else :name="contentTypeMeta[post.contentType].icon" class="size-8 text-white/90" />
       </div>
 
       <div class="flex items-center gap-2 flex-wrap mb-4">
@@ -43,8 +41,22 @@ watch(() => props.post?.id, (postId) => { if (postId) ensureItems(postId) }, { i
 
       <p class="text-sm text-[var(--color-text-muted)] leading-relaxed mb-4">{{ partnerNextStepHint(post.status) }}</p>
 
+      <!-- Enlaces de entrega: el borrador para revisar (vídeo o archivo pesado fuera de CIBERAN) y la publicación final. -->
+      <div v-if="post.draftUrl || post.resultUrl" class="flex flex-wrap gap-2 mb-4" data-post-links>
+        <a v-if="post.draftUrl" :href="post.draftUrl" target="_blank" rel="noopener noreferrer nofollow" class="btn btn--secondary btn--sm" data-draft-link>
+          <Icon name="ph:play-circle-bold" class="btn__icon" /><span>Ver el borrador ({{ linkHost(post.draftUrl) }})</span>
+        </a>
+        <a v-if="post.resultUrl" :href="post.resultUrl" target="_blank" rel="noopener noreferrer nofollow" class="btn btn--primary btn--sm" data-result-link>
+          <Icon name="ph:arrow-square-out-bold" class="btn__icon" /><span>Ver la publicación ({{ linkHost(post.resultUrl) }})</span>
+        </a>
+      </div>
+
       <p v-if="post.caption" class="text-base text-[var(--color-text)] leading-relaxed mb-4">{{ post.caption }}</p>
       <p v-else class="text-base text-[var(--color-text-faint)] italic mb-4">Sin caption todavía.</p>
+      <p v-if="post.status === 'ready_for_review' && !post.mediaUrl && !post.caption && !post.draftUrl" class="flex gap-2 text-sm rounded-[var(--radius-sm)] bg-[var(--color-mantequilla)] text-[var(--color-tinta-950)] px-3 py-2 mb-4" data-review-incomplete>
+        <Icon name="ph:info-bold" class="size-4 mt-0.5 shrink-0" />
+        Esta pieza llega sin imagen ni texto. Si no es lo que esperabas, usa «Pedir cambios» para que la completen antes de aprobarla.
+      </p>
 
       <div class="flex items-center gap-4 text-sm text-[var(--color-text-muted)] mb-4">
         <span class="inline-flex items-center gap-1.5">

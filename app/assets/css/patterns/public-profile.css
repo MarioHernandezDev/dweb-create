@@ -36,8 +36,8 @@
      blanco, pensado para ir sobre la cabecera oscura) debajo de una foto cuadrada del ancho de la pantalla, ya sobre el
      fondo claro: invisible. Ahora la cabecera va siempre primero, sobre lo oscuro, y la foto es un retrato de tamaño fijo. */
   .pp__head { order: 1; color: var(--color-hueso-50); min-width: 0; @media (width >= 64rem) { order: 0; grid-column: 2; grid-row: 1; } }
-  .pp__card { order: 2; @media (width >= 64rem) { order: 0; grid-column: 1; grid-row: 1 / span 2; } }
-  .pp__content { order: 3; display: grid; gap: 1.25rem; min-width: 0; @media (width >= 64rem) { order: 0; grid-column: 2; grid-row: 2; } }
+  .pp__card { order: 3; @media (width >= 64rem) { order: 0; grid-column: 1; grid-row: 1 / span 2; } }
+  .pp__content { order: 2; display: grid; gap: 1.25rem; min-width: 0; @media (width >= 64rem) { order: 0; grid-column: 2; grid-row: 2; } }
 
   .pp__name { font-family: var(--font-display); font-weight: 800; font-size: clamp(2.25rem, 1.4rem + 3vw, 3.75rem); letter-spacing: -0.03em; line-height: 1.05; overflow-wrap: anywhere; }
   .pp__sub { margin-top: 1rem; font-size: var(--text-lg); color: color-mix(in srgb, var(--color-hueso-50) 82%, transparent); }
@@ -72,6 +72,10 @@
   .pp__net-badge { display: grid; place-items: center; flex: none; width: 2.5rem; height: 2.5rem; border-radius: 50%; background: var(--color-tinta-950); color: var(--color-voltio-400); font-size: var(--text-micro); font-weight: 800; }
   .pp__net-text { display: grid; min-width: 0; flex: 1; & strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } & small { display: flex; align-items: center; gap: 0.25rem; color: var(--text-muted); } }
   .pp__cta { display: grid; gap: 0.5rem; }
+  .pp__nopkg { grid-column: 1 / -1; color: color-mix(in srgb, var(--color-hueso-50) 78%, transparent); }
+  .pp__cta--head { grid-auto-flow: column; grid-auto-columns: 1fr; margin-top: 1.25rem; max-width: 30rem; @media (width < 40rem) { grid-auto-flow: row; } @media (width >= 64rem) { display: none; } & > p { grid-column: 1 / -1; } }
+  /* En tablet y móvil las acciones viven en la cabecera: no se repiten en la tarjeta lateral. */
+  .pp__card .pp__cta { @media (width < 64rem) { display: none; } }
   .pp__copy { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.5rem; font-size: var(--text-sm); font-weight: 600; color: var(--text-muted); &:hover { color: var(--text-strong); } }
   .pub__error { color: var(--color-danger); font-weight: 600; font-size: var(--text-sm); }
 

@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import type { CoverArt } from '~/types'
+import type { CoverArt as CoverArtData } from '~/types'
+import type { LibraryItem } from '~/utils/media-library'
 
 /**
  * Imagen de la publicación. Un marco vertical (4:5, como se ve en Instagram) de tamaño contenido, no una banda a todo
@@ -9,7 +10,7 @@ import type { CoverArt } from '~/types'
 const props = defineProps<{
   postId: string
   mediaUrl?: string | null
-  cover: CoverArt
+  cover: CoverArtData
   icon: string
 }>()
 
@@ -54,6 +55,18 @@ async function handleFile(file: File | undefined) {
     if (inputEl.value) inputEl.value.value = ''
   }
 }
+// Biblioteca de archivos: la imagen elegida se copia como portada de esta publicación (misma subida y mismos avisos).
+const pickerOpen = ref(false)
+const { toFile: libraryFile } = useMediaLibrary()
+async function onLibraryPick(item: LibraryItem) {
+  error.value = ''
+  try {
+    await handleFile(await libraryFile(item))
+  } catch (err) {
+    console.error('[CoverUploader] fallo al usar la imagen de la biblioteca:', err)
+    error.value = 'No se ha podido usar esa imagen. Inténtalo de nuevo.'
+  }
+}
 function onChange(event: Event) { handleFile((event.target as HTMLInputElement).files?.[0]) }
 function onDrop(event: DragEvent) { dragging.value = false; handleFile(event.dataTransfer?.files?.[0]) }
 </script>
@@ -66,7 +79,8 @@ function onDrop(event: DragEvent) { dragging.value = false; handleFile(event.dat
       @click="inputEl?.click()" @dragover.prevent="dragging = true" @dragleave="dragging = false" @drop.prevent="onDrop"
     >
       <img v-if="mediaUrl" :src="mediaUrl" alt="" class="cover__img">
-      <span v-else class="cover__empty">
+      <CoverArt v-else :seed="postId" class="cover__art" />
+      <span v-if="!mediaUrl" class="cover__empty">
         <span class="cover__icon"><Icon :name="icon" class="size-6" /></span>
         <strong>Añade una imagen</strong>
         <small>Arrástrala aquí o pulsa para elegirla</small>
@@ -80,6 +94,9 @@ function onDrop(event: DragEvent) { dragging.value = false; handleFile(event.dat
     </button>
 
     <input ref="inputEl" type="file" accept="image/jpeg,image/png,image/webp" class="hidden" @change="onChange">
+
+    <BaseButton variant="ghost" size="sm" icon="ph:images-bold" type="button" class="mt-2" :disabled="uploading" data-pick-library @click="pickerOpen = true">Elegir de la biblioteca</BaseButton>
+    <MediaPicker v-model="pickerOpen" @pick="onLibraryPick" />
 
     <p v-if="error" class="cover__error" role="alert">{{ error }}</p>
   </div>

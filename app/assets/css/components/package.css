@@ -34,13 +34,16 @@
   .package__foot { display: flex; flex-wrap: wrap; align-items: center; gap: 0.625rem; margin-top: auto; padding-top: 1rem; border-top: 1px solid var(--line); }
   .package__pending { font-size: var(--text-sm); font-weight: 600; }
   .package__state { font-size: var(--text-sm); color: var(--text-muted); }
-  .package__actions { display: flex; align-items: center; gap: 0.375rem; margin-left: auto; }
+  .package__actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 0.375rem; margin-left: auto; }
+  .package__actions > * { flex-shrink: 0; }
 
   /* ---- Escaparate (lo que ven los demás): portada grande, precio protagonista ---- */
   .package--showcase { gap: 0; padding: 0; overflow: hidden; transition: box-shadow var(--dur) var(--ease-out), border-color var(--dur) var(--ease-out);
     &:hover { border-color: var(--line-strong); box-shadow: var(--shadow-2); }
   }
   .package__banner { position: relative; aspect-ratio: 16 / 9; overflow: hidden; background: var(--surface-sunken); }
+  .package__featured { position: absolute; left: 0.75rem; top: 0.75rem; display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.25rem 0.625rem; border-radius: var(--radius-pill); background: var(--color-tinta-950); color: var(--color-voltio-400); font-size: var(--text-micro); font-weight: 600; }
+  .package__featured--inline { position: static; width: fit-content; }
   .package__price--badge { position: absolute; right: 0.75rem; bottom: 0.75rem; padding: 0.25rem 0.875rem; border-radius: var(--radius-pill); background: var(--color-voltio-400); color: var(--color-tinta-950); box-shadow: 0 0 0 1px var(--color-tinta-950); }
   .package__body { display: grid; gap: 0.75rem; padding: var(--card-padding); }
   .package__desc--open { display: block; -webkit-line-clamp: unset; overflow: visible; margin-top: 0; }

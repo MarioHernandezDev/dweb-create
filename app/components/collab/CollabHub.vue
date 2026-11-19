@@ -158,7 +158,8 @@ function exportCsv() {
 
     <div class="hub__bar-row">
       <SegmentedTabs :model-value="view" :options="viewOptions" label="Vista de las colaboraciones" @update:model-value="setView" />
-      <div class="hub__tools">
+      <!-- Sin ninguna colaboración, buscar / ordenar / exportar no tienen nada que hacer: se esconden. -->
+      <div v-if="items.length" class="hub__tools">
         <label class="hub__search">
           <Icon name="ph:magnifying-glass-bold" class="size-4" />
           <span class="sr-only">Buscar colaboración</span>
@@ -189,11 +190,13 @@ function exportCsv() {
     <!-- TABLERO -->
     <template v-if="view === 'tablero'">
       <EmptyState
-        v-if="!activeShown.length" icon="ph:handshake"
+        v-if="!activeShown.length" icon="ph:handshake" :mascot="filtering ? undefined : 'sleepy'"
         :title="filtering ? 'Ninguna colaboración con estos filtros' : 'Sin colaboraciones en curso'"
         :description="filtering ? 'Prueba a quitar el buscador o el filtro.' : (paymentsEnabled ? 'Las solicitudes y ofertas que se acepten aparecerán aquí, de la aceptación al pago.' : 'Las solicitudes y ofertas que se acepten aparecerán aquí, de la aceptación a la publicación.')"
       >
         <BaseButton v-if="!filtering && pending.length" variant="primary" size="sm" @click="setView('solicitudes')">Ver {{ pending.length }} solicitud{{ pending.length === 1 ? '' : 'es' }} pendiente{{ pending.length === 1 ? '' : 's' }}</BaseButton>
+        <BaseButton v-if="!filtering && !pending.length" :to="`/${role}/discover`" variant="primary" size="sm" icon="ph:compass-bold">{{ isPartner ? 'Descubrir creadores' : 'Descubrir marcas' }}</BaseButton>
+        <BaseButton v-if="!filtering && !pending.length && !isPartner" to="/creator/packages" variant="secondary" size="sm" icon="ph:package-bold">Revisar mis paquetes</BaseButton>
       </EmptyState>
       <CollabHubBoard v-else :items="activeShown" :role="role" :progress-for="work.progressFor" :hint-of="hintOf" />
     </template>
@@ -206,10 +209,13 @@ function exportCsv() {
         <div class="hub__kpi"><p>Entregas en los próximos 7 días</p><strong>{{ soon.length }}</strong><small>{{ soonUntil ? `hasta el ${soonUntil}` : 'ninguna prevista' }}</small></div>
       </div>
       <EmptyState
-        v-if="!activeShown.length" icon="ph:handshake"
+        v-if="!activeShown.length" icon="ph:handshake" :mascot="filtering ? undefined : 'sleepy'"
         :title="filtering ? 'Ninguna colaboración con estos filtros' : 'Sin colaboraciones en curso'"
         :description="filtering ? 'Prueba a quitar el buscador o el filtro.' : 'Aquí verás cada colaboración agrupada por fase.'"
-      />
+      >
+        <BaseButton v-if="!filtering && !pending.length" :to="`/${role}/discover`" variant="primary" size="sm" icon="ph:compass-bold">{{ isPartner ? 'Descubrir creadores' : 'Descubrir marcas' }}</BaseButton>
+        <BaseButton v-if="!filtering && !pending.length && !isPartner" to="/creator/packages" variant="secondary" size="sm" icon="ph:package-bold">Revisar mis paquetes</BaseButton>
+      </EmptyState>
       <CollabHubList v-else :items="activeShown" :role="role" :progress-for="work.progressFor" :pay-label="who.cobroCol" />
     </template>
 
@@ -222,16 +228,18 @@ function exportCsv() {
     <!-- SOLICITUDES -->
     <template v-else>
       <EmptyState
-        v-if="!pendingShown.length && !historyShown.length" icon="ph:handshake"
+        v-if="!pendingShown.length && !historyShown.length" icon="ph:handshake" :mascot="filtering ? undefined : 'sleepy'"
         :title="filtering ? 'Ninguna solicitud con estos filtros' : 'Sin solicitudes'"
         :description="isPartner ? 'Contacta a un creador desde «Descubrir», o espera a que te encuentren ellos.' : 'Cuando contactes a una marca (o te contacten) desde «Descubrir», aparecerá aquí.'"
-      />
+      >
+        <BaseButton v-if="!filtering" :to="`/${role}/discover`" variant="primary" size="sm" icon="ph:compass-bold">{{ isPartner ? 'Descubrir creadores' : 'Descubrir marcas' }}</BaseButton>
+      </EmptyState>
       <section v-if="pendingShown.length" class="hub__section" aria-labelledby="hub-pending">
         <h2 id="hub-pending" class="hub__h">Pendientes <span class="hub__count">{{ pendingShown.length }}</span></h2>
         <div class="collab-grid">
           <CollabCard
             v-for="c in pendingShown" :key="c.id"
-            :name="c.counterpart" :status="c.status" :brief="c.brief" :budget-cents="c.budgetCents" :created-at="c.createdAt" :expires-at="c.expiresAt"
+            :name="c.counterpart" :status="c.status" :campaign="c.campaignName" :brief="c.brief" :budget-cents="c.budgetCents" :created-at="c.createdAt" :expires-at="c.expiresAt"
             :hint="hintOf(c)?.text" :hint-tone="hintOf(c)?.tone" @open="navigateTo(`/${role}/collaborations/${c.id}`)"
           />
         </div>
@@ -241,7 +249,7 @@ function exportCsv() {
         <div class="collab-grid">
           <CollabCard
             v-for="c in historyShown" :key="c.id"
-            :name="c.counterpart" :status="c.status" :brief="c.brief" :budget-cents="c.budgetCents" :created-at="c.createdAt"
+            :name="c.counterpart" :status="c.status" :campaign="c.campaignName" :brief="c.brief" :budget-cents="c.budgetCents" :created-at="c.createdAt"
             @open="navigateTo(`/${role}/collaborations/${c.id}`)"
           />
         </div>

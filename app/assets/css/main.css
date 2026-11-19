@@ -55,6 +55,8 @@
 @import "./components/post-board-extras.css";
 @import "./components/profile-hero.css";
 @import "./components/package.css";
+@import "./components/ray-mascot.css";
+@import "./components/command-palette.css";
 
 /* Patrones de pantalla */
 @import "./patterns/shell.css";
@@ -69,4 +71,5 @@
 @import "./patterns/public-profile.css";
 @import "./patterns/insights.css";
 @import "./patterns/settings.css";
+@import "./patterns/library.css";
 @import "./patterns/post-detail.css";

@@ -1,6 +1,10 @@
 <script setup lang="ts">
 const props = defineProps<{ title: string; subtitle?: string; role: import('~/types').Role }>()
 const router = useRouter()
+const { show: showPalette } = useCommandPalette()
+// Solo en el navegador (si no, el texto del servidor y el del cliente no coinciden en Mac).
+const isMac = ref(false)
+onMounted(() => { isMac.value = /Mac|iPhone|iPad/.test(navigator.platform) })
 const route = useRoute()
 
 const showBack = computed(() => route.path.split('/').filter(Boolean).length > 1)
@@ -48,6 +52,11 @@ const { avatarUrl, initials: myInitials, hue: myHue } = useMyAvatar()
     </div>
 
     <ProfileSearchBar />
+
+    <!-- Paleta de comandos (también Cmd/Ctrl+K): saltar a una sección, lanzar una acción o buscar sin tocar el ratón. -->
+    <button type="button" class="icon-link max-md:hidden" :aria-label="`Buscar y acciones (${isMac ? 'Cmd' : 'Ctrl'} K)`" :title="`Buscar y acciones · ${isMac ? '⌘' : 'Ctrl'} K`" data-open-palette @click="showPalette">
+      <Icon name="ph:command-bold" class="size-5" />
+    </button>
 
     <NuxtLink to="/chat" aria-label="Chat" title="Chat" class="icon-link max-md:hidden">
       <Icon name="ph:chat-circle-fill" class="size-5" />

@@ -62,7 +62,7 @@ async function onVisibility(open: boolean) {
         <PhaseChip :status="post.status" />
         <span>
           <Icon :name="platformMeta[post.platform].icon" class="size-4" />
-          {{ platformMeta[post.platform].label }} · {{ contentTypeMeta[post.contentType].label }}
+          {{ [post.platform, ...(post.extraPlatforms ?? [])].map((p) => platformMeta[p].label).join(' + ') }} · {{ contentTypeMeta[post.contentType].label }}
         </span>
         <span v-if="post.collaborationId"><Icon name="ph:handshake-fill" class="size-4" /> Colaboración</span>
         <span v-else><Icon name="ph:user-fill" class="size-4" /> Contenido propio</span>

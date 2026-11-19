@@ -54,6 +54,8 @@ export interface Post {
   caption: string
   contentType: ContentType
   platform: Platform
+  /** Otras redes donde se publicará la misma pieza (la principal es `platform`). */
+  extraPlatforms?: Platform[]
   status: PostStatus
   dueInDays: number
   /** `due_date` en bruto (fecha, "YYYY-MM-DD") — para poder editarla de verdad en un `<input type="date">`; `dueInDays` sigue siendo lo que usa el resto de la UI para agrupar/ordenar. */
@@ -61,6 +63,10 @@ export interface Post {
   hashtags: string[]
   cover: CoverArt
   mediaUrl?: string | null
+  /** Enlace al borrador (vídeo o archivo pesado fuera de CIBERAN) para que la marca lo vea al revisar. */
+  draftUrl?: string | null
+  /** Enlace a la publicación ya subida a la red: el resultado de la colaboración. */
+  resultUrl?: string | null
   successScore?: number
   /** Si el score vino de juzgar el contenido real con el LLM, o solo de la heurística de forma (longitud/hashtags). */
   aiEvaluated?: boolean

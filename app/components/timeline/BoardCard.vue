@@ -36,8 +36,9 @@ const dateLine = computed(() => {
     <div class="post-card__cover">
       <SmartImage v-if="post.mediaUrl" :src="post.mediaUrl" :width="320" :height="160" class="post-card__photo" />
       <CoverArt v-else :seed="post.id" :icon="contentTypeMeta[post.contentType].icon" />
-      <span class="post-card__platform" :title="platformMeta[post.platform].label">
+      <span class="post-card__platform" :title="[post.platform, ...(post.extraPlatforms ?? [])].map((p) => platformMeta[p].label).join(', ')">
         <Icon :name="platformMeta[post.platform].icon" class="size-3.5" />
+        <Icon v-for="p in post.extraPlatforms ?? []" :key="p" :name="platformMeta[p].icon" class="size-3.5" />
       </span>
     </div>
 

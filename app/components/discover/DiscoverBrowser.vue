@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useDebounceFn, useIntersectionObserver } from '@vueuse/core'
 import { formatEuros } from '~/utils/mock-data'
+import type { PackageSummary } from '~/composables/usePackages'
 import type { DiscoveryResult } from '~/composables/useDiscover'
 import { platformMeta } from '~/utils/mock-data'
 import { prefersReducedMotion } from '~/composables/useGsap'
@@ -52,15 +53,17 @@ const platforms = ref<string[]>([])
 const response = ref<ResponseFilter>('any')
 const types = ref<string[]>([])
 const verifiedOnly = ref(false)
+const withPackages = ref(false)
 const sort = ref<DiscoverSort>('affinity')
+const fitFilters = computed(() => ({ categories: selectedCategories.value, platforms: platforms.value }))
 const { items: savedSearches, add: addSavedSearch, remove: removeSavedSearch } = useSavedSearches(props.kind)
 const savedMenuOpen = ref(false)
 
 // Un campo numérico vacío llega como '' (no null).
 const num = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) ? v : null)
 const hasBudget = computed(() => num(minEuros.value) !== null || num(maxEuros.value) !== null)
-const hasActiveFilters = computed(() => selectedCategories.value.length > 0 || hasBudget.value || platforms.value.length > 0 || response.value !== 'any' || types.value.length > 0 || verifiedOnly.value)
-const activeCount = computed(() => selectedCategories.value.length + (hasBudget.value ? 1 : 0) + platforms.value.length + (response.value !== 'any' ? 1 : 0) + types.value.length + (verifiedOnly.value ? 1 : 0))
+const hasActiveFilters = computed(() => selectedCategories.value.length > 0 || hasBudget.value || platforms.value.length > 0 || response.value !== 'any' || types.value.length > 0 || verifiedOnly.value || withPackages.value)
+const activeCount = computed(() => selectedCategories.value.length + (hasBudget.value ? 1 : 0) + platforms.value.length + (response.value !== 'any' ? 1 : 0) + types.value.length + (verifiedOnly.value ? 1 : 0) + (withPackages.value ? 1 : 0))
 
 const PAGE_SIZE = 12
 const visibleCount = ref(PAGE_SIZE)
@@ -89,6 +92,7 @@ function clearFilters() {
   response.value = 'any'
   types.value = []
   verifiedOnly.value = false
+  withPackages.value = false
 }
 function removePlatform(p: string) { platforms.value = platforms.value.filter((x) => x !== p) }
 
@@ -147,22 +151,26 @@ const platformCounts = computed(() => {
   return counts
 })
 const filtered = computed(() => sortResults(
-  byName.value.filter((r) => matchesClientFilters(r, { platforms: platforms.value, response: response.value, types: types.value, verifiedOnly: verifiedOnly.value })),
-  sort.value
+  byName.value
+    .filter((r) => matchesClientFilters(r, { platforms: platforms.value, response: response.value, types: types.value, verifiedOnly: verifiedOnly.value }))
+    .filter((r) => !withPackages.value || !!pkgSummary.value[r.profileId]),
+  sort.value,
+  { pkgMinCents: (r) => pkgSummary.value[r.profileId]?.minCents ?? null }
 ))
 // Paquetes de cada resultado («3 paquetes · desde 150 €»): una sola consulta para los visibles, solo en el navegador y
 // sin repetir los ya pedidos. Si falla, las tarjetas simplemente no lo enseñan.
 const { summarizePackagesOf } = usePackages()
-const pkgSummary = ref<Record<string, { count: number; minCents: number }>>({})
+const pkgSummary = ref<Record<string, PackageSummary>>({})
 const pkgAsked = new Set<string>()
 async function loadPackageSummaries() {
-  const ids = filtered.value.slice(0, 60).map((r) => r.profileId).filter((id) => id && !pkgAsked.has(id))
+  // Se piden los de TODOS los resultados (una sola consulta): hace falta para poder filtrar y ordenar por paquetes.
+  const ids = results.value.slice(0, 400).map((r) => r.profileId).filter((id) => id && !pkgAsked.has(id))
   if (!ids.length) return
   ids.forEach((id) => pkgAsked.add(id))
   pkgSummary.value = { ...pkgSummary.value, ...(await summarizePackagesOf(ids)) }
 }
 onMounted(loadPackageSummaries)
-watch(filtered, () => { if (import.meta.client) loadPackageSummaries() })
+watch(results, () => { if (import.meta.client) loadPackageSummaries() })
 const sortOptions = computed(() => (Object.keys(SORT_LABELS) as DiscoverSort[]).map((k) => ({ value: k, label: SORT_LABELS[k] })))
 const countNote = computed(() => (sort.value === 'affinity'
   ? (scoreMeaningful.value ? 'ordenados por afinidad' : 'sin criterio de afinidad todavía')
@@ -233,7 +241,7 @@ useIntersectionObserver(sentinel, ([entry]) => { if (entry?.isIntersecting && ha
       <!-- Filtros: columna fija en escritorio; en móvil, hoja inferior -->
       <aside class="discover__aside" aria-label="Filtros">
         <DiscoverFilters
-          v-model:categories="selectedCategories" v-model:min="minEuros" v-model:max="maxEuros" v-model:platforms="platforms" v-model:response="response" v-model:types="types" v-model:verified-only="verifiedOnly" :brand-filters="kind === 'partner'"
+          v-model:categories="selectedCategories" v-model:min="minEuros" v-model:max="maxEuros" v-model:platforms="platforms" v-model:response="response" v-model:types="types" v-model:verified-only="verifiedOnly" v-model:with-packages="withPackages" :brand-filters="kind === 'partner'"
           :active="hasActiveFilters" :platform-counts="platformCounts" :budget-label="noun.budget" @clear="clearFilters"
         />
       </aside>
@@ -317,7 +325,7 @@ useIntersectionObserver(sentinel, ([entry]) => { if (entry?.isIntersecting && ha
             <div class="discover__featured-grid">
               <DiscoveryCard
                 v-for="(r, i) in featured" :key="r.id" :result="r" :kind="kind" :cta-label="ctaLabel" featured show-score :priority="i < 3"
-                :is-pending="pendingIds.includes(r.id)" :packages="pkgSummary[r.profileId] ?? null" @contact="emit('contact', r)"
+                :is-pending="pendingIds.includes(r.id)" :packages="pkgSummary[r.profileId] ?? null" :fit="fitFilters" @contact="emit('contact', r)"
               />
             </div>
           </section>
@@ -326,7 +334,7 @@ useIntersectionObserver(sentinel, ([entry]) => { if (entry?.isIntersecting && ha
           <div class="discover__grid">
             <DiscoveryCard
               v-for="(r, i) in visibleRest" :key="r.id" :result="r" :kind="kind" :cta-label="ctaLabel" :show-score="scoreMeaningful"
-              :priority="!featured.length && i < 4" :is-pending="pendingIds.includes(r.id)" :packages="pkgSummary[r.profileId] ?? null" @contact="emit('contact', r)"
+              :priority="!featured.length && i < 4" :is-pending="pendingIds.includes(r.id)" :packages="pkgSummary[r.profileId] ?? null" :fit="fitFilters" @contact="emit('contact', r)"
             />
           </div>
 
@@ -339,7 +347,7 @@ useIntersectionObserver(sentinel, ([entry]) => { if (entry?.isIntersecting && ha
 
     <BottomSheet v-model="filtersOpen" title="Filtros">
       <DiscoverFilters
-        v-model:categories="selectedCategories" v-model:min="minEuros" v-model:max="maxEuros" v-model:platforms="platforms" v-model:response="response" v-model:types="types" v-model:verified-only="verifiedOnly" :brand-filters="kind === 'partner'"
+        v-model:categories="selectedCategories" v-model:min="minEuros" v-model:max="maxEuros" v-model:platforms="platforms" v-model:response="response" v-model:types="types" v-model:verified-only="verifiedOnly" v-model:with-packages="withPackages" :brand-filters="kind === 'partner'"
         :active="hasActiveFilters" :platform-counts="platformCounts" :budget-label="noun.budget" hide-title @clear="clearFilters"
       />
       <BaseButton variant="primary" size="lg" block class="mt-5" @click="filtersOpen = false">Ver {{ filtered.length }} {{ filtered.length === 1 ? noun.one : noun.many }}</BaseButton>

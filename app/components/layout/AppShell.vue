@@ -20,6 +20,7 @@ const { pref } = useRailState()
 
     <BottomTabBar :role="role" />
     <ConfirmDialogHost />
+    <CommandPalette :role="role" />
     <ToastHost />
     <LoginWelcome />
     <OnboardingTour />

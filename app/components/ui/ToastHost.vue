@@ -23,7 +23,12 @@ const meta = {
       >
         <Icon :name="meta[t.tone].icon" class="size-5 shrink-0 mt-px" :style="{ color: meta[t.tone].color }" />
         <p class="min-w-0 flex-1 text-sm text-[var(--color-text)] leading-snug">{{ t.text }}</p>
-        <NuxtLink v-if="t.action" :to="t.action.to" class="shrink-0 text-sm font-medium text-[var(--color-primary-500)] hover:text-[var(--color-primary-600)] underline underline-offset-2" @click="dismiss(t.id)">{{ t.action.label }}</NuxtLink>
+        <button
+          v-if="t.action?.onClick" type="button" data-toast-action
+          class="shrink-0 text-sm font-medium text-[var(--color-primary-500)] hover:text-[var(--color-primary-600)] underline underline-offset-2"
+          @click="t.action.onClick?.(); dismiss(t.id)"
+        >{{ t.action.label }}</button>
+        <NuxtLink v-else-if="t.action?.to" :to="t.action.to" class="shrink-0 text-sm font-medium text-[var(--color-primary-500)] hover:text-[var(--color-primary-600)] underline underline-offset-2" @click="dismiss(t.id)">{{ t.action.label }}</NuxtLink>
         <button type="button" class="shrink-0 -mr-1 size-6 flex items-center justify-center rounded-full text-[var(--color-text-faint)] hover:text-[var(--color-text)]" aria-label="Cerrar aviso" @click="dismiss(t.id)">
           <Icon name="ph:x-bold" class="size-3" />
         </button>

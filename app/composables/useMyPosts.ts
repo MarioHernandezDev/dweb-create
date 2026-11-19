@@ -9,6 +9,7 @@ interface PostRow {
   caption: string | null
   content_type: ContentType
   platform: Platform
+  extra_platforms?: Platform[] | null
   status: PostStatus
   due_date: string
   created_at: string | null
@@ -16,6 +17,8 @@ interface PostRow {
   published_at: string | null
   content_version: number | null
   media_url: string | null
+  draft_url?: string | null
+  result_url?: string | null
   metadata: { hashtags?: string[] } | null
   ml_predictions: { success_score: number; model_version: string | null; suggestions: Suggestion[] | null; created_at: string }[] | null
   post_labels: { label_id: string }[] | null
@@ -43,6 +46,7 @@ function mapRow(row: PostRow): Post {
     caption: row.caption ?? '',
     contentType: row.content_type,
     platform: row.platform,
+    extraPlatforms: row.extra_platforms ?? [],
     status: row.status,
     dueInDays,
     dueDate: row.due_date.slice(0, 10),
@@ -53,6 +57,8 @@ function mapRow(row: PostRow): Post {
     hashtags: row.metadata?.hashtags ?? [],
     cover: coverArtFromString(row.id),
     mediaUrl: row.media_url,
+    draftUrl: row.draft_url ?? null,
+    resultUrl: row.result_url ?? null,
     successScore: prediction?.success_score,
     aiEvaluated: prediction?.model_version ? prediction.model_version.includes('llm') : undefined,
     // La IA que enriquece la predicción es opcional (ver docs/8-AI-SUGGESTIONS-SETUP.md):
@@ -72,6 +78,8 @@ export interface NewPostInput {
   caption: string
   contentType: ContentType
   platform: Platform
+  /** Redes adicionales (distintas de `platform`). */
+  extraPlatforms?: Platform[]
   /** Fecha de entrega ("YYYY-MM-DD", de un `<input type="date">`) — si no se indica, +3 días desde hoy, como antes. */
   dueDate?: string
   /** Colaboración activa a la que pertenece — opcional, contenido propio si no se indica. */
@@ -180,7 +188,7 @@ export function useMyPosts() {
 
   async function updatePost(
     id: string,
-    patch: { title?: string; caption?: string; status?: PostStatus; hashtags?: string[]; mediaUrl?: string | null; dueDate?: string }
+    patch: { title?: string; caption?: string; status?: PostStatus; hashtags?: string[]; mediaUrl?: string | null; dueDate?: string; draftUrl?: string | null; resultUrl?: string | null }
   ) {
     const payload: Record<string, unknown> = {}
     if (patch.title !== undefined) payload.title = patch.title
@@ -188,6 +196,8 @@ export function useMyPosts() {
     if (patch.status !== undefined) payload.status = patch.status
     if (patch.hashtags !== undefined) payload.metadata = { hashtags: patch.hashtags }
     if (patch.mediaUrl !== undefined) payload.media_url = patch.mediaUrl
+    if (patch.draftUrl !== undefined) payload.draft_url = patch.draftUrl
+    if (patch.resultUrl !== undefined) payload.result_url = patch.resultUrl
     if (patch.dueDate !== undefined) payload.due_date = parseDueDate(patch.dueDate).toISOString()
 
     // Sin tipos generados de la base de datos todavía (como en useMyRole),
@@ -232,6 +242,29 @@ export function useMyPosts() {
     return mediaUrl
   }
 
+  /**
+   * Quita una publicación de las listas SIN borrarla todavía (para poder «deshacer»): devuelve la función que la vuelve
+   * a poner donde estaba, o null si no estaba cargada. El borrado real lo hace `deletePostRemote` cuando pasa el plazo.
+   */
+  function stashPost(id: string): (() => void) | null {
+    const index = posts.value.findIndex((p) => p.id === id)
+    if (index === -1) return null
+    const removed = posts.value[index]!
+    posts.value = posts.value.filter((p) => p.id !== id)
+    fetched.value = Math.max(0, fetched.value - 1)
+    return () => {
+      if (posts.value.some((p) => p.id === id)) return
+      const next = [...posts.value]
+      next.splice(Math.min(index, next.length), 0, removed)
+      posts.value = next
+      fetched.value += 1
+    }
+  }
+  async function deletePostRemote(id: string) {
+    const { error } = await client.from('posts').delete().eq('id', id)
+    if (error) throw error
+  }
+
   async function deletePost(id: string) {
     const { error } = await client.from('posts').delete().eq('id', id)
     if (error) throw error
@@ -253,6 +286,8 @@ export function useMyPosts() {
         caption: input.caption,
         content_type: input.contentType,
         platform: input.platform,
+        // Solo si hay redes extra: sin ellas el alta no depende de la columna nueva.
+        ...(input.extraPlatforms?.length ? { extra_platforms: input.extraPlatforms } : {}),
         status: 'idea',
         due_date: parseDueDate(input.dueDate).toISOString(),
         metadata: input.hashtags?.length ? { hashtags: input.hashtags } : {}
@@ -266,5 +301,5 @@ export function useMyPosts() {
     return mapped
   }
 
-  return { posts, loading, loaded, hasMore, loadingMore, loadMoreError, loadMore, loadUntilDue, refresh, ensureLoaded, updatePost, deletePost, createPost, uploadCover }
+  return { posts, loading, loaded, hasMore, loadingMore, loadMoreError, loadMore, loadUntilDue, refresh, ensureLoaded, updatePost, deletePost, stashPost, deletePostRemote, createPost, uploadCover }
 }
