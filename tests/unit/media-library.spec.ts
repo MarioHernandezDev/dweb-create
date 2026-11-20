@@ -12,7 +12,7 @@ describe('validateLibraryFile', () => {
     expect(validateLibraryFile({ ...ok, type: 'image/gif' })).toMatch(/JPG, PNG o WebP/)
     expect(validateLibraryFile({ ...ok, size: 0 })).toMatch(/vacío/)
     expect(validateLibraryFile({ ...ok, size: LIBRARY_MAX_BYTES + 1 })).toMatch(/máximo/)
-    expect(validateLibraryFile(ok, LIBRARY_MAX_FILES)).toMatch(/100 archivos/)
+    expect(validateLibraryFile(ok, LIBRARY_MAX_FILES)).toMatch(new RegExp(`${LIBRARY_MAX_FILES} archivos`))
   })
 })
 

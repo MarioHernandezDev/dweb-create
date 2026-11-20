@@ -1,4 +1,5 @@
-import { displayName, libraryPath, normalizeTags, validateLibraryFile, type LibraryItem } from '~/utils/media-library'
+import { optimizeImageFile } from '~/utils/image'
+import { displayName, libraryPath, LIBRARY_TYPES, normalizeTags, validateLibraryFile, type LibraryItem } from '~/utils/media-library'
 
 interface LibraryRow { id: string; path: string; name: string; mime: string; size_bytes: number; tags: string[] | null; created_at: string }
 
@@ -54,16 +55,19 @@ export function useMediaLibrary() {
       for (const file of files) {
         const reason = validateLibraryFile(file, items.value.length)
         if (reason) { errors.push(reason); continue }
+        // Se guarda la versión optimizada (lado mayor 2.000 px, webp): ocupa una fracción y no se nota al mostrarla.
+        const prepared = await optimizeImageFile(file)
+        const mime = LIBRARY_TYPES[prepared.type] ? prepared.type : file.type
         const id = crypto.randomUUID()
-        const path = libraryPath(uid, id, file.type)
-        const { error: upErr } = await client.storage.from(BUCKET).upload(path, file, { contentType: file.type })
+        const path = libraryPath(uid, id, mime)
+        const { error: upErr } = await client.storage.from(BUCKET).upload(path, prepared, { contentType: mime })
         if (upErr) { console.error('[useMediaLibrary] fallo al subir:', upErr.message); errors.push(`No se ha podido subir «${file.name}». Inténtalo de nuevo.`); continue }
         const { data, error: insErr } = await db.from('media_library')
-          .insert({ path, name: displayName(file.name), mime: file.type, size_bytes: file.size, tags: normalizeTags(tags) }).select(SELECT).single()
+          .insert({ path, name: displayName(file.name), mime, size_bytes: prepared.size, tags: normalizeTags(tags) }).select(SELECT).single()
         if (insErr) {
           // Sin fila no hay archivo que valga: se quita para no dejar huérfanos.
           await client.storage.from(BUCKET).remove([path])
-          errors.push(insErr.message?.includes('100 archivos') ? insErr.message : `No se ha podido guardar «${file.name}». Inténtalo de nuevo.`)
+          errors.push(/\d+ archivos/.test(insErr.message ?? '') ? insErr.message : `No se ha podido guardar «${file.name}». Inténtalo de nuevo.`)
           continue
         }
         items.value = [mapRow(data as LibraryRow), ...items.value]

@@ -15,7 +15,10 @@
     "check:social": "node scripts/check-social-config.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:integration": "vitest run --config vitest.integration.config.ts"
+    "test:integration": "vitest run --config vitest.integration.config.ts",
+    "test:e2e": "playwright test",
+    "test:e2e:public": "playwright test --project=public",
+    "test:e2e:report": "playwright show-report"
   },
   "dependencies": {
     "@iconify-json/ph": "^1.2.2",
@@ -39,6 +42,7 @@
     "vuedraggable": "^4.1.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.65.1",
     "@types/node": "^26.6.5",
     "@types/nodemailer": "^8.0.2",
     "typescript": "^5.9.3",

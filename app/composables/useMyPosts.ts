@@ -1,4 +1,5 @@
 import { coverArtFromString } from '~/utils/avatar'
+import { optimizeImageFile } from '~/utils/image'
 import type { ContentType, Platform, Post, PostStatus, Suggestion } from '~/types'
 
 interface PostRow {
@@ -221,7 +222,9 @@ export function useMyPosts() {
   // es el auth.uid() del creador — es justo lo que comprueban las políticas
   // RLS de storage.objects, así que tiene que venir de la sesión, no de
   // `creator.value.id` (ese es el id de la fila `creators`, no el de auth).
-  async function uploadCover(postId: string, file: File) {
+  async function uploadCover(postId: string, original: File) {
+    // Se sube la versión optimizada (lado mayor 2.000 px, webp): ver utils/image.ts.
+    const file = await optimizeImageFile(original)
     const { data: userData, error: userError } = await client.auth.getUser()
     if (userError || !userData.user) throw userError ?? new Error('No hay sesión activa.')
 

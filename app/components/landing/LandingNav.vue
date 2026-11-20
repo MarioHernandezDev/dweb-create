@@ -9,7 +9,8 @@ useHead({ htmlAttrs: { class: computed(() => (open.value ? 'is-scroll-locked' : 
 const links = [
   { to: '/#fases', label: 'Cómo funciona' },
   { to: '/#perfiles', label: 'Para quién es' },
-  { to: '/instalaciones', label: 'Integraciones' }
+  { to: '/instalaciones', label: 'Integraciones' },
+  { to: '/ayuda', label: 'Ayuda' }
 ]
 const isActive = (to: string) => !to.includes('#') && route.path === to
 </script>

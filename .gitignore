@@ -26,3 +26,12 @@ logs
 
 # Vídeo de la demo (25 MB): se genera con scripts/demo-video, no se versiona
 docs/demo/video/*.mp4
+
+# Playwright
+test-results/
+playwright-report/
+tests/e2e/.auth/
+
+# Manuales en PDF: se guardan en local, no se suben a git (se regeneran con docs/manual/_build/build.mjs)
+docs/manual/*.pdf
+public/manuales/*.pdf

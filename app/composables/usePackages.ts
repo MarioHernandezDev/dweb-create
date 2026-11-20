@@ -1,3 +1,4 @@
+import { optimizeImageFile } from '~/utils/image'
 /** Resumen de los paquetes activos de un perfil: cuántos, desde cuánto y cuál es el destacado (si lo hay). */
 export interface PackageSummary { count: number; minCents: number; featured: { title: string; priceCents: number } | null }
 
@@ -174,7 +175,9 @@ export function usePackages() {
    * useMyCreator.ts/useMyPartner.ts, reutilizando el bucket `post-media`
    * (sus policies solo miran la carpeta `<auth.uid()>`, no qué es el archivo).
    */
-  async function uploadPackageCover(packageId: string, file: File) {
+  async function uploadPackageCover(packageId: string, original: File) {
+    // Se sube la versión optimizada (lado mayor 2.000 px, webp): ver utils/image.ts.
+    const file = await optimizeImageFile(original)
     const { data: userData, error: userError } = await client.auth.getUser()
     if (userError || !userData.user) throw userError ?? new Error('No hay sesión activa.')
 

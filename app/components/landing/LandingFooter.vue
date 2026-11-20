@@ -17,6 +17,7 @@ const year = new Date().getFullYear()
             <li><NuxtLink to="/#fases" class="land-foot__link">Cómo funciona</NuxtLink></li>
             <li><NuxtLink to="/#perfiles" class="land-foot__link">Para quién es</NuxtLink></li>
             <li><NuxtLink to="/instalaciones" class="land-foot__link">Integraciones</NuxtLink></li>
+            <li><NuxtLink to="/ayuda" class="land-foot__link">Ayuda y manuales</NuxtLink></li>
           </ul>
         </div>
 

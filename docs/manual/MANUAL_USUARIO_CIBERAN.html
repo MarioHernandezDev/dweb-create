@@ -1,0 +1,833 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Manual de usuario de CIBERAN</title>
+<link rel="stylesheet" href="fonts/fonts.css"><link rel="stylesheet" href="_build/manual.css">
+</head><body id="top" class="doc--manual">
+<nav class="sidenav" aria-label="Índice"><a class="sidenav__brand" href="#top">ciberan</a><a class="sidenav__part" href="#antes-de-empezar">Antes de empezar</a><a class="sidenav__sec" href="#como-usar-este-manual">Cómo usar este manual</a><a class="sidenav__sec" href="#lo-que-este-manual-no-promete">Lo que este manual no promete</a><a class="sidenav__part" href="#parte-i-conociendo-ciberan">Parte I · Conociendo CIBERAN</a><a class="sidenav__sec" href="#que-es-ciberan">Qué es CIBERAN</a><a class="sidenav__sec" href="#para-que-sirve">Para qué sirve</a><a class="sidenav__sec" href="#que-problemas-resuelve">Qué problemas resuelve</a><a class="sidenav__sec" href="#creador-y-partner-dos-perfiles">Creador y partner: dos perfiles</a><a class="sidenav__sec" href="#como-se-relacionan-ambos-perfiles">Cómo se relacionan ambos perfiles</a><a class="sidenav__sec" href="#conceptos-basicos">Conceptos básicos</a><a class="sidenav__part" href="#parte-ii-primeros-pasos">Parte II · Primeros pasos</a><a class="sidenav__sec" href="#acceder-a-ciberan">Acceder a CIBERAN</a><a class="sidenav__sec" href="#registrarse">Registrarse</a><a class="sidenav__sec" href="#iniciar-sesion">Iniciar sesión</a><a class="sidenav__sec" href="#recuperar-el-acceso">Recuperar el acceso</a><a class="sidenav__sec" href="#completar-tu-perfil">Completar tu perfil</a><a class="sidenav__sec" href="#el-primer-acceso-el-recorrido-de-bienvenida">El primer acceso: el recorrido de bienvenida</a><a class="sidenav__sec" href="#como-moverte-por-ciberan">Cómo moverte por CIBERAN</a><a class="sidenav__part" href="#parte-iii-manual-del-creador">Parte III · Manual del creador</a><a class="sidenav__sec" href="#inicio">Inicio</a><a class="sidenav__sec" href="#perfil-publico">Perfil público</a><a class="sidenav__sec" href="#descubrir">Descubrir</a><a class="sidenav__sec" href="#colaboraciones">Colaboraciones</a><a class="sidenav__sec" href="#publicaciones">Publicaciones</a><a class="sidenav__sec" href="#biblioteca-de-archivos">Biblioteca de archivos</a><a class="sidenav__sec" href="#paquetes">Paquetes</a><a class="sidenav__sec" href="#ofertas-y-chat">Ofertas y chat</a><a class="sidenav__sec" href="#resultados">Resultados</a><a class="sidenav__sec" href="#metricas-de-redes">Métricas de redes</a><a class="sidenav__sec" href="#prediccion-de-rendimiento">Predicción de rendimiento</a><a class="sidenav__sec" href="#calendario">Calendario</a><a class="sidenav__sec" href="#bandeja-de-entrada">Bandeja de entrada</a><a class="sidenav__sec" href="#cuenta-y-configuracion">Cuenta y configuración</a><a class="sidenav__part" href="#parte-iv-manual-del-partner">Parte IV · Manual del partner</a><a class="sidenav__sec" href="#inicio">Inicio</a><a class="sidenav__sec" href="#descubrir-creadores">Descubrir creadores</a><a class="sidenav__sec" href="#perfiles-de-creadores">Perfiles de creadores</a><a class="sidenav__sec" href="#colaboraciones">Colaboraciones</a><a class="sidenav__sec" href="#gestion-de-campanas">Gestión de campañas</a><a class="sidenav__sec" href="#necesidades">Necesidades</a><a class="sidenav__sec" href="#resultados">Resultados</a><a class="sidenav__sec" href="#cuenta-y-configuracion">Cuenta y configuración</a><a class="sidenav__part" href="#parte-v-una-colaboracion-de-principio-a-fin">Parte V · Una colaboración de principio a fin</a><a class="sidenav__sec" href="#paso-1-la-marca-descubre-a-la-creadora">Paso 1 · La marca descubre a la creadora</a><a class="sidenav__sec" href="#paso-2-la-marca-consulta-su-perfil">Paso 2 · La marca consulta su perfil</a><a class="sidenav__sec" href="#paso-3-la-marca-envia-una-propuesta">Paso 3 · La marca envía una propuesta</a><a class="sidenav__sec" href="#paso-4-la-creadora-recibe-la-solicitud">Paso 4 · La creadora recibe la solicitud</a><a class="sidenav__sec" href="#paso-5-la-creadora-responde-acepta-o-hace-una-contraoferta">Paso 5 · La creadora responde: acepta o hace una contraoferta</a><a class="sidenav__sec" href="#paso-6-la-marca-responde">Paso 6 · La marca responde</a><a class="sidenav__sec" href="#paso-7-la-colaboracion-queda-aceptada">Paso 7 · La colaboración queda aceptada</a><a class="sidenav__sec" href="#paso-8-se-prepara-el-contenido">Paso 8 · Se prepara el contenido</a><a class="sidenav__sec" href="#paso-9-se-entregan-las-publicaciones">Paso 9 · Se entregan las publicaciones</a><a class="sidenav__sec" href="#paso-10-la-marca-revisa-el-contenido">Paso 10 · La marca revisa el contenido</a><a class="sidenav__sec" href="#paso-11-revisiones-si-hacen-falta">Paso 11 · Revisiones, si hacen falta</a><a class="sidenav__sec" href="#paso-12-se-aprueba-el-trabajo">Paso 12 · Se aprueba el trabajo</a><a class="sidenav__sec" href="#paso-13-se-completa-la-colaboracion">Paso 13 · Se completa la colaboración</a><a class="sidenav__sec" href="#y-si-algo-no-sale-como-estaba-previsto">Y si algo no sale como estaba previsto</a><a class="sidenav__part" href="#parte-vi-preguntas-frecuentes">Parte VI · Preguntas frecuentes</a><a class="sidenav__sec" href="#sobre-mi-cuenta">Sobre mi cuenta</a><a class="sidenav__sec" href="#sobre-las-colaboraciones">Sobre las colaboraciones</a><a class="sidenav__sec" href="#sobre-las-publicaciones-y-los-resultados">Sobre las publicaciones y los resultados</a><a class="sidenav__sec" href="#otras-dudas">Otras dudas</a><a class="sidenav__part" href="#parte-vii-glosario">Parte VII · Glosario</a><a class="sidenav__part" href="#estado-y-mantenimiento-de-este-manual">Estado y mantenimiento de este manual</a><a class="sidenav__sec" href="#datos-de-esta-edicion">Datos de esta edición</a><a class="sidenav__sec" href="#lo-que-no-se-ha-podido-comprobar">Lo que no se ha podido comprobar</a><a class="sidenav__sec" href="#funciones-previstas-pero-no-disponibles">Funciones previstas pero no disponibles</a><a class="sidenav__sec" href="#historial-de-cambios">Historial de cambios</a></nav>
+<main class="doc">
+<section class="cover">
+  <div class="cover__top"><span class="cover__logo">ciberan</span><span class="cover__tag">Manual de usuario</span></div>
+  <div class="cover__mid">
+    <p class="cover__kicker">Guía oficial · Creadores y partners</p>
+    <h1 class="cover__title">Manual de usuario de CIBERAN</h1>
+    <p class="cover__sub">Todo lo que necesitas para colaborar entre creadores y marcas, paso a paso y sin tecnicismos.</p>
+    <div class="cover__bar"></div>
+  </div>
+  <div class="cover__bottom">
+    <dl><div><dt>Elaborado</dt><dd>19 de noviembre de 2026</dd></div><div><dt>Versión del manual</dt><dd>1.0</dd></div><div><dt>Aplicación documentada</dt><dd>CIBERAN, lanzamiento gratuito (nov. 2026)</dd></div></dl>
+  </div>
+</section>
+<section class="toc" id="indice"><h2 class="toc__title">Índice</h2><ol><li class="toc__part"><a href="#antes-de-empezar">Antes de empezar</a></li><li class="toc__sec"><a href="#como-usar-este-manual">Cómo usar este manual</a></li><li class="toc__sec"><a href="#lo-que-este-manual-no-promete">Lo que este manual no promete</a></li><li class="toc__part"><a href="#parte-i-conociendo-ciberan">Parte I · Conociendo CIBERAN</a></li><li class="toc__sec"><a href="#que-es-ciberan">Qué es CIBERAN</a></li><li class="toc__sec"><a href="#para-que-sirve">Para qué sirve</a></li><li class="toc__sec"><a href="#que-problemas-resuelve">Qué problemas resuelve</a></li><li class="toc__sec"><a href="#creador-y-partner-dos-perfiles">Creador y partner: dos perfiles</a></li><li class="toc__sec"><a href="#como-se-relacionan-ambos-perfiles">Cómo se relacionan ambos perfiles</a></li><li class="toc__sec"><a href="#conceptos-basicos">Conceptos básicos</a></li><li class="toc__part"><a href="#parte-ii-primeros-pasos">Parte II · Primeros pasos</a></li><li class="toc__sec"><a href="#acceder-a-ciberan">Acceder a CIBERAN</a></li><li class="toc__sec"><a href="#registrarse">Registrarse</a></li><li class="toc__sec"><a href="#iniciar-sesion">Iniciar sesión</a></li><li class="toc__sec"><a href="#recuperar-el-acceso">Recuperar el acceso</a></li><li class="toc__sec"><a href="#completar-tu-perfil">Completar tu perfil</a></li><li class="toc__sec"><a href="#el-primer-acceso-el-recorrido-de-bienvenida">El primer acceso: el recorrido de bienvenida</a></li><li class="toc__sec"><a href="#como-moverte-por-ciberan">Cómo moverte por CIBERAN</a></li><li class="toc__part"><a href="#parte-iii-manual-del-creador">Parte III · Manual del creador</a></li><li class="toc__sec"><a href="#inicio">Inicio</a></li><li class="toc__sec"><a href="#perfil-publico">Perfil público</a></li><li class="toc__sec"><a href="#descubrir">Descubrir</a></li><li class="toc__sec"><a href="#colaboraciones">Colaboraciones</a></li><li class="toc__sec"><a href="#publicaciones">Publicaciones</a></li><li class="toc__sec"><a href="#biblioteca-de-archivos">Biblioteca de archivos</a></li><li class="toc__sec"><a href="#paquetes">Paquetes</a></li><li class="toc__sec"><a href="#ofertas-y-chat">Ofertas y chat</a></li><li class="toc__sec"><a href="#resultados">Resultados</a></li><li class="toc__sec"><a href="#metricas-de-redes">Métricas de redes</a></li><li class="toc__sec"><a href="#prediccion-de-rendimiento">Predicción de rendimiento</a></li><li class="toc__sec"><a href="#calendario">Calendario</a></li><li class="toc__sec"><a href="#bandeja-de-entrada">Bandeja de entrada</a></li><li class="toc__sec"><a href="#cuenta-y-configuracion">Cuenta y configuración</a></li><li class="toc__part"><a href="#parte-iv-manual-del-partner">Parte IV · Manual del partner</a></li><li class="toc__sec"><a href="#inicio">Inicio</a></li><li class="toc__sec"><a href="#descubrir-creadores">Descubrir creadores</a></li><li class="toc__sec"><a href="#perfiles-de-creadores">Perfiles de creadores</a></li><li class="toc__sec"><a href="#colaboraciones">Colaboraciones</a></li><li class="toc__sec"><a href="#gestion-de-campanas">Gestión de campañas</a></li><li class="toc__sec"><a href="#necesidades">Necesidades</a></li><li class="toc__sec"><a href="#resultados">Resultados</a></li><li class="toc__sec"><a href="#cuenta-y-configuracion">Cuenta y configuración</a></li><li class="toc__part"><a href="#parte-v-una-colaboracion-de-principio-a-fin">Parte V · Una colaboración de principio a fin</a></li><li class="toc__sec"><a href="#paso-1-la-marca-descubre-a-la-creadora">Paso 1 · La marca descubre a la creadora</a></li><li class="toc__sec"><a href="#paso-2-la-marca-consulta-su-perfil">Paso 2 · La marca consulta su perfil</a></li><li class="toc__sec"><a href="#paso-3-la-marca-envia-una-propuesta">Paso 3 · La marca envía una propuesta</a></li><li class="toc__sec"><a href="#paso-4-la-creadora-recibe-la-solicitud">Paso 4 · La creadora recibe la solicitud</a></li><li class="toc__sec"><a href="#paso-5-la-creadora-responde-acepta-o-hace-una-contraoferta">Paso 5 · La creadora responde: acepta o hace una contraoferta</a></li><li class="toc__sec"><a href="#paso-6-la-marca-responde">Paso 6 · La marca responde</a></li><li class="toc__sec"><a href="#paso-7-la-colaboracion-queda-aceptada">Paso 7 · La colaboración queda aceptada</a></li><li class="toc__sec"><a href="#paso-8-se-prepara-el-contenido">Paso 8 · Se prepara el contenido</a></li><li class="toc__sec"><a href="#paso-9-se-entregan-las-publicaciones">Paso 9 · Se entregan las publicaciones</a></li><li class="toc__sec"><a href="#paso-10-la-marca-revisa-el-contenido">Paso 10 · La marca revisa el contenido</a></li><li class="toc__sec"><a href="#paso-11-revisiones-si-hacen-falta">Paso 11 · Revisiones, si hacen falta</a></li><li class="toc__sec"><a href="#paso-12-se-aprueba-el-trabajo">Paso 12 · Se aprueba el trabajo</a></li><li class="toc__sec"><a href="#paso-13-se-completa-la-colaboracion">Paso 13 · Se completa la colaboración</a></li><li class="toc__sec"><a href="#y-si-algo-no-sale-como-estaba-previsto">Y si algo no sale como estaba previsto</a></li><li class="toc__part"><a href="#parte-vi-preguntas-frecuentes">Parte VI · Preguntas frecuentes</a></li><li class="toc__sec"><a href="#sobre-mi-cuenta">Sobre mi cuenta</a></li><li class="toc__sec"><a href="#sobre-las-colaboraciones">Sobre las colaboraciones</a></li><li class="toc__sec"><a href="#sobre-las-publicaciones-y-los-resultados">Sobre las publicaciones y los resultados</a></li><li class="toc__sec"><a href="#otras-dudas">Otras dudas</a></li><li class="toc__part"><a href="#parte-vii-glosario">Parte VII · Glosario</a></li><li class="toc__part"><a href="#estado-y-mantenimiento-de-este-manual">Estado y mantenimiento de este manual</a></li><li class="toc__sec"><a href="#datos-de-esta-edicion">Datos de esta edición</a></li><li class="toc__sec"><a href="#lo-que-no-se-ha-podido-comprobar">Lo que no se ha podido comprobar</a></li><li class="toc__sec"><a href="#funciones-previstas-pero-no-disponibles">Funciones previstas pero no disponibles</a></li><li class="toc__sec"><a href="#historial-de-cambios">Historial de cambios</a></li></ol></section>
+<article class="content"><h1 id="antes-de-empezar">Antes de empezar</h1>
+<h2 id="como-usar-este-manual">Cómo usar este manual</h2>
+<p>Este manual explica CIBERAN como lo vería alguien que nunca ha usado una plataforma de colaboraciones. No hace falta saber nada técnico. Cada tarea sigue el mismo formato:</p>
+<ul>
+<li><strong>Qué queremos hacer</strong>: de qué se trata, en una frase.</li>
+<li><strong>Pasos</strong>: qué pulsar y dónde, en orden.</li>
+<li><strong>Qué sucede después</strong>: lo que verás al terminar.</li>
+<li><strong>Consejo</strong>: una recomendación, cuando la hay.</li>
+</ul>
+<p>Si eres <strong>creador de contenido</strong>, lee la Parte I, la Parte II y la Parte III. Si eres <strong>marca o empresa (partner)</strong>, lee la Parte I, la Parte II y la Parte IV. La Parte V cuenta una colaboración completa, vista por los dos lados, y es la mejor manera de entender cómo encaja todo.</p>
+<aside class="callout callout--tip"><div class="callout__label">Consejo</div><p>Si solo tienes cinco minutos, lee la sección «Conceptos básicos» de la Parte I y la Parte V. Con eso entenderás el 80 % de CIBERAN.</p>
+</aside>
+<h2 id="lo-que-este-manual-no-promete">Lo que este manual no promete</h2>
+<p>Este manual describe lo que la aplicación hace <strong>hoy</strong>. Hay funciones previstas que todavía no están disponibles y se indican siempre con un aviso gris de «No disponible» o «Próximamente». Las más importantes:</p>
+<div class="table-wrap"><table><thead><tr><th>Función</th><th>Estado</th></tr></thead><tbody><tr><td>Métricas de tus redes sociales (seguidores, alcance, likes…)</td><td><strong>Próximamente.</strong> El menú ya muestra «Métricas» con la etiqueta «Pronto».</td></tr><tr><td>Pagos y cobros dentro de CIBERAN</td><td><strong>No disponible.</strong> CIBERAN es gratis durante el lanzamiento y no gestiona dinero.</td></tr><tr><td>Predicción de rendimiento con IA</td><td><strong>No disponible</strong> en este momento (está desactivada en el lanzamiento gratuito).</td></tr><tr><td>Entrar con Google</td><td><strong>No disponible.</strong> Solo se entra con email y contraseña.</td></tr></tbody></table></div>
+<aside class="callout callout--info"><div class="callout__label">Aviso</div><p>Las capturas del manual son de la aplicación real, pero los nombres, emails y marcas que aparecen se han sustituido por datos ficticios (por ejemplo «Lucía Martín» o «Marca Ejemplo») para proteger la privacidad. Donde no se ha podido hacer una captura, se indica con un recuadro de «Captura pendiente».</p>
+</aside>
+<h1 id="parte-i-conociendo-ciberan">Parte I · Conociendo CIBERAN</h1>
+<h2 id="que-es-ciberan">Qué es CIBERAN</h2>
+<p>CIBERAN es un lugar donde <strong>creadores de contenido</strong> y <strong>marcas</strong> se encuentran, se ponen de acuerdo y trabajan juntos en cada publicación, sin salir de la plataforma.</p>
+<p><figure><img src="img/pub-landing.jpg" alt="Página de inicio pública de CIBERAN" loading="lazy"><figcaption>Página de inicio pública de CIBERAN</figcaption></figure></p>
+<h2 id="para-que-sirve">Para qué sirve</h2>
+<p>Con CIBERAN puedes:</p>
+<ul>
+<li><strong>Encontrar con quién colaborar</strong>: los creadores aparecen en el buscador de las marcas, y las marcas en el de los creadores.</li>
+<li><strong>Acordar las condiciones</strong>: precio, entregables y plazos quedan escritos, con propuesta, contraoferta y aceptación.</li>
+<li><strong>Organizar el trabajo</strong>: cada pieza de contenido pasa por fases (idea, producción, revisión, programada, publicada).</li>
+<li><strong>Revisar y aprobar</strong>: la marca ve el contenido antes de que salga y puede aprobarlo o pedir cambios.</li>
+<li><strong>Ver cómo van las colaboraciones</strong>: plazos, tiempos de respuesta y resultados.</li>
+</ul>
+<h2 id="que-problemas-resuelve">Qué problemas resuelve</h2>
+<div class="table-wrap"><table><thead><tr><th>Antes</th><th>Con CIBERAN</th></tr></thead><tbody><tr><td>Se negocia por mensajes sueltos y se pierde lo acordado.</td><td>Cada colaboración guarda el acuerdo, el precio y el historial.</td></tr><tr><td>«¿En qué punto estamos?»</td><td>Un indicador de <strong>Siguiente paso</strong> dice qué toca hacer y a quién le toca.</td></tr><tr><td>Los archivos se pierden entre correos y chats.</td><td>Cada colaboración tiene su espacio de archivos y su chat.</td></tr><tr><td>Nadie sabe si algo está aprobado.</td><td>Cada entrega tiene un estado claro: enviada, aprobada o con cambios pedidos.</td></tr></tbody></table></div>
+<h2 id="creador-y-partner-dos-perfiles">Creador y partner: dos perfiles</h2>
+<p>Al crear tu cuenta eliges uno de los dos perfiles. <strong>No se puede ser los dos a la vez con la misma cuenta.</strong></p>
+<div class="table-wrap"><table><thead><tr><th></th><th><strong>Creador de contenido</strong></th><th><strong>Partner (marca o empresa)</strong></th></tr></thead><tbody><tr><td>Quién es</td><td>Persona que crea contenido y lo publica en sus redes.</td><td>Marca, empresa o agencia que quiere contratar contenido.</td></tr><tr><td>Qué hace</td><td>Gestiona sus publicaciones, sus colaboraciones y sus resultados.</td><td>Contacta con creadores, acuerda la colaboración y aprueba el contenido.</td></tr><tr><td>Qué publica en su perfil</td><td><strong>Paquetes</strong>: lo que ofrece y a qué precio.</td><td><strong>Necesidades</strong>: lo que busca y con qué presupuesto.</td></tr><tr><td>Su menú</td><td>Inicio, Publicaciones, Descubrir, Paquetes, Biblioteca, Colaboraciones, Resultados y Métricas (próximamente).</td><td>Inicio, Descubrir, Colaboraciones, Necesidades y Resultados.</td></tr><tr><td>Decide el contenido</td><td>Lo crea y lo envía a revisión.</td><td>Lo revisa: aprueba o pide cambios.</td></tr></tbody></table></div>
+<h2 id="como-se-relacionan-ambos-perfiles">Cómo se relacionan ambos perfiles</h2>
+<ol>
+<li><strong>El partner contacta con un creador</strong> (o el creador propone a una marca). Eso crea una <strong>solicitud</strong> de colaboración.</li>
+<li><strong>La otra parte responde</strong>: acepta, rechaza o hace una <strong>contraoferta</strong> con otro importe.</li>
+<li>Cuando las dos partes están de acuerdo, la colaboración queda <strong>aceptada</strong>.</li>
+<li>El creador <strong>produce el contenido</strong> y lo envía a revisión.</li>
+<li>El partner <strong>aprueba</strong> o <strong>pide cambios</strong>.</li>
+<li>Con todo aprobado y publicado, la colaboración se <strong>completa</strong> y cada parte puede valorar a la otra.</li>
+</ol>
+<h2 id="conceptos-basicos">Conceptos básicos</h2>
+<div class="table-wrap"><table><thead><tr><th>Palabra</th><th>Qué significa</th></tr></thead><tbody><tr><td><strong>Colaboración</strong></td><td>Un acuerdo concreto entre un creador y un partner, con importe, entregables y plazos.</td></tr><tr><td><strong>Solicitud</strong></td><td>El primer paso: alguien propone colaborar y espera respuesta. Caduca a los 7 días si nadie responde.</td></tr><tr><td><strong>Contraoferta</strong></td><td>Una respuesta con otro importe, en lugar de aceptar o rechazar.</td></tr><tr><td><strong>Paquete</strong></td><td>Lo que ofrece un creador (por ejemplo «1 Reel + 3 Stories», 300 €).</td></tr><tr><td><strong>Necesidad</strong></td><td>Lo que busca un partner (por ejemplo «Campaña de temporada», 500 €).</td></tr><tr><td><strong>Entregable</strong></td><td>Cada pieza de contenido que se acuerda entregar.</td></tr><tr><td><strong>Publicación</strong></td><td>Una pieza de contenido que el creador prepara. Si es de una colaboración, es un entregable.</td></tr><tr><td><strong>Siguiente paso</strong></td><td>El aviso que dice qué hay que hacer ahora y quién tiene que hacerlo.</td></tr></tbody></table></div>
+<p>El glosario completo está en la Parte VII.</p>
+<h1 id="parte-ii-primeros-pasos">Parte II · Primeros pasos</h1>
+<h2 id="acceder-a-ciberan">Acceder a CIBERAN</h2>
+<p><strong>Qué queremos hacer:</strong> abrir CIBERAN por primera vez.</p>
+<h4 id="pasos">Pasos</h4>
+<ol>
+<li>Abre la dirección web de CIBERAN en el navegador del móvil o del ordenador.</li>
+<li>Verás la página de inicio, con los botones <strong>Acceder</strong> y <strong>Crear cuenta</strong> arriba a la derecha y <strong>Crear cuenta</strong> y <strong>Ya tengo cuenta</strong> en el centro.</li>
+<li>Si ya tienes cuenta, pulsa <strong>Acceder</strong>. Si no, pulsa <strong>Crear cuenta</strong>.</li>
+</ol>
+<h4 id="que-sucede-despues">Qué sucede después</h4>
+<p>Irás a la pantalla de acceso o a la de registro.</p>
+<aside class="callout callout--tip"><div class="callout__label">Consejo</div><p>Puedes instalar CIBERAN como una app en tu móvil, sin pasar por ninguna tienda. La página <strong>Instalar</strong> explica cómo hacerlo en iPhone, Android y escritorio.</p>
+</aside>
+<p><figure><img src="img/pub-instalar.jpg" alt="Instalar CIBERAN como app" loading="lazy"><figcaption>Instalar CIBERAN como app</figcaption></figure></p>
+<h2 id="registrarse">Registrarse</h2>
+<p><strong>Qué queremos hacer:</strong> crear una cuenta gratuita.</p>
+<h4 id="pasos">Pasos</h4>
+<ol>
+<li>Pulsa <strong>Crear cuenta</strong>.</li>
+<li>En el <strong>Paso 1 de 2</strong>, elige tu perfil: (1) <strong>Creador de contenido</strong> o (2) <strong>Partner</strong>.</li>
+<li>En el <strong>Paso 2 de 2</strong> (<strong>Crea tu cuenta</strong>), escribe tu nombre. Si eres partner, también el nombre de la empresa.</li>
+<li>Escribe tu <strong>email</strong> y una <strong>contraseña</strong> de al menos 8 caracteres. Repítela.</li>
+<li>Marca la casilla de aceptación de los términos y la política de privacidad (puedes leerlos antes en los enlaces que aparecen).</li>
+<li>Pulsa el botón para crear la cuenta.</li>
+</ol>
+<p><figure><img src="img/pub-onboarding-rol.jpg" alt="Elegir perfil: creador o partner" loading="lazy"><figcaption>Elegir perfil: creador o partner</figcaption></figure></p>
+<h4 id="que-sucede-despues">Qué sucede después</h4>
+<p>CIBERAN te envía un <strong>correo de confirmación</strong> y te muestra la pantalla <strong>Revisa tu email</strong>. Abre el correo y pulsa el enlace para activar la cuenta.</p>
+<aside class="callout callout--warn"><div class="callout__label">Atención</div><p>Hasta que no confirmes el email no podrás entrar. Si no lo ves, mira en la carpeta de spam o promociones. En la propia pantalla puedes pedir que te lo enviemos otra vez o pulsar <strong>Cambiar el email</strong> si te equivocaste de dirección.</p>
+</aside>
+<aside class="callout callout--info"><div class="callout__label">Aviso</div><p>Crear la cuenta es gratis. Tu perfil será visible para otros usuarios y, si no lo cambias en Privacidad, también para quien tenga su enlace sin iniciar sesión.</p>
+</aside>
+<h2 id="iniciar-sesion">Iniciar sesión</h2>
+<p><strong>Qué queremos hacer:</strong> entrar en tu cuenta.</p>
+<h4 id="pasos">Pasos</h4>
+<ol>
+<li>En la página de inicio, pulsa <strong>Acceder</strong>.</li>
+<li>Escribe tu <strong>Email</strong> (1) y tu <strong>Contraseña</strong>.</li>
+<li>Pulsa <strong>Acceder</strong> (3).</li>
+</ol>
+<p><figure><img src="img/pub-login.jpg" alt="Pantalla de acceso" loading="lazy"><figcaption>Pantalla de acceso</figcaption></figure></p>
+<h4 id="que-sucede-despues">Qué sucede después</h4>
+<p>Entras en tu página de <strong>Inicio</strong>: la del creador o la del partner según el perfil que elegiste.</p>
+<p>Si algo falla, verás uno de estos mensajes:</p>
+<div class="table-wrap"><table><thead><tr><th>Mensaje</th><th>Qué hacer</th></tr></thead><tbody><tr><td>«Email o contraseña incorrectos.»</td><td>Revisa los datos. Si no recuerdas la contraseña, usa «¿Olvidaste tu contraseña?».</td></tr><tr><td>«Todavía no has confirmado tu email — revisa tu bandeja de entrada.»</td><td>Abre el correo de confirmación. Puedes pedir que te lo enviemos otra vez.</td></tr><tr><td>«Demasiados intentos seguidos — espera un momento y vuelve a intentarlo.»</td><td>Espera unos minutos antes de volver a probar.</td></tr></tbody></table></div>
+<h2 id="recuperar-el-acceso">Recuperar el acceso</h2>
+<p><strong>Qué queremos hacer:</strong> crear una contraseña nueva si no recuerdas la tuya.</p>
+<h4 id="pasos">Pasos</h4>
+<ol>
+<li>En la pantalla de acceso, pulsa <strong>¿Olvidaste tu contraseña?</strong> (2).</li>
+<li>En <strong>Recupera tu contraseña</strong>, escribe el email de tu cuenta y pulsa <strong>Enviar enlace</strong>.</li>
+<li>Abre el correo que recibirás y pulsa el enlace. <strong>Ábrelo en el mismo navegador</strong> donde hiciste la petición.</li>
+<li>En <strong>Elige una contraseña nueva</strong>, escribe la contraseña (mínimo 8 caracteres) y repítela.</li>
+<li>Confirma. Ya puedes entrar con la contraseña nueva.</li>
+</ol>
+<p><figure><img src="img/pub-olvido.jpg" alt="Recuperar la contraseña" loading="lazy"><figcaption>Recuperar la contraseña</figcaption></figure></p>
+<aside class="callout callout--warn"><div class="callout__label">Atención</div><p>Los enlaces duran poco y <strong>solo valen una vez</strong>. Usa siempre el último correo que recibas: los anteriores dejan de valer.</p>
+</aside>
+<h4 id="si-el-enlace-no-funciona">Si el enlace no funciona</h4>
+<p>Si ves <strong>«No podemos usar este enlace»</strong>, tu contraseña no se ha cambiado. Pulsa <strong>Pedir un enlace nuevo</strong> y repite el proceso. Las causas habituales son que el enlace haya caducado, que ya lo hayas usado o que lo abras en otro navegador.</p>
+<p>Si ves <strong>«Hay otra sesión abierta»</strong>, pulsa <strong>Cerrar sesión y pedir un enlace nuevo</strong>.</p>
+<aside class="callout callout--todo"><div class="callout__label">Sin verificar</div><p>El envío real de correos depende de la configuración del servicio de correo de CIBERAN. Si no te llega ningún mensaje tras varios intentos, escribe al equipo de CIBERAN.</p>
+</aside>
+<h2 id="completar-tu-perfil">Completar tu perfil</h2>
+<p><strong>Qué queremos hacer:</strong> que tu perfil esté completo para que te encuentren y se fíen de ti.</p>
+<h4 id="pasos">Pasos</h4>
+<ol>
+<li>Pulsa tu <strong>avatar</strong> (arriba a la derecha) para ir a <strong>Perfil</strong>.</li>
+<li>Mira el indicador <strong>Ficha completa al…</strong> y la lista <strong>Te falta:</strong> (foto de perfil, foto de portada, biografía, categorías, tarifa…).</li>
+<li>Pulsa <strong>Editar ficha</strong> y rellena lo que falte.</li>
+</ol>
+<h4 id="que-sucede-despues">Qué sucede después</h4>
+<p>El porcentaje sube. Cuanto más completa esté tu ficha, mejor te muestran los buscadores de <strong>Descubrir</strong>.</p>
+<p>Los detalles de cada campo están en la Parte III (creadores) y en la Parte IV (partners).</p>
+<h2 id="el-primer-acceso-el-recorrido-de-bienvenida">El primer acceso: el recorrido de bienvenida</h2>
+<p>La primera vez que entras, CIBERAN te enseña un <strong>recorrido de bienvenida</strong> de unos seis pasos. Va señalando, en el menú real, cada apartado de la aplicación y para qué sirve. Puedes pulsar <strong>Siguiente</strong> para avanzar o <strong>Saltar recorrido</strong> cuando quieras.</p>
+<p><figure><img src="img/c-tour.jpg" alt="Recorrido de bienvenida" loading="lazy"><figcaption>Recorrido de bienvenida</figcaption></figure></p>
+<aside class="callout callout--tip"><div class="callout__label">Consejo</div><p>Si lo saltaste y quieres verlo otra vez, entra en <strong>Perfil → Resumen</strong> y pulsa <strong>Ver el recorrido de bienvenida</strong>, al final de la página.</p>
+</aside>
+<p>En tu página de Inicio también verás el cuadro <strong>Primeros pasos</strong> (por ejemplo «Completa tu ficha pública» o «Publica tu primer paquete»). Se va marcando solo según avanzas, y puedes ocultarlo con <strong>Ocultar</strong>.</p>
+<h2 id="como-moverte-por-ciberan">Cómo moverte por CIBERAN</h2>
+<p>En el ordenador, el <strong>menú</strong> está a la izquierda. En el móvil, abajo, con un botón <strong>Más</strong> para el resto de apartados.</p>
+<p><figure><img src="img/c-menu-movil.jpg" alt="Menú en el móvil" loading="lazy"><figcaption>Menú en el móvil</figcaption></figure></p>
+<p>Arriba a la derecha tienes siempre cuatro accesos:</p>
+<ul>
+<li><strong>Buscar perfiles</strong>: escribe un nombre para encontrar a cualquier creador o marca.</li>
+<li><strong>Buscar y acciones (Ctrl K)</strong>: la paleta de comandos. Salta a cualquier pantalla, o busca colaboraciones y perfiles, escribiendo unas letras.</li>
+<li><strong>Chat</strong>: tus conversaciones.</li>
+<li><strong>Bandeja de entrada</strong>: lo que te toca hacer y tus avisos. El número indica lo pendiente.</li>
+</ul>
+<p>Tu avatar lleva a tu <strong>Perfil</strong>. Abajo del menú están <strong>Guardados</strong> y <strong>Cerrar sesión</strong>.</p>
+<h3 id="la-paleta-de-comandos-ctrl-o-cmd-k">La paleta de comandos (Ctrl o Cmd + K)</h3>
+<p><strong>Qué queremos hacer:</strong> ir a una pantalla o encontrar algo sin recorrer el menú.</p>
+<h4 id="pasos">Pasos</h4>
+<ol>
+<li>Pulsa a la vez <strong>Ctrl</strong> y <strong>K</strong> (en Mac, <strong>Cmd</strong> y <strong>K</strong>), o pulsa el botón del símbolo ⌘ de la barra superior.</li>
+<li>Escribe unas letras. Por ejemplo «biblio» para ir a la Biblioteca.</li>
+<li>Con las flechas <strong>↑ ↓</strong> elige un resultado y pulsa <strong>Intro</strong>. Con <strong>Esc</strong> la cierras.</li>
+</ol>
+<p><figure><img src="img/c-paleta.jpg" alt="Paleta de comandos" loading="lazy"><figcaption>Paleta de comandos</figcaption></figure></p>
+<h4 id="que-sucede-despues">Qué sucede después</h4>
+<p>Se abre la pantalla elegida. Si escribes algo que no existe, verás «Nada coincide». Además de las pantallas, la paleta busca <strong>colaboraciones</strong> y <strong>perfiles</strong> por su nombre.</p>
+<aside class="callout callout--info"><div class="callout__label">Aviso</div><p>La paleta ofrece solo las pantallas de tu perfil. Un partner, por ejemplo, no verá «Biblioteca», que es del creador.</p>
+</aside>
+<h1 id="parte-iii-manual-del-creador">Parte III · Manual del creador</h1>
+<p>Esta parte es para quien eligió el perfil <strong>Creador de contenido</strong>. El menú del creador tiene estos apartados: <strong>Inicio, Publicaciones, Descubrir, Paquetes, Biblioteca, Colaboraciones, Resultados</strong> y <strong>Métricas</strong> (próximamente).</p>
+<h2 id="inicio">Inicio</h2>
+<p><strong>Qué queremos hacer:</strong> ver de un vistazo qué tengo pendiente.</p>
+<h4 id="pasos">Pasos</h4>
+<ol>
+<li>Pulsa <strong>Inicio</strong> en el menú.</li>
+<li>Mira el saludo: te dice cuántas tareas tienes pendientes en la bandeja.</li>
+<li>Recorre las tarjetas de colores y los bloques de debajo.</li>
+</ol>
+<p><figure><img src="img/c-inicio.jpg" alt="Inicio del creador" loading="lazy"><figcaption>Inicio del creador</figcaption></figure></p>
+<p>Marcadores de la imagen: (1) botón <strong>Nueva publicación</strong>, (2) tarjeta de <strong>Colaboraciones activas</strong>, (3) botón de la paleta de comandos.</p>
+<h4 id="que-significa-cada-tarjeta">Qué significa cada tarjeta</h4>
+<div class="table-wrap"><table><thead><tr><th>Tarjeta</th><th>Qué cuenta</th></tr></thead><tbody><tr><td><strong>Colaboraciones activas</strong></td><td>Las colaboraciones aceptadas que siguen en marcha.</td></tr><tr><td><strong>Solicitudes pendientes</strong></td><td>Solicitudes de marcas que esperan tu respuesta.</td></tr><tr><td><strong>Entregas próximas</strong></td><td>Publicaciones con fecha de entrega en los próximos días.</td></tr><tr><td><strong>Objetivo semanal</strong></td><td>Cuántas publicaciones llevas esta semana frente a tu objetivo (por ejemplo 0/5). El objetivo lo eliges en <strong>Perfil → Resumen</strong>.</td></tr></tbody></table></div>
+<p>Debajo encontrarás:</p>
+<ul>
+<li><strong>Tus paquetes</strong>: tus ofertas, con un botón <strong>Nuevo paquete</strong>.</li>
+<li><strong>Entregas de los próximos 7 días</strong>: un gráfico, día a día, de lo pendiente y lo publicado.</li>
+<li><strong>Tus publicaciones por fase</strong>: cuántas hay en Idea, En producción, Para revisar, Programado y Publicado.</li>
+<li><strong>Entrega en N días</strong>: la próxima entrega, con enlace <strong>Ver publicación</strong>.</li>
+<li><strong>Marcas que podrían interesarte</strong>: sugerencias, con enlace <strong>Ver todo</strong>.</li>
+<li><strong>Necesita tu atención</strong>: lo que vence pronto.</li>
+<li><strong>Primeros pasos</strong>: una lista que se marca sola (completar la ficha, publicar un paquete, contactar con una marca, crear una publicación). Puedes ocultarla con <strong>Ocultar</strong>.</li>
+</ul>
+<p><figure><img src="img/c-inicio-movil.jpg" alt="Inicio del creador en el móvil" loading="lazy"><figcaption>Inicio del creador en el móvil</figcaption></figure></p>
+<aside class="callout callout--tip"><div class="callout__label">Consejo</div><p>Si no sabes por dónde seguir, empieza siempre por Inicio. Si una tarjeta tiene un número, es que hay algo que hacer.</p>
+</aside>
+<h2 id="perfil-publico">Perfil público</h2>
+<p>Tu perfil es lo primero que ven las marcas. Se compone de tu <strong>ficha</strong> (lo que escribes) y de tus <strong>paquetes</strong> (lo que ofreces).</p>
+<h3 id="verlo-y-editarlo">Verlo y editarlo</h3>
+<p><strong>Qué queremos hacer:</strong> ver cómo me ven las marcas y mejorar mi ficha.</p>
+<h4 id="pasos">Pasos</h4>
+<ol>
+<li>Pulsa tu avatar, arriba a la derecha, para ir a <strong>Perfil</strong>.</li>
+<li>Pulsa (2) <strong>Ver perfil público</strong> para ver tu perfil tal como lo ven los demás, o el icono de enlace para copiar su dirección.</li>
+<li>Pulsa (1) <strong>Editar ficha</strong> para cambiar tus datos.</li>
+<li>Observa (3) <strong>Ficha completa al…</strong>: el porcentaje y la lista de lo que falta.</li>
+</ol>
+<p><figure><img src="img/c-perfil.jpg" alt="Perfil del creador" loading="lazy"><figcaption>Perfil del creador</figcaption></figure></p>
+<p>El perfil tiene cuatro pestañas: <strong>Resumen</strong>, <strong>Ficha pública</strong>, <strong>Paquetes</strong> y <strong>Privacidad y cuenta</strong>.</p>
+<h3 id="la-ficha-publica">La ficha pública</h3>
+<p>En la pestaña <strong>Ficha pública</strong> completas lo que ve un partner en Descubrir. Cuanto más completa, mejor encajan los resultados.</p>
+<div class="table-wrap"><table><thead><tr><th>Apartado</th><th>Qué escribes</th></tr></thead><tbody><tr><td><strong>Presentación</strong></td><td>Una <strong>frase de presentación</strong> (hasta 80 caracteres), tu <strong>ubicación</strong> (hasta 80) y tu <strong>biografía</strong> (hasta 500). También tu foto de perfil y tu foto de portada.</td></tr><tr><td><strong>Categorías</strong></td><td>Los temas de tu contenido (Moda, Belleza, Fitness, Viajes, Tecnología…). Los partners te encuentran por ellas.</td></tr><tr><td><strong>Colaboración</strong></td><td>Tu <strong>tarifa orientativa</strong> (desde / hasta, en euros), <strong>qué tipo de marcas buscas</strong> (hasta 300 caracteres) y si quieres <strong>mostrar con quién has colaborado</strong>.</td></tr><tr><td><strong>Audiencia</strong></td><td>Los países, las edades y el género de tu audiencia, en porcentaje. La declaras tú: las marcas la ven marcada como «declarada por el creador». Déjalo en blanco lo que no sepas.</td></tr></tbody></table></div>
+<p><figure><img src="img/c-perfil-ficha.jpg" alt="Ficha pública" loading="lazy"><figcaption>Ficha pública</figcaption></figure></p>
+<aside class="callout callout--warn"><div class="callout__label">Importante</div><p>La audiencia la declaras tú y CIBERAN no la verifica. Escribe solo lo que sepas con seguridad.</p>
+</aside>
+<aside class="callout callout--off"><div class="callout__label">No disponible</div><p>Aún no se puede conectar tus redes para mostrar tus métricas reales. Llegará más adelante (ver «Métricas»).</p>
+</aside>
+<aside class="callout callout--tip"><div class="callout__label">Consejo</div><p>Una foto de portada, una biografía clara y un paquete bien descrito son lo que más ayuda a que una marca te elija.</p>
+</aside>
+<h3 id="privacidad-y-cuenta">Privacidad y cuenta</h3>
+<p>En la pestaña <strong>Privacidad y cuenta</strong> decides:</p>
+<ul>
+<li><strong>Privacidad del chat</strong>: <strong>Cualquiera</strong> (cualquier perfil puede escribirte) o <strong>Solo tras oferta aceptada</strong> (solo te escriben en texto libre quienes ya tienen una oferta aceptada contigo; aun así, cualquiera puede mandarte una oferta).</li>
+<li><strong>Visibilidad del perfil</strong>: si tu perfil se ve <strong>sin iniciar sesión</strong> para quien abra tu enlace. Verá tu nombre, foto, presentación, categorías, contenido destacado y valoración. Las tarifas, el catálogo y el contacto siguen pidiendo sesión.</li>
+<li><strong>Avisos</strong>: las solicitudes, ofertas y revisiones se avisan siempre. Eliges si quieres recordatorios de plazo, avisos de valoraciones, de notas del registro y de inicios de sesión. También los <strong>avisos por correo</strong>: un resumen si tienes avisos sin leer.</li>
+<li><strong>Tus datos</strong>: <strong>Descargar</strong> una copia de tus datos (un ZIP con una hoja por tema), y <strong>Eliminar mi cuenta</strong>.</li>
+</ul>
+<p><figure><img src="img/c-perfil-privacidad.jpg" alt="Privacidad y cuenta" loading="lazy"><figcaption>Privacidad y cuenta</figcaption></figure></p>
+<aside class="callout callout--warn"><div class="callout__label">Atención</div><p><strong>Eliminar mi cuenta</strong> borra tu cuenta y tus datos y <strong>no se puede deshacer</strong>. Antes puedes descargar una copia desde «Tus datos».</p>
+</aside>
+<h2 id="descubrir">Descubrir</h2>
+<p><strong>Qué es:</strong> el buscador de <strong>marcas</strong>. Aquí encuentras empresas interesadas en tu contenido y puedes proponerles una colaboración.</p>
+<aside class="callout callout--info"><div class="callout__label">Aviso</div><p>Esta sección es la misma que el partner ve para buscar creadores, pero con los papeles cambiados. Tú ves marcas; ellos ven creadores.</p>
+</aside>
+<h4 id="pasos">Pasos</h4>
+<ol>
+<li>Pulsa <strong>Descubrir</strong> en el menú.</li>
+<li>Para buscar por nombre, escribe en (1) <strong>Buscar marca por nombre</strong>.</li>
+<li>Afina con los (2) <strong>Filtros</strong>: <strong>Categorías</strong>, <strong>Presupuesto</strong> y <strong>Más filtros</strong>.</li>
+<li>Cambia el orden con (3) <strong>Ordenar</strong>: más afines, más colaboraciones, responden antes, presupuesto o precio del paquete (de menor a mayor o al revés).</li>
+<li>Cambia entre <strong>Rejilla</strong> y <strong>Carrusel</strong> para ver las tarjetas de otra forma.</li>
+<li>Pulsa <strong>Guardar búsqueda</strong> para guardar tus filtros.</li>
+</ol>
+<p><figure><img src="img/c-descubrir.jpg" alt="Descubrir marcas" loading="lazy"><figcaption>Descubrir marcas</figcaption></figure></p>
+<h4 id="como-leer-una-tarjeta-de-marca">Cómo leer una tarjeta de marca</h4>
+<p>Cada tarjeta muestra el nombre de la marca, cuántas colaboraciones tiene, si ha publicado <strong>necesidades</strong> (por ejemplo «1 necesidad · desde 500 €»), su <strong>presupuesto</strong> y tres acciones: (4) <strong>Proponer</strong>, el icono de <strong>marcador</strong> para guardarla y el icono de <strong>mensaje</strong> para escribirle.</p>
+<aside class="callout callout--info"><div class="callout__label">Aviso</div><p>Si una marca no ha completado su ficha, la tarjeta lo dice («Aún no ha completado su ficha»). Eso no impide proponerle una colaboración.</p>
+</aside>
+<p>Con <strong>Guardados</strong> (en el menú, abajo) ves a quienes has marcado. En el buscador también existe un modo <strong>Con IA</strong>, que permite describir con tus palabras lo que buscas.</p>
+<aside class="callout callout--todo"><div class="callout__label">Sin verificar</div><p>El modo <strong>Con IA</strong> existe en pantalla, pero en la preparación de este manual no se ha probado su funcionamiento.</p>
+</aside>
+<h3 id="proponer-una-colaboracion-a-una-marca">Proponer una colaboración a una marca</h3>
+<p><strong>Qué queremos hacer:</strong> enviar a una marca una propuesta con mi tarifa y mis entregables.</p>
+<h4 id="pasos">Pasos</h4>
+<ol>
+<li>En una tarjeta de marca, pulsa <strong>Proponer</strong>. Se abre la hoja <strong>Proponer a…</strong>.</li>
+<li>Escribe (o ajusta con el deslizador) <strong>Tu tarifa (€)</strong>. Si la marca indicó un rango, lo verás al lado.</li>
+<li>En <strong>Entregables</strong>, elige cuántos <strong>Reels / vídeos</strong>, <strong>Posts</strong> y <strong>Stories</strong> ofreces, con los botones <strong>+</strong> y <strong>−</strong>. Hace falta al menos uno.</li>
+<li>En <strong>Uso del contenido por la marca</strong>, elige: <strong>Sin uso</strong>, <strong>1 mes</strong>, <strong>3 meses</strong>, <strong>6 meses</strong>, <strong>1 año</strong> o <strong>Perpetuo</strong>.</li>
+<li>Si quieres, pon un <strong>Nombre de la campaña</strong> y un <strong>Mensaje</strong>.</li>
+<li>En <strong>Más condiciones (opcional)</strong> puedes indicar el objetivo, el público, el tono, las revisiones incluidas y si pides <strong>exclusividad</strong>.</li>
+<li>Marca la casilla: «Entiendo que la propuesta es vinculante…».</li>
+<li>Pulsa <strong>Enviar propuesta</strong>.</li>
+</ol>
+<p><figure><img src="img/c-proponer.jpg" alt="Proponer a una marca" loading="lazy"><figcaption>Proponer a una marca</figcaption></figure></p>
+<h4 id="que-sucede-despues">Qué sucede después</h4>
+<p>Verás «Propuesta enviada» y «Te avisamos en cuanto responda». La solicitud aparece en <strong>Colaboraciones → Solicitudes</strong>.</p>
+<aside class="callout callout--warn"><div class="callout__label">Atención</div><p>La propuesta es <strong>vinculante</strong>: si la marca acepta tu tarifa, te comprometes a los entregables indicados. Las condiciones adicionales quedan fijadas al enviar y <strong>no se pueden editar después</strong>.</p>
+</aside>
+<aside class="callout callout--tip"><div class="callout__label">Consejo</div><p>Si vas a enviar propuestas parecidas, pulsa <strong>Guardar como plantilla</strong> en la hoja. La próxima vez, elige la plantilla en el desplegable <strong>Usar una plantilla…</strong> y retoca solo lo que cambie.</p>
+</aside>
+<h2 id="colaboraciones">Colaboraciones</h2>
+<p>Aquí vive cada acuerdo, desde que se propone hasta que se cierra. Pulsa <strong>Colaboraciones</strong> en el menú.</p>
+<p><figure><img src="img/c-colabs-tablero.jpg" alt="Colaboraciones, vista Tablero" loading="lazy"><figcaption>Colaboraciones, vista Tablero</figcaption></figure></p>
+<p>La página tiene cuatro vistas (1): <strong>Tablero</strong>, <strong>Lista</strong>, <strong>Calendario</strong> y <strong>Solicitudes</strong>, y arriba un resumen de las colaboraciones en marcha y del avance de los entregables. Puedes <strong>buscar</strong> una colaboración, <strong>ordenarla</strong> (por fecha de entrega, importe o más recientes) y pulsar (3) <strong>Exportar CSV</strong> para descargar el listado en una hoja de cálculo.</p>
+<div class="table-wrap"><table><thead><tr><th>Vista</th><th>Para qué sirve</th></tr></thead><tbody><tr><td><strong>Tablero</strong></td><td>Columnas por fase: Aceptada, En producción, Revisión de marca y Publicada.</td></tr><tr><td><strong>Lista</strong></td><td>Todas en filas, agrupadas por fase, con formato, avance de entregables, fecha e importe.</td></tr><tr><td><strong>Calendario</strong></td><td>Las fechas de entrega en un calendario mensual.</td></tr><tr><td><strong>Solicitudes</strong></td><td>Las propuestas que aún no están aceptadas: las que tú recibes y las que tú envías.</td></tr></tbody></table></div>
+<p><figure><img src="img/c-colabs-lista.jpg" alt="Vista Lista" loading="lazy"><figcaption>Vista Lista</figcaption></figure></p>
+<p><figure><img src="img/c-colabs-solicitudes.jpg" alt="Vista Solicitudes (vacía en este ejemplo)" loading="lazy"><figcaption>Vista Solicitudes (vacía en este ejemplo)</figcaption></figure></p>
+<h3 id="recibir-y-responder-a-una-solicitud">Recibir y responder a una solicitud</h3>
+<p><strong>Qué queremos hacer:</strong> responder a una marca que me propone colaborar.</p>
+<h4 id="pasos">Pasos</h4>
+<ol>
+<li>Fíjate en el aviso de <strong>Bandeja de entrada</strong> o en la tarjeta <strong>Solicitudes pendientes</strong> de Inicio.</li>
+<li>Entra en <strong>Colaboraciones → Solicitudes</strong> y pulsa la solicitud.</li>
+<li>Lee el resumen: quién escribe, el <strong>importe</strong>, el <strong>brief</strong> y los plazos. Verás un aviso de caducidad: las solicitudes caducan a los 7 días.</li>
+<li>En el bloque <strong>Presupuesto y respuesta</strong>, elige una de tres opciones.</li>
+</ol>
+<div class="table-wrap"><table><thead><tr><th>Opción</th><th>Qué hace</th></tr></thead><tbody><tr><td><strong>Aceptar · (importe)</strong></td><td>Aceptas las condiciones. La colaboración pasa a <strong>Aceptada</strong>.</td></tr><tr><td><strong>Hacer contraoferta</strong></td><td>Propones otro importe, con un mensaje opcional. La otra parte decide.</td></tr><tr><td><strong>Rechazar solicitud</strong></td><td>La rechazas. Pide una confirmación.</td></tr></tbody></table></div>
+<aside class="callout callout--todo"><div class="callout__label">Captura pendiente</div><p>Este bloque con los tres botones solo aparece cuando hay una solicitud esperando respuesta, y no la había en el momento de preparar el manual. La descripción está comprobada en la aplicación; falta la imagen.</p>
+</aside>
+<h4 id="hacer-una-contraoferta">Hacer una contraoferta</h4>
+<ol>
+<li>Pulsa <strong>Hacer contraoferta</strong>.</li>
+<li>Escribe el <strong>nuevo importe (€)</strong> y, si quieres, un mensaje (por ejemplo, por qué).</li>
+<li>Envía la contraoferta.</li>
+</ol>
+<p>Ahora le <strong>toca a la otra parte</strong>. Verás el aviso <strong>Siguiente paso</strong>: «te toca a ti» o «le toca a (la otra persona)» según quién deba mover ficha. Los avisos <strong>Por responder</strong> y <strong>Siguiente paso</strong> se calculan según quién hizo la <strong>última propuesta</strong>: si tú hiciste la última, esperas; si la hizo la otra parte, te toca a ti.</p>
+<h4 id="rechazar-una-solicitud">Rechazar una solicitud</h4>
+<ol>
+<li>Pulsa <strong>Rechazar solicitud</strong>.</li>
+<li>CIBERAN pregunta: <strong>«¿Seguro? No se puede deshacer.»</strong></li>
+<li>Pulsa <strong>Cancelar</strong> para volver atrás o <strong>Sí, rechazar</strong> para confirmar.</li>
+</ol>
+<p>Al confirmar, verás el aviso «Solicitud rechazada» y volverás al listado. La colaboración queda en estado <strong>Rechazada</strong>.</p>
+<aside class="callout callout--warn"><div class="callout__label">Atención</div><p>Rechazar <strong>no se puede deshacer</strong>. Si dudas, usa antes una contraoferta.</p>
+</aside>
+<h4 id="que-sucede-despues-de-aceptar">Qué sucede después de aceptar</h4>
+<p>La colaboración queda <strong>Aceptada</strong> y se abre su espacio de trabajo, que se explica a continuación.</p>
+<h3 id="el-espacio-de-una-colaboracion">El espacio de una colaboración</h3>
+<p>Al abrir una colaboración aceptada verás tres zonas.</p>
+<p><figure><img src="img/c-colab-resumen.jpg" alt="Detalle de una colaboración" loading="lazy"><figcaption>Detalle de una colaboración</figcaption></figure></p>
+<ol>
+<li><strong>La cabecera</strong>, con el nombre de la colaboración, su estado, la marca, la entrega final y un botón <strong>Chat</strong>. Debajo, una barra con las <strong>fases</strong>: <strong>Aceptada → En producción → Revisión de marca → Publicada</strong>.</li>
+<li><strong>Siguiente paso</strong> (1): una caja oscura que dice qué hay que hacer ahora y si <strong>te toca a ti</strong> o le toca a la otra parte. Por ejemplo, «Crea la primera publicación para…» o «Cierra la colaboración con…».</li>
+<li><strong>Cinco pestañas</strong> (2): <strong>Resumen</strong>, <strong>Entregables</strong>, <strong>Acuerdo y archivos</strong>, <strong>Chat</strong> y <strong>Actividad</strong>.</li>
+</ol>
+<aside class="callout callout--info"><div class="callout__label">Aviso</div><p>El nombre de la colaboración sale del <strong>nombre de campaña</strong> que pusieron al proponerla. Si no hay, se usa el nombre del paquete o la primera frase del brief.</p>
+</aside>
+<h4 id="fases-de-una-colaboracion">Fases de una colaboración</h4>
+<div class="table-wrap"><table><thead><tr><th>Fase</th><th>Cuándo se alcanza</th></tr></thead><tbody><tr><td><strong>Aceptada</strong></td><td>Se aceptó, pero aún no hay ninguna publicación empezada.</td></tr><tr><td><strong>En producción</strong></td><td>Hay alguna publicación en marcha.</td></tr><tr><td><strong>Revisión de marca</strong></td><td>Alguna publicación espera la aprobación de la marca.</td></tr><tr><td><strong>Publicada</strong></td><td>Todo está publicado, o la colaboración se ha completado.</td></tr></tbody></table></div>
+<aside class="callout callout--info"><div class="callout__label">Aviso</div><p>Las fases no se marcan a mano: CIBERAN las deduce del estado de las publicaciones. No existe una fase de «Pagada» porque CIBERAN no gestiona pagos.</p>
+</aside>
+<h4 id="estados-de-una-colaboracion">Estados de una colaboración</h4>
+<div class="table-wrap"><table><thead><tr><th>Estado</th><th>Significado</th></tr></thead><tbody><tr><td><strong>Pendiente de respuesta</strong></td><td>Alguien propuso y falta que la otra parte responda.</td></tr><tr><td><strong>Aceptada</strong></td><td>Las dos partes están de acuerdo.</td></tr><tr><td><strong>En curso</strong></td><td>Se trabaja en las publicaciones.</td></tr><tr><td><strong>Completada</strong></td><td>Se cerró con todo entregado.</td></tr><tr><td><strong>Rechazada</strong></td><td>Alguien rechazó la solicitud.</td></tr><tr><td><strong>Cancelada</strong></td><td>Las dos partes acordaron cancelarla.</td></tr><tr><td><strong>Terminada por incumplimiento</strong></td><td>Una parte la dio por terminada porque no se cumplió lo pactado.</td></tr></tbody></table></div>
+<h3 id="los-entregables">Los entregables</h3>
+<p>La pestaña <strong>Entregables</strong> lista las publicaciones vinculadas a la colaboración, cada una con su estado (<strong>Programado</strong>, <strong>Para revisar</strong>…), su aprobación (<strong>Aprobada</strong>) y su versión (<strong>v1</strong>).</p>
+<p><figure><img src="img/c-colab-entregables.jpg" alt="Pestaña Entregables" loading="lazy"><figcaption>Pestaña Entregables</figcaption></figure></p>
+<p>En esta pestaña puedes:</p>
+<ul>
+<li>Ver cuántos entregables están resueltos («<strong>N de M</strong> resueltos»).</li>
+<li><strong>Crear publicación</strong> para un entregable (te lleva al editor con la colaboración ya elegida) o <strong>Asignar</strong> una que ya tienes.</li>
+<li><strong>Confirmar entregables</strong> cuando la marca los ha definido. Hasta que los confirmes, no son exigibles para completar la colaboración.</li>
+<li>Usar las opciones avanzadas de cada entregable: <strong>Aceptar sin aprobación</strong>, <strong>Renunciar</strong> y <strong>Reabrir</strong>. Todas piden un <strong>motivo obligatorio</strong> (mínimo 10 caracteres) que ven las dos partes.</li>
+</ul>
+<p>Algunas etiquetas pueden aparecer junto a un entregable: <strong>Aprobación invalidada</strong>, <strong>Editada tras publicar</strong>, <strong>Sin aprobación</strong> o <strong>Decisión caducada</strong>. Indican que el contenido cambió después de aprobarse y puede necesitar una nueva revisión.</p>
+<h3 id="acuerdo-y-archivos">Acuerdo y archivos</h3>
+<p>La pestaña <strong>Acuerdo y archivos</strong> recoge el brief, las condiciones pactadas, el presupuesto y los archivos compartidos.</p>
+<p><figure><img src="img/c-colab-acuerdo.jpg" alt="Acuerdo y archivos" loading="lazy"><figcaption>Acuerdo y archivos</figcaption></figure></p>
+<ul>
+<li><strong>Acuerdo</strong>: el brief, <strong>Sobre la campaña</strong> (objetivo, público y tono) y las <strong>Condiciones pactadas</strong> (alcance, revisiones y derechos de uso). Si no se fijaron, la pantalla lo dice y recomienda aclararlo por chat.</li>
+<li><strong>Resumen del acuerdo (imprimir o PDF)</strong>: abre un resumen para guardar o imprimir.</li>
+<li><strong>Añadir entregas al calendario</strong>: descarga un archivo para tu calendario (Google, Apple, Outlook).</li>
+<li><strong>Archivos</strong>: material compartido solo entre las dos partes. Se aceptan PDF, imágenes y documentos de hasta 10 MB, con un máximo de 20 archivos. Se sube con <strong>Subir archivo</strong>.</li>
+</ul>
+<h3 id="chat-y-actividad">Chat y actividad</h3>
+<ul>
+<li><strong>Chat</strong>: la conversación de esta colaboración. Tiene respuestas rápidas («Recibido, gracias», «¿Puedes revisarlo?», «Propongo otra fecha», «Lo tengo esta semana»).</li>
+<li><strong>Actividad</strong>: la <strong>cronología</strong> de todo lo ocurrido, de lo más reciente a lo más antiguo: solicitud, aceptación, envíos a revisión, cambios pedidos y aprobaciones. Con <strong>Añadir apunte</strong> dejas una nota que ven las dos partes, y puedes filtrar por <strong>Todo</strong> o <strong>Mensajes y acciones</strong>.</li>
+</ul>
+<p><figure><img src="img/c-colab-actividad.jpg" alt="Actividad de una colaboración" loading="lazy"><figcaption>Actividad de una colaboración</figcaption></figure></p>
+<h3 id="completar-la-colaboracion">Completar la colaboración</h3>
+<p><strong>Qué queremos hacer:</strong> cerrar la colaboración cuando todo está entregado.</p>
+<h4 id="pasos">Pasos</h4>
+<ol>
+<li>Cuando todas las entregas están aprobadas, el <strong>Siguiente paso</strong> dice «Cierra la colaboración…».</li>
+<li>En el bloque <strong>Presupuesto y respuesta</strong>, pulsa <strong>Marcar como completada</strong>.</li>
+</ol>
+<h4 id="que-sucede-despues">Qué sucede después</h4>
+<p>La colaboración pasa a <strong>Completada</strong>. Cada parte puede dejar una <strong>valoración</strong> de la otra, con estrellas y un comentario opcional sobre la comunicación y el cumplimiento de plazos. La valoración alimenta el apartado <strong>Valoración</strong> del perfil.</p>
+<aside class="callout callout--info"><div class="callout__label">Aviso</div><p>CIBERAN <strong>no gestiona pagos ni cobra comisión</strong>. Verás el mensaje: «el importe acordado te lo paga la marca por el medio que acordéis». El cobro lo arregláis entre vosotros.</p>
+</aside>
+<h3 id="cancelar-o-terminar-una-colaboracion">Cancelar o terminar una colaboración</h3>
+<p>En <strong>Más acciones</strong> tienes dos opciones.</p>
+<p><figure><img src="img/c-colab-mas-acciones.jpg" alt="Más acciones de una colaboración" loading="lazy"><figcaption>Más acciones de una colaboración</figcaption></figure></p>
+<div class="table-wrap"><table><thead><tr><th>Opción</th><th>Cómo funciona</th></tr></thead><tbody><tr><td><strong>Proponer cancelar de común acuerdo</strong></td><td>Explicas el motivo. La otra parte puede <strong>Aceptar la cancelación</strong> o <strong>Seguir con la colaboración</strong>. Hasta que responda, todo sigue igual, y tú puedes <strong>Retirar la propuesta</strong>.</td></tr><tr><td><strong>Dar por terminada por incumplimiento</strong></td><td>Cierra la colaboración sin esperar a la otra parte. Úsalo solo si de verdad no se cumplió lo pactado. Queda en la cronología y lo ve el equipo de CIBERAN.</td></tr></tbody></table></div>
+<p>También puedes usar <strong>Reportar esta solicitud</strong> si algo te parece indebido. El equipo revisa los reportes y puede avisar o bloquear cuentas, pero no puede reclamar importes ni emprender acciones legales.</p>
+<aside class="callout callout--warn"><div class="callout__label">Atención</div><p>Dar por terminada una colaboración por incumplimiento deja constancia. Úsalo con cuidado y describe con claridad qué se acordó y qué no se cumplió.</p>
+</aside>
+<h2 id="publicaciones">Publicaciones</h2>
+<p>Es el centro de trabajo del creador: aquí preparas cada pieza de contenido y la llevas de la idea a la publicación. Pulsa <strong>Publicaciones</strong> en el menú.</p>
+<aside class="callout callout--info"><div class="callout__label">Aviso</div><p>En la aplicación <strong>no existe una sección llamada «CIBERAN Studio»</strong>. Lo que se conoce como las herramientas de creación son las que se describen en este apartado y en los siguientes: <strong>Publicaciones</strong>, <strong>Biblioteca</strong>, <strong>Paquetes</strong>, las <strong>plantillas</strong>, <strong>Deshacer</strong> y la <strong>paleta de comandos</strong>.</p>
+</aside>
+<p><figure><img src="img/c-pub-tablero.jpg" alt="Publicaciones, vista Tablero" loading="lazy"><figcaption>Publicaciones, vista Tablero</figcaption></figure></p>
+<h3 id="las-tres-vistas">Las tres vistas</h3>
+<p>Arriba (2) eliges <strong>Tablero</strong>, <strong>Calendario</strong> o <strong>Lista</strong>.</p>
+<div class="table-wrap"><table><thead><tr><th>Vista</th><th>Qué muestra</th></tr></thead><tbody><tr><td><strong>Tablero</strong></td><td>Una columna por fase: <strong>Idea, En producción, Para revisar, Programado, Publicado</strong>. Arrastra una tarjeta a otra columna para cambiarla de fase.</td></tr><tr><td><strong>Calendario</strong></td><td>Un calendario mensual. Arrastra una entrega a otro día para reprogramarla.</td></tr><tr><td><strong>Lista</strong></td><td>Todas las publicaciones en filas.</td></tr></tbody></table></div>
+<p><figure><img src="img/c-pub-calendario.jpg" alt="Vista Calendario" loading="lazy"><figcaption>Vista Calendario</figcaption></figure></p>
+<p><figure><img src="img/c-pub-lista.jpg" alt="Vista Lista" loading="lazy"><figcaption>Vista Lista</figcaption></figure></p>
+<p>Encima del tablero verás la semana actual, con cada entrega en su día y los contadores <strong>Atrasadas</strong> y <strong>Esta semana</strong>. Puedes buscar por título, texto o hashtags, y filtrar por (3) <strong>red</strong> y por <strong>colaboración</strong> (todas, contenido propio o una en concreto).</p>
+<h3 id="crear-una-publicacion">Crear una publicación</h3>
+<p><strong>Qué queremos hacer:</strong> anotar una pieza de contenido nueva.</p>
+<h4 id="pasos">Pasos</h4>
+<ol>
+<li>En Publicaciones, pulsa (1) <strong>Nueva publicación</strong> (también está en Inicio).</li>
+<li>Escribe el <strong>Título interno</strong> (solo para reconocerla en tu tablero).</li>
+<li>Si quieres, escribe el <strong>Texto de la publicación</strong> (hasta 2.200 caracteres) y los <strong>Hashtags</strong> (separados por espacios o comas; la almohadilla se pone sola).</li>
+<li>En <strong>¿Para quién es?</strong>, elige <strong>Contenido propio</strong> (solo lo ves tú, no cuenta como entregable) o <strong>Para una colaboración</strong> (y elige cuál).</li>
+<li>Elige la <strong>Red donde se publicará</strong> (TikTok, YouTube, X, Instagram, Facebook o LinkedIn). Si va también a otras redes, márcalas en <strong>¿También en otras redes?</strong>.</li>
+<li>Elige el <strong>Formato</strong> (por ejemplo, Reel) y la <strong>Fecha de entrega</strong>.</li>
+<li>Guarda.</li>
+</ol>
+<p><figure><img src="img/c-pub-nueva.jpg" alt="Nueva publicación" loading="lazy"><figcaption>Nueva publicación</figcaption></figure></p>
+<h4 id="que-sucede-despues">Qué sucede después</h4>
+<p>La publicación aparece en el tablero, en la columna que corresponda, y en el calendario. Si es de una colaboración, la marca la ve y cuenta como entregable.</p>
+<aside class="callout callout--tip"><div class="callout__label">Consejo</div><p>No hace falta rellenarlo todo. La ventana lo dice: «Empieza por lo básico: podrás completar el resto, añadir la imagen y planificarla después en su ficha».</p>
+</aside>
+<h3 id="la-ficha-de-una-publicacion">La ficha de una publicación</h3>
+<p>Al abrir una publicación ves toda su información.</p>
+<p><figure><img src="img/c-pub-detalle-arriba.jpg" alt="Ficha de una publicación" loading="lazy"><figcaption>Ficha de una publicación</figcaption></figure></p>
+<ul>
+<li><strong>Barra de fases</strong>: Idea, En producción, Para revisar, Programado, Publicado.</li>
+<li><strong>Qué toca ahora</strong> (3): te propone la siguiente acción, con un botón principal como (1) <strong>Marcar como publicada</strong>, y otro para <strong>devolverla a «Para revisar»</strong>.</li>
+<li><strong>Contenido</strong>: título, <strong>Texto de la publicación</strong> (2) con contador y <strong>Hashtags</strong>. El botón <strong>Copiar texto y hashtags</strong> te lo deja listo para pegar en la red.</li>
+<li><strong>Historial de revisión</strong>: lo que ha dicho la marca (por ejemplo, «aprobó esta publicación»).</li>
+<li><strong>Imagen</strong>: la que ve la marca al revisar. Se sube arrastrándola o pulsando, o con <strong>Elegir de la biblioteca</strong> (JPG, PNG o WebP, máximo 8 MB).</li>
+<li><strong>Entrega</strong>: enlaces para que la marca vea el <strong>borrador</strong> y, al final, el <strong>resultado</strong>. Se explican más abajo.</li>
+<li><strong>Planificación</strong>: fecha de entrega, red, formato, versión y fechas de creación y edición.</li>
+<li><strong>Checklist</strong>: apuntes de lo que no quieres olvidar (grabar, editar, subtítulos).</li>
+<li><strong>Etiquetas</strong>: para agrupar publicaciones en el tablero.</li>
+<li><strong>Reutilizar</strong>: <strong>Duplicar publicación</strong> y <strong>Guardar como plantilla</strong>.</li>
+<li><strong>Eliminar publicación</strong>.</li>
+</ul>
+<h4 id="los-enlaces-de-entrega">Los enlaces de entrega</h4>
+<p>En el apartado <strong>Entrega</strong> hay dos campos opcionales:</p>
+<ul>
+<li><strong>Enlace al borrador</strong>: para un vídeo o archivo pesado en Drive, WeTransfer o un enlace privado. <strong>La marca lo ve al revisar.</strong></li>
+<li><strong>Enlace de la publicación</strong>: cuando ya está publicada en la red, pega aquí su enlace. <strong>Queda como resultado de la colaboración.</strong></li>
+</ul>
+<h4 id="varias-redes-en-una-publicacion">Varias redes en una publicación</h4>
+<p>Una publicación tiene una <strong>red principal</strong> y puede indicar <strong>otras redes</strong> donde también se publicará. Se elige al crearla.</p>
+<h3 id="revision-por-la-marca">Revisión por la marca</h3>
+<p>Cuando una publicación es de una colaboración y la envías a revisión (estado <strong>Para revisar</strong>), la marca puede <strong>aprobarla</strong> o <strong>pedir cambios</strong> con un comentario. Tú ves lo que dice en el <strong>Historial de revisión</strong> y en la <strong>Actividad</strong> de la colaboración.</p>
+<ol>
+<li>Envía la publicación a <strong>Para revisar</strong> (con el botón de «Qué toca ahora» o arrastrando la tarjeta).</li>
+<li>La marca la revisa: <strong>Aprobar</strong> o <strong>Pedir cambios</strong>.</li>
+<li>Si pide cambios, lee su comentario, corrige el contenido y vuelve a enviarla: se crea una <strong>nueva versión</strong> (v2, v3…).</li>
+<li>Si la aprueba, aparece <strong>Aprobada</strong> y puedes programarla y publicarla.</li>
+</ol>
+<aside class="callout callout--todo"><div class="callout__label">Captura pendiente</div><p>La pantalla de revisión de la marca (botones <strong>Aprobar</strong> y <strong>Pedir cambios</strong>) se muestra en el apartado del partner. Del lado del creador, el resultado se ve en el <strong>Historial de revisión</strong> y en <strong>Actividad</strong>.</p>
+</aside>
+<aside class="callout callout--warn"><div class="callout__label">Atención</div><p>Si cambias una publicación <strong>después</strong> de aprobada, la aprobación puede quedar <strong>invalidada</strong> y la marca tendrá que revisarla de nuevo.</p>
+</aside>
+<h3 id="duplicar-y-guardar-como-plantilla">Duplicar y guardar como plantilla</h3>
+<p><strong>Qué queremos hacer:</strong> no escribir lo mismo dos veces.</p>
+<h4 id="pasos">Pasos</h4>
+<ol>
+<li>Abre la publicación que quieres reutilizar.</li>
+<li>En <strong>Reutilizar</strong>, pulsa <strong>Duplicar publicación</strong> para empezar otra pieza con los mismos datos, o <strong>Guardar como plantilla</strong>.</li>
+<li>Para una plantilla, ponle un <strong>nombre</strong> y guarda. Si usas un nombre que ya existe, se actualiza esa plantilla.</li>
+<li>La próxima vez, al pulsar <strong>Nueva publicación</strong>, elige la plantilla en <strong>Usar una plantilla…</strong>. Se rellena el formulario y puedes retocar lo que quieras antes de guardar.</li>
+</ol>
+<aside class="callout callout--info"><div class="callout__label">Aviso</div><p>Al aplicar una plantilla se avisa de que revises los datos. Una plantilla solo rellena el formulario: no crea nada hasta que guardas.</p>
+</aside>
+<h3 id="deshacer">Deshacer</h3>
+<p>CIBERAN te deja <strong>deshacer</strong> algunas acciones durante unos segundos:</p>
+<div class="table-wrap"><table><thead><tr><th>Acción</th><th>Cómo deshacerla</th></tr></thead><tbody><tr><td><strong>Eliminar una publicación</strong></td><td>Aparece el aviso «…eliminada» con <strong>Deshacer</strong>. Tienes <strong>8 segundos</strong>. Pasado ese tiempo se borra del todo.</td></tr><tr><td><strong>Cambiar el estado de una publicación</strong></td><td>Tras mover la tarjeta, el aviso incluye <strong>Deshacer</strong> para devolverla a su fase anterior.</td></tr><tr><td><strong>Eliminar una imagen de la biblioteca</strong></td><td>Igual: 8 segundos para <strong>Deshacer</strong>.</td></tr></tbody></table></div>
+<aside class="callout callout--warn"><div class="callout__label">Atención</div><p>Si la publicación <strong>forma parte de una colaboración</strong>, la marca deja de verla al borrarla. Por eso CIBERAN pide una <strong>confirmación</strong> antes («Es una pieza de una colaboración: la marca dejará de verla…»). Aun así, tienes 8 segundos para deshacerlo. Si cierras la pestaña antes de que pasen, el borrado se cancela.</p>
+</aside>
+<h2 id="biblioteca-de-archivos">Biblioteca de archivos</h2>
+<p><strong>Qué es:</strong> tu almacén de imágenes listas para reutilizar como portada de publicaciones y de paquetes. Es una función <strong>solo del creador</strong>.</p>
+<p><figure><img src="img/c-biblioteca.jpg" alt="Biblioteca de archivos" loading="lazy"><figcaption>Biblioteca de archivos</figcaption></figure></p>
+<div class="table-wrap"><table><thead><tr><th>Qué</th><th>Detalle</th></tr></thead><tbody><tr><td><strong>Formatos</strong></td><td>JPG, PNG y WebP.</td></tr><tr><td><strong>Tamaño</strong></td><td>Hasta 8 MB por archivo.</td></tr><tr><td><strong>Cantidad</strong></td><td>Hasta 50 archivos. El contador (por ejemplo «1 de 50») está arriba.</td></tr><tr><td><strong>Optimización</strong></td><td>Al subir, CIBERAN reduce cada imagen (como mucho 2.000 píxeles de lado) y la guarda en un formato más ligero. Se ve igual, pero ocupa mucho menos.</td></tr></tbody></table></div>
+<h4 id="subir-imagenes">Subir imágenes</h4>
+<ol>
+<li>Pulsa <strong>Subir imágenes</strong> (1), o arrastra imágenes sobre la página.</li>
+<li>Si algún archivo no es válido (formato o tamaño), verás un aviso con el motivo.</li>
+</ol>
+<h4 id="buscar-etiquetar-y-renombrar">Buscar, etiquetar y renombrar</h4>
+<ol>
+<li>Escribe en (2) <strong>Buscar en la biblioteca</strong> para filtrar por nombre o etiqueta, o pulsa una etiqueta (por ejemplo <strong>#otoño</strong>) para ver solo esas imágenes.</li>
+<li>Pulsa (3) el icono del lápiz (<strong>Editar nombre y etiquetas</strong>) para cambiar el nombre y poner hasta 8 etiquetas (por ejemplo «#otoño #producto»).</li>
+<li>Con el icono de enlace abres la imagen en otra pestaña, y con la papelera la borras (con 8 segundos para deshacer).</li>
+</ol>
+<h4 id="usar-una-imagen-de-la-biblioteca">Usar una imagen de la biblioteca</h4>
+<ol>
+<li>Abre la publicación o el paquete donde quieres la imagen.</li>
+<li>Pulsa <strong>Elegir de la biblioteca</strong>.</li>
+<li>Busca y pulsa la imagen que quieras.</li>
+</ol>
+<p><figure><img src="img/c-biblioteca-selector.jpg" alt="Elegir de la biblioteca" loading="lazy"><figcaption>Elegir de la biblioteca</figcaption></figure></p>
+<aside class="callout callout--warn"><div class="callout__label">Importante</div><p>Al elegir una imagen se hace una <strong>copia</strong>. Si luego <strong>borras el original</strong> de la biblioteca, las publicaciones y paquetes que ya usaban esa imagen <strong>no se ven afectados</strong>: conservan su propia copia.</p>
+</aside>
+<h2 id="paquetes">Paquetes</h2>
+<p><strong>Qué son:</strong> lo que ofreces. Un paquete describe un servicio y su precio (por ejemplo «Reseña en vídeo · 400 €»). Una marca puede hacerte una <strong>oferta</strong> sobre cualquiera.</p>
+<aside class="callout callout--info"><div class="callout__label">Aviso</div><p>Los partners tienen su propia página, llamada <strong>Necesidades</strong>, que funciona igual pero al revés: describe lo que buscan. Está en la Parte IV.</p>
+</aside>
+<p><figure><img src="img/c-paquetes.jpg" alt="Paquetes del creador" loading="lazy"><figcaption>Paquetes del creador</figcaption></figure></p>
+<h3 id="crear-un-paquete">Crear un paquete</h3>
+<h4 id="pasos">Pasos</h4>
+<ol>
+<li>Pulsa <strong>Paquetes</strong> en el menú y luego (1) <strong>Añadir paquete</strong> (también hay un <strong>Nuevo paquete</strong> en Inicio).</li>
+<li>Si quieres ir más rápido, elige una plantilla en <strong>Empieza con una plantilla</strong>: <strong>1 Reel</strong>, <strong>Reel + 3 Stories</strong>, <strong>3 Stories</strong>, <strong>Reseña en vídeo</strong>, <strong>Unboxing</strong> o <strong>Pack mensual</strong>. Luego lo puedes editar todo.</li>
+<li>Escribe el <strong>Título</strong> y, si quieres, la <strong>Descripción</strong> (qué incluye y cómo trabajas).</li>
+<li>Escribe los <strong>Entregables</strong>, uno por uno, y pulsa <strong>Intro</strong> después de cada uno. Tienes sugerencias debajo.</li>
+<li>Escribe el <strong>Precio del paquete</strong>: lo que cobras por el paquete completo.</li>
+<li>Si quieres, añade una <strong>portada</strong>: sube una imagen o pulsa <strong>Elegir de la biblioteca</strong>.</li>
+<li>Mira la <strong>Vista previa</strong> y pulsa <strong>Publicar paquete</strong>.</li>
+</ol>
+<p><figure><img src="img/c-paquete-nuevo.jpg" alt="Nuevo paquete" loading="lazy"><figcaption>Nuevo paquete</figcaption></figure></p>
+<h4 id="que-sucede-despues">Qué sucede después</h4>
+<p>El paquete aparece en tu lista y en tu perfil público. Los partners pueden hacerte una oferta sobre él.</p>
+<h3 id="gestionar-los-paquetes">Gestionar los paquetes</h3>
+<p>Cada tarjeta tiene acciones: <strong>Pausar paquete</strong> (deja de aparecer sin borrarlo), <strong>Editar</strong>, <strong>Duplicar paquete</strong>, <strong>Eliminar</strong> y la <strong>estrella</strong> para destacarlo.</p>
+<ul>
+<li><strong>Destacado</strong> (2): el paquete destacado sale <strong>primero en tu perfil</strong>. Solo se puede destacar uno. Aparece una etiqueta <strong>Destacado</strong> y, para quitarlo, <strong>Quitar como destacado</strong>.</li>
+<li><strong>Reordenar</strong>: arrastra las tarjetas para cambiar el orden.</li>
+<li><strong>Ver cómo te ven las marcas</strong>: abre tu perfil público.</li>
+</ul>
+<aside class="callout callout--warn"><div class="callout__label">Atención</div><p>Al <strong>eliminar</strong> un paquete se borra de forma permanente, <strong>junto con las ofertas</strong> que se hubieran hecho sobre él. CIBERAN pide confirmación antes.</p>
+</aside>
+<aside class="callout callout--tip"><div class="callout__label">Consejo</div><p>Si no quieres borrar un paquete pero no quieres recibir ofertas ahora mismo, usa <strong>Pausar paquete</strong>.</p>
+</aside>
+<h2 id="ofertas-y-chat">Ofertas y chat</h2>
+<p>Además de las solicitudes de colaboración, hay otra forma de empezar a trabajar: una <strong>oferta sobre un paquete</strong>.</p>
+<ul>
+<li>Un partner puede ir a tu perfil público y pulsar <strong>Hacer oferta</strong> sobre uno de tus paquetes, o hacerla desde el chat con el botón <strong>Oferta</strong>. Puede proponer un precio distinto al listado, para negociar.</li>
+<li>Tú la ves en el <strong>chat</strong>, en una tarjeta con los botones <strong>Aceptar</strong> y <strong>Rechazar</strong>. Si el paquete ya no existe, la tarjeta dice «Esta oferta ya no está disponible».</li>
+</ul>
+<p>El <strong>Chat</strong> (icono de burbuja, arriba) lista tus conversaciones con filtros <strong>Todas</strong>, <strong>No leídas</strong> y <strong>Ofertas</strong>, y un buscador por nombre. Las ofertas que esperan tu respuesta aparecen marcadas. Para iniciar un chat, ve al perfil de alguien en <strong>Descubrir</strong> y pulsa el icono de mensaje.</p>
+<p><figure><img src="img/c-chat.jpg" alt="Chat" loading="lazy"><figcaption>Chat</figcaption></figure></p>
+<aside class="callout callout--info"><div class="callout__label">Aviso</div><p>Quién puede escribirte lo decides en <strong>Perfil → Privacidad y cuenta → Privacidad del chat</strong>.</p>
+</aside>
+<h2 id="resultados">Resultados</h2>
+<p><strong>Qué es:</strong> cómo van tus colaboraciones <strong>dentro de CIBERAN</strong>. Pulsa <strong>Resultados</strong> en el menú y elige el periodo: <strong>3 meses</strong>, <strong>6 meses</strong>, <strong>12 meses</strong> o <strong>Todo</strong>.</p>
+<p><figure><img src="img/c-resultados.jpg" alt="Resultados" loading="lazy"><figcaption>Resultados</figcaption></figure></p>
+<div class="table-wrap"><table><thead><tr><th>Indicador</th><th>Qué mide</th></tr></thead><tbody><tr><td><strong>Completadas con éxito</strong></td><td>Colaboraciones cerradas con todo entregado.</td></tr><tr><td><strong>Entregas a tiempo</strong></td><td>Porcentaje de entregas que llegaron a su fecha.</td></tr><tr><td><strong>Valoración recibida</strong></td><td>La media de las valoraciones que te dan las marcas.</td></tr><tr><td><strong>Presupuesto medio</strong></td><td>El importe medio de tus colaboraciones aceptadas.</td></tr><tr><td><strong>Colaboraciones</strong></td><td>Cuántas se iniciaron, aceptaron, completaron, cancelaron de común acuerdo o terminaron por incumplimiento, y cuántas hay en curso.</td></tr><tr><td><strong>Tiempos y revisiones</strong></td><td>En cuánto respondes tú, en cuánto responden las marcas, cuánto tarda una propuesta en aceptarse y cuántas revisiones lleva cada entregable.</td></tr><tr><td><strong>Evolución por mes</strong></td><td>Un gráfico mensual de iniciadas, aceptadas y completadas.</td></tr></tbody></table></div>
+<aside class="callout callout--info"><div class="callout__label">Aviso</div><p>Cuando no hay datos suficientes, la pantalla dice «Aún sin datos suficientes» en lugar de inventar una cifra. Todo se calcula con tu actividad en CIBERAN.</p>
+</aside>
+<h2 id="metricas-de-redes">Métricas de redes</h2>
+<p>El menú muestra <strong>Métricas</strong> con la etiqueta <strong>Pronto</strong>. Al pulsarla, la página dice «Próximamente».</p>
+<p><figure><img src="img/c-metricas.jpg" alt="Métricas de redes: próximamente" loading="lazy"><figcaption>Métricas de redes: próximamente</figcaption></figure></p>
+<aside class="callout callout--off"><div class="callout__label">Próximamente</div><p>Las métricas de tus redes (audiencia, rendimiento de cada publicación, evolución en el tiempo y resultados por colaboración) llegarán en una fase posterior, conectando tus cuentas con permiso de cada red. <strong>Hoy no se pueden consultar métricas de redes en CIBERAN.</strong> Mientras tanto, usa <strong>Resultados</strong>.</p>
+</aside>
+<h2 id="prediccion-de-rendimiento">Predicción de rendimiento</h2>
+<aside class="callout callout--off"><div class="callout__label">No disponible</div><p>La <strong>predicción de éxito con IA</strong> está desactivada en el lanzamiento gratuito. No aparece en la aplicación y no se puede usar. Por eso este manual no describe su uso. Cuando se active, se añadirá en una próxima versión.</p>
+</aside>
+<h2 id="calendario">Calendario</h2>
+<p>CIBERAN tiene calendario en dos sitios:</p>
+<ul>
+<li><strong>Publicaciones → Calendario</strong>: tus publicaciones por día. Se pueden <strong>arrastrar a otro día</strong> para cambiar la fecha de entrega, y <strong>crear una publicación</strong> desde un día.</li>
+<li><strong>Colaboraciones → Calendario</strong>: las fechas de entrega de tus colaboraciones.</li>
+</ul>
+<p>Además, en la pestaña <strong>Acuerdo y archivos</strong> de cada colaboración, <strong>Añadir entregas al calendario</strong> descarga un archivo para llevarlas a Google Calendar, Apple Calendar u Outlook.</p>
+<h2 id="bandeja-de-entrada">Bandeja de entrada</h2>
+<p>La <strong>Bandeja de entrada</strong> (icono arriba a la derecha) reúne lo que te toca hacer y tus avisos, en tres pestañas.</p>
+<p><figure><img src="img/c-bandeja.jpg" alt="Bandeja de entrada" loading="lazy"><figcaption>Bandeja de entrada</figcaption></figure></p>
+<div class="table-wrap"><table><thead><tr><th>Pestaña</th><th>Qué contiene</th></tr></thead><tbody><tr><td><strong>Qué me toca</strong></td><td>Tareas con botón de acción (por ejemplo <strong>Crear publicación</strong> o <strong>Ver colaboración</strong>).</td></tr><tr><td><strong>Importantes</strong></td><td>Avisos que conviene leer: solicitudes, revisiones, plazos.</td></tr><tr><td><strong>Actividad</strong></td><td>El resto de la actividad de tu cuenta.</td></tr></tbody></table></div>
+<h2 id="cuenta-y-configuracion">Cuenta y configuración</h2>
+<p>Todo lo de tu cuenta está en <strong>Perfil</strong>, en las pestañas <strong>Resumen</strong>, <strong>Ficha pública</strong>, <strong>Paquetes</strong> y <strong>Privacidad y cuenta</strong>.</p>
+<div class="table-wrap"><table><thead><tr><th>Quiero…</th><th>Dónde</th></tr></thead><tbody><tr><td>Cambiar mi foto, portada, biografía o categorías</td><td><strong>Perfil → Editar ficha</strong></td></tr><tr><td>Cambiar mi objetivo semanal de publicaciones</td><td><strong>Perfil → Resumen → Objetivo semanal</strong></td></tr><tr><td>Ver el recorrido de bienvenida otra vez</td><td><strong>Perfil → Resumen → Ver el recorrido de bienvenida</strong></td></tr><tr><td>Decidir quién me escribe, qué avisos recibo o si mi perfil se ve sin iniciar sesión</td><td><strong>Perfil → Privacidad y cuenta</strong></td></tr><tr><td>Descargar mis datos o borrar mi cuenta</td><td><strong>Perfil → Privacidad y cuenta → Tus datos</strong></td></tr><tr><td>Cerrar sesión</td><td>Abajo del menú: <strong>Cerrar sesión</strong></td></tr><tr><td>Cambiar mi contraseña</td><td>Usa <strong>¿Olvidaste tu contraseña?</strong> en la pantalla de acceso</td></tr></tbody></table></div>
+<aside class="callout callout--todo"><div class="callout__label">Sin verificar</div><p>En la aplicación no se ha encontrado un apartado para cambiar la contraseña o el email desde dentro del perfil. El camino comprobado para cambiar la contraseña es el de recuperación.</p>
+</aside>
+<h4 id="cerrar-sesion">Cerrar sesión</h4>
+<ol>
+<li>En el menú (abajo a la izquierda en el ordenador, o dentro de <strong>Más</strong> en el móvil), pulsa <strong>Cerrar sesión</strong>.</li>
+<li>Volverás a la página de inicio.</li>
+</ol>
+<aside class="callout callout--tip"><div class="callout__label">Consejo</div><p>Si usas un ordenador compartido, cierra siempre la sesión al terminar.</p>
+</aside>
+<h1 id="parte-iv-manual-del-partner">Parte IV · Manual del partner</h1>
+<p>Esta parte es para quien eligió el perfil <strong>Partner</strong> (marca, empresa o agencia). El menú del partner tiene cinco apartados: <strong>Inicio, Descubrir, Colaboraciones, Necesidades</strong> y <strong>Resultados</strong>.</p>
+<aside class="callout callout--info"><div class="callout__label">Aviso</div><p>El partner <strong>no tiene</strong> Publicaciones, Biblioteca ni Paquetes propios: el contenido lo crea y lo gestiona el creador. Tu papel es contactar, acordar y <strong>revisar</strong>.</p>
+</aside>
+<h2 id="inicio">Inicio</h2>
+<p><strong>Qué queremos hacer:</strong> ver cómo van mis colaboraciones y qué tengo pendiente.</p>
+<h4 id="pasos">Pasos</h4>
+<ol>
+<li>Pulsa <strong>Inicio</strong> en el menú.</li>
+<li>Lee el saludo («¡Hola, … Organiza tus colaboraciones!») y cuántas tareas tienes en la bandeja.</li>
+<li>Recorre las tarjetas y los bloques.</li>
+</ol>
+<p><figure><img src="img/p-inicio.jpg" alt="Inicio del partner" loading="lazy"><figcaption>Inicio del partner</figcaption></figure></p>
+<p>Marcadores: (1) botón <strong>Descubrir creadores</strong>, (2) tarjeta <strong>Por responder</strong>.</p>
+<div class="table-wrap"><table><thead><tr><th>Tarjeta</th><th>Qué cuenta</th></tr></thead><tbody><tr><td><strong>Colaboraciones activas</strong></td><td>Las que están en marcha.</td></tr><tr><td><strong>Por responder</strong></td><td>Propuestas que esperan tu respuesta (te toca a ti).</td></tr><tr><td><strong>Por revisar</strong></td><td>Contenido que un creador te ha enviado y espera tu aprobación.</td></tr><tr><td><strong>Entregas próximas</strong></td><td>Entregas con fecha en los próximos días.</td></tr></tbody></table></div>
+<p>Debajo verás <strong>Entregas de los próximos 7 días</strong>, <strong>Publicaciones por fase</strong> (Idea, En producción, Para revisar, Programado, Publicado), <strong>Tu calendario</strong> (con el porcentaje de lo ya revisado), <strong>Creadores que podrían encajar</strong> y <strong>Primeros pasos</strong> («Completa tu ficha pública», «Contacta con un creador», «Acordad la colaboración»).</p>
+<h2 id="descubrir-creadores">Descubrir creadores</h2>
+<p><strong>Qué queremos hacer:</strong> encontrar creadores que encajen con mi marca y contactar con ellos.</p>
+<h4 id="pasos">Pasos</h4>
+<ol>
+<li>Pulsa <strong>Descubrir</strong> en el menú.</li>
+<li>Escribe en (1) <strong>Buscar creador por nombre</strong> o usa los (2) <strong>Filtros</strong>: <strong>Categorías</strong> y <strong>Tarifa</strong>, además de <strong>Más filtros</strong> (por ejemplo, tiempo de respuesta).</li>
+<li>Ordena con <strong>Ordenar</strong>: más afines, más colaboraciones, responden antes, tarifa o precio del paquete (de menor a mayor o al revés).</li>
+<li>Cambia entre <strong>Rejilla</strong> y <strong>Carrusel</strong>.</li>
+<li>Pulsa <strong>Guardar búsqueda</strong> para conservar tus filtros, o el icono de marcador de una tarjeta para guardar a un creador.</li>
+</ol>
+<p><figure><img src="img/p-descubrir.jpg" alt="Descubrir creadores" loading="lazy"><figcaption>Descubrir creadores</figcaption></figure></p>
+<h4 id="como-leer-una-tarjeta-de-creador">Cómo leer una tarjeta de creador</h4>
+<p>La tarjeta muestra el nombre, sus categorías, <strong>cuánto tarda en responder</strong> («Responde en ~1 h»), el <strong>número de colaboraciones</strong> que ha hecho, su <strong>paquete destacado</strong> con precio («Destacado: Reseña en vídeo · 400 €») o «1 paquete · desde 250 €», y su <strong>tarifa</strong>. Abajo, (3) <strong>Contactar</strong>.</p>
+<aside class="callout callout--info"><div class="callout__label">Aviso</div><p>«Aún no ha completado su ficha» significa que ese creador no ha rellenado su perfil. Puedes contactarle igualmente, pero tendrás menos información para valorar.</p>
+</aside>
+<p>Con <strong>Guardados</strong> (menú, abajo) recuperas a los creadores que marcaste, para compararlos.</p>
+<aside class="callout callout--todo"><div class="callout__label">Sin verificar</div><p>Al igual que en el lado del creador, existe el modo <strong>Con IA</strong> para describir con tus palabras lo que buscas. No se ha probado su funcionamiento al preparar este manual.</p>
+</aside>
+<h3 id="comparar-creadores">Comparar creadores</h3>
+<p>CIBERAN no tiene una pantalla de «comparar» lado a lado. Para valorar varios creadores:</p>
+<ol>
+<li>Pulsa el marcador de cada uno para <strong>guardarlos</strong>.</li>
+<li>Abre <strong>Guardados</strong> para tenerlos juntos.</li>
+<li>Entra en el perfil de cada uno (siguiente apartado) y compara con calma sus paquetes, su audiencia y su valoración.</li>
+</ol>
+<h2 id="perfiles-de-creadores">Perfiles de creadores</h2>
+<p><strong>Qué queremos hacer:</strong> valorar a un creador antes de contactarle.</p>
+<h4 id="pasos">Pasos</h4>
+<ol>
+<li>Pulsa el nombre de un creador en una tarjeta o escríbelo en <strong>Buscar perfiles</strong> (arriba).</li>
+<li>Se abre su perfil público.</li>
+</ol>
+<p><figure><img src="img/p-perfil-creador.jpg" alt="Perfil público de un creador, visto por un partner" loading="lazy"><figcaption>Perfil público de un creador, visto por un partner</figcaption></figure></p>
+<h4 id="que-puedes-consultar">Qué puedes consultar</h4>
+<ul>
+<li><strong>Responde en</strong>: su tiempo de respuesta habitual.</li>
+<li><strong>Colaboraciones</strong>: cuántas ha hecho en CIBERAN.</li>
+<li><strong>Paquetes</strong>: cuántos tiene y desde qué precio.</li>
+<li><strong>Valoración</strong>: lo que han dicho otras marcas. «Sin valoraciones» si todavía no tiene.</li>
+<li>Pestañas <strong>Paquetes</strong>, <strong>Contenido</strong>, <strong>Audiencia</strong>, <strong>Marcas colaboradoras</strong> y <strong>Creadores similares</strong>.</li>
+</ul>
+<p>La <strong>audiencia</strong> la declara el propio creador y se marca como «declarada por el creador»: CIBERAN no la verifica.</p>
+<aside class="callout callout--off"><div class="callout__label">No disponible</div><p>En este momento CIBERAN no muestra <strong>métricas reales de redes sociales</strong> (seguidores, alcance, interacciones). Llegarán más adelante. Para evaluar a un creador, apóyate en su valoración, sus colaboraciones previas, su tiempo de respuesta, sus paquetes y lo que él mismo declara.</p>
+</aside>
+<h4 id="que-elementos-ayudan-a-valorar-una-colaboracion">Qué elementos ayudan a valorar una colaboración</h4>
+<div class="table-wrap"><table><thead><tr><th>Elemento</th><th>Qué te dice</th></tr></thead><tbody><tr><td><strong>Valoración</strong></td><td>Cómo fue colaborar con él para otras marcas.</td></tr><tr><td><strong>Colaboraciones</strong></td><td>Su experiencia dentro de CIBERAN.</td></tr><tr><td><strong>Responde en…</strong></td><td>Si es ágil en la comunicación.</td></tr><tr><td><strong>Paquetes y precios</strong></td><td>Qué ofrece y a qué precio.</td></tr><tr><td><strong>Marcas colaboradoras</strong></td><td>Con quién ha trabajado (si decidió mostrarlo).</td></tr></tbody></table></div>
+<p>Desde el perfil tienes tres botones: <strong>Invitar a colaborar</strong>, <strong>Enviar mensaje</strong> y, en cada paquete, <strong>Hacer oferta</strong>. También hay un icono para <strong>copiar el enlace del perfil</strong>.</p>
+<h2 id="colaboraciones">Colaboraciones</h2>
+<p>Todo lo que acuerdas con creadores está en <strong>Colaboraciones</strong>. Es igual que la del creador: cuatro vistas (<strong>Tablero</strong>, <strong>Lista</strong>, <strong>Calendario</strong>, <strong>Solicitudes</strong>), buscador, orden y <strong>Exportar CSV</strong>.</p>
+<p><figure><img src="img/p-colabs-tablero.jpg" alt="Colaboraciones del partner" loading="lazy"><figcaption>Colaboraciones del partner</figcaption></figure></p>
+<h3 id="iniciar-una-colaboracion-contactar-con-un-creador">Iniciar una colaboración (contactar con un creador)</h3>
+<p><strong>Qué queremos hacer:</strong> proponer a un creador que trabaje conmigo.</p>
+<h4 id="pasos">Pasos</h4>
+<ol>
+<li>En <strong>Descubrir</strong>, pulsa <strong>Contactar</strong> en la tarjeta del creador (o <strong>Invitar a colaborar</strong> en su perfil). Se abre la hoja <strong>Contactar a…</strong>.</li>
+<li>Si quieres, escribe un <strong>Nombre de la campaña</strong> (opcional).</li>
+<li>En <strong>Cuéntales tu campaña</strong>, explica qué necesitas y para cuándo.</li>
+<li>Escribe tu <strong>Presupuesto (€)</strong>.</li>
+<li>Si quieres, completa <strong>Sobre la campaña</strong> (<strong>Objetivo</strong>, <strong>Público objetivo</strong>, <strong>Tono</strong>) y <strong>Condiciones</strong> (<strong>Alcance</strong>, <strong>Revisiones incluidas</strong>, <strong>Derechos de uso del contenido</strong>).</li>
+<li>Pulsa el botón de enviar.</li>
+</ol>
+<p><figure><img src="img/p-contactar.jpg" alt="Contactar con un creador" loading="lazy"><figcaption>Contactar con un creador</figcaption></figure></p>
+<h4 id="que-sucede-despues">Qué sucede después</h4>
+<p>Verás «Solicitud enviada» y «Te avisamos en cuanto responda». Con <strong>Ver mis solicitudes</strong> vas a la vista <strong>Solicitudes</strong>. El creador recibe un aviso y tiene <strong>7 días</strong> para responder: pasado ese plazo la solicitud caduca.</p>
+<aside class="callout callout--warn"><div class="callout__label">Atención</div><p>Las condiciones que escribes quedan <strong>fijadas tal cual al enviar</strong> y no se pueden editar después. Revísalas antes de enviar.</p>
+</aside>
+<h3 id="enviar-una-propuesta-u-oferta">Enviar una propuesta u oferta</h3>
+<p>Hay tres caminos para proponer trabajo a un creador. Elige el que mejor encaje:</p>
+<div class="table-wrap"><table><thead><tr><th>Camino</th><th>Cuándo usarlo</th></tr></thead><tbody><tr><td><strong>Contactar / Invitar a colaborar</strong></td><td>Quieres proponer una campaña propia, con tu presupuesto y tus condiciones.</td></tr><tr><td><strong>Hacer oferta</strong> (sobre un paquete)</td><td>Te interesa un paquete concreto del creador y quieres ofertar sobre él, con el precio del listado u otro distinto.</td></tr><tr><td><strong>Enviar mensaje</strong></td><td>Quieres hablar antes de proponer nada.</td></tr></tbody></table></div>
+<p>Si el creador tiene la privacidad del chat en «Solo tras oferta aceptada», no podrás escribirle en texto libre hasta que acepte una oferta tuya, pero sí mandarle una oferta.</p>
+<h3 id="negociar-y-gestionar-contraofertas">Negociar y gestionar contraofertas</h3>
+<p>Cuando el creador responde con una <strong>contraoferta</strong>, te llega un aviso y la colaboración queda <strong>«te toca a ti»</strong>. Dentro, en el bloque <strong>Presupuesto y respuesta</strong>, tienes las mismas tres opciones:</p>
+<div class="table-wrap"><table><thead><tr><th>Opción</th><th>Qué hace</th></tr></thead><tbody><tr><td><strong>Aceptar · (importe)</strong></td><td>Aceptas el importe. La colaboración queda <strong>Aceptada</strong>.</td></tr><tr><td><strong>Hacer contraoferta</strong></td><td>Propones otro importe, con un mensaje opcional.</td></tr><tr><td><strong>Rechazar solicitud</strong></td><td>La rechazas. Pide confirmación: «¿Seguro? No se puede deshacer.»</td></tr></tbody></table></div>
+<p>El aviso <strong>Siguiente paso</strong> te dice siempre a quién le toca. Se calcula según quién hizo la <strong>última propuesta</strong>: la otra parte espera tu respuesta, y tú la suya cuando haga una contraoferta.</p>
+<aside class="callout callout--warn"><div class="callout__label">Atención</div><p>Rechazar una solicitud <strong>no se puede deshacer</strong>.</p>
+</aside>
+<h3 id="completar-el-brief-y-definir-los-entregables">Completar el brief y definir los entregables</h3>
+<p>Una vez aceptada la colaboración, el <strong>Siguiente paso</strong> del partner suele ser <strong>Completar brief</strong>.</p>
+<p><figure><img src="img/p-colab-resumen.jpg" alt="Detalle de una colaboración, visto por un partner" loading="lazy"><figcaption>Detalle de una colaboración, visto por un partner</figcaption></figure></p>
+<h4 id="completar-el-brief">Completar el brief</h4>
+<ol>
+<li>En la caja de <strong>Siguiente paso</strong>, pulsa (2) <strong>Completar brief</strong>.</li>
+<li>Rellena lo que falte: <strong>Objetivo de la campaña</strong>, <strong>Público objetivo</strong>, <strong>Tono</strong>, <strong>Alcance</strong> (qué se entrega), <strong>Revisiones incluidas</strong> (de 0 a 20) y <strong>Derechos de uso</strong>.</li>
+<li>Pulsa <strong>Guardar</strong>.</li>
+</ol>
+<aside class="callout callout--warn"><div class="callout__label">Importante</div><p>El objetivo, el público, el tono y las condiciones <strong>se fijan una sola vez</strong>. Piénsalo antes de guardar.</p>
+</aside>
+<h4 id="definir-los-entregables">Definir los entregables</h4>
+<ol>
+<li>Abre la pestaña <strong>Entregables</strong>.</li>
+<li>Pulsa <strong>Definir entregables</strong>.</li>
+<li>Escribe <strong>un entregable por línea</strong> (por ejemplo «1 reel de 30 s» y «3 stories») y pulsa <strong>Definir</strong>.</li>
+</ol>
+<p><figure><img src="img/p-colab-entregables.jpg" alt="Entregables, vista del partner" loading="lazy"><figcaption>Entregables, vista del partner</figcaption></figure></p>
+<p>El creador tendrá que <strong>confirmarlos</strong> antes de que sean exigibles para completar la colaboración.</p>
+<aside class="callout callout--warn"><div class="callout__label">Atención</div><p>Los entregables <strong>solo se pueden definir una vez</strong>. Redáctalos con cuidado.</p>
+</aside>
+<h3 id="revisar-contenido-aprobar-o-pedir-cambios">Revisar contenido: aprobar o pedir cambios</h3>
+<p>Cuando el creador envía una publicación a revisión (estado <strong>Para revisar</strong>), te aparece en la tarjeta <strong>Por revisar</strong> de tu Inicio y en la pestaña <strong>Entregables</strong> de la colaboración, y la fase pasa a <strong>Revisión de marca</strong>.</p>
+<h4 id="pasos">Pasos</h4>
+<ol>
+<li>Abre la colaboración y la pestaña <strong>Entregables</strong>, o el aviso de <strong>Por revisar</strong>.</li>
+<li>Mira el contenido: la imagen, el texto, los hashtags y, si el creador lo puso, el <strong>enlace al borrador</strong>.</li>
+<li>Elige una de dos opciones:<ul>
+<li><strong>Aprobar</strong>: puedes añadir un comentario opcional.</li>
+<li><strong>Pedir cambios</strong>: escribe en «¿Qué hay que cambiar?». Sé concreto: <strong>es justo lo que verá el creador</strong>. El comentario es obligatorio.</li>
+</ul>
+</li>
+</ol>
+<aside class="callout callout--todo"><div class="callout__label">Captura pendiente</div><p>La pantalla con los botones <strong>Aprobar</strong> y <strong>Pedir cambios</strong> solo aparece cuando hay una publicación pendiente de revisar, y no la había al preparar el manual. La descripción está comprobada en la aplicación; falta la imagen.</p>
+</aside>
+<h4 id="que-sucede-despues">Qué sucede después</h4>
+<ul>
+<li>Si <strong>apruebas</strong>, la entrega queda marcada como <strong>Aprobada</strong> y el creador la puede programar y publicar. Queda anotado en <strong>Actividad</strong> («… aprobada (v1)»).</li>
+<li>Si <strong>pides cambios</strong>, el creador recibe tu comentario, lo corrige y vuelve a enviarlo como <strong>nueva versión</strong> (v2, v3…). Verás en <strong>Actividad</strong> «Cambios pedidos» y luego «Nueva versión enviada a revisión».</li>
+</ul>
+<aside class="callout callout--tip"><div class="callout__label">Consejo</div><p>Cuanto más concretos sean tus comentarios («falta la captura del producto y dos líneas de opinión»), menos rondas de revisión harán falta. En el brief puedes limitar las <strong>revisiones incluidas</strong>.</p>
+</aside>
+<h3 id="finalizar-la-colaboracion">Finalizar la colaboración</h3>
+<p>Cuando todas las entregas están aprobadas, el <strong>Siguiente paso</strong> pasa a «Cierra la colaboración…». Pulsa <strong>Marcar como completada</strong> en el bloque <strong>Presupuesto y respuesta</strong>. La colaboración queda <strong>Completada</strong> y puedes <strong>valorar</strong> al creador con estrellas y un comentario opcional.</p>
+<aside class="callout callout--info"><div class="callout__label">Aviso</div><p>CIBERAN <strong>no gestiona pagos ni cobra comisión</strong>. Verás el mensaje: «el importe acordado lo pagas al creador por el medio que acordéis». El pago lo haces tú directamente, fuera de CIBERAN.</p>
+</aside>
+<p>La pestaña <strong>Acuerdo y archivos</strong> y las opciones de <strong>Más acciones</strong> (cancelar de común acuerdo, terminar por incumplimiento) son iguales que las del creador; están explicadas en la Parte III.</p>
+<h2 id="gestion-de-campanas">Gestión de campañas</h2>
+<p>CIBERAN no tiene un módulo de «campañas» como tal. Lo que sí ofrece para organizar y controlar tus colaboraciones es esto:</p>
+<div class="table-wrap"><table><thead><tr><th>Herramienta</th><th>Para qué te sirve</th></tr></thead><tbody><tr><td><strong>Nombre de campaña</strong></td><td>Al contactar o proponer, puedes ponerle un nombre («Lanzamiento de primavera»). Ese nombre identifica la colaboración en tableros, listas, la bandeja y el buscador. Si no lo pones, se usa el nombre del paquete o la primera frase del brief.</td></tr><tr><td><strong>Tablero y Lista</strong></td><td>Ves todas tus colaboraciones por fase.</td></tr><tr><td><strong>Calendario</strong></td><td>Ves las fechas de entrega.</td></tr><tr><td><strong>Exportar CSV</strong></td><td>Descargas el listado para trabajar en una hoja de cálculo.</td></tr><tr><td><strong>Resultados</strong></td><td>Mides plazos, respuestas y revisiones.</td></tr><tr><td><strong>Necesidades</strong></td><td>Publicas lo que buscas para que los creadores te hagan ofertas.</td></tr><tr><td><strong>Chat y Actividad</strong></td><td>Hablas con el creador y consultas la cronología de cada colaboración.</td></tr></tbody></table></div>
+<aside class="callout callout--tip"><div class="callout__label">Consejo</div><p>Si lanzas varias colaboraciones a la vez para una misma campaña, usa el mismo <strong>nombre de campaña</strong> en todas para encontrarlas juntas con el buscador.</p>
+</aside>
+<h2 id="necesidades">Necesidades</h2>
+<p><strong>Qué son:</strong> lo que buscas. Una necesidad describe un encargo y su presupuesto (por ejemplo «Campaña de temporada · 500 €»). Un creador puede hacerte una <strong>oferta</strong> ajustándose a ella. Es el equivalente a los <strong>paquetes</strong> del creador.</p>
+<p><figure><img src="img/p-necesidades.jpg" alt="Necesidades del partner" loading="lazy"><figcaption>Necesidades del partner</figcaption></figure></p>
+<h4 id="publicar-una-necesidad">Publicar una necesidad</h4>
+<ol>
+<li>Pulsa <strong>Necesidades</strong> en el menú y luego <strong>Añadir necesidad</strong>.</li>
+<li>Escribe el <strong>Título</strong>, la <strong>Descripción</strong>, los <strong>Entregables</strong> (uno por uno, con Intro) y el <strong>Presupuesto</strong>.</li>
+<li>Pulsa el botón de publicar.</li>
+</ol>
+<p><figure><img src="img/p-necesidad-nueva.jpg" alt="Nueva necesidad" loading="lazy"><figcaption>Nueva necesidad</figcaption></figure></p>
+<p>Como en los paquetes del creador, cada tarjeta permite <strong>Pausar</strong>, <strong>Editar</strong>, <strong>Duplicar</strong>, <strong>Eliminar</strong>, <strong>Destacar</strong> (la necesidad destacada sale primero en tu perfil) y <strong>reordenar</strong> arrastrando. Con <strong>Ver cómo te ven los creadores</strong> abres tu perfil público.</p>
+<aside class="callout callout--warn"><div class="callout__label">Atención</div><p>Eliminar una necesidad la borra de forma permanente, junto con las ofertas hechas sobre ella.</p>
+</aside>
+<h2 id="resultados">Resultados</h2>
+<p>Igual que en el creador, <strong>Resultados</strong> muestra cómo van tus colaboraciones <strong>dentro de CIBERAN</strong>, por periodos de <strong>3 meses</strong>, <strong>6 meses</strong>, <strong>12 meses</strong> o <strong>Todo</strong>.</p>
+<p><figure><img src="img/p-resultados.jpg" alt="Resultados del partner" loading="lazy"><figcaption>Resultados del partner</figcaption></figure></p>
+<p>Incluye <strong>Completadas con éxito</strong>, <strong>Entregas recibidas a tiempo</strong>, <strong>Valoración recibida</strong>, <strong>Presupuesto medio</strong>, el recorrido de las colaboraciones, los <strong>tiempos y revisiones</strong> («Tú respondes en…», «Los creadores te responden en…»), la <strong>Evolución por mes</strong> y <strong>Tu fiabilidad</strong>: lo que dice tu historial en CIBERAN, que hoy solo ves tú y el equipo.</p>
+<h2 id="cuenta-y-configuracion">Cuenta y configuración</h2>
+<p>Pulsa tu avatar para ir a <strong>Perfil</strong>. Tiene cuatro pestañas: <strong>Resumen</strong>, <strong>Ficha pública</strong>, <strong>Necesidades</strong> y <strong>Privacidad</strong>.</p>
+<p><figure><img src="img/p-perfil.jpg" alt="Perfil del partner" loading="lazy"><figcaption>Perfil del partner</figcaption></figure></p>
+<div class="table-wrap"><table><thead><tr><th>Quiero…</th><th>Dónde</th></tr></thead><tbody><tr><td>Completar mi ficha (logo, portada, biografía, categorías, presupuesto, <strong>qué tipo de creador buscas</strong>)</td><td><strong>Perfil → Editar ficha</strong></td></tr><tr><td>Ver cómo me ven los creadores</td><td><strong>Perfil → Ver perfil público</strong></td></tr><tr><td>Ver mis necesidades activas y las ofertas pendientes</td><td><strong>Perfil → Resumen</strong>, con <strong>Ver colaboraciones</strong> y <strong>Gestionar necesidades</strong></td></tr><tr><td>Elegir quién me escribe, qué avisos recibo y si mi perfil se ve sin iniciar sesión</td><td><strong>Perfil → Privacidad</strong></td></tr><tr><td>Ver el recorrido de bienvenida otra vez</td><td><strong>Perfil → Resumen → Ver el recorrido de bienvenida</strong></td></tr><tr><td>Cerrar sesión</td><td>Abajo del menú: <strong>Cerrar sesión</strong></td></tr></tbody></table></div>
+<p>También tienes <strong>Chat</strong>, <strong>Bandeja de entrada</strong>, <strong>Guardados</strong> y la <strong>paleta de comandos (Ctrl o Cmd + K)</strong>, que funcionan igual que en el creador.</p>
+<p><figure><img src="img/p-paleta.jpg" alt="Paleta de comandos del partner" loading="lazy"><figcaption>Paleta de comandos del partner</figcaption></figure></p>
+<aside class="callout callout--info"><div class="callout__label">Aviso</div><p>Como partner, la paleta te ofrece tus pantallas (Inicio, Descubrir, Colaboraciones, Necesidades, Resultados…) y busca colaboraciones y perfiles. No muestra «Biblioteca», que es del creador.</p>
+</aside>
+<h1 id="parte-v-una-colaboracion-de-principio-a-fin">Parte V · Una colaboración de principio a fin</h1>
+<aside class="callout callout--example"><div class="callout__label">Ejemplo</div><p>Todo este capítulo es un <strong>ejemplo ilustrativo con personajes ficticios</strong>. «<strong>Marca Ejemplo</strong>» es una marca de cosmética natural, y «<strong>Lucía Martín</strong>», una creadora. Los importes y los nombres son inventados para explicarlo. Los pasos y las pantallas, en cambio, son los reales de CIBERAN. Cuando algo no se ha podido comprobar, se indica.</p>
+</aside>
+<p><strong>La situación:</strong> Marca Ejemplo quiere contratar a Lucía para una campaña de <strong>Instagram</strong> con un <strong>Reel</strong> y <strong>dos Stories</strong>, por <strong>300 €</strong>.</p>
+<h2 id="paso-1-la-marca-descubre-a-la-creadora">Paso 1 · La marca descubre a la creadora</h2>
+<div class="table-wrap"><table><thead><tr><th>La marca ve</th><th>La creadora ve</th></tr></thead><tbody><tr><td>En <strong>Descubrir</strong> filtra por categoría «Belleza» y ordena por «Responden antes». Aparece la tarjeta de Lucía con su paquete destacado.</td><td>Nada todavía.</td></tr></tbody></table></div>
+<h2 id="paso-2-la-marca-consulta-su-perfil">Paso 2 · La marca consulta su perfil</h2>
+<div class="table-wrap"><table><thead><tr><th>La marca ve</th><th>La creadora ve</th></tr></thead><tbody><tr><td>Pulsa el nombre de Lucía y abre su perfil: su <strong>valoración</strong>, sus <strong>colaboraciones</strong>, cuánto tarda en <strong>responder</strong>, sus <strong>paquetes</strong> y su audiencia declarada.</td><td>Nada.</td></tr></tbody></table></div>
+<h2 id="paso-3-la-marca-envia-una-propuesta">Paso 3 · La marca envía una propuesta</h2>
+<div class="table-wrap"><table><thead><tr><th>La marca hace</th><th>La creadora ve</th></tr></thead><tbody><tr><td>Pulsa <strong>Contactar</strong>. Escribe «Campaña de otoño» como nombre de campaña, cuenta que busca un Reel y dos Stories para el 30 de noviembre, pone <strong>300 €</strong> de presupuesto y envía. Ve «Solicitud enviada».</td><td>Nada aún: el aviso llega al paso siguiente.</td></tr></tbody></table></div>
+<h2 id="paso-4-la-creadora-recibe-la-solicitud">Paso 4 · La creadora recibe la solicitud</h2>
+<div class="table-wrap"><table><thead><tr><th>La marca ve</th><th>La creadora ve</th></tr></thead><tbody><tr><td>La solicitud en <strong>Colaboraciones → Solicitudes</strong>, en estado <strong>Pendiente de respuesta</strong>.</td><td>Un aviso en la <strong>Bandeja de entrada</strong> y la tarjeta <strong>Solicitudes pendientes</strong> en Inicio. Abre la solicitud y lee el brief y los 300 €. Verá un aviso de que la solicitud caduca en 7 días.</td></tr></tbody></table></div>
+<h2 id="paso-5-la-creadora-responde-acepta-o-hace-una-contraoferta">Paso 5 · La creadora responde: acepta o hace una contraoferta</h2>
+<p>Lucía puede elegir entre <strong>Aceptar · 300 €</strong>, <strong>Hacer contraoferta</strong> o <strong>Rechazar solicitud</strong>. Supongamos que quiere <strong>350 €</strong> porque la campaña lleva más trabajo:</p>
+<div class="table-wrap"><table><thead><tr><th>La creadora hace</th><th>La marca ve</th></tr></thead><tbody><tr><td>Pulsa <strong>Hacer contraoferta</strong>, escribe 350 y un mensaje («Incluye guion y edición»), y envía. Su <strong>Siguiente paso</strong> pasa a «le toca a la marca».</td><td>Un aviso. En la colaboración, su <strong>Siguiente paso</strong> dice «te toca a ti», porque la última propuesta fue de Lucía.</td></tr></tbody></table></div>
+<h2 id="paso-6-la-marca-responde">Paso 6 · La marca responde</h2>
+<p>La marca tiene tres opciones. Supongamos que <strong>acepta los 350 €</strong>:</p>
+<div class="table-wrap"><table><thead><tr><th>La marca hace</th><th>La creadora ve</th></tr></thead><tbody><tr><td>Pulsa <strong>Aceptar · 350 €</strong>.</td><td>Un aviso de que la colaboración ha sido <strong>aceptada</strong>.</td></tr></tbody></table></div>
+<aside class="callout callout--info"><div class="callout__label">Aviso</div><p>La marca también podría haber hecho una <strong>nueva contraoferta</strong> (por ejemplo, 320 €). La negociación puede repetirse: el aviso de <strong>Siguiente paso</strong> indica siempre a quién le toca.</p>
+</aside>
+<h2 id="paso-7-la-colaboracion-queda-aceptada">Paso 7 · La colaboración queda aceptada</h2>
+<div class="table-wrap"><table><thead><tr><th>La marca ve</th><th>La creadora ve</th></tr></thead><tbody><tr><td>La colaboración pasa de <strong>Solicitudes</strong> a la columna <strong>Aceptada</strong> del tablero. Su <strong>Siguiente paso</strong> es <strong>Completar brief</strong>.</td><td>La colaboración en la columna <strong>Aceptada</strong>. Su <strong>Siguiente paso</strong> es «Crea la primera publicación para Marca Ejemplo».</td></tr></tbody></table></div>
+<h2 id="paso-8-se-prepara-el-contenido">Paso 8 · Se prepara el contenido</h2>
+<div class="table-wrap"><table><thead><tr><th>La marca hace</th><th>La creadora hace</th></tr></thead><tbody><tr><td>Pulsa <strong>Completar brief</strong> y rellena objetivo, público, tono, revisiones incluidas (2) y derechos de uso. En <strong>Entregables</strong>, pulsa <strong>Definir entregables</strong> y escribe «1 Reel de 30 s», «2 Stories».</td><td>Entra en <strong>Entregables</strong> y pulsa <strong>Confirmar entregables</strong>. Después, <strong>Crear publicación</strong> para cada uno: se abre el editor con la colaboración ya elegida. Prepara el texto, los hashtags y la imagen, y mueve cada publicación a <strong>En producción</strong>.</td></tr></tbody></table></div>
+<p>La fase de la colaboración pasa a <strong>En producción</strong>.</p>
+<h2 id="paso-9-se-entregan-las-publicaciones">Paso 9 · Se entregan las publicaciones</h2>
+<div class="table-wrap"><table><thead><tr><th>La creadora hace</th><th>La marca ve</th></tr></thead><tbody><tr><td>Sube el borrador a Drive y pega el enlace en <strong>Enlace al borrador</strong>. Cambia la publicación a <strong>Para revisar</strong>.</td><td>La fase pasa a <strong>Revisión de marca</strong>. La tarjeta <strong>Por revisar</strong> de su Inicio sube a 1, y la publicación aparece en <strong>Entregables</strong>, con el enlace al borrador.</td></tr></tbody></table></div>
+<h2 id="paso-10-la-marca-revisa-el-contenido">Paso 10 · La marca revisa el contenido</h2>
+<div class="table-wrap"><table><thead><tr><th>La marca hace</th><th>La creadora ve</th></tr></thead><tbody><tr><td>Abre el contenido y lo mira. Elige <strong>Aprobar</strong> o <strong>Pedir cambios</strong>.</td><td>Espera. Su <strong>Siguiente paso</strong> indica que la marca tiene que revisar.</td></tr></tbody></table></div>
+<h2 id="paso-11-revisiones-si-hacen-falta">Paso 11 · Revisiones, si hacen falta</h2>
+<p>Supongamos que a la marca le falta algo en la primera Story:</p>
+<div class="table-wrap"><table><thead><tr><th>La marca hace</th><th>La creadora ve</th></tr></thead><tbody><tr><td>Pulsa <strong>Pedir cambios</strong> y escribe: «Falta la captura del producto y dos líneas de opinión».</td><td>Un aviso. En <strong>Historial de revisión</strong> y en <strong>Actividad</strong> lee el comentario. Corrige el contenido y lo envía otra vez: aparece como <strong>nueva versión (v2)</strong>.</td></tr></tbody></table></div>
+<p>La marca revisa la v2.</p>
+<h2 id="paso-12-se-aprueba-el-trabajo">Paso 12 · Se aprueba el trabajo</h2>
+<div class="table-wrap"><table><thead><tr><th>La marca hace</th><th>La creadora ve</th></tr></thead><tbody><tr><td>Pulsa <strong>Aprobar</strong> en cada entrega.</td><td>Cada entrega muestra <strong>Aprobada</strong>. Programa la publicación y, cuando sale en Instagram, pulsa <strong>Marcar como publicada</strong> y pega el <strong>Enlace de la publicación</strong>.</td></tr></tbody></table></div>
+<h2 id="paso-13-se-completa-la-colaboracion">Paso 13 · Se completa la colaboración</h2>
+<div class="table-wrap"><table><thead><tr><th>La marca ve</th><th>La creadora ve</th></tr></thead><tbody><tr><td>Con todo aprobado y publicado, el <strong>Siguiente paso</strong> pasa a «Cierra la colaboración…». Pulsa <strong>Marcar como completada</strong>.</td><td>Lo mismo: el <strong>Siguiente paso</strong> le pide cerrar. Cualquiera de las dos partes puede marcarla como completada.</td></tr></tbody></table></div>
+<p>La colaboración queda <strong>Completada</strong>. Cada parte puede dejar una <strong>valoración</strong> con estrellas y un comentario opcional. <strong>El pago de los 350 € lo acuerdan entre ellos</strong>: CIBERAN no lo gestiona.</p>
+<h2 id="y-si-algo-no-sale-como-estaba-previsto">Y si algo no sale como estaba previsto</h2>
+<h3 id="la-creadora-rechaza-la-propuesta">La creadora rechaza la propuesta</h3>
+<p>En el paso 5, Lucía pulsa <strong>Rechazar solicitud</strong> y confirma con <strong>Sí, rechazar</strong>. La colaboración queda <strong>Rechazada</strong>. La marca ve el cambio de estado. Puede enviar otra propuesta distinta o contactar con otra persona.</p>
+<h3 id="nadie-responde">Nadie responde</h3>
+<p>Una solicitud <strong>caduca a los 7 días</strong> si no se responde. Pasado ese plazo ya no se puede aceptar.</p>
+<h3 id="la-marca-pide-cambios">La marca pide cambios</h3>
+<p>Es el paso 11: la creadora corrige y vuelve a enviar. Cada envío es una nueva versión. Si el brief limitaba las <strong>revisiones incluidas</strong>, conviene tenerlo presente.</p>
+<h3 id="se-cancela-una-colaboracion-ya-aceptada">Se cancela una colaboración ya aceptada</h3>
+<p>Cualquiera de las dos partes puede, en <strong>Más acciones</strong>, <strong>Proponer cancelar de común acuerdo</strong>. La otra puede <strong>Aceptar la cancelación</strong> o <strong>Seguir con la colaboración</strong>. Si se acepta, queda <strong>Cancelada</strong>.</p>
+<h3 id="una-parte-incumple">Una parte incumple</h3>
+<p>Quien se sienta perjudicado puede <strong>Dar por terminada por incumplimiento</strong>. Es una acción unilateral: queda en la cronología y la ve el equipo de CIBERAN. La colaboración queda <strong>Terminada por incumplimiento</strong>.</p>
+<h3 id="se-cambia-una-publicacion-despues-de-aprobarla">Se cambia una publicación después de aprobarla</h3>
+<p>La aprobación puede quedar <strong>invalidada</strong> y la marca tendrá que revisarla otra vez.</p>
+<aside class="callout callout--todo"><div class="callout__label">Captura pendiente</div><p>Al preparar el manual no se pudo capturar el momento de la negociación (contraoferta) ni el de la revisión de la marca, porque no había colaboraciones en esos estados y el manual no modifica datos. La <strong>cronología real</strong> de una colaboración con cambios pedidos y aprobación sí se ve en la captura de <strong>Actividad</strong> de la Parte III.</p>
+</aside>
+<h1 id="parte-vi-preguntas-frecuentes">Parte VI · Preguntas frecuentes</h1>
+<h2 id="sobre-mi-cuenta">Sobre mi cuenta</h2>
+<p><strong>¿Qué diferencia hay entre creador y partner?</strong>
+El creador crea contenido y lo entrega; el partner (marca, empresa o agencia) contacta, acuerda y revisa. Cada cuenta tiene un único perfil, que se elige al registrarse. Mira la tabla de la Parte I.</p>
+<p><strong>¿Qué ocurre si tengo un problema de acceso?</strong>
+Si olvidaste la contraseña, usa <strong>¿Olvidaste tu contraseña?</strong>. Si no te llega el correo, mira el spam y pide otro; usa siempre el último. Si ves «Todavía no has confirmado tu email», abre el correo de confirmación. Si ves «Demasiados intentos seguidos», espera unos minutos. Si nada de esto funciona, escribe al equipo de CIBERAN.</p>
+<p><strong>¿Puedo entrar con Google?</strong>
+No. Por ahora solo se entra con email y contraseña.</p>
+<p><strong>¿Puedo borrar mi cuenta?</strong>
+Sí, en <strong>Perfil → Privacidad y cuenta → Eliminar mi cuenta</strong>. No se puede deshacer. Antes puedes <strong>Descargar</strong> una copia de tus datos.</p>
+<h2 id="sobre-las-colaboraciones">Sobre las colaboraciones</h2>
+<p><strong>¿Cómo recibo una colaboración?</strong>
+Una marca te contacta o te hace una oferta sobre un paquete. Te llega un aviso a la <strong>Bandeja de entrada</strong> y aparece en <strong>Colaboraciones → Solicitudes</strong>. Tienes 7 días para responder.</p>
+<p><strong>¿Puedo negociar el precio?</strong>
+Sí. En lugar de aceptar o rechazar, pulsa <strong>Hacer contraoferta</strong> y propón otro importe. La negociación puede repetirse hasta que alguien acepte o rechace.</p>
+<p><strong>¿Qué sucede si rechazo una propuesta?</strong>
+La colaboración queda <strong>Rechazada</strong> y la otra parte lo ve. Rechazar <strong>no se puede deshacer</strong>: CIBERAN te pide confirmación antes.</p>
+<p><strong>¿Cómo sé cuándo tengo que actuar?</strong>
+Mira el <strong>Siguiente paso</strong> de cada colaboración («te toca a ti» o «le toca a…»), la tarjeta <strong>Por responder</strong> (partner) o <strong>Solicitudes pendientes</strong> (creador) de Inicio y la pestaña <strong>Qué me toca</strong> de la <strong>Bandeja de entrada</strong>.</p>
+<p><strong>¿Cómo se aprueba un entregable?</strong>
+Lo aprueba el partner, en la pestaña <strong>Entregables</strong> de la colaboración o desde <strong>Por revisar</strong> en su Inicio, con el botón <strong>Aprobar</strong>. Si algo no encaja, <strong>Pedir cambios</strong> con un comentario.</p>
+<p><strong>¿Qué significa cada estado?</strong>
+Hay estados de <strong>colaboración</strong> (Pendiente de respuesta, Aceptada, En curso, Completada, Rechazada, Cancelada, Terminada por incumplimiento) y fases de <strong>publicación</strong> (Idea, En producción, Para revisar, Programado, Publicado). Están explicados en la Parte III y en el glosario.</p>
+<p><strong>¿Cuánto cuesta usar CIBERAN? ¿Cómo se paga una colaboración?</strong>
+Durante el lanzamiento CIBERAN es <strong>gratis</strong>: sin cuotas ni comisiones. La plataforma <strong>no gestiona pagos</strong>: lo que acordáis lo pagáis y cobráis entre vosotros.</p>
+<p><strong>¿Qué pasa si una colaboración no se cumple?</strong>
+Puedes <strong>Proponer cancelar de común acuerdo</strong> o <strong>Dar por terminada por incumplimiento</strong>. También puedes <strong>Reportar</strong>. El equipo puede avisar o bloquear cuentas, pero no puede reclamar importes ni emprender acciones legales.</p>
+<h2 id="sobre-las-publicaciones-y-los-resultados">Sobre las publicaciones y los resultados</h2>
+<p><strong>¿Cómo puedo consultar mis publicaciones?</strong>
+En <strong>Publicaciones</strong> (creador), en vista <strong>Tablero</strong>, <strong>Calendario</strong> o <strong>Lista</strong>. Las de una colaboración también están en su pestaña <strong>Entregables</strong>.</p>
+<p><strong>¿Puedo recuperar una publicación que borré sin querer?</strong>
+Durante <strong>8 segundos</strong> tras borrarla aparece <strong>Deshacer</strong>. Pasado ese tiempo, se borra del todo.</p>
+<p><strong>¿Dónde puedo encontrar mis estadísticas?</strong>
+En <strong>Resultados</strong>: cómo van tus colaboraciones dentro de CIBERAN. Las <strong>métricas de redes sociales</strong> (alcance, likes, seguidores) <strong>todavía no están disponibles</strong> («Próximamente»).</p>
+<p><strong>¿Qué pasa con la predicción de rendimiento con IA?</strong>
+No está disponible en este momento.</p>
+<p><strong>¿Por qué mi imagen de la biblioteca sigue en una publicación si la borré?</strong>
+Porque al elegirla se hace una <strong>copia</strong>. Borrar el original no afecta a lo que ya la usa.</p>
+<h2 id="otras-dudas">Otras dudas</h2>
+<p><strong>¿Puedo usar CIBERAN en el móvil?</strong>
+Sí. La web se adapta al móvil y se puede <strong>instalar como app</strong> (página <strong>Instalar</strong>), sin pasar por ninguna tienda.</p>
+<p><strong>¿Quién ve mi perfil?</strong>
+Tú decides en <strong>Perfil → Privacidad y cuenta → Visibilidad del perfil</strong>: puede verse solo dentro de CIBERAN o también sin iniciar sesión con tu enlace. Las tarifas, el catálogo y el contacto siempre piden sesión.</p>
+<p><strong>¿Quién puede escribirme?</strong>
+En <strong>Privacidad del chat</strong> eliges: <strong>Cualquiera</strong>, o <strong>Solo tras oferta aceptada</strong>.</p>
+<h1 id="parte-vii-glosario">Parte VII · Glosario</h1>
+<div class="table-wrap"><table><thead><tr><th>Término</th><th>Qué significa</th></tr></thead><tbody><tr><td><strong>Acuerdo</strong></td><td>Lo que las dos partes han pactado en una colaboración: brief, condiciones e importe. Se consulta en la pestaña <strong>Acuerdo y archivos</strong>.</td></tr><tr><td><strong>Aprobación</strong></td><td>Cuando el partner da el visto bueno a un entregable. Se muestra como <strong>Aprobada</strong>.</td></tr><tr><td><strong>Bandeja de entrada</strong></td><td>El lugar donde ves lo que te toca hacer y tus avisos.</td></tr><tr><td><strong>Biblioteca</strong></td><td>Tu almacén de imágenes para reutilizar como portada (solo creadores).</td></tr><tr><td><strong>Brief</strong></td><td>La descripción de lo que se quiere conseguir con una colaboración: objetivo, público, tono y alcance.</td></tr><tr><td><strong>Campaña</strong></td><td>El conjunto de contenido que una marca encarga con un mismo objetivo. En CIBERAN se identifica con el <strong>nombre de campaña</strong>.</td></tr><tr><td><strong>Colaboración</strong></td><td>Un acuerdo entre un creador y un partner, con importe, entregables y plazos.</td></tr><tr><td><strong>Contraoferta</strong></td><td>Una respuesta a una propuesta con otro importe, en lugar de aceptar o rechazar.</td></tr><tr><td><strong>Creador</strong></td><td>Persona que crea contenido y lo publica en sus redes.</td></tr><tr><td><strong>Descubrir</strong></td><td>El buscador: los creadores buscan marcas y las marcas buscan creadores.</td></tr><tr><td><strong>Entregable</strong></td><td>Cada pieza de contenido que se acuerda entregar.</td></tr><tr><td><strong>Ficha</strong></td><td>La información de tu perfil (presentación, categorías, tarifa…). Tiene un porcentaje de completado.</td></tr><tr><td><strong>Métricas</strong></td><td>Datos de rendimiento de tus redes (alcance, likes…). <strong>Todavía no disponibles en CIBERAN.</strong></td></tr><tr><td><strong>Necesidad</strong></td><td>Lo que busca un partner, con un presupuesto. Es el equivalente a los paquetes del creador.</td></tr><tr><td><strong>Oferta</strong></td><td>Una propuesta de precio sobre un paquete (o necesidad) concreto.</td></tr><tr><td><strong>Paquete</strong></td><td>Lo que ofrece un creador: un servicio con descripción, entregables y precio.</td></tr><tr><td><strong>Paleta de comandos</strong></td><td>La ventana que se abre con <strong>Ctrl + K</strong> (o <strong>Cmd + K</strong>) para ir a cualquier pantalla o buscar colaboraciones y perfiles.</td></tr><tr><td><strong>Partner</strong></td><td>Marca, empresa o agencia que contrata contenido.</td></tr><tr><td><strong>Plantilla</strong></td><td>Un formulario guardado (de publicación, de propuesta o de paquete) para no escribirlo de nuevo.</td></tr><tr><td><strong>Propuesta</strong></td><td>El primer paso de una colaboración: alguien plantea trabajar junto con unas condiciones. También se llama <strong>solicitud</strong>.</td></tr><tr><td><strong>Publicación</strong></td><td>Una pieza de contenido que el creador prepara y lleva de la idea a publicarla. Si es de una colaboración, es un entregable.</td></tr><tr><td><strong>Raya</strong></td><td>La mantarraya mascota de CIBERAN. Forma parte de la identidad visual: aparece en la página de inicio y en algunas pantallas vacías. <strong>No es una herramienta.</strong></td></tr><tr><td><strong>Resultados</strong></td><td>La pantalla donde ves cómo van tus colaboraciones dentro de CIBERAN (plazos, respuestas, valoraciones).</td></tr><tr><td><strong>Revisión</strong></td><td>Cuando el partner examina un contenido y decide aprobarlo o pedir cambios.</td></tr><tr><td><strong>Siguiente paso</strong></td><td>El aviso de cada colaboración que dice qué hay que hacer ahora y a quién le toca.</td></tr><tr><td><strong>Solicitud</strong></td><td>Una propuesta de colaboración que espera respuesta. Caduca a los 7 días.</td></tr><tr><td><strong>Studio</strong></td><td>Término que se usa para las herramientas de creación del creador. <strong>En la aplicación no existe una sección con ese nombre</strong>; esas herramientas son Publicaciones, Biblioteca, Paquetes, plantillas y deshacer.</td></tr><tr><td><strong>Versión (v1, v2…)</strong></td><td>Cada vez que el creador reenvía un contenido tras unos cambios, se crea una versión nueva.</td></tr></tbody></table></div>
+<h1 id="estado-y-mantenimiento-de-este-manual">Estado y mantenimiento de este manual</h1>
+<h2 id="datos-de-esta-edicion">Datos de esta edición</h2>
+<div class="table-wrap"><table><thead><tr><th></th><th></th></tr></thead><tbody><tr><td><strong>Fecha de elaboración</strong></td><td>19 de noviembre de 2026</td></tr><tr><td><strong>Versión del manual</strong></td><td>1.0</td></tr><tr><td><strong>Aplicación documentada</strong></td><td>CIBERAN en su lanzamiento gratuito (noviembre de 2026). La aplicación no muestra un número de versión.</td></tr><tr><td><strong>Cómo se ha elaborado</strong></td><td>Recorriendo la aplicación con una cuenta de creador y otra de partner de prueba, y contrastando cada pantalla con su comportamiento real. Las capturas son reales; los datos personales se han sustituido por datos ficticios.</td></tr></tbody></table></div>
+<h2 id="lo-que-no-se-ha-podido-comprobar">Lo que no se ha podido comprobar</h2>
+<div class="table-wrap"><table><thead><tr><th>Tema</th><th>Situación</th></tr></thead><tbody><tr><td>Pantallas de <strong>responder a una solicitud</strong> (Aceptar, Contraoferta, Rechazar) y de <strong>revisión de la marca</strong> (Aprobar, Pedir cambios)</td><td>Descritas a partir de la aplicación y de su uso en cuentas de prueba, pero <strong>sin captura</strong>: no había colaboraciones en esos estados y el manual no modifica datos.</td></tr><tr><td><strong>Valoración</strong> al completar una colaboración</td><td>Descrita a partir de la pantalla de la aplicación; sin captura.</td></tr><tr><td><strong>Chat</strong> con conversaciones reales</td><td>No había conversaciones; solo se capturó la pantalla vacía.</td></tr><tr><td>Modo <strong>Con IA</strong> de Descubrir</td><td>Existe en pantalla; no se ha probado.</td></tr><tr><td><strong>Envío de correos</strong> (confirmación, recuperación, avisos por correo)</td><td>Dependen de la configuración del servicio de correo; no se ha podido garantizar su entrega.</td></tr><tr><td>Cambio de <strong>contraseña o email desde el perfil</strong></td><td>No se ha encontrado esa opción dentro de la aplicación.</td></tr></tbody></table></div>
+<h2 id="funciones-previstas-pero-no-disponibles">Funciones previstas pero no disponibles</h2>
+<p>Métricas de redes sociales, pagos y cobros dentro de CIBERAN, predicción de rendimiento con IA y acceso con Google.</p>
+<h2 id="historial-de-cambios">Historial de cambios</h2>
+<div class="table-wrap"><table><thead><tr><th>Versión</th><th>Fecha</th><th>Cambios</th></tr></thead><tbody><tr><td><strong>1.0</strong></td><td>19-11-2026</td><td>Primera edición completa: creador y partner, colaboración de principio a fin, preguntas frecuentes y glosario. Incluye biblioteca de archivos, plantillas y duplicado, paleta de comandos, deshacer, enlaces de entrega, nombre de campaña, varias redes por publicación, paquetes y necesidades destacados, recuperación de contraseña y rechazo con confirmación.</td></tr></tbody></table></div>
+<aside class="callout callout--info"><div class="callout__label">Aviso</div><p>Cuando CIBERAN incorpore una función nueva o cambie una pantalla, este manual debe actualizarse y subir de versión. Las fuentes editables están en <code>docs/manual/</code> y se regeneran con <code>node docs/manual/_build/build.mjs</code>.</p>
+</aside>
+</article>
+</main></body></html>

@@ -292,6 +292,22 @@
   .integration { display: flex; align-items: center; gap: 1rem; }
 }
 
+/* ---- Ayuda y manuales (/ayuda) ---- */
+@layer components {
+  .helpdocs { display: grid; gap: 1.25rem; margin-top: 2.5rem; padding: 0; list-style: none; @media (width >= 48rem) { grid-template-columns: repeat(2, minmax(0, 1fr)); } @media (width >= 64rem) { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+  .helpdoc { display: flex; }
+  .helpdoc__card { display: flex; flex-direction: column; width: 100%; gap: 0.25rem; }
+  .helpdoc__head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem; margin-bottom: 1rem; }
+  .helpdoc__icon { display: grid; place-items: center; width: 3rem; height: 3rem; background: var(--color-tinta-950); color: var(--color-voltio-400); border-radius: var(--radius-md); }
+  .helpdoc__title { font-family: var(--font-display); font-size: var(--text-title); font-weight: 700; line-height: 1.15; letter-spacing: -0.02em; }
+  .helpdoc__text { margin-top: 0.5rem; color: var(--text-muted); }
+  .helpdoc__list { display: grid; gap: 0.5rem; margin: 1.25rem 0 0; padding: 0; list-style: none; font-size: var(--text-sm); }
+  .helpdoc__list li { display: flex; align-items: flex-start; gap: 0.5rem; }
+  .helpdoc__list svg { margin-top: 0.2rem; color: var(--color-voltio-700); }
+  .helpdoc__foot { margin-top: auto; padding-top: 1.5rem; display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem 1rem; }
+  .helpdoc__meta { font-size: var(--text-micro); color: var(--text-muted); }
+}
+
 /* ---- Pantalla completa de marca (error, confirmación) ---- */
 @layer components {
   .splash { position: relative; display: grid; place-items: center; min-height: 100dvh; overflow: hidden; padding: 1.25rem; background: var(--surface-inverse); color: var(--text-on-inverse); text-align: center; }

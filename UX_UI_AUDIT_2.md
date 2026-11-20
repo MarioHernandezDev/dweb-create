@@ -123,7 +123,7 @@ Primera pieza de la Fase 5 de la hoja de ruta (`docs/HOJA_DE_RUTA.md`), probada 
 
 ## 10. Studio · biblioteca de archivos
 
-**Qué hace.** Página «Biblioteca» del creador (`/creator/library`): sube imágenes (JPG/PNG/WebP, máx. 8 MB, hasta 100), con búsqueda, etiquetas (máx. 8), renombrado, abrir y borrar con deshacer de 8 s. Se reutilizan desde un selector («Elegir de la biblioteca») en la portada de las publicaciones y en la portada de los paquetes. Al elegir, se **copia** el archivo: borrar el original de la biblioteca no rompe publicaciones ni paquetes que ya lo usan.
+**Qué hace.** Página «Biblioteca» del creador (`/creator/library`): sube imágenes (JPG/PNG/WebP, máx. 8 MB, hasta 50; se optimizan al subir: lado mayor 2.000 px y webp; migración `20261120100000_media_library_cap_50.sql` pendiente de aplicar), con búsqueda, etiquetas (máx. 8), renombrado, abrir y borrar con deshacer de 8 s. Se reutilizan desde un selector («Elegir de la biblioteca») en la portada de las publicaciones y en la portada de los paquetes. Al elegir, se **copia** el archivo: borrar el original de la biblioteca no rompe publicaciones ni paquetes que ya lo usan.
 
 **Migración (aplicada con tu OK):** `supabase/migrations/20261119120000_media_library.sql` — tabla `media_library` con RLS por propietario, permisos por columna, tope de 100 por persona y bloque ROLLBACK.
 
@@ -132,3 +132,8 @@ Primera pieza de la Fase 5 de la hoja de ruta (`docs/HOJA_DE_RUTA.md`), probada 
 **Sin probar:** biblioteca en móvil (375 px), selector en la hoja de publicación en móvil, archivos huérfanos si se cierra la pestaña a mitad de una subida.
 
 **Pendiente de Studio:** autoguardado de borradores, publicaciones recurrentes, asistentes con IA (apagados).
+
+### 10.1 Ahorro de almacenamiento (20-nov-2026)
+- Tope de la biblioteca: **50 archivos** por persona (antes 100). En el código (`LIBRARY_MAX_FILES`) ya vale 50; en la base lo impone `media_library_cap`, y la migración `20261120100000_media_library_cap_50.sql` está **escrita y sin aplicar** (hace falta el OK para tocar la base compartida).
+- Optimización al subir (`optimizeImageFile`, `app/utils/image.ts`): lado mayor 2.000 px y webp al 82 %; nunca se guarda algo más pesado que el original. Se aplica a la biblioteca y a las portadas de publicaciones y paquetes. Las imágenes ya subidas no se tocan.
+- Medido con fotos sintéticas: 1.276 KB → 142 KB y 595 KB → 110 KB (con fotos reales el ahorro suele ser algo menor).

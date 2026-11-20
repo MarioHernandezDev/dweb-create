@@ -105,7 +105,7 @@ async function saveEdit() {
             </div>
           </li>
         </ul>
-        <p v-if="items.length" class="lib__hint">Suelta imágenes aquí para añadirlas. Para usar una como portada, ábrela desde la publicación o el paquete («Elegir de la biblioteca»).</p>
+        <p v-if="items.length" class="lib__hint">Suelta imágenes aquí para añadirlas. Se optimizan al subir para que ocupen poco. Para usar una como portada, ábrela desde la publicación o el paquete («Elegir de la biblioteca»).</p>
       </div>
     </div>
 

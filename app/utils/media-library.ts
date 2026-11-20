@@ -1,10 +1,11 @@
 /**
  * Biblioteca de archivos del creador: reglas y utilidades puras (sin Vue ni red). Las mismas reglas están en el bucket
- * `post-media` (tipos y tamaño) y en la tabla `media_library` (100 archivos, 8 etiquetas, nombre); aquí se comprueban
+ * `post-media` (tipos y tamaño) y en la tabla `media_library` (archivos por persona, 8 etiquetas, nombre); aquí se comprueban
  * antes de subir para dar el motivo en claro.
  */
 export const LIBRARY_MAX_BYTES = 8 * 1024 * 1024
-export const LIBRARY_MAX_FILES = 100
+// Tope de archivos por persona. En la base lo impone `media_library_cap` (migración 20261120100000_media_library_cap_50.sql).
+export const LIBRARY_MAX_FILES = 50
 export const LIBRARY_MAX_TAGS = 8
 export const LIBRARY_TAG_MAX = 30
 export const LIBRARY_TYPES: Record<string, string> = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' }

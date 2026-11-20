@@ -1,0 +1,110 @@
+/* Manual de usuario CIBERAN — identidad «Señal»: tinta, hueso y voltio (la de la propia app). */
+:root{
+  --tinta:#121019; --tinta-800:#2a2633; --tinta-500:#57515f; --tinta-400:#66606f;
+  --hueso-50:#fbf9f5; --hueso-100:#f5f1ea; --hueso-200:#ece6db; --hueso-300:#ddd5c7;
+  --voltio:#c6f24e; --voltio-200:#e6fab0; --voltio-700:#7fa71a; --lila:#5b40e0; --lila-200:#e5ddff;
+  --coral:#ff6b4a; --menta:#bdebd5; --cielo:#c9ddff; --mantequilla:#ffe28a;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--hueso-100);color:var(--tinta);font:400 10.3pt/1.58 "Hanken Grotesk",system-ui,sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+h1,h2,h3,h4{font-family:"Bricolage Grotesque","Hanken Grotesk",system-ui,sans-serif;color:var(--tinta);line-height:1.15;letter-spacing:-.01em}
+a{color:var(--tinta);text-decoration-color:var(--voltio-700);text-underline-offset:2px}
+
+/* ---------- Portada ---------- */
+.cover{background:var(--tinta);color:var(--hueso-50);height:297mm;width:210mm;max-width:100%;padding:22mm 20mm 20mm;display:flex;flex-direction:column;justify-content:space-between;break-after:page;position:relative;overflow:hidden}
+.cover::before{content:"";position:absolute;right:-60mm;top:40mm;width:150mm;height:150mm;border-radius:50%;border:1.2mm solid rgba(198,242,78,.16);box-shadow:0 0 0 14mm rgba(198,242,78,.05),0 0 0 28mm rgba(198,242,78,.035)}
+.cover__top{display:flex;justify-content:space-between;align-items:center;position:relative}
+.cover__logo{font:800 30pt/1 "Bricolage Grotesque",sans-serif;letter-spacing:-.03em;color:var(--hueso-50)}
+.cover__tag{border:1px solid rgba(251,249,245,.35);border-radius:99px;padding:3px 12px;font-size:9pt;letter-spacing:.06em;text-transform:uppercase}
+.cover__mid{position:relative}
+.cover__kicker{color:var(--voltio);font-weight:700;letter-spacing:.14em;text-transform:uppercase;font-size:10pt;margin:0 0 8mm}
+.cover__title{font-size:46pt;margin:0 0 6mm;color:var(--hueso-50);font-weight:700}
+.cover__sub{font-size:14pt;line-height:1.45;color:#d9d3c9;max-width:120mm;margin:0}
+.cover__bar{width:26mm;height:2.2mm;background:var(--voltio);border-radius:2px;margin-top:12mm}
+.cover__bottom dl{display:flex;gap:10mm;margin:0;border-top:1px solid rgba(251,249,245,.2);padding-top:6mm}
+.cover__bottom dt{font-size:8pt;text-transform:uppercase;letter-spacing:.1em;color:#a39cb0}
+.cover__bottom dd{margin:2px 0 0;font-weight:600;font-size:10pt}
+
+/* ---------- Índice ---------- */
+.toc{break-after:page;padding-top:4mm}
+.toc__title{font-size:26pt;margin:0 0 8mm}
+.toc ol{list-style:none;margin:0;padding:0;columns:1}
+.toc li{margin:0}
+.toc__part{margin-top:5mm}
+.toc__part a{font:700 12pt "Bricolage Grotesque",sans-serif;text-decoration:none;display:block;padding:2mm 3mm;background:var(--hueso-200);border-left:2mm solid var(--voltio);border-radius:2mm}
+.toc__sec a{text-decoration:none;display:block;padding:.7mm 0 .7mm 6mm;font-size:10pt;color:var(--tinta-800)}
+.toc a:hover{text-decoration:underline}
+
+/* ---------- Contenido ---------- */
+.content{max-width:178mm}
+.content h1{font-size:30pt;margin:0 0 6mm;padding-top:2mm;break-before:page;border-bottom:1.4mm solid var(--voltio);padding-bottom:4mm}
+.content > h1:first-child{break-before:auto}
+.content h2{font-size:18pt;margin:9mm 0 3.5mm;break-after:avoid}
+.content h3{font-size:13.5pt;margin:8mm 0 2.5mm;break-after:avoid}
+.content h4{font:700 8.8pt "Hanken Grotesk",sans-serif;text-transform:uppercase;letter-spacing:.09em;color:var(--tinta-500);margin:5mm 0 1.5mm;break-after:avoid}
+.content h4::before{content:"";display:inline-block;width:2.4mm;height:2.4mm;background:var(--voltio);border-radius:50%;margin-right:2mm;transform:translateY(.1mm)}
+p{margin:0 0 3mm;orphans:3;widows:3}
+ul,ol{margin:0 0 4mm;padding-left:6mm}
+li{margin:0 0 1.2mm}
+li::marker{color:var(--voltio-700);font-weight:700}
+ol>li::marker{color:var(--tinta);font-family:"Bricolage Grotesque",sans-serif}
+strong{font-weight:700}
+code,kbd{font:600 .88em "Hanken Grotesk",monospace;background:var(--hueso-200);border:1px solid var(--hueso-300);border-bottom-width:2px;border-radius:4px;padding:0 5px}
+hr{border:0;border-top:1px solid var(--hueso-300);margin:8mm 0}
+
+figure{margin:5mm 0 6mm;break-inside:avoid;text-align:center}
+figure img{max-width:100%;max-height:150mm;border-radius:3mm;border:1px solid var(--hueso-300);box-shadow:0 2mm 6mm rgba(18,16,25,.14);background:#fff}
+figcaption{font-size:8.8pt;color:var(--tinta-400);margin-top:2mm;font-style:normal}
+.doc--corta figure img{max-height:105mm}
+
+.table-wrap{margin:4mm 0 6mm;break-inside:avoid}
+table{width:100%;border-collapse:separate;border-spacing:0;font-size:9.6pt;border:1px solid var(--hueso-300);border-radius:3mm;overflow:hidden;background:var(--hueso-50)}
+th{background:var(--tinta);color:var(--hueso-50);text-align:left;font-weight:600;padding:2.2mm 3mm}
+td{padding:2mm 3mm;border-top:1px solid var(--hueso-200);vertical-align:top}
+tr:nth-child(even) td{background:rgba(236,230,219,.35)}
+
+.callout{margin:4mm 0 5mm;padding:3.2mm 4mm 3mm;border-radius:3mm;border-left:1.6mm solid;break-inside:avoid;background:var(--hueso-50)}
+.callout p:last-child{margin-bottom:0}
+.callout__label{font:700 8.4pt "Hanken Grotesk",sans-serif;text-transform:uppercase;letter-spacing:.1em;margin-bottom:1mm}
+.callout--tip{border-color:var(--voltio-700);background:var(--voltio-200)}
+.callout--tip .callout__label{color:#4c6b05}
+.callout--warn{border-color:var(--coral);background:#ffe9e2}
+.callout--warn .callout__label{color:#b0391c}
+.callout--info{border-color:var(--cielo);background:#e8f0ff;border-left-color:#5a7fd6}
+.callout--info .callout__label{color:#2e47d6}
+.callout--example{border-color:var(--lila);background:var(--lila-200)}
+.callout--example .callout__label{color:var(--lila)}
+.callout--off{border-color:var(--tinta-400);background:var(--hueso-200)}
+.callout--off .callout__label{color:var(--tinta-500)}
+.callout--todo{border:1.5px dashed var(--tinta-400);background:transparent}
+.callout--todo .callout__label{color:var(--tinta-500)}
+blockquote{margin:4mm 0;padding:1mm 4mm;border-left:1.4mm solid var(--hueso-300);color:var(--tinta-500)}
+
+/* ---------- Pantalla (HTML) ---------- */
+@media screen{
+  body{padding-left:0}
+  .doc{margin-left:300px;padding:0 40px 80px;max-width:calc(900px + 300px)}
+  .cover{height:auto;min-height:100vh;width:auto;margin:0 -40px 40px;border-radius:0 0 20px 20px}
+  .toc{background:var(--hueso-50);border:1px solid var(--hueso-300);border-radius:16px;padding:28px;margin-bottom:40px}
+  .content{max-width:760px;font-size:16px;line-height:1.7}
+  .content h1{margin-top:60px;font-size:38px}
+  .sidenav{position:fixed;left:0;top:0;bottom:0;width:300px;overflow:auto;background:var(--tinta);padding:20px 14px 30px;display:flex;flex-direction:column;gap:2px}
+  .sidenav a{color:#d9d3c9;text-decoration:none;font-size:13px;padding:5px 10px;border-radius:8px;line-height:1.3}
+  .sidenav a:hover{background:rgba(251,249,245,.09);color:#fff}
+  .sidenav__brand{font:800 24px "Bricolage Grotesque",sans-serif;color:#fff!important;margin-bottom:10px}
+  .sidenav__part{font-weight:700;color:var(--voltio)!important;margin-top:12px;font-size:12.5px!important;text-transform:uppercase;letter-spacing:.05em}
+  .sidenav__sec{padding-left:18px!important}
+  .doc--corta .doc{margin-left:0}
+  .doc--corta .doc{max-width:900px;margin:0 auto}
+  @media (max-width:900px){.sidenav{display:none}.doc{margin-left:0;padding:0 18px 60px}.cover{margin:0 -18px 30px}}
+}
+@media print{
+  @page{size:A4;margin:16mm 16mm 18mm}
+  @page:first{margin:0}
+  body{background:#fff}
+  .sidenav{display:none}
+  .doc{margin:0;padding:0}
+  .content{font-size:10.3pt}
+  a{text-decoration:none}
+}
