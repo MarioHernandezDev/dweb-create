@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { errorMessage } from '~/utils/error-message'
 import type { Role } from '~/types'
 import type { Package } from '~/composables/usePackages'
 import type { DiscoveryResult } from '~/composables/useDiscover'
@@ -98,7 +99,7 @@ async function startChat() {
     const conversationId = await openConversationWith(shown.profileId)
     router.push(`/chat/${conversationId}`)
   } catch (e) {
-    chatError.value = e instanceof Error ? e.message : 'No se ha podido abrir el chat.'
+    chatError.value = errorMessage(e, 'No se ha podido abrir el chat.')
   } finally {
     startingChat.value = false
   }

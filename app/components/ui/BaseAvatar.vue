@@ -25,7 +25,7 @@ const px = computed(() => PX[props.size] ?? 44)
 <template>
   <div
     class="avatar" :class="[size !== 'md' && `avatar--${size}`, hasPhoto && 'avatar--has-photo']"
-    :style="{ '--hue': hue }"
+    :style="{ '--hue': hue }" aria-hidden="true"
   >
     <SmartImage v-if="hasPhoto" :src="src!" :width="px" :height="px" class="avatar__img" @error="imgFailed = true" />
     <template v-else>{{ initials }}</template>

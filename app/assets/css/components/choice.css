@@ -69,6 +69,7 @@
 /* ---- Formulario de nueva publicación (PostComposerSheet.vue) ---- */
 @layer components {
   .composer { display: grid; gap: 1.25rem; }
+  .composer__restored { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin-top: 0.5rem; font-size: var(--text-sm); color: var(--text-muted); }
   .composer__lead { display: flex; align-items: flex-start; gap: 0.625rem; padding: 0.75rem 1rem; border-radius: var(--radius-sm); background: var(--color-voltio-200); color: var(--color-tinta-950); font-size: var(--text-sm); font-weight: 500; }
   .composer__cols { display: grid; gap: 1.5rem; @media (width >= 48rem) { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 2rem; } }
   .composer__col { display: grid; align-content: start; gap: 1.25rem; min-width: 0; }

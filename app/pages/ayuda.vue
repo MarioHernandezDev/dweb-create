@@ -3,11 +3,20 @@ useHead({
   title: 'Ayuda y manuales',
   meta: [{ name: 'description', content: 'Manual de usuario y guías rápidas de CIBERAN para creadores y partners, en PDF.' }]
 })
+
+// Pública, pero con sesión se ve dentro del panel (con su menú) en vez de con la cabecera de la portada.
+const user = useSupabaseUser()
+const { role, ensureRole } = useMyRole()
+const shellRole = user.value ? (role.value ?? (await ensureRole())) : null
 </script>
 
 <template>
-  <div>
+  <AppShell v-if="shellRole" :role="shellRole" title="Ayuda y manuales" subtitle="Aprende a usar CIBERAN en pocos minutos">
+    <HelpDocs embedded />
+  </AppShell>
+  <div v-else>
     <LandingNav />
+    <main id="contenido">
     <section class="hero hero--page">
       <div class="container">
         <div class="hero__grid">
@@ -27,6 +36,7 @@ useHead({
     </section>
     <HelpDocs />
     <LandingCta />
+    </main>
     <LandingFooter />
   </div>
 </template>

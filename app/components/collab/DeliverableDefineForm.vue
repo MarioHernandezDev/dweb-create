@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { errorMessage } from '~/utils/error-message'
 /**
  * La marca define los entregables de una colaboración que no tiene (Descubrir, antiguas): una sola
  * vez, uno por línea. Quedan «por confirmar»: no son exigibles hasta que el creador los confirma
@@ -24,7 +25,7 @@ async function save() {
     text.value = ''
     emit('changed')
   } catch (e) {
-    error.value = e instanceof Error ? e.message : 'No se han podido guardar los entregables.'
+    error.value = errorMessage(e, 'No se han podido guardar los entregables.')
   }
 }
 </script>

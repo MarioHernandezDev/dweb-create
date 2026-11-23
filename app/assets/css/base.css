@@ -20,6 +20,10 @@
     line-height: var(--text-base--line-height);
     -webkit-font-smoothing: antialiased;
     overscroll-behavior-y: none;
+    /* Un texto largo sin espacios (una URL, un hashtag, un nombre pegado) se corta en vez de ensanchar la página: antes un
+       nombre de campaña de 80 letras seguidas daba 1.700 px de scroll horizontal. `anywhere` (y no `break-word`) también
+       reduce el ancho mínimo en cajas flex, que es lo que de verdad provocaba el desborde. */
+    overflow-wrap: anywhere;
   }
 
   /* La familia y el tamaño de un título los pone su patrón (page-header,

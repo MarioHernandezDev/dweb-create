@@ -53,8 +53,22 @@ export function matchesClientFilters(
   return true
 }
 
-/** `extra.pkgMinCents`: precio del paquete más barato de cada perfil (null si no tiene); solo hace falta para los órdenes por paquete. */
+/** ¿Ha rellenado algo de su ficha (presentación o categorías)? Si no, la tarjeta solo dice «Aún no ha completado su ficha». */
+export function hasFicha(r: Pick<DiscoveryResult, 'bio' | 'categories'>): boolean {
+  return !!r.bio?.trim() || (r.categories?.length ?? 0) > 0
+}
+
+/**
+ * `extra.pkgMinCents`: precio del paquete más barato de cada perfil (null si no tiene); solo hace falta para los órdenes por paquete.
+ * Sea cual sea el orden elegido, los perfiles sin ficha van detrás de los que sí la tienen (mantienen su orden relativo): una
+ * tarjeta vacía no ayuda a decidir.
+ */
 export function sortResults(list: DiscoveryResult[], sort: DiscoverSort, extra: { pkgMinCents?: (r: DiscoveryResult) => number | null } = {}): DiscoveryResult[] {
+  const ordered = sortByCriterion(list, sort, extra)
+  return [...ordered.filter(hasFicha), ...ordered.filter((r) => !hasFicha(r))]
+}
+
+function sortByCriterion(list: DiscoveryResult[], sort: DiscoverSort, extra: { pkgMinCents?: (r: DiscoveryResult) => number | null }): DiscoveryResult[] {
   const copy = [...list]
   // Los que no tienen el dato van siempre al final, no al principio.
   const nullsLast = (get: (r: DiscoveryResult) => number | null, dir: 1 | -1) => (a: DiscoveryResult, b: DiscoveryResult) => {

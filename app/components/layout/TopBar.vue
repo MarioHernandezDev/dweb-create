@@ -18,6 +18,8 @@ const showBack = computed(() => route.path.split('/').filter(Boolean).length > 1
 // y unas barras salían sin contador y otras con él, lo que provocaba el aviso de
 // hidratación de Vue («Hydration node mismatch») en todas las pantallas.
 const { unreadCount, refreshIfStale: refreshNotifications } = useNotifications()
+/** Texto del contador: el mismo en pantalla y en el nombre accesible del enlace (así se oye lo que se ve). */
+const badgeText = (n: number) => (n > 9 ? '9+' : String(n))
 
 // Mismo criterio para el chat, y es también el único punto de montaje fijo
 // en toda la app desde el que arrancar la suscripción Realtime una sola vez
@@ -58,18 +60,19 @@ const { avatarUrl, initials: myInitials, hue: myHue } = useMyAvatar()
       <Icon name="ph:command-bold" class="size-5" />
     </button>
 
-    <NuxtLink to="/chat" aria-label="Chat" title="Chat" class="icon-link max-md:hidden">
+    <NuxtLink to="/chat" :aria-label="chatUnreadCount ? `Chat, ${badgeText(chatUnreadCount)} sin leer` : 'Chat'" title="Chat" class="icon-link max-md:hidden">
       <Icon name="ph:chat-circle-fill" class="size-5" />
-      <span v-if="chatUnreadCount" class="badge badge--on-light badge--corner">{{ chatUnreadCount > 9 ? '9+' : chatUnreadCount }}</span>
+      <span v-if="chatUnreadCount" class="badge badge--on-light badge--corner">{{ badgeText(chatUnreadCount) }}</span>
     </NuxtLink>
 
-    <NuxtLink to="/inbox" aria-label="Bandeja de entrada" title="Bandeja de entrada" class="icon-link">
+    <NuxtLink to="/inbox" :aria-label="unreadCount ? `Bandeja de entrada, ${badgeText(unreadCount)} sin leer` : 'Bandeja de entrada'" title="Bandeja de entrada" class="icon-link">
       <Icon name="ph:tray-fill" class="size-5" />
-      <span v-if="unreadCount" class="badge badge--on-light badge--corner">{{ unreadCount > 9 ? '9+' : unreadCount }}</span>
+      <span v-if="unreadCount" class="badge badge--on-light badge--corner">{{ badgeText(unreadCount) }}</span>
     </NuxtLink>
 
-    <NuxtLink :to="`/${role}/profile`" aria-label="Perfil" class="shrink-0">
+    <NuxtLink :to="`/${role}/profile`" class="shrink-0" title="Perfil">
       <BaseAvatar :initials="myInitials" :src="avatarUrl" :hue="myHue" size="sm" />
+      <span class="sr-only">Perfil</span>
     </NuxtLink>
   </header>
 </template>

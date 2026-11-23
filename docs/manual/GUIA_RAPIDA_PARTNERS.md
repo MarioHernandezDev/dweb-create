@@ -3,10 +3,10 @@ title: Guía rápida para partners
 subtitle: Empieza a colaborar con creadores en pocos minutos.
 etiqueta: Guía rápida
 kicker: Marcas, empresas y agencias
-fecha: 19 de noviembre de 2026
-version: 1.0
+fecha: 20 de noviembre de 2026
+version: 1.1
 app: CIBERAN, lanzamiento gratuito (nov. 2026)
-pie: CIBERAN · Guía rápida para partners · v1.0
+pie: CIBERAN · Guía rápida para partners · v1.1
 ---
 
 # Empieza en 6 pasos
@@ -74,6 +74,7 @@ El **Siguiente paso** te dice siempre a quién le toca mover ficha.
 | Ver el calendario de entregas | **Colaboraciones → Calendario**. |
 | Exportar mis colaboraciones | **Colaboraciones → Exportar CSV**. |
 | Ver cómo van mis colaboraciones | Menú **Resultados**. |
+| Volver a estas guías | Menú → **Ayuda**. |
 
 > **Atención:** CIBERAN **no gestiona pagos**. El importe acordado lo pagas directamente al creador por el medio que acordéis.
 

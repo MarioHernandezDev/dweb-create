@@ -3,13 +3,15 @@
  * Etiqueta o filtro. Con `selected` definido (true/false) se pinta como botón
  * seleccionable con aria-pressed; sin él es una etiqueta de solo lectura.
  */
-const props = defineProps<{
+// `selected: undefined` es imprescindible: Vue convierte una prop booleana ausente en `false`, y con eso TODAS las
+// etiquetas se pintaban como botones (con foco, clic y aria-pressed) aunque fueran solo texto.
+const props = withDefaults(defineProps<{
   selected?: boolean
   icon?: string
   tint?: 'voltio' | 'mantequilla' | 'menta' | 'cielo' | 'rosa'
   outline?: boolean
   size?: 'sm' | 'md'
-}>()
+}>(), { selected: undefined })
 defineEmits<{ click: [] }>()
 const pressable = computed(() => props.selected !== undefined)
 </script>

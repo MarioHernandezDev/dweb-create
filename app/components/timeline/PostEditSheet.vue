@@ -144,7 +144,7 @@ async function onVisibility(open: boolean) {
       </div>
 
       <div class="pdetail__danger">
-        <span>Borrarla es definitivo.</span>
+        <span>Puedes deshacerlo unos segundos; después se borra del todo.</span>
         <BaseButton variant="danger" size="sm" icon="ph:trash-fill" :loading="deleting" :disabled="deleting" @click="onRemove">Eliminar publicación</BaseButton>
       </div>
 

@@ -5,9 +5,11 @@ useHead({ title: 'Instalar la app' })
 <template>
   <div>
     <LandingNav />
-    <InstallHero />
-    <InstallGuide />
-    <LandingCta />
+    <main id="contenido">
+      <InstallHero />
+      <InstallGuide />
+      <LandingCta />
+    </main>
     <LandingFooter />
   </div>
 </template>

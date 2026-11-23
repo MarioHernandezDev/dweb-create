@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { isFileTooLarge, formatFileSize, resizeImageFile } from '~/utils/image'
+import { isFileTooLarge, resizeImageFile } from '~/utils/image'
+import { formatFileSize } from '~/utils/collab-files'
 
 /**
  * Controles para cambiar la foto de portada, encima de la propia portada de la

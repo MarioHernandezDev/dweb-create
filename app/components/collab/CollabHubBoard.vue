@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { formatEuros } from '~/utils/mock-data'
-import { visiblePhases, type CollabPhase } from '~/utils/collab-phase'
+import { visiblePhases, readyPostCount, type CollabPhase } from '~/utils/collab-phase'
 import { PLATFORM_SHORT } from '~/utils/discover-view'
 import { initialsFromName, hueFromString } from '~/utils/avatar'
 import type { HubItem } from '~/composables/useCollabHub'
@@ -22,8 +22,8 @@ const dueLabel = (d: string | null) => (d ? new Date(`${d}T00:00:00`).toLocaleDa
 </script>
 
 <template>
-  <div class="hboard" role="list">
-    <section v-for="ph in phases" :key="ph.value" class="hboard__col" :data-phase="ph.value" role="listitem" :aria-label="ph.label">
+  <div class="hboard">
+    <section v-for="ph in phases" :key="ph.value" class="hboard__col" :data-phase="ph.value" :aria-label="ph.label">
       <header class="hboard__head"><h3>{{ ph.label }}</h3><span>{{ byPhase(items, ph.value).length }}</span></header>
       <div class="hboard__cards">
         <NuxtLink
@@ -38,8 +38,8 @@ const dueLabel = (d: string | null) => (d ? new Date(`${d}T00:00:00`).toLocaleDa
           </span>
           <span class="hcard__brief">{{ c.brief }}</span>
           <span v-if="progressFor(c.id) || c.posts.length" class="hcard__progress">
-            <span class="hcard__bar"><span :style="{ width: `${(progressFor(c.id) ? progressFor(c.id)!.done / progressFor(c.id)!.total : c.posts.filter((p) => p.status === 'published').length / c.posts.length) * 100}%` }" /></span>
-            <span>{{ progressFor(c.id) ? `${progressFor(c.id)!.done}/${progressFor(c.id)!.total}` : `${c.posts.filter((p) => p.status === 'published').length}/${c.posts.length}` }}</span>
+            <span class="hcard__bar"><span :style="{ width: `${(progressFor(c.id) ? progressFor(c.id)!.done / progressFor(c.id)!.total : readyPostCount(c.posts) / c.posts.length) * 100}%` }" /></span>
+            <span>{{ progressFor(c.id) ? `${progressFor(c.id)!.done}/${progressFor(c.id)!.total}` : `${readyPostCount(c.posts)}/${c.posts.length}` }}</span>
           </span>
           <span class="hcard__foot">
             <span v-if="hintOf(c)" class="hcard__hint" :data-tone="hintOf(c)!.tone">{{ hintOf(c)!.text }}</span>

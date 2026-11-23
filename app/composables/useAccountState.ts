@@ -12,6 +12,10 @@ interface AccountStateRow {
  * aceptada y si ya vio el recorrido de bienvenida (migración 20261112110000).
  * Se lee una vez por sesión de pestaña.
  */
+// Petición en curso compartida por todos los que llamen a la vez: TermsGate y OnboardingTour se montan juntos y antes
+// lanzaban cada uno su propia consulta idéntica en cada carga de página.
+let inflight: Promise<AccountStateRow | null> | null = null
+
 export function useAccountState() {
   const client = useSupabaseClient()
   const { resolveMyProfileId } = useMyProfileId()
@@ -19,8 +23,13 @@ export function useAccountState() {
   const state = useState<AccountStateRow | null>('account-state', () => null)
   const loaded = useState<boolean>('account-state-loaded', () => false)
 
-  async function ensureLoaded(): Promise<AccountStateRow | null> {
-    if (loaded.value) return state.value
+  function ensureLoaded(): Promise<AccountStateRow | null> {
+    if (loaded.value) return Promise.resolve(state.value)
+    inflight ??= load().finally(() => { inflight = null })
+    return inflight
+  }
+
+  async function load(): Promise<AccountStateRow | null> {
     const id = await resolveMyProfileId()
     if (!id) return null
     const { data, error } = await client.from('profiles').select('terms_version, terms_accepted_at, onboarding_completed_at, created_at').eq('id', id).maybeSingle<AccountStateRow>()
@@ -59,6 +68,7 @@ export function useAccountState() {
   function reset() {
     state.value = null
     loaded.value = false
+    inflight = null
   }
 
   return { state, loaded, termsPending, ensureLoaded, acceptTerms, markOnboardingDone, reset }

@@ -1,3 +1,4 @@
+import { errorMessage } from '~/utils/error-message'
 export interface DiscoveryResult {
   id: string
   name: string
@@ -114,7 +115,7 @@ export function useDiscover() {
       searched.value = true
     } catch (err) {
       if (requestId !== latestRequestId) return
-      error.value = err instanceof Error ? err.message : 'No se ha podido buscar. Inténtalo de nuevo.'
+      error.value = errorMessage(err, 'No se ha podido buscar. Inténtalo de nuevo.')
       loading.value = false
       return
     }

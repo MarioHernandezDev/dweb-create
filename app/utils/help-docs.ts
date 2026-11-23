@@ -29,8 +29,8 @@ export const helpDocs: HelpDoc[] = [
     highlights: ['Registro, acceso y perfil', 'Colaboraciones de principio a fin', 'Preguntas frecuentes y glosario'],
     href: '/manuales/MANUAL_USUARIO_CIBERAN.pdf',
     filename: 'MANUAL_USUARIO_CIBERAN.pdf',
-    pages: 78,
-    version: 'v1.0',
+    pages: 82,
+    version: 'v1.1',
     icon: 'ph:book-open-text-fill'
   },
   {
@@ -42,7 +42,7 @@ export const helpDocs: HelpDoc[] = [
     href: '/manuales/GUIA_RAPIDA_CREADORES.pdf',
     filename: 'GUIA_RAPIDA_CREADORES.pdf',
     pages: 5,
-    version: 'v1.0',
+    version: 'v1.1',
     icon: 'ph:camera-fill'
   },
   {
@@ -54,7 +54,7 @@ export const helpDocs: HelpDoc[] = [
     href: '/manuales/GUIA_RAPIDA_PARTNERS.pdf',
     filename: 'GUIA_RAPIDA_PARTNERS.pdf',
     pages: 5,
-    version: 'v1.0',
+    version: 'v1.1',
     icon: 'ph:storefront-fill'
   }
 ]

@@ -3,6 +3,8 @@
  * `post-media` (tipos y tamaño) y en la tabla `media_library` (archivos por persona, 8 etiquetas, nombre); aquí se comprueban
  * antes de subir para dar el motivo en claro.
  */
+import { formatFileSize } from './collab-files'
+
 export const LIBRARY_MAX_BYTES = 8 * 1024 * 1024
 // Tope de archivos por persona. En la base lo impone `media_library_cap` (migración 20261120100000_media_library_cap_50.sql).
 export const LIBRARY_MAX_FILES = 50
@@ -74,8 +76,4 @@ export function tagCounts(items: { tags: string[] }[]): { tag: string; count: nu
   return [...map.entries()].map(([tag, count]) => ({ tag, count })).sort((a, b) => b.count - a.count || a.tag.localeCompare(b.tag, 'es'))
 }
 
-export function humanSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`
-  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`
-  return `${(bytes / (1024 * 1024)).toFixed(1).replace('.', ',')} MB`
-}
+export const humanSize = formatFileSize

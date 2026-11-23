@@ -67,6 +67,7 @@ export function secondaryNav(role: Role): NavItem[] {
     { to: '/chat', label: 'Chat', icon: 'ph:chat-circle-fill' },
     { to: '/inbox', label: 'Bandeja de entrada', icon: 'ph:tray-fill' },
     { to: '/favorites', label: 'Guardados', icon: 'ph:bookmark-simple-fill' },
+    { to: '/ayuda', label: 'Ayuda', icon: 'ph:lifebuoy-fill' },
     { to: `/${role}/profile`, label: 'Perfil', icon: 'ph:user-circle-fill' }
   ]
 }

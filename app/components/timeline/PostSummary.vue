@@ -57,7 +57,8 @@ const weekCount = computed(() => week.value.reduce((sum, d) => sum + (byDay.valu
         <h2>Esta semana</h2>
         <span>{{ weekRangeLabel(week) }} · {{ weekCount }} {{ weekCount === 1 ? 'entrega' : 'entregas' }}</span>
       </header>
-      <div class="psum__days">
+      <!-- En móvil la semana se desplaza en horizontal: con tabindex el teclado también puede moverla (WCAG 2.1.1). -->
+      <div class="psum__days" role="region" aria-label="Días de esta semana" tabindex="0">
         <div v-for="d in week" :key="d.iso" class="psum__day" :class="d.isToday && 'is-today'">
           <p class="psum__day-label">{{ d.label }}<template v-if="d.isToday"> · hoy</template></p>
           <button

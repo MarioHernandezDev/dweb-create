@@ -1,5 +1,5 @@
 import { serverSupabaseServiceRole } from '#supabase/server'
-import { toCsv } from '../../../app/utils/data-export'
+import { exportToCsv } from '../../../app/utils/data-export'
 import { applyActivityFilters } from '../../utils/admin-activity-query'
 
 const MAX_ROWS = 5000
@@ -20,5 +20,5 @@ export default defineEventHandler(async (event) => {
   await logAdminAction(event, actor, { action: 'exportó el historial de actividad', detail: { filas: rows.length } })
   setResponseHeader(event, 'Content-Type', 'text/csv; charset=utf-8')
   setResponseHeader(event, 'Content-Disposition', `attachment; filename="ciberan-actividad-${new Date().toISOString().slice(0, 10)}.csv"`)
-  return `﻿${toCsv(['fecha', 'tipo', 'descripcion', 'cuenta'], rows)}`
+  return `﻿${exportToCsv(['fecha', 'tipo', 'descripcion', 'cuenta'], rows)}`
 })

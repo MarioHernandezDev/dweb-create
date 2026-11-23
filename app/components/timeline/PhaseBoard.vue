@@ -273,7 +273,7 @@ async function bulkDelete() {
           <div class="flex items-center gap-2 px-0.5">
             <h2 class="board-col__title">{{ statusMeta[phase].label }}</h2>
             <span
-              class="flex items-center justify-center size-4 rounded-full text-[var(--color-text-faint)] cursor-help" tabindex="0"
+              class="flex items-center justify-center size-4 rounded-full text-[var(--color-text-faint)] cursor-help" role="img" tabindex="0"
               :title="phaseDescription[phase]" :aria-label="phaseDescription[phase]"
             >
               <Icon name="ph:question-fill" class="size-3" />

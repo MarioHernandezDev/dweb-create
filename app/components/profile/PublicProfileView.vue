@@ -235,7 +235,8 @@ const websiteHost = computed(() => { try { return new URL(props.profile.website 
 
         <!-- Paquetes / necesidades -->
         <template v-else-if="tab === 'packages'">
-          <section data-section="packages">
+          <section data-section="packages" aria-label="Paquetes">
+            <h2 class="sr-only">{{ isPartner ? 'Necesidades' : 'Paquetes' }}</h2>
             <EmptyState v-if="!packages.length" icon="ph:package" :title="isOwnProfile ? 'Aún no has publicado ningún paquete' : 'Sin paquetes publicados'" :description="isOwnProfile ? 'Los paquetes son lo que permite que te hagan ofertas directas: crea el primero en un minuto, con una plantilla.' : `Todavía no se le puede hacer una oferta — ${isPartner ? 'la marca' : 'el creador'} no ha publicado ningún paquete.`">
               <BaseButton v-if="isOwnProfile" :to="`/${profile.role}/packages?nuevo=1`" variant="primary" size="sm" icon="ph:plus-bold">{{ isPartner ? 'Crear una necesidad' : 'Crear mi primer paquete' }}</BaseButton>
             </EmptyState>

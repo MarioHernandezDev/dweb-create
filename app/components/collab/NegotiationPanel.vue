@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { errorMessage } from '~/utils/error-message'
 import { formatEuros } from '~/utils/mock-data'
 import { relativeTime } from '~/utils/status'
 import type { CollaborationStatus, Role } from '~/types'
@@ -10,6 +11,8 @@ const props = defineProps<{
   status: CollaborationStatus
   myRole: Role
   initiatedBy: Role
+  /** Solicitud caducada: ya no se puede aceptar ni contraofertar (la base de datos lo impide); solo rechazar o retirar. */
+  expired?: boolean
 }>()
 
 const emit = defineEmits<{ accept: [budgetCents: number | null]; decline: []; countered: [] }>()
@@ -65,7 +68,7 @@ async function sendCounter() {
     // Avisa a la página: el «Siguiente paso» y el turno se calculan con los eventos, que hay que refrescar.
     emit('countered')
   } catch (e) {
-    counterError.value = e instanceof Error ? e.message : 'No se ha podido enviar la contraoferta. Inténtalo de nuevo.'
+    counterError.value = errorMessage(e, 'No se ha podido enviar la contraoferta. Inténtalo de nuevo.')
   }
 }
 
@@ -88,7 +91,7 @@ async function sendReport() {
     await reportCollaboration(props.collaborationId, reportReason.value, reportDetail.value || undefined)
     reportSent.value = true
   } catch (e) {
-    reportError.value = e instanceof Error ? e.message : 'No se ha podido enviar el reporte. Inténtalo de nuevo.'
+    reportError.value = errorMessage(e, 'No se ha podido enviar el reporte. Inténtalo de nuevo.')
   }
 }
 </script>
@@ -114,7 +117,7 @@ async function sendReport() {
 
     <template v-if="status === 'requested'">
       <p v-if="!myTurn" class="text-sm text-[var(--color-text-faint)] mb-4">
-        Esperando respuesta {{ otherRoleLabel }}.
+        {{ expired ? 'Esta propuesta ha caducado: nadie la respondió a tiempo.' : `Esperando respuesta ${otherRoleLabel}.` }}
       </p>
 
       <template v-else>
@@ -147,10 +150,11 @@ async function sendReport() {
 
         <!-- Jerarquía: aceptar (principal) → contraoferta (secundaria) → rechazar (poco frecuente, sin peso visual). -->
         <div v-else class="flex flex-col gap-2.5 mb-4">
-          <BaseButton variant="primary" block @click="$emit('accept', currentAmount)">
+          <p v-if="expired" class="text-sm text-[var(--color-text-muted)] text-center" data-offer-expired>Ha caducado: ya no se puede aceptar ni contraofertar.</p>
+          <BaseButton v-else variant="primary" block @click="$emit('accept', currentAmount)">
             Aceptar{{ currentAmount ? ` · ${formatEuros(currentAmount)}` : '' }}
           </BaseButton>
-          <BaseButton variant="outline" block data-counter-open @click="countering = true">Hacer contraoferta</BaseButton>
+          <BaseButton v-if="!expired" variant="outline" block data-counter-open @click="countering = true">Hacer contraoferta</BaseButton>
           <button type="button" class="mx-auto min-h-[var(--control-md)] px-3 text-sm font-medium text-[var(--text-muted)] hover:text-[var(--color-danger)] transition-colors" data-decline-open @click="confirmingDecline = true">
             Rechazar solicitud
           </button>

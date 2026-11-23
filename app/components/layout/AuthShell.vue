@@ -22,10 +22,10 @@ defineProps<{ claim?: string; sub?: string }>()
     </aside>
 
     <div class="auth__panel">
-      <div class="auth__top">
+      <header class="auth__top">
         <NuxtLink to="/" aria-label="CIBERAN, inicio" class="md:invisible"><BrandMark :size="36" label="" /></NuxtLink>
         <NuxtLink to="/" class="text-sm font-semibold text-[var(--text-muted)] hover:text-[var(--text-strong)]">Volver al inicio</NuxtLink>
-      </div>
+      </header>
       <main class="auth__main">
         <div class="auth__box"><slot /></div>
       </main>

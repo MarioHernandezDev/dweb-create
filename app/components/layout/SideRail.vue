@@ -7,10 +7,10 @@ const { pref, toggle: toggleRail } = useRailState()
 const route = useRoute()
 const items = computed(() => roleNav[props.role])
 
-// Solo Guardados. Chat y Bandeja ya tienen su icono (con contador) en la barra
+// Guardados y Ayuda. Chat y Bandeja ya tienen su icono (con contador) en la barra
 // superior: tenerlos también aquí era el mismo destino por dos caminos. «Perfil»
 // tiene su propio bloque más abajo (avatar + nombre de cuenta).
-const secondaryItems = computed(() => secondaryNav(props.role).filter((i) => i.to === '/favorites'))
+const secondaryItems = computed(() => secondaryNav(props.role).filter((i) => i.to === '/favorites' || i.to === '/ayuda'))
 
 function isActive(to: string) {
   return to === items.value[0]?.to ? route.path === to : route.path.startsWith(to)

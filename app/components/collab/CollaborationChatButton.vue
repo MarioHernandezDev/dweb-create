@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { errorMessage } from '~/utils/error-message'
 /**
  * Acceso directo al chat con la otra parte desde el detalle de una
  * colaboración (C-11/4.4 de docs/audit/08_COLLABORATION_FLOW_AUDIT.md). Usa la
@@ -24,7 +25,7 @@ async function open() {
     const conversationId = await openConversationWith(props.counterpartProfileId)
     await router.push(`/chat/${conversationId}`)
   } catch (e) {
-    error.value = e instanceof Error ? e.message : 'No se ha podido abrir el chat.'
+    error.value = errorMessage(e, 'No se ha podido abrir el chat.')
   } finally {
     opening.value = false
   }

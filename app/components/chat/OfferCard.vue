@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { errorMessage } from '~/utils/error-message'
 import { formatEuros } from '~/utils/mock-data'
 import { offerCopy } from '~/utils/chat-view'
 import type { Offer } from '~/composables/useOffers'
@@ -73,7 +74,7 @@ async function respond(accept: boolean) {
     await Promise.all([refreshMessages(updated.conversationId), refreshConversations()])
     useOffers().refreshPendingIncoming()
   } catch (e) {
-    respondError.value = e instanceof Error ? e.message : 'No se ha podido responder a la oferta.'
+    respondError.value = errorMessage(e, 'No se ha podido responder a la oferta.')
   }
 }
 

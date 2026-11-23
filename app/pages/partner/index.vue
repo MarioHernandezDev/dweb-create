@@ -7,7 +7,7 @@ import type { Creator, Post } from '~/types'
 import type { FirstStep } from '~/components/onboarding/FirstSteps.vue'
 import type { LastProposal } from '~/composables/useCollaborationOffers'
 
-import { weekDays, overdueCount, phaseShares } from '~/utils/home-charts'
+import { weekBars, overdueCount, phaseShares } from '~/utils/home-charts'
 
 useHead({ title: 'Inicio' })
 
@@ -163,7 +163,7 @@ function onHeroClick() {
 const unreadConversations = computed(() => conversations.value.filter((c) => c.unread).slice(0, 4))
 
 // Gráficas de resumen (datos ya cargados; nada se consulta aparte).
-const chartDays = computed(() => weekDays(posts.value, new Date()))
+const chartDays = computed(() => weekBars(posts.value, new Date()))
 const chartOverdue = computed(() => overdueCount(posts.value))
 const chartShares = computed(() => phaseShares(posts.value))
 

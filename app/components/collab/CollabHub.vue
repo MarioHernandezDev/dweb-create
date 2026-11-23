@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { collaborationStatusMeta } from '~/utils/status'
-import { COLLAB_PHASES, formatMoney } from '~/utils/collab-phase'
+import { COLLAB_PHASES, formatMoney, readyPostCount } from '~/utils/collab-phase'
 import { toCsv, downloadCsv } from '~/utils/csv'
-import { buildIcs, downloadIcs } from '~/utils/ics'
+import { buildIcs } from '~/utils/ics'
+import { downloadIcs } from '~/utils/ics-download'
 import { initialsFromName, hueFromString } from '~/utils/avatar'
 import type { HubItem } from '~/composables/useCollabHub'
 
@@ -85,12 +86,18 @@ const people = computed(() => {
   for (const i of inProgress.value) seen.set(i.counterpart, i.counterpart)
   return [...seen.values()]
 })
+// «1 marca en curso» / «3 marcas en curso» (antes decía «1 marcas»).
+const peopleLabel = computed(() => {
+  const n = people.value.length
+  const brand = who.one === 'marca'
+  return `${n} ${brand ? (n === 1 ? 'marca' : 'marcas') : (n === 1 ? 'creador' : 'creadores')} en curso`
+})
 const delivProgress = computed(() => {
   let done = 0
   let total = 0
   for (const i of inProgress.value) {
     const p = work.progressFor(i.id)
-    if (p) { done += p.done; total += p.total } else { total += i.posts.length; done += i.posts.filter((x) => x.status === 'published').length }
+    if (p) { done += p.done; total += p.total } else { total += i.posts.length; done += readyPostCount(i.posts) }
   }
   return total ? { done, total, pct: Math.round((done / total) * 100) } : null
 })
@@ -146,13 +153,13 @@ function exportCsv() {
         <h2>Colaboraciones activas <span class="hub__chip">En curso</span></h2>
         <p class="hub__sub">{{ inProgress.length }} en marcha<template v-if="active.length > inProgress.length"> · {{ active.length - inProgress.length }} completada{{ active.length - inProgress.length === 1 ? '' : 's' }}</template></p>
       </div>
-      <div v-if="people.length" class="hub__people" :aria-label="`${people.length} ${who.one === 'marca' ? 'marcas' : 'creadores'} en curso`">
+      <div v-if="people.length" class="hub__people" role="group" :aria-label="peopleLabel">
         <BaseAvatar v-for="n in people.slice(0, 4)" :key="n" :initials="initialsFromName(n)" :hue="hueFromString(n)" size="sm" :title="n" />
         <span v-if="people.length > 4" class="hub__more">+{{ people.length - 4 }}</span>
       </div>
       <div v-if="delivProgress" class="hub__progress">
         <p><span>Entregables</span><strong>{{ delivProgress.pct }}%</strong></p>
-        <span class="hub__bar" role="progressbar" :aria-valuenow="delivProgress.pct" aria-valuemin="0" aria-valuemax="100"><span :style="{ width: `${delivProgress.pct}%` }" /></span>
+        <span class="hub__bar" role="progressbar" aria-label="Avance de los entregables" :aria-valuenow="delivProgress.pct" aria-valuemin="0" aria-valuemax="100"><span :style="{ width: `${delivProgress.pct}%` }" /></span>
       </div>
     </section>
 
@@ -182,6 +189,7 @@ function exportCsv() {
           </select>
           <Icon name="ph:caret-down-bold" class="size-3.5" />
         </label>
+        <CalendarSubscribe v-if="view === 'calendario'" />
         <BaseButton v-if="view === 'calendario'" variant="outline" size="sm" icon="ph:calendar-plus-bold" :disabled="!calendarPosts.some((p) => !!p.dueDate)" data-export-ics @click="exportIcs">Añadir a mi calendario</BaseButton>
         <BaseButton variant="outline" size="sm" icon="ph:download-simple-bold" data-export-csv @click="exportCsv">Exportar CSV</BaseButton>
       </div>

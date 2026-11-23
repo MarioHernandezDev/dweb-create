@@ -75,6 +75,9 @@
     pointer-events: none;
     will-change: transform;
   }
+  /* Se esconde en las secciones marcadas con `data-companion-hide` (ver LandingCompanion.vue). */
+  .ray-companion { transition: opacity 0.3s ease; }
+  .ray-companion.is-hidden { opacity: 0; visibility: hidden; transition: opacity 0.3s ease, visibility 0s linear 0.3s; }
   .ray-companion__body {
     position: absolute;
     top: 0;

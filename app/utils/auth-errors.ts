@@ -29,6 +29,11 @@ export function translateAuthError(message: string): string {
   if (/error sending .*email|smtp|username and password not accepted|\b535\b|unexpected_failure/i.test(msg)) {
     return 'No hemos podido enviar el correo ahora mismo. Inténtalo de nuevo en unos minutos; si sigue pasando, escríbenos y lo resolvemos.'
   }
+  // Cambio de contraseña con código del correo (reautenticación): código mal escrito o caducado.
+  if (/nonce|reauthentication|invalid.*(otp|token)|token.*(expired|invalid)/i.test(msg) && !/rate limit/i.test(msg)) {
+    return 'El código no es correcto o ha caducado. Pide uno nuevo.'
+  }
+  if (/new password should be different|same.password/i.test(msg)) return 'La contraseña nueva tiene que ser distinta de la actual.'
   if (/email not confirmed/i.test(msg)) {
     return 'Todavía no has confirmado tu email — revisa tu bandeja de entrada.'
   }

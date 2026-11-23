@@ -19,7 +19,7 @@ export interface WeekDay {
 }
 
 /** Los próximos 7 días a partir de hoy (hoy incluido) con sus entregas. */
-export function weekDays(posts: Pick<Post, 'dueInDays' | 'status'>[], now: Date): WeekDay[] {
+export function weekBars(posts: Pick<Post, 'dueInDays' | 'status'>[], now: Date): WeekDay[] {
   return Array.from({ length: 7 }, (_, offset) => {
     const date = new Date(now.getFullYear(), now.getMonth(), now.getDate() + offset)
     const due = posts.filter((p) => p.dueInDays === offset)

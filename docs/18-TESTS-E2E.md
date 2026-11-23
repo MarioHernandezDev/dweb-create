@@ -31,6 +31,10 @@ E2E_PARTNER_PASSWORD=...
 
 `collaboration.partner.spec.ts` además usa `SUPABASE_SERVICE_ROLE_KEY` del `.env` para sembrar solicitudes (mismo patrón que `tests/integration/chat-fixture.ts`).
 
+## Accesibilidad (axe-core)
+
+`a11y.public.spec.ts`, `a11y.creator.spec.ts` y `a11y.partner.spec.ts` pasan axe-core (WCAG 2.0/2.1 A y AA, incluido el contraste) por las pantallas principales de cada rol, en escritorio y móvil, y por la paleta y la ventana «Nueva publicación» abiertas. Fallan con la lista de problemas y los elementos afectados. Excluyen el indicador de Nuxt DevTools (solo existe en desarrollo). El rendimiento no se mide aquí: debe medirse sobre la compilación de producción (`npm run build`), no sobre el servidor de desarrollo.
+
 ## Qué escriben
 
 Solo filas con prefijo `[E2E]` (imágenes de biblioteca, paquetes, solicitudes) y las borran al terminar, incluso si el test falla. Aun así, la base es la compartida: no los lances en mitad de una demo.

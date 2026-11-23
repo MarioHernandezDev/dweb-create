@@ -1,12 +1,16 @@
 <script setup lang="ts">
 import { helpDocs } from '~/utils/help-docs'
+
+/** `embedded`: dentro del panel de la app (sin la banda y el título de la landing). */
+defineProps<{ embedded?: boolean }>()
 </script>
 
 <template>
-  <section id="manuales" class="band band--paper" aria-labelledby="manuales-title">
-    <div class="container">
-      <h2 id="manuales-title" class="band__title">Elige tu guía.</h2>
-      <p class="band__intro">Son PDF gratuitos, sin registro. Si ya tienes cuenta, también te ayudan a sacar más partido a cada pantalla.</p>
+  <section id="manuales" :class="embedded ? 'helpdocs-embedded' : 'band band--paper'" aria-labelledby="manuales-title">
+    <div :class="!embedded && 'container'">
+      <h2 v-if="!embedded" id="manuales-title" class="band__title">Elige tu guía.</h2>
+      <h2 v-else id="manuales-title" class="sr-only">Manuales y guías</h2>
+      <p :class="embedded ? 'helpdocs-embedded__intro' : 'band__intro'">Son PDF gratuitos, sin registro. Te ayudan a sacar más partido a cada pantalla.</p>
 
       <ul class="helpdocs" data-help-docs>
         <li v-for="doc in helpDocs" :key="doc.id" class="helpdoc" :data-help-doc="doc.id">

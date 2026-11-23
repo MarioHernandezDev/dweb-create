@@ -15,7 +15,9 @@
     align-items: end;
   }
   .week-chart__plot { position: relative; }
-  .week-chart__plot.is-empty .week-chart__col { opacity: 0.55; }
+  /* Semana sin datos: se atenúan solo las barras. Antes bajaba la opacidad de toda la columna y las etiquetas de los días
+     quedaban con un contraste de 2,5:1 (WCAG AA exige 4,5:1). */
+  .week-chart__plot.is-empty .week-chart__track { opacity: 0.55; }
   .week-chart__none {
     position: absolute; inset: 0 0 1.75rem; display: grid; place-items: center;
     margin: 0; padding: 0 1rem; text-align: center; color: var(--text-muted); font-size: var(--text-sm);

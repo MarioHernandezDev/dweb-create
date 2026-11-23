@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { errorMessage } from '~/utils/error-message'
 import { initialsFromName, hueFromString } from '~/utils/avatar'
 import { dateDividerLabel } from '~/utils/status'
 import { isComposerRestricted } from '~/utils/chat-view'
@@ -206,7 +207,7 @@ async function send() {
     await sendMessage(conversationId, body)
   } catch (e) {
     // Nunca se muestra como enviado si el servidor no lo confirmó: el texto vuelve al campo.
-    sendError.value = e instanceof Error ? e.message : 'No se ha podido enviar el mensaje.'
+    sendError.value = errorMessage(e, 'No se ha podido enviar el mensaje.')
     draft.value = body
   }
 }

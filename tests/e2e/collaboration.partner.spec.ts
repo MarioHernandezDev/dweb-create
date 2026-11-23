@@ -62,7 +62,7 @@ test('el partner puede cancelar el rechazo y luego rechazar la solicitud', async
   await page.getByRole('button', { name: 'Rechazar solicitud' }).click()
   await page.getByRole('button', { name: 'Sí, rechazar' }).click()
   await expect(page).toHaveURL(/\/partner\/requests/, { timeout: 20_000 })
-  await expect(page.getByText('Solicitud rechazada')).toBeVisible()
+  await expect(page.locator('[data-toast]').filter({ hasText: 'Solicitud rechazada' }).first()).toBeVisible()
   expect(await estado(id)).toBe('declined')
 })
 

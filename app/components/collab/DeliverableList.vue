@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { errorMessage } from '~/utils/error-message'
 import type { Post } from '~/types'
 import type { CollabDeliverable, DecisionMode } from '~/composables/useCollabDeliverables'
 
@@ -56,7 +57,7 @@ async function run(action: () => Promise<unknown>) {
     await action()
     emit('changed')
   } catch (e) {
-    error.value = e instanceof Error ? e.message : 'No se ha podido completar la acción. Inténtalo de nuevo.'
+    error.value = errorMessage(e, 'No se ha podido completar la acción. Inténtalo de nuevo.')
   }
 }
 
@@ -85,7 +86,7 @@ async function submitDecision(reason: string) {
     dialogOpen.value = false
     emit('changed')
   } catch (e) {
-    dialogError.value = e instanceof Error ? e.message : 'No se ha podido guardar la decisión.'
+    dialogError.value = errorMessage(e, 'No se ha podido guardar la decisión.')
   }
 }
 

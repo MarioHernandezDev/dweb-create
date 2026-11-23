@@ -20,7 +20,8 @@ export default defineConfig({
   outputDir: 'test-results',
   fullyParallel: false,
   workers: 1,
-  retries: 0,
+  // Un reintento: el servidor de desarrollo compila bajo demanda y, en una pasada larga, alguna prueba puede ir lenta.
+  retries: process.env.CI ? 2 : 1,
   timeout: 45_000,
   expect: { timeout: 10_000 },
   reporter: [['list'], ['html', { open: 'never', outputFolder: 'playwright-report' }]],

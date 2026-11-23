@@ -3,10 +3,10 @@ title: Guía rápida para creadores
 subtitle: Empieza a usar CIBERAN en pocos minutos.
 etiqueta: Guía rápida
 kicker: Creadores de contenido
-fecha: 19 de noviembre de 2026
-version: 1.0
+fecha: 20 de noviembre de 2026
+version: 1.1
 app: CIBERAN, lanzamiento gratuito (nov. 2026)
-pie: CIBERAN · Guía rápida para creadores · v1.0
+pie: CIBERAN · Guía rápida para creadores · v1.1
 ---
 
 # Empieza en 6 pasos
@@ -76,6 +76,7 @@ Mira siempre el **Siguiente paso** de cada colaboración: te dice si te toca a t
 | Recuperar algo que borré sin querer | Pulsa **Deshacer** en los 8 segundos siguientes. |
 | Dar el borrador a la marca | En la publicación, pega el **Enlace al borrador**. |
 | Ver cómo me va | Menú **Resultados**. |
+| Volver a estas guías | Menú → **Ayuda**. |
 
 > **Atención:** CIBERAN **no gestiona pagos**. El importe acordado lo cobras directamente de la marca.
 

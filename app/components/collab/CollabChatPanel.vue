@@ -110,7 +110,7 @@ function onKeydown(e: KeyboardEvent) {
 
     <template v-else>
       <div ref="listEl" class="cchat__list nx-scroll" role="log" aria-live="polite" :aria-label="`Conversación con ${counterpartName}`">
-        <NuxtLink v-if="hidden" :to="`/chat/${conversationId}`" class="cchat__older">Ver los {{ hidden }} mensajes anteriores</NuxtLink>
+        <NuxtLink v-if="hidden" :to="`/chat/${conversationId}`" class="cchat__older">{{ hidden === 1 ? 'Ver el mensaje anterior' : `Ver los ${hidden} mensajes anteriores` }}</NuxtLink>
         <p v-if="!messages.length" class="cchat__empty">Todavía no os habéis escrito. Usa este chat para concretar detalles de la colaboración.</p>
         <MessageBubble
           v-for="(m, i) in messages" :key="m.id" :message="m" :mine="m.senderId === myId" :other-name="counterpartName" :my-role="role"

@@ -20,10 +20,15 @@ export interface WorkCollab extends CollaborationTerms {
   counterpartName: string
   /** Texto del brief: sirve para distinguir tareas de varias colaboraciones con la misma persona. */
   brief?: string
+  /** Nombre de campaña (si lo tiene): distingue tareas de varias colaboraciones con la misma persona. */
+  campaignName?: string | null
   /** Importe de la propuesta inicial (para decir «antes X €» al recibir una contraoferta). */
   budgetCents?: number | null
   /** Caducidad de la solicitud pendiente: caducada ya no se puede aceptar, así que no es una tarea. */
   expiresAt?: string | null
+  /** Perfil que ha propuesto cancelar de común acuerdo (null/ausente: nadie). Si es la otra parte, responder es lo más urgente. */
+  cancelRequestedBy?: string | null
+  cancelReason?: string | null
 }
 
 export interface WorkPost {
@@ -55,6 +60,7 @@ export type WorkTaskKind =
   | 'respond_offer'
   | 'assign_deliverable'
   | 'confirm_deliverables'
+  | 'respond_cancel'
 
 export interface WorkTask {
   id: string
@@ -75,6 +81,8 @@ export interface WorkWaiting {
   collaborationId: string
   counterpartName: string
   text: string
+  /** Qué hacer (o no) mientras tanto. Sin él, se dice que no hace falta hacer nada y que se avisará. */
+  detail?: string
 }
 
 /** Un entregable tal como lo deriva la base de datos (vista `collaboration_deliverable_status`). */
@@ -116,6 +124,21 @@ function lastChangesComment(post: WorkPost, events: WorkEvent[]): string | undef
 
 function clip(text: string, max = 110): string {
   return text.length > max ? `${text.slice(0, max - 1).trimEnd()}…` : text
+}
+
+/**
+ * «Campaña» o primera frase del brief, entre comillas, para distinguir tareas idénticas: con varias colaboraciones con la
+ * misma marca, «Crea la primera publicación para X» salía repetido sin forma de saber de cuál era cada una.
+ */
+export function collabContext(c: Pick<WorkCollab, 'campaignName' | 'brief'>): string {
+  const name = c.campaignName?.trim()
+  if (name) return `«${clip(name, 50)}»`
+  const brief = c.brief?.trim().split(/(?<=[.!?])\s|\n/)[0]
+  return brief ? `«${clip(brief, 50)}»` : ''
+}
+const withContext = (c: Pick<WorkCollab, 'campaignName' | 'brief'>, text: string) => {
+  const ctx = collabContext(c)
+  return ctx ? `${ctx} · ${text}` : text
 }
 
 function dueText(dueInDays: number): string {
@@ -165,10 +188,15 @@ export function collaborationWork(
   const mine = posts.filter((p) => p.collaborationId === collab.id)
   const states = mine.map((p) => ({ post: p, state: deliverableState(p, events) }))
   let waitingText: string | null = null
+  let waitingDetail: string | undefined
 
   if (collab.status === 'requested') {
     if (expiryState(collab.status, collab.expiresAt).expired) {
+      // Una caducada ya no cambia sola: avisar de que «te avisaremos» era engañoso. Cada parte tiene una salida distinta.
       waitingText = `La propuesta con ${who} ha caducado`
+      waitingDetail = iProposedLast(role, collab, events, myProfileId)
+        ? 'Nadie respondió a tiempo. Retira la solicitud y envía una nueva si sigues interesado.'
+        : 'No se respondió a tiempo. Puedes rechazarla; si te interesa, pide que te la envíen de nuevo.'
     } else if (iProposedLast(role, collab, events, myProfileId)) {
       waitingText = `Esperando la respuesta de ${who}`
     } else {
@@ -191,6 +219,21 @@ export function collaborationWork(
     }
   } else if (collab.status === 'accepted' || collab.status === 'in_progress') {
     const delivs = deliverables.filter((d) => d.collaborationId === collab.id)
+
+    // Una cancelación propuesta por la otra parte es lo más urgente: hasta que se responde, la colaboración está en el aire.
+    if (collab.cancelRequestedBy) {
+      if (collab.cancelRequestedBy === myProfileId) {
+        waitingText = `Esperando la respuesta de ${who} a tu propuesta de cancelar`
+      } else {
+        const reason = collab.cancelReason?.trim()
+        tasks.push({
+          ...base, id: `cancel:${collab.id}`, kind: 'respond_cancel', priority: 8,
+          title: `${who} propone cancelar la colaboración`,
+          detail: `${reason ? `«${clip(reason, 80)}» · ` : ''}Acepta la cancelación o sigue adelante con la colaboración.`,
+          cta: 'Responder', to: collaborationHref(role, collab.id) + '#cancelar'
+        })
+      }
+    }
 
     if (delivs.length) {
       // Con entregables definidos, el estado de cada uno lo da la base de datos (vista derivada).
@@ -288,7 +331,7 @@ export function collaborationWork(
       if (role === 'creator' && !mine.length) {
         tasks.push({
           ...base, id: `start:${collab.id}`, kind: 'start_deliverable', priority: 35,
-          title: `Crea la primera publicación para ${who}`, detail: 'Aún no hay ninguna publicación vinculada a esta colaboración.',
+          title: `Crea la primera publicación para ${who}`, detail: withContext(collab, 'Aún no hay ninguna publicación vinculada a esta colaboración.'),
           // Abre el formulario de nueva publicación con esta colaboración ya elegida (lo lee timeline.vue).
           cta: 'Crear publicación', to: `/creator/timeline?nueva=1&colaboracion=${collab.id}`
         })
@@ -318,12 +361,12 @@ export function collaborationWork(
     if (!hasRated(events, myProfileId)) {
       tasks.push({
         ...base, id: `rate:${collab.id}`, kind: 'rate', priority: 60,
-        title: `Valora a ${who}`, detail: 'Tu valoración ayuda a otros usuarios.',
+        title: `Valora a ${who}`, detail: withContext(collab, 'Tu valoración ayuda a otros usuarios.'),
         cta: 'Valorar', to: collaborationHref(role, collab.id) + '#respuesta'
       })
     }
   }
 
   tasks.sort((a, b) => a.priority - b.priority)
-  return { tasks, waiting: waitingText ? { collaborationId: collab.id, counterpartName: who, text: waitingText } : null }
+  return { tasks, waiting: waitingText ? { collaborationId: collab.id, counterpartName: who, text: waitingText, ...(waitingDetail ? { detail: waitingDetail } : {}) } : null }
 }

@@ -30,17 +30,23 @@ export interface ListableConversation {
   id: string
   otherName: string
   unread: boolean
+  /** Fecha del último mensaje; `null`/ausente = conversación todavía sin mensajes. */
+  lastMessageAt?: string | null
 }
 
-/** Búsqueda por nombre (sin distinguir mayúsculas ni acentos) y filtros de la bandeja. */
+/**
+ * Búsqueda por nombre (sin distinguir mayúsculas ni acentos) y filtros de la bandeja. Las conversaciones sin ningún mensaje
+ * (se crean al pulsar «Chat» aunque luego no se escriba nada) no se listan, salvo la que está abierta (`keepId`).
+ */
 export function filterConversations<T extends ListableConversation>(
   list: T[],
-  opts: { query: string; filter: ConversationFilter },
+  opts: { query: string; filter: ConversationFilter; keepId?: string },
   pendingOffers: Record<string, number>
 ): T[] {
   const norm = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
   const q = norm(opts.query.trim())
   return list.filter((c) => {
+    if (c.lastMessageAt === null && c.id !== opts.keepId) return false
     if (q && !norm(c.otherName).includes(q)) return false
     if (opts.filter === 'unread') return c.unread
     if (opts.filter === 'offers') return (pendingOffers[c.id] ?? 0) > 0

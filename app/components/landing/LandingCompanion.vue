@@ -6,6 +6,7 @@
  *   (te «sigue») y gira la cabeza hacia donde vas (hacia abajo si bajas, hacia arriba si subes).
  * - Reacciona a cada sección (`data-companion` en la sección: `data-companion-mood`, `data-companion-tone`,
  *   `data-companion-say`): cambia de ánimo y dice una frase corta.
+ * - Las secciones con `data-companion-hide` (p. ej. «Para quién es») no la enseñan: se esconde mientras estén en pantalla.
  * - Los ojos siguen al cursor; con un clic da una voltereta y suelta una frase.
  * - Es decorativa (`aria-hidden`, sin foco): no añade ni quita contenido. Con movimiento reducido no se mueve ni te
  *   sigue: queda fija en la esquina y solo cambia de frase. Solo se monta en el navegador.
@@ -24,6 +25,7 @@ const bubbleOn = ref(false)
 const look = reactive({ x: 0, y: 0 })
 const spinning = ref(false)
 const docked = ref(false)
+const hidden = ref(false)
 const size = ref(92)
 const bubbleSide = ref<'left' | 'top'>('left')
 // Posición del globo respecto al origen del contenedor (esquina superior izquierda de la raya; en reposo, esquina inferior
@@ -48,6 +50,7 @@ let bubbleTimer: ReturnType<typeof setTimeout> | null = null
 let moodTimer: ReturnType<typeof setTimeout> | null = null
 let sectionMood: Mood = 'swim'
 let observer: IntersectionObserver | null = null
+let hideObserver: IntersectionObserver | null = null
 let pokeIndex = 0
 
 const prefersReduced = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
@@ -164,6 +167,18 @@ function observeSections() {
     }
   }, { rootMargin: '-45% 0px -45% 0px', threshold: 0 })
   sections.forEach((s) => observer!.observe(s))
+
+  // Secciones donde Raya no debe aparecer: se esconde mientras alguna ocupe la zona central de la pantalla.
+  const hideSections = document.querySelectorAll<HTMLElement>('[data-companion-hide]')
+  const visibles = new Set<Element>()
+  hideObserver = new IntersectionObserver((entries) => {
+    for (const entry of entries) {
+      if (entry.isIntersecting) visibles.add(entry.target); else visibles.delete(entry.target)
+    }
+    hidden.value = visibles.size > 0
+    if (hidden.value) bubbleOn.value = false
+  }, { rootMargin: '-10% 0px -10% 0px', threshold: 0 })
+  hideSections.forEach((s) => hideObserver!.observe(s))
 }
 
 onMounted(() => {
@@ -186,6 +201,7 @@ onBeforeUnmount(() => {
   if (bubbleTimer) clearTimeout(bubbleTimer)
   if (moodTimer) clearTimeout(moodTimer)
   observer?.disconnect()
+  hideObserver?.disconnect()
   window.removeEventListener('scroll', kick)
   window.removeEventListener('pointermove', onPointer)
   window.removeEventListener('resize', layout)
@@ -194,7 +210,7 @@ onBeforeUnmount(() => {
 
 <template>
   <ClientOnly>
-    <div ref="root" class="ray-companion" :class="docked && 'ray-companion--docked'" aria-hidden="true" data-ray-companion>
+    <div ref="root" class="ray-companion" :class="[docked && 'ray-companion--docked', hidden && 'is-hidden']" aria-hidden="true" data-ray-companion>
       <div
         class="ray-companion__bubble" :class="[bubbleOn && 'is-on', tone === 'light' && 'ray-companion__bubble--on-dark']"
         :style="bubbleStyle"

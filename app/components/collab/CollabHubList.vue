@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { formatEuros } from '~/utils/mock-data'
-import { COLLAB_PHASES, formatMoney, type CollabPhase } from '~/utils/collab-phase'
+import { COLLAB_PHASES, formatMoney, readyPostCount, type CollabPhase } from '~/utils/collab-phase'
 import { PLATFORM_SHORT } from '~/utils/discover-view'
 import { initialsFromName, hueFromString } from '~/utils/avatar'
 import type { HubItem } from '~/composables/useCollabHub'
@@ -24,7 +24,7 @@ const groups = computed(() => COLLAB_PHASES
 const dueLabel = (d: string | null) => (d ? new Date(`${d}T00:00:00`).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }).replace('.', '') : '—')
 const pct = (c: HubItem) => {
   const p = props.progressFor(c.id)
-  const done = p ? p.done : c.posts.filter((x) => x.status === 'published').length
+  const done = p ? p.done : readyPostCount(c.posts)
   const total = p ? p.total : c.posts.length
   return { done, total, w: total ? (done / total) * 100 : 0 }
 }

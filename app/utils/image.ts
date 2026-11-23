@@ -29,11 +29,6 @@ export function optimizeImageFile(file: File): Promise<File> {
   return resizeImageFile(file, OPTIMIZE_MAX_DIMENSION, OPTIMIZE_QUALITY, { alwaysEncode: true })
 }
 
-export function formatFileSize(bytes: number): string {
-  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
-}
-
 export function isFileTooLarge(file: File): boolean {
   return file.size > MAX_ORIGINAL_BYTES
 }

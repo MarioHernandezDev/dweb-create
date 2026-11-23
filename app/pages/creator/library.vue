@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { errorMessage } from '~/utils/error-message'
 import { filterLibrary, humanSize, LIBRARY_ACCEPT, LIBRARY_MAX_FILES, normalizeTags, tagCounts, type LibraryItem } from '~/utils/media-library'
 
 // Biblioteca de archivos del creador: imágenes reutilizables (portadas de publicaciones y de paquetes).
@@ -51,7 +52,7 @@ async function saveEdit() {
     toast.success('Cambios guardados')
     editOpen.value = false
   } catch (e) {
-    editError.value = e instanceof Error ? e.message : 'No se han podido guardar los cambios.'
+    editError.value = errorMessage(e, 'No se han podido guardar los cambios.')
   } finally {
     editBusy.value = false
   }

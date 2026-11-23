@@ -50,3 +50,13 @@ test.describe('Partner · paleta de comandos (Ctrl+K)', () => {
     await expect(paleta).toBeHidden()
   })
 })
+
+test.describe('Partner · ayuda dentro de la app', () => {
+  test('«Ayuda» está en el menú y abre los manuales dentro del panel', async ({ page }) => {
+    await page.goto('/partner')
+    await page.waitForLoadState('networkidle')
+    await page.locator('.shell__rail').getByRole('link', { name: 'Ayuda' }).click()
+    await expect(page).toHaveURL(/\/ayuda/)
+    await expect(page.locator('[data-help-doc]')).toHaveCount(3)
+  })
+})

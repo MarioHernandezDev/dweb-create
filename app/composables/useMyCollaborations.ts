@@ -1,3 +1,4 @@
+import { errorMessage } from '~/utils/error-message'
 import type { CollaborationStatus } from '~/types'
 import type { CollaborationTerms } from '~/utils/collaboration-terms'
 import { isActiveCollaborationStatus, isUnresolvedCollaborationStatus } from '~/utils/status'
@@ -25,6 +26,8 @@ export interface MyCollaboration extends CollaborationTerms {
   createdAt: string
   /** Cuándo caduca la solicitud (solo si está pendiente y es posterior a la migración de caducidad). */
   expiresAt: string | null
+  cancelRequestedBy?: string | null
+  cancelReason?: string | null
   initiatedBy: 'creator' | 'partner'
   /** Instantánea del paquete aceptado en el chat (null si no nació de una oferta o el paquete ya no existía). */
   packageTitle: string | null
@@ -42,6 +45,8 @@ interface CollaborationRow {
   paid_at: string | null
   created_at: string
   expires_at: string | null
+  cancel_requested_by?: string | null
+  cancel_reason?: string | null
   initiated_by: 'creator' | 'partner'
   scope_notes: string | null
   revisions_included: number | null
@@ -78,7 +83,7 @@ export function useMyCollaborations() {
 
     const { data, error } = await client
       .from('collaborations')
-      .select('id, status, creator_id, brief, budget_cents, paid_at, created_at, expires_at, initiated_by, scope_notes, revisions_included, exclusivity, usage_rights, campaign_goal, target_audience, tone, campaign_name, package_title, package_description, package_deliverables, creators(display_name, profile_id)')
+      .select('id, status, creator_id, brief, budget_cents, paid_at, created_at, expires_at, cancel_requested_by, cancel_reason, initiated_by, scope_notes, revisions_included, exclusivity, usage_rights, campaign_goal, target_audience, tone, campaign_name, package_title, package_description, package_deliverables, creators(display_name, profile_id)')
       .eq('partner_id', me.id)
       .order('created_at', { ascending: false })
       .limit(300)
@@ -98,6 +103,8 @@ export function useMyCollaborations() {
       paidAt: r.paid_at,
       createdAt: r.created_at,
       expiresAt: r.expires_at,
+      cancelRequestedBy: r.cancel_requested_by ?? null,
+      cancelReason: r.cancel_reason ?? null,
       initiatedBy: r.initiated_by,
       scopeNotes: r.scope_notes,
       revisionsIncluded: r.revisions_included,
@@ -222,7 +229,7 @@ export function useMyCollaborations() {
       await navigateTo(url, { external: true })
     } catch (e) {
       payError.value = (e as { data?: { statusMessage?: string } })?.data?.statusMessage
-        ?? (e instanceof Error ? e.message : 'No se ha podido iniciar el pago. Inténtalo de nuevo.')
+        ?? (errorMessage(e, 'No se ha podido iniciar el pago. Inténtalo de nuevo.'))
     } finally {
       paying.value = null
     }

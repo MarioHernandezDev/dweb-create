@@ -83,6 +83,61 @@ test.describe('Ayuda y manuales', () => {
   })
 })
 
+test.describe('Calendario suscribible · enlaces', () => {
+  test('un token falso o mal formado devuelve 404 y nunca un calendario', async ({ request }) => {
+    for (const token of ['3f2b8c1e-9a4d-4c7e-8b1a-5d6e7f8a9b0c.ics', '3f2b8c1e-9a4d-4c7e-8b1a-5d6e7f8a9b0c', 'no-es-un-token', '..%2F..%2Fetc%2Fpasswd']) {
+      const res = await request.get(`/api/calendar/${token}`)
+      expect(res.status(), token).toBe(404)
+      expect(res.headers()['content-type'] ?? '', token).not.toContain('calendar')
+    }
+  })
+})
+
+test.describe('Landing · barra de navegación por tamaños', () => {
+  for (const [ancho, menu] of [[375, true], [768, true], [1023, true], [1280, false]] as const) {
+    test(`${ancho} px: ${menu ? 'menú hamburguesa, sin enlaces desbordados' : 'enlaces y botones a la vista'}`, async ({ page }) => {
+      await page.setViewportSize({ width: ancho, height: 800 })
+      await page.goto('/')
+      await page.waitForLoadState('networkidle')
+      if (menu) {
+        await expect(page.locator('.land-nav__toggle')).toBeVisible()
+        await expect(page.locator('.land-nav__links')).toBeHidden()
+      } else {
+        await expect(page.locator('.land-nav__toggle')).toBeHidden()
+        await expect(page.locator('.land-nav__links')).toBeVisible()
+        const cortado = await page.locator('.land-nav__actions').evaluate((e) => e.getBoundingClientRect().right > window.innerWidth)
+        expect(cortado, 'los botones de la barra no pueden salirse de la pantalla').toBe(false)
+      }
+    })
+  }
+
+  test('/ayuda: las etiquetas «Para: …» son texto, no botones', async ({ page }) => {
+    await page.goto('/ayuda')
+    await expect(page.locator('[data-help-doc]')).toHaveCount(3)
+    await expect(page.locator('button.chip')).toHaveCount(0)
+    await expect(page.locator('main#contenido')).toHaveCount(1)
+  })
+})
+
+test.describe('Landing · Raya', () => {
+  test('Raya no aparece en «Para quién es» y sí en el resto', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 900 })
+    await page.goto('/')
+    await page.waitForLoadState('networkidle')
+    const raya = page.locator('[data-ray-companion]')
+    await expect(raya).toBeAttached()
+    await expect(raya).not.toHaveClass(/is-hidden/)
+
+    await page.locator('#perfiles').scrollIntoViewIfNeeded()
+    await page.evaluate(() => document.querySelector('#perfiles')!.scrollIntoView({ block: 'center' }))
+    await expect(raya).toHaveClass(/is-hidden/)
+    await expect(raya).toBeHidden()
+
+    await page.evaluate(() => document.querySelector('#fases')!.scrollIntoView({ block: 'center' }))
+    await expect(raya).not.toHaveClass(/is-hidden/)
+  })
+})
+
 test.describe('Guardas de ruta (sin sesión)', () => {
   for (const ruta of ['/creator', '/creator/library', '/creator/packages', '/partner', '/partner/requests', '/inbox', '/chat']) {
     test(`${ruta} redirige al login`, async ({ page }) => {

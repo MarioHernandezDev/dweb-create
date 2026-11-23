@@ -49,6 +49,14 @@ export function paymentState(c: PhaseSubject & { budgetCents: number | null }, p
   return c.budgetCents ? 'pending' : 'none'
 }
 
+/**
+ * Publicaciones «listas»: aprobadas por la marca (estado Programado) o ya publicadas. Es el avance que se enseña cuando la
+ * colaboración no tiene entregables formales: antes solo contaba las publicadas y una pieza aprobada seguía en «0/2».
+ */
+export function readyPostCount(posts: { status: string }[]): number {
+  return posts.filter((p) => p.status === 'scheduled' || p.status === 'published').length
+}
+
 /** Título corto de una colaboración: el del paquete aceptado o la primera frase del brief. */
 export function collabTitle(c: { campaignName?: string | null; packageTitle?: string | null; brief: string }, max = 60): string {
   const base = (c.campaignName?.trim() || c.packageTitle?.trim() || c.brief.trim().split(/(?<=[.!?])\s|\n/)[0] || 'Colaboración').trim().replace(/\.$/, '')

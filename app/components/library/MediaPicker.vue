@@ -1,14 +1,17 @@
 <script setup lang="ts">
-import { filterLibrary, tagCounts, type LibraryItem } from '~/utils/media-library'
+import { filterLibrary, LIBRARY_ACCEPT, LIBRARY_MAX_FILES, tagCounts, type LibraryItem } from '~/utils/media-library'
 
 /**
  * Selector de una imagen de la biblioteca (hoja inferior): buscar por nombre o etiqueta y pulsar una para elegirla.
- * No sube ni borra nada: solo devuelve la elegida. Se usa en las portadas de publicaciones y de paquetes.
+ * Permite subir una imagen nueva sin salir de aquí (si subes una sola, se elige sola); no borra nada. Devuelve la elegida.
+ * Se usa en las portadas de publicaciones y de paquetes.
  */
 const open = defineModel<boolean>({ default: false })
 const emit = defineEmits<{ pick: [item: LibraryItem] }>()
 
-const { items, loaded, loading, error, load } = useMediaLibrary()
+const { items, loaded, loading, uploading, error, load, upload } = useMediaLibrary()
+const fileInput = ref<HTMLInputElement | null>(null)
+const uploadErrors = ref<string[]>([])
 const query = ref('')
 const tag = ref<string | null>(null)
 
@@ -16,6 +19,7 @@ watch(open, (isOpen) => {
   if (!isOpen) return
   query.value = ''
   tag.value = null
+  uploadErrors.value = []
   load()
 })
 
@@ -24,6 +28,19 @@ const tags = computed(() => tagCounts(items.value).slice(0, 12))
 function choose(item: LibraryItem) {
   emit('pick', item)
   open.value = false
+}
+
+const full = computed(() => items.value.length >= LIBRARY_MAX_FILES)
+async function onFiles(e: Event) {
+  const input = e.target as HTMLInputElement
+  const files = Array.from(input.files ?? [])
+  input.value = ''
+  if (!files.length) return
+  uploadErrors.value = []
+  const result = await upload(files)
+  uploadErrors.value = result.errors
+  // Una sola imagen subida: es la que se quería usar, así que se elige sin más pasos.
+  if (files.length === 1 && result.added === 1 && items.value[0]) choose(items.value[0])
 }
 </script>
 
@@ -39,7 +56,7 @@ function choose(item: LibraryItem) {
       </template>
 
       <EmptyState v-else-if="!items.length" icon="ph:images" mascot="swim" title="Tu biblioteca está vacía" description="Sube aquí las imágenes que usas a menudo y podrás ponerlas de portada con un toque.">
-        <BaseButton to="/creator/library" variant="primary" size="sm" icon="ph:upload-simple-bold">Ir a la biblioteca</BaseButton>
+        <BaseButton variant="primary" size="sm" icon="ph:upload-simple-bold" :loading="uploading" data-picker-upload @click="fileInput?.click()">Subir una imagen</BaseButton>
       </EmptyState>
 
       <template v-else>
@@ -55,8 +72,16 @@ function choose(item: LibraryItem) {
             <span class="libpick__name">{{ i.name }}</span>
           </button>
         </div>
-        <p class="libpick__foot"><NuxtLink to="/creator/library" class="underline font-semibold">Gestionar la biblioteca</NuxtLink></p>
       </template>
+
+      <ul v-if="uploadErrors.length" class="libpick__msg" role="alert" data-picker-upload-errors>
+        <li v-for="msg in uploadErrors" :key="msg">{{ msg }}</li>
+      </ul>
+      <p v-if="!error && !(loading && !loaded)" class="libpick__foot">
+        <BaseButton v-if="items.length" variant="secondary" size="sm" icon="ph:upload-simple-bold" :loading="uploading" :disabled="uploading || full" data-picker-upload @click="fileInput?.click()">Subir una imagen</BaseButton>
+        <NuxtLink to="/creator/library" class="underline font-semibold">Gestionar la biblioteca</NuxtLink>
+      </p>
+      <input ref="fileInput" type="file" :accept="LIBRARY_ACCEPT" class="hidden" data-picker-file @change="onFiles">
     </div>
   </BottomSheet>
 </template>

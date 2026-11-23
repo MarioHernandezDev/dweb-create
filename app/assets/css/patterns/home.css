@@ -40,7 +40,8 @@
   .home-hero--photo { @media (width >= 48rem) { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); .home-hero__photo { height: 100%; } } }
 
   /* ---- Actividad: filas sin caja ---- */
-  .activity { display: grid; margin: 0 -0.5rem; }
+  /* `minmax(0, 1fr)`: con la columna `auto` un título con puntos suspensivos ensanchaba la página entera en móvil. */
+  .activity { display: grid; grid-template-columns: minmax(0, 1fr); margin: 0 -0.5rem; }
   .activity__row {
     display: flex; align-items: center; gap: 0.75rem; padding: 0.625rem 0.5rem; border-radius: var(--radius-sm);
     text-decoration: none; transition: background-color var(--dur) var(--ease-out);

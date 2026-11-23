@@ -25,6 +25,7 @@ const inline = computed(() => !!main.value && !!props.inlineKinds?.includes(main
 // Quién tiene la pelota: así se distingue de un vistazo «me toca a mí» de «espera la otra parte».
 const kicker = computed(() => {
   if (main.value) return 'Siguiente paso · te toca a ti'
+  if (props.waiting?.detail) return 'Siguiente paso'
   if (props.waiting) return `Siguiente paso · le toca a ${props.waiting.counterpartName}`
   return props.closedText ? 'Estado' : 'Siguiente paso'
 })
@@ -44,7 +45,7 @@ const kicker = computed(() => {
     </template>
     <template v-else-if="waiting">
       <h2 id="nextstep-title" class="nextstep__title"><Icon name="ph:hourglass-medium" class="size-5" /> {{ waiting.text }}</h2>
-      <p class="nextstep__detail">No hace falta que hagas nada ahora: te avisaremos cuando cambie.</p>
+      <p class="nextstep__detail">{{ waiting.detail ?? 'No hace falta que hagas nada ahora: te avisaremos cuando cambie.' }}</p>
     </template>
     <template v-else>
       <h2 id="nextstep-title" class="nextstep__title"><Icon name="ph:check-circle-fill" class="size-5" /> {{ closedText ?? 'No tienes nada pendiente aquí' }}</h2>

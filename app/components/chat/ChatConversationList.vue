@@ -25,10 +25,10 @@ const filters: { value: ConversationFilter; label: string }[] = [
   { value: 'offers', label: 'Ofertas' }
 ]
 
-const shown = computed(() => filterConversations(conversations.value, { query: query.value, filter: filter.value }, pendingIncomingByConversation.value))
+const activeId = computed(() => route.params.id as string | undefined)
+const shown = computed(() => filterConversations(conversations.value, { query: query.value, filter: filter.value, keepId: activeId.value }, pendingIncomingByConversation.value))
 const unreadTotal = computed(() => conversations.value.filter((c) => c.unread).length)
 const pendingTotal = computed(() => Object.values(pendingIncomingByConversation.value).filter((n) => n > 0).length)
-const activeId = computed(() => route.params.id as string | undefined)
 
 async function load() {
   refreshing.value = true

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { collabBriefExcerpt, collabDisplayName, collabPhase, collabTitle, paymentState } from '../../app/utils/collab-phase'
+import { collabBriefExcerpt, collabDisplayName, collabPhase, collabTitle, paymentState, readyPostCount } from '../../app/utils/collab-phase'
 
 const c = (o: Partial<{ status: string; paidAt: string | null }> = {}) => ({ status: 'accepted', paidAt: null, ...o })
 
@@ -61,5 +61,12 @@ describe('collabContextLabel', () => {
     expect(collabContextLabel({ campaignName: ' Primavera ', partnerName: 'mexo' })).toBe('Primavera')
     expect(collabContextLabel({ campaignName: null, partnerName: 'mexo' })).toBe('mexo')
     expect(collabContextLabel(undefined)).toBe('Colaboración')
+  })
+})
+
+describe('readyPostCount', () => {
+  it('cuenta las piezas aprobadas (Programado) y las publicadas, no las que siguen en trabajo', () => {
+    expect(readyPostCount([{ status: 'scheduled' }, { status: 'published' }, { status: 'in_production' }, { status: 'ready_for_review' }, { status: 'idea' }])).toBe(2)
+    expect(readyPostCount([])).toBe(0)
   })
 })

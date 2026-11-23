@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { suggestionsForDraft, platformMeta } from '~/utils/mock-data'
 import type { ContentType, Platform, Suggestion } from '~/types'
-import { contentTypeMeta } from '~/utils/status'
+import { contentTypeMeta, relativeTime } from '~/utils/status'
+import { draftStorageKey, isEmptyDraft, parseDraft, serializeDraft } from '~/utils/post-draft'
 import { sanitizePostTemplate } from '~/utils/post-templates'
 
 const { paymentsEnabled, predictionsEnabled } = useLaunchMode()
@@ -78,6 +79,77 @@ const createdPostId = ref<string | null>(null)
 // Ya se llevó al usuario a la página de la publicación (o va de camino): no hace falta el aviso con enlace al cerrar.
 const navigated = ref(false)
 
+// ---- Borrador autoguardado (ver utils/post-draft.ts): lo escrito sobrevive a cerrar la hoja o la pestaña ----
+const sessionUser = useSupabaseUser()
+const draftKey = computed(() => {
+  const u = sessionUser.value as { sub?: string; id?: string } | null
+  const id = u?.sub ?? u?.id
+  return id ? draftStorageKey(id) : null
+})
+const restoredAt = ref<string | null>(null)
+let draftTimer: ReturnType<typeof setTimeout> | null = null
+
+function readDraft() {
+  try { return draftKey.value ? parseDraft(localStorage.getItem(draftKey.value)) : null } catch { return null }
+}
+function clearDraft() {
+  try { if (draftKey.value) localStorage.removeItem(draftKey.value) } catch { /* sin almacenamiento: se sigue sin borrador */ }
+}
+function persistDraft() {
+  if (!draftKey.value || createdPostId.value || stage.value !== 'draft') return
+  const data = {
+    title: title.value, caption: caption.value, contentType: contentType.value, platform: platform.value,
+    extraPlatforms: extraPlatforms.value, hashtags: parsedHashtags(), collaborationId: collaborationId.value, dueDate: dueDate.value
+  }
+  try {
+    if (isEmptyDraft(data)) localStorage.removeItem(draftKey.value)
+    else localStorage.setItem(draftKey.value, serializeDraft(data))
+  } catch { /* cuota llena o modo privado: no pasa nada */ }
+}
+function flushDraft() {
+  if (draftTimer) { clearTimeout(draftTimer); draftTimer = null }
+  if (open.value) persistDraft()
+}
+watch([title, caption, hashtagsInput, contentType, platform, extraPlatforms, collaborationId, dueDate], () => {
+  if (!open.value) return
+  if (draftTimer) clearTimeout(draftTimer)
+  draftTimer = setTimeout(persistDraft, 600)
+}, { deep: true })
+onMounted(() => window.addEventListener('pagehide', flushDraft))
+onBeforeUnmount(() => { window.removeEventListener('pagehide', flushDraft); if (draftTimer) clearTimeout(draftTimer) })
+
+/** Si la hoja se abre en blanco y hay un borrador guardado, se recupera (la colaboración solo si sigue activa). */
+function restoreDraft() {
+  if (createdPostId.value || props.prefill || title.value || caption.value || hashtagsInput.value) return
+  const d = readDraft()
+  if (!d) return
+  title.value = d.title
+  caption.value = d.caption
+  contentType.value = d.contentType
+  platform.value = d.platform
+  extraPlatforms.value = d.extraPlatforms
+  hashtagsInput.value = d.hashtags.join(' ')
+  if (d.dueDate && d.dueDate >= todayIso && !props.presetDate) dueDate.value = d.dueDate
+  restoredAt.value = new Date(d.savedAt).toISOString()
+  if (d.collaborationId && !props.collaborationId) {
+    Promise.resolve(ensureCollabRequestsLoaded()).then(() => {
+      if (open.value && activeCollaborations.value.some((c) => c.id === d.collaborationId)) collaborationId.value = d.collaborationId
+    })
+  }
+}
+function discardDraft() {
+  clearDraft()
+  restoredAt.value = null
+  title.value = ''
+  caption.value = ''
+  hashtagsInput.value = ''
+  extraPlatforms.value = []
+  contentType.value = 'reel'
+  platform.value = 'instagram'
+  if (!props.collaborationId) collaborationId.value = ''
+  dueDate.value = props.presetDate ?? defaultDueDate()
+}
+
 function detailPath(id: string) {
   return `/creator/post/${id}`
 }
@@ -131,6 +203,8 @@ async function saveDraft(): Promise<string> {
     })
     createdPostId.value = created.id
     justCreated.value = true
+    clearDraft()
+    restoredAt.value = null
     // Checklist de la plantilla: una tarea tras otra (para respetar el orden); si alguna falla, la publicación ya existe.
     if (templateChecklist.value.length) {
       try {
@@ -228,8 +302,13 @@ watch(open, (value) => {
       extraPlatforms.value = []
       hashtagsInput.value = props.prefill.hashtags.join(' ')
     }
+    restoreDraft()
     return
   }
+  // Se cierra: lo escrito a medias queda guardado como borrador antes de vaciar el formulario.
+  if (draftTimer) { clearTimeout(draftTimer); draftTimer = null }
+  persistDraft()
+  restoredAt.value = null
   stage.value = 'draft'
   title.value = ''
   caption.value = ''
@@ -249,6 +328,11 @@ watch(open, (value) => {
         <p class="composer__lead">
           <Icon name="ph:lightbulb-fill" class="size-5 shrink-0" />
           Empieza por lo básico: podrás completar el resto, añadir la imagen y planificarla después en su ficha.
+        </p>
+        <p v-if="restoredAt" class="composer__restored" role="status" data-draft-restored>
+          <Icon name="ph:clock-counter-clockwise-bold" class="size-4 shrink-0" aria-hidden="true" />
+          <span>Hemos recuperado tu borrador ({{ relativeTime(restoredAt) }}).</span>
+          <button type="button" class="underline font-semibold" data-draft-discard @click="discardDraft">Descartar</button>
         </p>
 
         <ProposalTemplateBar kind="post" :current="templateCurrent" apply-hint="revisa los datos y ajusta la fecha" @apply="applyTemplate" />

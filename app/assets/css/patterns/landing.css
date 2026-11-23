@@ -32,7 +32,7 @@
     @media (width >= 48rem) { height: 4.5rem; }
   }
   .land-nav__brand { display: inline-flex; text-decoration: none; }
-  .land-nav__links { display: none; align-items: center; gap: 0.25rem; @media (width >= 48rem) { display: flex; } }
+  .land-nav__links { display: none; align-items: center; gap: 0.25rem; @media (width >= 64rem) { display: flex; } }
   .land-nav__link {
     display: inline-flex;
     align-items: center;
@@ -46,14 +46,14 @@
     &:hover { color: var(--color-hueso-50); background: rgb(245 241 234 / 8%); }
     &.is-active { color: var(--color-hueso-50); background: rgb(245 241 234 / 12%); }
   }
-  .land-nav__actions { display: none; align-items: center; gap: 0.5rem; @media (width >= 48rem) { display: flex; } }
-  .land-nav__toggle { @media (width >= 48rem) { display: none; } }
+  .land-nav__actions { display: none; align-items: center; gap: 0.5rem; @media (width >= 64rem) { display: flex; } }
+  .land-nav__toggle { @media (width >= 64rem) { display: none; } }
   .land-nav__menu {
     display: grid;
     gap: 0.25rem;
     padding: 1rem 1.25rem 1.5rem;
     border-top: 1px solid rgb(245 241 234 / 10%);
-    @media (width >= 48rem) { display: none; }
+    @media (width >= 64rem) { display: none; }
   }
   .land-nav__menu .land-nav__link { height: 3rem; font-size: var(--text-lg); }
   .land-nav__menu-actions { display: grid; gap: 0.5rem; margin-top: 0.75rem; }
@@ -228,8 +228,9 @@
   .land-foot__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2.5rem 1.5rem; @media (width >= 48rem) { grid-template-columns: 1.4fr 1fr 1fr 1.2fr; } }
   .land-foot__brand { grid-column: 1 / -1; @media (width >= 48rem) { grid-column: auto; } }
   .land-foot__title { margin-bottom: 0.875rem; font-size: var(--text-sm); font-weight: 700; color: var(--color-hueso-100); }
-  .land-foot__list { display: grid; gap: 0.625rem; font-size: var(--text-sm); }
-  .land-foot__link { text-decoration: none; transition: color var(--dur) var(--ease-out); &:hover { color: var(--color-hueso-50); text-decoration: underline; } }
+  .land-foot__list { display: grid; gap: 0.125rem; font-size: var(--text-sm); }
+  /* Objetivo táctil de al menos 24 px de alto (WCAG 2.2, 2.5.8): antes los enlaces del pie medían 18 px. */
+  .land-foot__link { display: inline-block; padding-block: 0.3125rem; text-decoration: none; transition: color var(--dur) var(--ease-out); &:hover { color: var(--color-hueso-50); text-decoration: underline; } }
   .land-foot__bottom { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem 1.5rem; margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid rgb(245 241 234 / 10%); font-size: var(--text-sm); }
 
   /* ---- Acceso y alta ---- */
@@ -295,6 +296,8 @@
 /* ---- Ayuda y manuales (/ayuda) ---- */
 @layer components {
   .helpdocs { display: grid; gap: 1.25rem; margin-top: 2.5rem; padding: 0; list-style: none; @media (width >= 48rem) { grid-template-columns: repeat(2, minmax(0, 1fr)); } @media (width >= 64rem) { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+  .helpdocs-embedded__intro { color: var(--text-muted); max-width: 52ch; }
+  .helpdocs-embedded .helpdocs { margin-top: 1.5rem; }
   .helpdoc { display: flex; }
   .helpdoc__card { display: flex; flex-direction: column; width: 100%; gap: 0.25rem; }
   .helpdoc__head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem; margin-bottom: 1rem; }

@@ -351,6 +351,10 @@ const heroRange = computed(() => rangeText(
               <NotificationPreferences role="partner" />
             </PanelCard>
 
+            <PanelCard title="Acceso a la cuenta" data-card="account-access">
+              <AccountAccessCard />
+            </PanelCard>
+
             <PanelCard title="Tus datos" data-card="data-export">
               <DataExportCard />
             </PanelCard>

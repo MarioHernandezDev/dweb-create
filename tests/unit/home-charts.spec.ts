@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest'
-import { overdueCount, phaseShares, weekDays, weekDaysSummary } from '../../app/utils/home-charts'
+import { overdueCount, phaseShares, weekBars, weekDaysSummary } from '../../app/utils/home-charts'
 import type { PostStatus } from '../../app/types'
 
 const post = (dueInDays: number, status: PostStatus) => ({ dueInDays, status })
 const monday = new Date(2026, 10, 2) // lunes 2 de noviembre de 2026
 
-describe('weekDays', () => {
+describe('weekBars', () => {
   it('devuelve 7 días empezando hoy y marca solo el primero como hoy', () => {
-    const days = weekDays([], monday)
+    const days = weekBars([], monday)
     expect(days).toHaveLength(7)
     expect(days.map((d) => d.today)).toEqual([true, false, false, false, false, false, false])
     expect(days[0]!.label).toBe('lun')
@@ -15,14 +15,14 @@ describe('weekDays', () => {
   })
 
   it('separa pendientes y publicadas por día, y un día vacío es 0 (no un hueco)', () => {
-    const days = weekDays([post(0, 'idea'), post(0, 'published'), post(0, 'scheduled'), post(3, 'in_production')], monday)
+    const days = weekBars([post(0, 'idea'), post(0, 'published'), post(0, 'scheduled'), post(3, 'in_production')], monday)
     expect(days[0]).toMatchObject({ pending: 2, done: 1 })
     expect(days[3]).toMatchObject({ pending: 1, done: 0 })
     expect(days[1]).toMatchObject({ pending: 0, done: 0 })
   })
 
   it('ignora lo que cae fuera de los 7 días (pasado y futuro lejano)', () => {
-    const days = weekDays([post(-2, 'idea'), post(7, 'idea'), post(30, 'idea')], monday)
+    const days = weekBars([post(-2, 'idea'), post(7, 'idea'), post(30, 'idea')], monday)
     expect(days.every((d) => d.pending === 0 && d.done === 0)).toBe(true)
   })
 })
@@ -53,7 +53,7 @@ describe('phaseShares', () => {
 
 describe('weekDaysSummary', () => {
   it('describe cada día con texto y usa singular/plural', () => {
-    const text = weekDaysSummary(weekDays([post(0, 'idea'), post(1, 'idea'), post(1, 'idea')], monday))
+    const text = weekDaysSummary(weekBars([post(0, 'idea'), post(1, 'idea'), post(1, 'idea')], monday))
     expect(text).toContain('1 entrega')
     expect(text).toContain('2 entregas')
     expect(text).toContain('sin entregas')

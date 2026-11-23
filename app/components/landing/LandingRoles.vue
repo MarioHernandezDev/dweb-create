@@ -25,7 +25,7 @@ const cards: RoleCard[] = [
 </script>
 
 <template>
-  <section id="perfiles" class="band band--paper" data-companion data-companion-mood="swim" data-companion-say="¿Creador o marca? Elige cómo entrar.">
+  <section id="perfiles" class="band band--paper" data-companion-hide>
     <div class="container">
       <div class="band__head reveal">
         <h2 class="band__title">Creadores y marcas: mismo tablero, distinta vista.</h2>

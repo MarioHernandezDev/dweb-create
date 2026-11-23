@@ -16,7 +16,7 @@ function goHome() {
 </script>
 
 <template>
-  <div class="splash">
+  <main class="splash">
     <WaveMotif class="splash__waves" />
     <div class="splash__box">
       <RayMascot tone="light" :size="132" :mood="isNotFound ? 'wow' : 'sleepy'" />
@@ -31,5 +31,5 @@ function goHome() {
       </p>
       <BaseButton variant="brand" size="lg" icon="ph:house-fill" @click="goHome">Volver al inicio</BaseButton>
     </div>
-  </div>
+  </main>
 </template>

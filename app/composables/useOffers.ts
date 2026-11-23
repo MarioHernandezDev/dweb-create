@@ -1,4 +1,4 @@
-export type OfferStatus = 'pending' | 'accepted' | 'declined'
+import type { OfferStatus } from '~/utils/chat-view'
 
 export interface Offer {
   id: string

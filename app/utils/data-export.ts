@@ -55,7 +55,7 @@ const EXTRA_SECTION_COLUMNS: Record<string, string[]> = {
 }
 
 /** Una celda CSV (RFC 4180 con «;»): fechas tal cual, listas separadas por coma, objetos como JSON y protección frente a fórmulas de hoja de cálculo. */
-export function csvCell(value: unknown): string {
+export function exportCsvCell(value: unknown): string {
   if (value === null || value === undefined) return ''
   let text: string
   if (typeof value === 'string') text = value
@@ -67,9 +67,9 @@ export function csvCell(value: unknown): string {
   return /[";\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text
 }
 
-export function toCsv(columns: string[], rows: Record<string, unknown>[]): string {
-  const header = columns.map(csvCell).join(CSV_SEPARATOR)
-  const lines = rows.map((row) => columns.map((c) => csvCell(row[c])).join(CSV_SEPARATOR))
+export function exportToCsv(columns: string[], rows: Record<string, unknown>[]): string {
+  const header = columns.map(exportCsvCell).join(CSV_SEPARATOR)
+  const lines = rows.map((row) => columns.map((c) => exportCsvCell(row[c])).join(CSV_SEPARATOR))
   return [header, ...lines].join('\r\n') + '\r\n'
 }
 
@@ -112,10 +112,10 @@ export function buildExportEntries(cuenta: Record<string, unknown>, datos: Recor
   ].join('\r\n') + '\r\n'
   return [
     { name: 'LEEME.txt', content: readme },
-    { name: 'cuenta.csv', content: toCsv(['grupo', 'campo', 'valor'], accountRows) },
+    { name: 'cuenta.csv', content: exportToCsv(['grupo', 'campo', 'valor'], accountRows) },
     ...sections.map((section) => {
       const rows = datos[section] as Record<string, unknown>[]
-      return { name: `${section}.csv`, content: toCsv(sectionColumns(section, rows), rows) }
+      return { name: `${section}.csv`, content: exportToCsv(sectionColumns(section, rows), rows) }
     })
   ]
 }

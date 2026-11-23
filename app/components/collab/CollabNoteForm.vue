@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { errorMessage } from '~/utils/error-message'
 import type { CollaborationLogKind } from '~/composables/useCollaborationLog'
 
 /**
@@ -34,7 +35,7 @@ async function save() {
     open.value = false
     emit('added')
   } catch (e) {
-    error.value = e instanceof Error ? e.message : 'No se ha podido guardar. Inténtalo de nuevo.'
+    error.value = errorMessage(e, 'No se ha podido guardar. Inténtalo de nuevo.')
   } finally {
     saving.value = false
   }

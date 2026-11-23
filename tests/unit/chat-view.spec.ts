@@ -79,3 +79,19 @@ describe('systemIcon', () => {
     expect(systemIcon(null)).toBe('ph:info-fill')
   })
 })
+
+describe('filterConversations · conversaciones vacías', () => {
+  const list = [
+    { id: 'a', otherName: 'Ana', unread: false, lastMessageAt: '2026-11-19T10:00:00Z' },
+    { id: 'b', otherName: 'Beto', unread: false, lastMessageAt: null }
+  ]
+  it('no lista las que no tienen ningún mensaje', () => {
+    expect(filterConversations(list, { query: '', filter: 'all' }, {}).map((c) => c.id)).toEqual(['a'])
+  })
+  it('pero sí la que está abierta', () => {
+    expect(filterConversations(list, { query: '', filter: 'all', keepId: 'b' }, {}).map((c) => c.id)).toEqual(['a', 'b'])
+  })
+  it('si no se sabe la fecha (campo ausente), se lista', () => {
+    expect(filterConversations([{ id: 'c', otherName: 'Cris', unread: false }], { query: '', filter: 'all' }, {})).toHaveLength(1)
+  })
+})

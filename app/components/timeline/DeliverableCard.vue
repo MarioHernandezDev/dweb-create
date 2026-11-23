@@ -29,13 +29,12 @@ const coverStyle = computed(() => {
 </script>
 
 <template>
-  <!-- role="button" en vez de un <button> real: lleva un <slot name="actions">
-       con sus propios controles interactivos dentro (mismo motivo que BoardCard.vue). -->
+  <!-- Lleva un <slot name="actions"> con sus propios controles: no puede ser un botón. Con ratón se abre pulsando en cualquier
+       parte; con teclado, el botón real es el título (mismo motivo que BoardCard.vue). -->
   <div
     class="relative rounded-[var(--radius-sm)]" :class="interactive && 'cursor-pointer select-none'"
-    :role="interactive ? 'button' : undefined" :tabindex="interactive ? 0 : undefined"
-    :aria-label="interactive ? `Abrir «${post.title}»` : undefined" style="box-shadow: 3px 3px 0 0 rgb(26 22 37 / 7%), 6px 6px 0 0 rgb(26 22 37 / 4%)"
-    @click="interactive && $emit('open', post)" @keydown.enter="interactive && $emit('open', post)" @keydown.space.prevent="interactive && $emit('open', post)"
+    style="box-shadow: 3px 3px 0 0 rgb(26 22 37 / 7%), 6px 6px 0 0 rgb(26 22 37 / 4%)"
+    @click="interactive && $emit('open', post)"
   >
     <div class="flex gap-0 overflow-hidden rounded-[var(--radius-sm)] border border-[var(--color-hairline)] bg-[var(--color-paper)]">
       <div class="w-1 shrink-0" :style="{ background: statusMeta[post.status].color }" />
@@ -51,7 +50,7 @@ const coverStyle = computed(() => {
 
         <div class="min-w-0 flex-1">
           <div class="flex items-start justify-between gap-2">
-            <p class="text-base font-medium text-[var(--color-text)] leading-snug line-clamp-2">{{ post.title }}</p>
+            <p class="text-base font-medium text-[var(--color-text)] leading-snug line-clamp-2"><button v-if="interactive" type="button" class="text-left cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2">{{ post.title }}</button><template v-else>{{ post.title }}</template></p>
             <Icon :name="platformMeta[post.platform].icon" class="size-4 shrink-0 mt-0.5" :style="{ color: platformMeta[post.platform].colorVar }" />
           </div>
 

@@ -6,7 +6,7 @@ import { publishedThisWeek as countPublishedThisWeek } from '~/utils/post-librar
 import type { FirstStep } from '~/components/onboarding/FirstSteps.vue'
 import type { LastProposal } from '~/composables/useCollaborationOffers'
 
-import { weekDays, overdueCount, phaseShares } from '~/utils/home-charts'
+import { weekBars, overdueCount, phaseShares } from '~/utils/home-charts'
 
 useHead({ title: 'Inicio' })
 
@@ -148,7 +148,7 @@ const activity = computed<ActivityItem[]>(() => {
 })
 
 // Gráficas de resumen (datos ya cargados; nada se consulta aparte).
-const chartDays = computed(() => weekDays(posts.value, new Date()))
+const chartDays = computed(() => weekBars(posts.value, new Date()))
 const chartOverdue = computed(() => overdueCount(posts.value))
 const chartShares = computed(() => phaseShares(posts.value))
 

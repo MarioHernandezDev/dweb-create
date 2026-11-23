@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { isFileTooLarge, formatFileSize, resizeImageFile } from '~/utils/image'
+import { isFileTooLarge, resizeImageFile } from '~/utils/image'
+import { formatFileSize } from '~/utils/collab-files'
 
 /**
  * Foto de perfil circular editable — mismo patrón de interacción que
@@ -78,10 +79,10 @@ async function onRemove() {
   <div>
     <div class="relative size-[var(--uploader-size,4rem)] shrink-0">
       <button
-        type="button" :aria-label="avatarUrl ? 'Cambiar foto de perfil' : 'Añadir foto de perfil'"
-        class="group relative size-full rounded-full block" :disabled="uploading || removing" @click="inputEl?.click()"
+        type="button" class="group relative size-full rounded-full block" :disabled="uploading || removing" @click="inputEl?.click()"
       >
         <BaseAvatar :initials="initials" :src="avatarUrl" :hue="hue" :size="fluid ? 'fluid' : 'lg'" />
+        <span class="sr-only">{{ avatarUrl ? 'Cambiar foto de perfil' : 'Añadir foto de perfil' }}</span>
 
         <div
           class="absolute inset-0 flex items-center justify-center rounded-full bg-black/0 text-white opacity-0 transition-[background-color,opacity] duration-200"

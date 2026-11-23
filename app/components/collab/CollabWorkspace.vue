@@ -9,7 +9,8 @@ import { expiryState } from '~/utils/collab-expiry'
 import { collabPhase, collabDisplayName, collabBriefExcerpt, paymentState, formatMoney, COLLAB_PHASES } from '~/utils/collab-phase'
 import { collaborationStatusMeta } from '~/utils/status'
 import { agreementFingerprint, buildAgreementHtml, printHtml, type AgreementData } from '~/utils/agreement-summary'
-import { buildIcs, downloadIcs } from '~/utils/ics'
+import { buildIcs } from '~/utils/ics'
+import { downloadIcs } from '~/utils/ics-download'
 
 /**
  * Página de una colaboración, para los dos roles (`/creator/collaborations/[id]`
@@ -331,12 +332,12 @@ useHead({ title: computed(() => title.value || 'Colaboración') })
 
       <p v-if="expiry.label" class="cwork__expiry" :data-expired="expiry.expired" role="status">
         <Icon :name="expiry.expired ? 'ph:clock-countdown-fill' : 'ph:clock'" class="size-4" />
-        {{ expiry.expired ? 'Esta propuesta ha caducado: ya no se puede aceptar. Puedes rechazarla o pedir que te la envíen de nuevo.' : `${expiry.label}: pasado ese plazo ya no se podrá aceptar.` }}
+        {{ expiry.expired ? (view.initiatedBy === role ? 'Esta propuesta ha caducado: ya no se puede aceptar. Puedes retirarla y enviar una nueva.' : 'Esta propuesta ha caducado: ya no se puede aceptar. Puedes rechazarla o pedir que te la envíen de nuevo.') : `${expiry.label}: pasado ese plazo ya no se podrá aceptar.` }}
       </p>
 
       <CollabNextStep
         :tasks="work.tasks" :waiting="work.waiting" :closed-text="closedText"
-        :inline-kinds="section === 'resumen' ? ['respond_request', 'close_collaboration'] : []" @go="goTask"
+        :inline-kinds="section === 'resumen' ? ['respond_request', 'respond_cancel', 'close_collaboration'] : []" @go="goTask"
       />
 
       <SegmentedTabs :model-value="section" :options="sections" label="Secciones de la colaboración" class="cwork__tabs" data-collab-sections @update:model-value="setSection" />
@@ -348,7 +349,7 @@ useHead({ title: computed(() => title.value || 'Colaboración') })
             <div class="collab-actions">
               <NegotiationPanel
                 :collaboration-id="view.id" :initial-budget-cents="view.budgetCents" :status="view.status"
-                :my-role="role" :initiated-by="view.initiatedBy"
+                :my-role="role" :initiated-by="view.initiatedBy" :expired="expiry.expired"
                 @accept="handleAccept" @decline="handleDecline" @countered="onCountered"
               />
               <BaseButton
@@ -394,10 +395,12 @@ useHead({ title: computed(() => title.value || 'Colaboración') })
                 :collaboration-id="view.id" :counterpart-name="view.counterpartName" @rated="reloadEvents"
               />
               <p v-if="actionError" class="collab-error" role="alert">{{ actionError }}</p>
-              <CollabCancelPanel
-                :collaboration-id="view.id" :status="view.status" :paid-at="view.paidAt"
-                :my-profile-id="myProfileId" :counterpart-name="view.counterpartName" @changed="afterCancelChange"
-              />
+              <div id="cancelar">
+                <CollabCancelPanel
+                  :collaboration-id="view.id" :status="view.status" :paid-at="view.paidAt"
+                  :my-profile-id="myProfileId" :counterpart-name="view.counterpartName" @changed="afterCancelChange"
+                />
+              </div>
             </div>
           </PanelCard>
 

@@ -18,6 +18,7 @@ export function resetAccountCaches() {
   useState<number>('role-guard-user-cache-at', () => 0).value = 0
 
   useMyRole().reset()
+  useState<string | null>('calendar-feed-token', () => null).value = null
   useMyCreator().reset()
   useMyPartner().reset()
 

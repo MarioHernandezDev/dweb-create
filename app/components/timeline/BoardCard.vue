@@ -25,14 +25,10 @@ const dateLine = computed(() => {
 </script>
 
 <template>
-  <!-- No es un <button> real: la tarjeta tiene un <select> interactivo dentro
-       (el cambio de fase), y un botón no puede contener otro control
-       interactivo. role="button" + tabindex + Enter/Espacio es el patrón
-       correcto para ese caso. -->
-  <div
-    class="post-card" :class="overdue && 'post-card--overdue'" role="button" tabindex="0" :aria-label="`Abrir «${post.title}»`"
-    @click="$emit('open', post)" @keydown.enter="$emit('open', post)" @keydown.space.prevent="$emit('open', post)"
-  >
+  <!-- La tarjeta lleva un <select> dentro (el cambio de fase), así que no puede ser un botón ni llevar role="button":
+       un control no puede contener a otro. Con ratón se abre pulsando en cualquier parte; con teclado y lector de
+       pantalla, el botón real es el título (su nombre es el propio título). -->
+  <div class="post-card" :class="overdue && 'post-card--overdue'" @click="$emit('open', post)">
     <div class="post-card__cover">
       <SmartImage v-if="post.mediaUrl" :src="post.mediaUrl" :width="320" :height="160" class="post-card__photo" />
       <CoverArt v-else :seed="post.id" :icon="contentTypeMeta[post.contentType].icon" />
@@ -48,7 +44,7 @@ const dateLine = computed(() => {
         <span v-if="postLabels.length > MAX_LABELS" class="post-card__label post-card__label--more" :title="postLabels.slice(MAX_LABELS).map((l) => l.name).join(', ')">+{{ postLabels.length - MAX_LABELS }}</span>
       </div>
 
-      <p class="post-card__title">{{ post.title }}</p>
+      <p class="post-card__title"><button type="button" class="post-card__open">{{ post.title }}</button></p>
 
       <p v-if="overdue" class="post-card__chip post-card__chip--danger">{{ overdueLabel(post.dueInDays) }}</p>
       <p v-else-if="post.status !== 'published' && post.dueInDays === 1" class="post-card__chip">Vence mañana</p>

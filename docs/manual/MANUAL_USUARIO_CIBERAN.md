@@ -3,10 +3,10 @@ title: Manual de usuario de CIBERAN
 subtitle: Todo lo que necesitas para colaborar entre creadores y marcas, paso a paso y sin tecnicismos.
 etiqueta: Manual de usuario
 kicker: Guía oficial · Creadores y partners
-fecha: 19 de noviembre de 2026
-version: 1.0
+fecha: 20 de noviembre de 2026
+version: 1.1
 app: CIBERAN, lanzamiento gratuito (nov. 2026)
-pie: CIBERAN · Manual de usuario · v1.0
+pie: CIBERAN · Manual de usuario · v1.1
 ---
 
 # Antes de empezar
@@ -181,6 +181,8 @@ Si algo falla, verás uno de estos mensajes:
 
 ![Recuperar la contraseña](img/pub-olvido.jpg)
 
+> **Consejo:** si ya estás dentro de CIBERAN y solo quieres cambiar la contraseña, hazlo en **Perfil → Privacidad y cuenta → Acceso a la cuenta**.
+
 > **Atención:** los enlaces duran poco y **solo valen una vez**. Usa siempre el último correo que recibas: los anteriores dejan de valer.
 
 #### Si el enlace no funciona
@@ -230,7 +232,7 @@ Arriba a la derecha tienes siempre cuatro accesos:
 - **Chat**: tus conversaciones.
 - **Bandeja de entrada**: lo que te toca hacer y tus avisos. El número indica lo pendiente.
 
-Tu avatar lleva a tu **Perfil**. Abajo del menú están **Guardados** y **Cerrar sesión**.
+Tu avatar lleva a tu **Perfil**. Abajo del menú están **Guardados**, **Ayuda** (los manuales en PDF) y **Cerrar sesión**.
 
 ### La paleta de comandos (Ctrl o Cmd + K)
 
@@ -336,9 +338,35 @@ En la pestaña **Privacidad y cuenta** decides:
 - **Privacidad del chat**: **Cualquiera** (cualquier perfil puede escribirte) o **Solo tras oferta aceptada** (solo te escriben en texto libre quienes ya tienen una oferta aceptada contigo; aun así, cualquiera puede mandarte una oferta).
 - **Visibilidad del perfil**: si tu perfil se ve **sin iniciar sesión** para quien abra tu enlace. Verá tu nombre, foto, presentación, categorías, contenido destacado y valoración. Las tarifas, el catálogo y el contacto siguen pidiendo sesión.
 - **Avisos**: las solicitudes, ofertas y revisiones se avisan siempre. Eliges si quieres recordatorios de plazo, avisos de valoraciones, de notas del registro y de inicios de sesión. También los **avisos por correo**: un resumen si tienes avisos sin leer.
+- **Acceso a la cuenta**: ves tu email y puedes **cambiar tu contraseña o tu email** (los pasos están justo debajo).
 - **Tus datos**: **Descargar** una copia de tus datos (un ZIP con una hoja por tema), y **Eliminar mi cuenta**.
 
 ![Privacidad y cuenta](img/c-perfil-privacidad.jpg)
+
+![Acceso a la cuenta: cambiar contraseña o email](img/c-perfil-acceso.jpg)
+
+### Cambiar la contraseña
+
+**Qué queremos hacer:** poner una contraseña nueva estando dentro de tu cuenta.
+
+#### Pasos
+
+1. Ve a **Perfil → Privacidad y cuenta → Acceso a la cuenta** (en el partner, **Perfil → Privacidad**) y pulsa **Cambiar** junto a «Contraseña».
+2. **Paso 1 de 2:** escribe tu **contraseña actual** y pulsa **Enviar código al correo**.
+3. **Paso 2 de 2:** abre el correo que te hemos enviado y escribe el **código de 6 dígitos** (puedes pegarlo tal cual llega, con o sin guiones).
+4. Escribe la **contraseña nueva** y repítela. Mientras escribes, un medidor te dice si es **Muy débil, Débil, Aceptable, Buena o Excelente** y te da un consejo.
+5. Deja marcada (o desmarca) la casilla **Cerrar la sesión en mis otros dispositivos**.
+6. Pulsa **Cambiar contraseña**.
+
+#### Qué sucede después
+
+Verás el aviso «Contraseña cambiada». Si dejaste la casilla marcada, se cierra la sesión en tus demás dispositivos y tendrás que volver a entrar en ellos con la contraseña nueva.
+
+> **Consejo:** una contraseña **larga** protege más que una corta con símbolos. Una frase de 3 o 4 palabras sin relación entre sí es fácil de recordar y difícil de adivinar. Evita tu nombre, tu email y las contraseñas típicas («password123», «12345678»): CIBERAN no las admite.
+
+> **Atención:** el código caduca en unos minutos. Si no llega, mira el spam y pulsa **Reenviar código** (hay que esperar un minuto entre envíos). Si has perdido el acceso al correo de tu cuenta, no podrás cambiar la contraseña desde aquí: escribe al equipo de CIBERAN.
+
+> **Sin verificar:** el envío real del código depende del servicio de correo de CIBERAN. Los pasos, las validaciones y el medidor están comprobados; el segundo paso completo (con el código llegando a un buzón real) no se ha podido probar de principio a fin. No hay captura del segundo paso por el mismo motivo.
 
 > **Atención:** **Eliminar mi cuenta** borra tu cuenta y tus datos y **no se puede deshacer**. Antes puedes descargar una copia desde «Tus datos».
 
@@ -364,6 +392,8 @@ En la pestaña **Privacidad y cuenta** decides:
 Cada tarjeta muestra el nombre de la marca, cuántas colaboraciones tiene, si ha publicado **necesidades** (por ejemplo «1 necesidad · desde 500 €»), su **presupuesto** y tres acciones: (4) **Proponer**, el icono de **marcador** para guardarla y el icono de **mensaje** para escribirle.
 
 > **Aviso:** si una marca no ha completado su ficha, la tarjeta lo dice («Aún no ha completado su ficha»). Eso no impide proponerle una colaboración.
+
+> **Aviso:** los perfiles que todavía no han rellenado su ficha salen **al final** de los resultados, sea cual sea el orden que elijas.
 
 Con **Guardados** (en el menú, abajo) ves a quienes has marcado. En el buscador también existe un modo **Con IA**, que permite describir con tus palabras lo que buscas.
 
@@ -410,6 +440,8 @@ La página tiene cuatro vistas (1): **Tablero**, **Lista**, **Calendario** y **S
 | **Solicitudes** | Las propuestas que aún no están aceptadas: las que tú recibes y las que tú envías. |
 
 ![Vista Lista](img/c-colabs-lista.jpg)
+
+> **Aviso:** el avance de entregables que ves en el tablero y en la lista (por ejemplo «2/2») cuenta las publicaciones **listas**: las aprobadas por la marca y las ya publicadas.
 
 ![Vista Solicitudes (vacía en este ejemplo)](img/c-colabs-solicitudes.jpg)
 
@@ -596,6 +628,10 @@ Encima del tablero verás la semana actual, con cada entrega en su día y los co
 
 La publicación aparece en el tablero, en la columna que corresponda, y en el calendario. Si es de una colaboración, la marca la ve y cuenta como entregable.
 
+#### Borrador automático
+
+Si cierras la ventana de «Nueva publicación» a medias, CIBERAN **guarda lo que habías escrito** (hasta 14 días) y te lo devuelve la próxima vez que la abras, con el aviso «Hemos recuperado tu borrador». Pulsa **Descartar** para empezar de cero. El borrador se guarda en tu navegador: no se ve desde otro dispositivo ni desde otro navegador.
+
 > **Consejo:** no hace falta rellenarlo todo. La ventana lo dice: «Empieza por lo básico: podrás completar el resto, añadir la imagen y planificarla después en su ficha».
 
 ### La ficha de una publicación
@@ -694,6 +730,7 @@ CIBERAN te deja **deshacer** algunas acciones durante unos segundos:
 1. Abre la publicación o el paquete donde quieres la imagen.
 2. Pulsa **Elegir de la biblioteca**.
 3. Busca y pulsa la imagen que quieras.
+4. Si todavía no la tienes en la biblioteca, pulsa **Subir una imagen** en el propio selector. Si subes una sola, se elige automáticamente.
 
 ![Elegir de la biblioteca](img/c-biblioteca-selector.jpg)
 
@@ -744,7 +781,7 @@ Además de las solicitudes de colaboración, hay otra forma de empezar a trabaja
 - Un partner puede ir a tu perfil público y pulsar **Hacer oferta** sobre uno de tus paquetes, o hacerla desde el chat con el botón **Oferta**. Puede proponer un precio distinto al listado, para negociar.
 - Tú la ves en el **chat**, en una tarjeta con los botones **Aceptar** y **Rechazar**. Si el paquete ya no existe, la tarjeta dice «Esta oferta ya no está disponible».
 
-El **Chat** (icono de burbuja, arriba) lista tus conversaciones con filtros **Todas**, **No leídas** y **Ofertas**, y un buscador por nombre. Las ofertas que esperan tu respuesta aparecen marcadas. Para iniciar un chat, ve al perfil de alguien en **Descubrir** y pulsa el icono de mensaje.
+El **Chat** (icono de burbuja, arriba) lista tus conversaciones con filtros **Todas**, **No leídas** y **Ofertas**, y un buscador por nombre. Las ofertas que esperan tu respuesta aparecen marcadas. Para iniciar un chat, ve al perfil de alguien en **Descubrir** y pulsa el icono de mensaje. Las conversaciones en las que todavía no se ha escrito nada no aparecen en la lista hasta que haya un mensaje.
 
 ![Chat](img/c-chat.jpg)
 
@@ -789,6 +826,30 @@ CIBERAN tiene calendario en dos sitios:
 
 Además, en la pestaña **Acuerdo y archivos** de cada colaboración, **Añadir entregas al calendario** descarga un archivo para llevarlas a Google Calendar, Apple Calendar u Outlook.
 
+### Suscribirte al calendario (se actualiza solo)
+
+**Qué queremos hacer:** ver tus fechas de entrega en Google Calendar, Apple Calendar u Outlook sin descargar nada cada vez.
+
+#### Pasos
+
+1. Entra en **Colaboraciones** y abre la vista **Calendario**.
+2. Pulsa **Suscribirme al calendario**.
+3. Pulsa **Copiar enlace** (o **Abrir en mi calendario**, que lo abre directamente en la aplicación de tu dispositivo).
+4. En tu calendario, añade una suscripción «desde una dirección web» y pega el enlace:
+   - **Google Calendar:** Otros calendarios (+) → Desde URL.
+   - **Apple Calendar:** Archivo → Nueva suscripción a calendario.
+   - **Outlook:** Agregar calendario → Suscribirse desde la web.
+
+![Suscribirse al calendario](img/c-calendario-suscribir.jpg)
+
+#### Qué sucede después
+
+Tu calendario consulta el enlace cada cierto tiempo y muestra tus entregas con fecha (las de colaboraciones y, si eres creador, también tu contenido propio), de los últimos 30 días en adelante. Los cambios de fecha se reflejan solos; el tiempo que tarda depende de cada aplicación de calendario.
+
+> **Atención:** el enlace es **privado**: quien lo tenga puede ver tus fechas de entrega y sus títulos, sin iniciar sesión. Si lo compartes sin querer, pulsa **Generar enlace nuevo**: el anterior deja de funcionar y tendrás que suscribirte de nuevo con el nuevo.
+
+> **Sin verificar:** la suscripción solo funciona cuando CIBERAN está publicada en una dirección accesible desde internet; en un servidor local los calendarios externos no pueden alcanzarla. Cada aplicación de calendario actualiza a su ritmo.
+
 ## Bandeja de entrada
 
 La **Bandeja de entrada** (icono arriba a la derecha) reúne lo que te toca hacer y tus avisos, en tres pestañas.
@@ -813,9 +874,13 @@ Todo lo de tu cuenta está en **Perfil**, en las pestañas **Resumen**, **Ficha 
 | Decidir quién me escribe, qué avisos recibo o si mi perfil se ve sin iniciar sesión | **Perfil → Privacidad y cuenta** |
 | Descargar mis datos o borrar mi cuenta | **Perfil → Privacidad y cuenta → Tus datos** |
 | Cerrar sesión | Abajo del menú: **Cerrar sesión** |
-| Cambiar mi contraseña | Usa **¿Olvidaste tu contraseña?** en la pantalla de acceso |
+| Cambiar mi contraseña o mi email | **Perfil → Privacidad y cuenta → Acceso a la cuenta** |
+| Ver los manuales en PDF | Menú → **Ayuda** |
+| No recuerdo mi contraseña | **¿Olvidaste tu contraseña?** en la pantalla de acceso |
 
-> **Sin verificar:** en la aplicación no se ha encontrado un apartado para cambiar la contraseña o el email desde dentro del perfil. El camino comprobado para cambiar la contraseña es el de recuperación.
+> **Aviso:** para cambiar la contraseña o el email, CIBERAN pide antes tu contraseña actual, y el email nuevo no sustituye al actual hasta que abras el enlace que enviamos a ese correo.
+
+> **Sin verificar:** el envío de ese correo depende de la configuración del servicio de correo; no se ha podido garantizar su entrega.
 
 #### Cerrar sesión
 
@@ -879,11 +944,14 @@ Con **Guardados** (menú, abajo) recuperas a los creadores que marcaste, para co
 
 ### Comparar creadores
 
-CIBERAN no tiene una pantalla de «comparar» lado a lado. Para valorar varios creadores:
+Desde **Guardados** puedes comparar de 2 a 3 perfiles a la vez:
 
-1. Pulsa el marcador de cada uno para **guardarlos**.
-2. Abre **Guardados** para tenerlos juntos.
-3. Entra en el perfil de cada uno (siguiente apartado) y compara con calma sus paquetes, su audiencia y su valoración.
+1. Guarda a los creadores que te interesen con el icono de marcador.
+2. Abre **Guardados** y pulsa **Comparar** (aparece cuando tienes más de uno guardado).
+3. Marca entre 2 y 3 perfiles y pulsa **Comparar (N)**.
+4. Verás una comparación con su **tarifa**, su **reputación** y otros datos, y un botón **Ver perfil completo** en cada uno.
+
+> **Consejo:** compara con calma sus paquetes, su audiencia declarada y su valoración antes de contactar.
 
 ## Perfiles de creadores
 
@@ -1036,7 +1104,7 @@ CIBERAN no tiene un módulo de «campañas» como tal. Lo que sí ofrece para or
 |---|---|
 | **Nombre de campaña** | Al contactar o proponer, puedes ponerle un nombre («Lanzamiento de primavera»). Ese nombre identifica la colaboración en tableros, listas, la bandeja y el buscador. Si no lo pones, se usa el nombre del paquete o la primera frase del brief. |
 | **Tablero y Lista** | Ves todas tus colaboraciones por fase. |
-| **Calendario** | Ves las fechas de entrega. |
+| **Calendario** | Ves las fechas de entrega y puedes suscribir tu calendario externo con **Suscribirme al calendario**. |
 | **Exportar CSV** | Descargas el listado para trabajar en una hoja de cálculo. |
 | **Resultados** | Mides plazos, respuestas y revisiones. |
 | **Necesidades** | Publicas lo que buscas para que los creadores te hagan ofertas. |
@@ -1083,6 +1151,8 @@ Pulsa tu avatar para ir a **Perfil**. Tiene cuatro pestañas: **Resumen**, **Fic
 | Ver mis necesidades activas y las ofertas pendientes | **Perfil → Resumen**, con **Ver colaboraciones** y **Gestionar necesidades** |
 | Elegir quién me escribe, qué avisos recibo y si mi perfil se ve sin iniciar sesión | **Perfil → Privacidad** |
 | Ver el recorrido de bienvenida otra vez | **Perfil → Resumen → Ver el recorrido de bienvenida** |
+| Cambiar mi contraseña o mi email | **Perfil → Privacidad → Acceso a la cuenta** |
+| Ver los manuales en PDF | Menú → **Ayuda** |
 | Cerrar sesión | Abajo del menú: **Cerrar sesión** |
 
 También tienes **Chat**, **Bandeja de entrada**, **Guardados** y la **paleta de comandos (Ctrl o Cmd + K)**, que funcionan igual que en el creador.
@@ -1230,6 +1300,9 @@ Si olvidaste la contraseña, usa **¿Olvidaste tu contraseña?**. Si no te llega
 **¿Puedo entrar con Google?**
 No. Por ahora solo se entra con email y contraseña.
 
+**¿Puedo cambiar mi contraseña o mi email?**
+Sí, en **Perfil → Privacidad y cuenta → Acceso a la cuenta** (en el partner, **Perfil → Privacidad**). Para la contraseña te pedimos la actual y un código de 6 dígitos que enviamos a tu correo. Si cambias el email, te pide tu contraseña actual y tendrás que abrir el enlace que enviamos al correo nuevo para que se aplique.
+
 **¿Puedo borrar mi cuenta?**
 Sí, en **Perfil → Privacidad y cuenta → Eliminar mi cuenta**. No se puede deshacer. Antes puedes **Descargar** una copia de tus datos.
 
@@ -1267,6 +1340,9 @@ En **Publicaciones** (creador), en vista **Tablero**, **Calendario** o **Lista**
 **¿Puedo recuperar una publicación que borré sin querer?**
 Durante **8 segundos** tras borrarla aparece **Deshacer**. Pasado ese tiempo, se borra del todo.
 
+**¿Se pierde lo que escribo si cierro «Nueva publicación» a medias?**
+No: CIBERAN guarda un borrador en tu navegador durante 14 días y te lo devuelve al abrir la ventana. Puedes descartarlo con **Descartar**.
+
 **¿Dónde puedo encontrar mis estadísticas?**
 En **Resultados**: cómo van tus colaboraciones dentro de CIBERAN. Las **métricas de redes sociales** (alcance, likes, seguidores) **todavía no están disponibles** («Próximamente»).
 
@@ -1295,6 +1371,7 @@ En **Privacidad del chat** eliges: **Cualquiera**, o **Solo tras oferta aceptada
 | **Aprobación** | Cuando el partner da el visto bueno a un entregable. Se muestra como **Aprobada**. |
 | **Bandeja de entrada** | El lugar donde ves lo que te toca hacer y tus avisos. |
 | **Biblioteca** | Tu almacén de imágenes para reutilizar como portada (solo creadores). |
+| **Borrador** | Lo que escribes en «Nueva publicación» y todavía no has guardado. CIBERAN lo conserva en tu navegador hasta 14 días. |
 | **Brief** | La descripción de lo que se quiere conseguir con una colaboración: objetivo, público, tono y alcance. |
 | **Campaña** | El conjunto de contenido que una marca encarga con un mismo objetivo. En CIBERAN se identifica con el **nombre de campaña**. |
 | **Colaboración** | Un acuerdo entre un creador y un partner, con importe, entregables y plazos. |
@@ -1326,8 +1403,8 @@ En **Privacidad del chat** eliges: **Cualquiera**, o **Solo tras oferta aceptada
 
 | | |
 |---|---|
-| **Fecha de elaboración** | 19 de noviembre de 2026 |
-| **Versión del manual** | 1.0 |
+| **Fecha de elaboración** | 20 de noviembre de 2026 (v1.1; primera edición: 19 de noviembre) |
+| **Versión del manual** | 1.1 |
 | **Aplicación documentada** | CIBERAN en su lanzamiento gratuito (noviembre de 2026). La aplicación no muestra un número de versión. |
 | **Cómo se ha elaborado** | Recorriendo la aplicación con una cuenta de creador y otra de partner de prueba, y contrastando cada pantalla con su comportamiento real. Las capturas son reales; los datos personales se han sustituido por datos ficticios. |
 
@@ -1340,7 +1417,7 @@ En **Privacidad del chat** eliges: **Cualquiera**, o **Solo tras oferta aceptada
 | **Chat** con conversaciones reales | No había conversaciones; solo se capturó la pantalla vacía. |
 | Modo **Con IA** de Descubrir | Existe en pantalla; no se ha probado. |
 | **Envío de correos** (confirmación, recuperación, avisos por correo) | Dependen de la configuración del servicio de correo; no se ha podido garantizar su entrega. |
-| Cambio de **contraseña o email desde el perfil** | No se ha encontrado esa opción dentro de la aplicación. |
+| **Código del correo** al cambiar la contraseña, y cambio de **email** desde el perfil | La pantalla y sus mensajes están comprobados; la entrega del correo de confirmación depende del servicio de correo y no se ha podido garantizar. |
 
 ## Funciones previstas pero no disponibles
 
@@ -1351,5 +1428,6 @@ Métricas de redes sociales, pagos y cobros dentro de CIBERAN, predicción de re
 | Versión | Fecha | Cambios |
 |---|---|---|
 | **1.0** | 19-11-2026 | Primera edición completa: creador y partner, colaboración de principio a fin, preguntas frecuentes y glosario. Incluye biblioteca de archivos, plantillas y duplicado, paleta de comandos, deshacer, enlaces de entrega, nombre de campaña, varias redes por publicación, paquetes y necesidades destacados, recuperación de contraseña y rechazo con confirmación. |
+| **1.1** | 20-11-2026 | Cambio de contraseña (con código al correo, medidor de fortaleza y cierre de otras sesiones) y de email desde el perfil, enlace «Ayuda» dentro de la app, subida de imágenes desde el selector de la biblioteca, borrador automático de publicaciones, comparación de perfiles guardados, suscripción al calendario con enlace privado y renovable, avance de entregables «listas», perfiles sin ficha al final en Descubrir y tope de 50 imágenes en la biblioteca. |
 
 > **Aviso:** cuando CIBERAN incorpore una función nueva o cambie una pantalla, este manual debe actualizarse y subir de versión. Las fuentes editables están en `docs/manual/` y se regeneran con `node docs/manual/_build/build.mjs`.

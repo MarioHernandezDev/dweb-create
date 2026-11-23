@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { matchesClientFilters, responseLabel, sortResults } from '../../app/utils/discover-view'
+import { hasFicha, matchesClientFilters, responseLabel, sortResults } from '../../app/utils/discover-view'
 import { buildDeliverablesSummary } from '../../app/utils/proposal'
 import { monthGrid, postsByDay, weekDays, weekRangeLabel } from '../../app/utils/post-calendar'
 import { platformFeeCents, MARKETPLACE_FEE_RATE } from '../../app/utils/fees'
@@ -108,5 +108,18 @@ describe('orden por paquete en Descubrir', () => {
   })
   it('de más caro a más barato, sin paquetes al final', () => {
     expect(sortResults(list, 'pkg_desc', { pkgMinCents }).map((r) => r.id)).toEqual(['d', 'a', 'c', 'b'])
+  })
+})
+
+describe('Descubrir: perfiles sin ficha', () => {
+  const con = (id: string, o: Partial<DiscoveryResult> = {}) => r({ id, bio: 'Hola', ...o })
+  it('van detrás de los que tienen ficha, sea cual sea el orden', () => {
+    const list = [r({ id: 'vacio', score: 99 }), con('a', { score: 10 }), con('b', { score: 20 })]
+    expect(sortResults(list, 'affinity').map((x) => x.id)).toEqual(['b', 'a', 'vacio'])
+    expect(sortResults(list, 'collabs').map((x) => x.id)).toEqual(['b', 'a', 'vacio'])
+  })
+  it('las categorías también cuentan como ficha', () => {
+    expect(hasFicha(r({ categories: ['moda'] }))).toBe(true)
+    expect(hasFicha(r({ bio: '   ' }))).toBe(false)
   })
 })

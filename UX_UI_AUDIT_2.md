@@ -137,3 +137,23 @@ Primera pieza de la Fase 5 de la hoja de ruta (`docs/HOJA_DE_RUTA.md`), probada 
 - Tope de la biblioteca: **50 archivos** por persona (antes 100). En el código (`LIBRARY_MAX_FILES`) ya vale 50; en la base lo impone `media_library_cap`, y la migración `20261120100000_media_library_cap_50.sql` está **escrita y sin aplicar** (hace falta el OK para tocar la base compartida).
 - Optimización al subir (`optimizeImageFile`, `app/utils/image.ts`): lado mayor 2.000 px y webp al 82 %; nunca se guarda algo más pesado que el original. Se aplica a la biblioteca y a las portadas de publicaciones y paquetes. Las imágenes ya subidas no se tocan.
 - Medido con fotos sintéticas: 1.276 KB → 142 KB y 595 KB → 110 KB (con fotos reales el ahorro suele ser algo menor).
+
+## 11. Mejoras de usabilidad (20-nov-2026)
+Hechas a partir de la lista propuesta tras el manual de usuario:
+1. Texto de borrado corregido («Puedes deshacerlo unos segundos…»), antes decía «Borrarla es definitivo».
+2. Avance de entregables: sin entregables formales cuenta las piezas **listas** (aprobadas o publicadas), no solo las publicadas (`readyPostCount`).
+3. «Ayuda» en el menú (barra lateral y «Más» en móvil) y en la paleta; `/ayuda` se ve dentro del panel si hay sesión.
+4. «Acceso a la cuenta» en el perfil de los dos roles: cambiar contraseña (comprueba la actual) y email (enlace de confirmación al correo nuevo).
+5. Subir una imagen desde el selector de la biblioteca (si es una sola, se elige sola).
+6. Las conversaciones sin ningún mensaje no se listan (salvo la abierta): ya no aparece «Sin mensajes todavía» tras pulsar «Chat».
+7. Descubrir: los perfiles sin ficha van detrás de los que la tienen, sea cual sea el orden.
+8. Borrador automático de «Nueva publicación» (localStorage, 14 días, por usuario).
+9. Accesibilidad: auditoría con axe-core (WCAG 2.1 A/AA) de 27 pantallas, sin fallos tras los arreglos (nombre accesible del contador, avatares decorativos, barra de progreso, tooltips, tarjetas con el título como botón). Suite en `tests/e2e/a11y.*.spec.ts`. Rendimiento: sin medir (hay que hacerlo sobre la build de producción).
+10. Calendario suscribible (enlace privado `.ics` renovable). Migración `20261120110000_calendar_feeds.sql` **aplicada** (tabla `calendar_feeds` con RLS de solo lectura propia y dos funciones para crear/renovar el token; el servidor sirve `/api/calendar/<token>.ics` con la clave de servicio, limitado a 60 peticiones por IP cada 10 min). Probado en E2E: sirve el `.ics`, renovar invalida el enlace anterior y un token falso da 404.
+Además: Raya ya no aparece en la sección «Para quién es» de la landing.
+
+### 11.1 Cambio de contraseña reforzado (20-nov-2026)
+Dos pasos: contraseña actual (comprobada con un cliente de Supabase aparte para no renovar la sesión real) y, después, **código de 6 dígitos enviado al correo** (`reauthenticate()` + `updateUser({ password, nonce })`) con medidor de fortaleza (`password-strength.ts`), rechazo de contraseñas comunes/secuencias/nombre propio, reenvío con espera de 60 s y casilla (marcada) para cerrar las demás sesiones. **El servidor solo exige el código si «Secure password change» está activado en Supabase** (y la sesión no es reciente): hay que activarlo en producción; ver `docs/19-SEGURIDAD-CUENTA.md`. Sin probar de principio a fin: el envío real del código (necesita buzón y SMTP).
+
+---
+Segunda capa de auditoría (23-nov-2026): ver `docs/audit/11_SEGUNDA_CAPA_2026-11-23.md`.

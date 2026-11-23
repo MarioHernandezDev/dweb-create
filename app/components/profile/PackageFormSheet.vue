@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { errorMessage } from '~/utils/error-message'
 import type { Package } from '~/composables/usePackages'
 import type { LibraryItem } from '~/utils/media-library'
 import type { Role } from '~/types'
@@ -162,7 +163,7 @@ async function save() {
     emit('saved')
     emit('update:modelValue', false)
   } catch (e) {
-    errorMsg.value = e instanceof Error ? e.message : 'No se ha podido guardar. Inténtalo de nuevo.'
+    errorMsg.value = errorMessage(e, 'No se ha podido guardar. Inténtalo de nuevo.')
   }
 }
 </script>

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { errorMessage } from '~/utils/error-message'
 import { formatEuros } from '~/utils/mock-data'
 import type { Package } from '~/composables/usePackages'
 
@@ -51,7 +52,7 @@ async function send() {
     // vive ahí) — solo navega si de verdad es una conversación distinta.
     if (route.path !== `/chat/${offer.conversationId}`) router.push(`/chat/${offer.conversationId}`)
   } catch (e) {
-    errorMsg.value = e instanceof Error ? e.message : 'No se ha podido enviar la oferta.'
+    errorMsg.value = errorMessage(e, 'No se ha podido enviar la oferta.')
   }
 }
 </script>

@@ -95,6 +95,12 @@ const SHOTS = [
   { id: 'c-perfil', role: 'creator', path: '/creator/profile', marks: [{ text: 'Editar ficha', n: 1 }, { text: 'Ver perfil público', n: 2 }, { text: 'Ficha completa al', n: 3 }] },
   { id: 'c-perfil-ficha', vp: T2, scrollText: 'Presentación', role: 'creator', path: '/creator/profile', act: async (p) => { await click(p, tab(p, 'Ficha pública')) } },
   { id: 'c-perfil-privacidad', vp: T2, scrollText: 'Privacidad del chat', role: 'creator', path: '/creator/profile', act: async (p) => { await click(p, tab(p, /Privacidad/)) } },
+  { id: 'c-perfil-acceso', scrollText: 'Acceso a la cuenta', vp: T1, role: 'creator', path: '/creator/profile', act: async (p) => { await click(p, tab(p, /Privacidad/)) } },
+  { id: 'c-calendario-suscribir', role: 'creator', path: '/creator/requests?vista=calendario', act: async (p) => {
+    await click(p, p.locator('[data-calendar-subscribe]')); await p.waitForTimeout(1200)
+    // Solo en pantalla: se enmascara el enlace privado real antes de capturar.
+    await p.evaluate(() => { const i = document.querySelector('[data-calendar-url]'); if (i) i.value = 'https://tu-dominio.es/api/calendar/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx.ics' })
+  } },
   { id: 'c-tour', role: 'creator', path: '/creator/profile', act: async (p) => { await click(p, B(p, 'Ver el recorrido de bienvenida')) } },
   { id: 'c-descubrir', role: 'creator', path: '/creator/discover', marks: [{ text: 'Buscar marca por nombre', n: 1 }, { text: 'Filtros', n: 2 }, { text: 'Ordenar', n: 3 }, { text: 'Proponer', n: 4 }] },
   { id: 'c-proponer', role: 'creator', path: '/creator/discover', act: async (p) => { await click(p, B(p, 'Proponer')); await p.waitForTimeout(700) } },
@@ -114,7 +120,7 @@ const SHOTS = [
   { id: 'c-pub-detalle', role: 'creator', path: '/creator/post/:post', full: true },
   { id: 'c-pub-detalle-arriba', role: 'creator', path: '/creator/post/:post', marks: [{ text: 'Marcar como publicada', n: 1 }, { text: 'Texto de la publicación', n: 2 }, { text: 'Qué toca ahora', n: 3 }] },
   { id: 'c-biblioteca', role: 'creator', path: '/creator/library', marks: [{ text: 'Subir imágenes', n: 1 }, { text: 'Buscar en la biblioteca', n: 2 }, { text: 'Editar nombre y etiquetas', n: 3 }] },
-  { id: 'c-biblioteca-selector', role: 'creator', path: '/creator/packages', act: async (p) => { await click(p, B(p, /Añadir paquete/)); await p.waitForTimeout(700); await click(p, p.locator('[data-pick-library]')); await p.waitForTimeout(900) } },
+  { id: 'c-biblioteca-selector', role: 'creator', path: '/creator/packages', act: async (p) => { await click(p, B(p, /Añadir paquete/)); await p.waitForTimeout(700); await click(p, p.locator('[data-pick-library]')); await p.waitForTimeout(900); /* solo en pantalla: se ocultan imágenes ajenas al ejemplo (pueden ser fotos reales) */ await p.evaluate(() => document.querySelectorAll('[data-media-pick]').forEach((b) => { if (!/otoño/i.test(b.getAttribute('aria-label') || '')) b.remove() })) } },
   { id: 'c-paquetes', role: 'creator', path: '/creator/packages', marks: [{ text: 'Añadir paquete', n: 1 }, { text: 'Destacado', n: 2 }, { text: 'Editar', n: 3 }] },
   { id: 'c-paquete-nuevo', role: 'creator', path: '/creator/packages', act: async (p) => { await click(p, B(p, /Añadir paquete/)); await p.waitForTimeout(900) } },
   { id: 'c-resultados', role: 'creator', path: '/creator/insights' },

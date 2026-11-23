@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { ACTIVITY_NOTIFICATION_TYPES, MUTABLE_NOTIFICATION_TYPES, NOTIFICATION_PREFERENCE_GROUPS, isGroupEnabled, toggleGroup } from '../../app/utils/notifications'
-import { EXPORT_QUERIES, buildExportEntries, buildZip, crc32, csvCell, exportFilename, exportQueriesFor, toCsv } from '../../app/utils/data-export'
+import { EXPORT_QUERIES, buildExportEntries, buildZip, crc32, exportCsvCell, exportFilename, exportQueriesFor, exportToCsv } from '../../app/utils/data-export'
 import { COLLAB_FILE_MAX_BYTES, COLLAB_FILE_TYPES, collabFilePath, collabFileProblem, fileIcon, formatFileSize, safeFileName } from '../../app/utils/collab-files'
 import { agreementCanonicalText, agreementFingerprint, agreementRows, buildAgreementHtml, type AgreementData } from '../../app/utils/agreement-summary'
 import { buildIcs } from '../../app/utils/ics'
@@ -88,13 +88,13 @@ describe('descargar mis datos', () => {
     expect(entries[1]!.content).toContain('perfil;full_name;Ana')
   })
   it('las hojas CSV escapan comillas, saltos de línea y fórmulas, y conservan la cabecera aunque no haya filas', () => {
-    expect(csvCell('hola; "mundo"\nfin')).toBe('"hola; ""mundo""\nfin"')
-    expect(csvCell(['moda', 'fitness'])).toBe('moda, fitness')
-    expect(csvCell(null)).toBe('')
-    expect(csvCell('=SUMA(A1:A2)')).toBe("'=SUMA(A1:A2)")
-    expect(csvCell(12)).toBe('12')
-    expect(toCsv(['id', 'title'], [])).toBe('id;title\r\n')
-    expect(toCsv(['id', 'title'], [{ id: 1, title: 'a;b' }])).toBe('id;title\r\n1;"a;b"\r\n')
+    expect(exportCsvCell('hola; "mundo"\nfin')).toBe('"hola; ""mundo""\nfin"')
+    expect(exportCsvCell(['moda', 'fitness'])).toBe('moda, fitness')
+    expect(exportCsvCell(null)).toBe('')
+    expect(exportCsvCell('=SUMA(A1:A2)')).toBe("'=SUMA(A1:A2)")
+    expect(exportCsvCell(12)).toBe('12')
+    expect(exportToCsv(['id', 'title'], [])).toBe('id;title\r\n')
+    expect(exportToCsv(['id', 'title'], [{ id: 1, title: 'a;b' }])).toBe('id;title\r\n1;"a;b"\r\n')
   })
   it('el ZIP tiene una firma válida, un CRC por archivo y los nombres en UTF-8', () => {
     expect(crc32(new TextEncoder().encode('123456789'))).toBe(0xcbf43926)

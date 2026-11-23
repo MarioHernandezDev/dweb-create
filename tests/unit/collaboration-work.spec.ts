@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { collaborationWork, deliverableState, hasRated, type WorkCollab, type WorkDeliverable, type WorkEvent, type WorkPost } from '../../app/utils/collaboration-work'
+import { collabContext, collaborationWork, deliverableState, hasRated, type WorkCollab, type WorkDeliverable, type WorkEvent, type WorkPost } from '../../app/utils/collaboration-work'
 
 const empty = { scopeNotes: null, revisionsIncluded: null, exclusivity: false, usageRights: null, campaignGoal: null, targetAudience: null, tone: null }
 const collab = (over: Partial<WorkCollab> = {}): WorkCollab => ({
@@ -148,5 +148,55 @@ describe('collaborationWork con entregables · partner', () => {
   it('ignora entregables de otras colaboraciones', () => {
     const r = collaborationWork('creator', collab(), [], [], 'me', [deliv({ collaborationId: 'otra' })])
     expect(kinds(r)).toEqual(['start_deliverable'])
+  })
+})
+
+describe('collaborationWork · cancelación pendiente y solicitud caducada', () => {
+  const accepted = (over: Partial<WorkCollab> = {}) => collab({ status: 'accepted', ...over })
+  it('si la otra parte propone cancelar, responder es lo más urgente (antes que el brief)', () => {
+    const r = collaborationWork('partner', accepted({ cancelRequestedBy: 'creator-profile', cancelReason: 'No puedo cumplir los plazos.', campaignGoal: null }), [], [], 'me')
+    expect(kinds(r)[0]).toBe('respond_cancel')
+    expect(r.tasks[0]!.title).toMatch(/propone cancelar/)
+    expect(r.tasks[0]!.detail).toMatch(/No puedo cumplir los plazos/)
+    expect(r.tasks[0]!.to).toMatch(/#cancelar$/)
+    expect(kinds(r)).toContain('complete_brief') // sigue estando, pero detrás
+  })
+  it('si la propuesta de cancelar es mía, no es una tarea: espero la respuesta', () => {
+    const r = collaborationWork('partner', accepted({ cancelRequestedBy: 'me' }), [], [], 'me')
+    expect(kinds(r)).not.toContain('respond_cancel')
+    expect(r.waiting?.text).toMatch(/Esperando la respuesta de .* a tu propuesta de cancelar/)
+  })
+  it('sin cancelación pendiente no aparece ninguna tarea de cancelar', () => {
+    expect(kinds(collaborationWork('partner', accepted(), [], [], 'me'))).not.toContain('respond_cancel')
+  })
+  it('una solicitud caducada dice qué hacer, distinto para quien la envió y para quien la recibió', () => {
+    const past = '2020-01-01T00:00:00Z'
+    const sender = collaborationWork('partner', collab({ status: 'requested', initiatedBy: 'partner', expiresAt: past }), [], [], 'me')
+    expect(sender.waiting?.text).toMatch(/ha caducado/)
+    expect(sender.waiting?.detail).toMatch(/Retira la solicitud/)
+    const receiver = collaborationWork('creator', collab({ status: 'requested', initiatedBy: 'partner', expiresAt: past }), [], [], 'me')
+    expect(receiver.waiting?.detail).toMatch(/rechazarla/)
+    expect(sender.tasks).toHaveLength(0)
+  })
+  it('una espera normal no lleva detalle propio (se usa el genérico)', () => {
+    const r = collaborationWork('partner', collab({ status: 'requested', initiatedBy: 'partner' }), [], [], 'me')
+    expect(r.waiting?.detail).toBeUndefined()
+  })
+})
+
+describe('contexto de la campaña en tareas idénticas', () => {
+  it('«Crea la primera publicación» y «Valora» llevan el nombre de campaña para distinguir colaboraciones con la misma marca', () => {
+    const a = collaborationWork('creator', collab({ id: 'a', campaignName: 'Lanzamiento de otoño', campaignGoal: null }), [], [], 'me')
+    const b = collaborationWork('creator', collab({ id: 'b', campaignName: 'Black Friday', campaignGoal: null }), [], [], 'me')
+    expect(a.tasks.find((t) => t.kind === 'start_deliverable')!.detail).toContain('«Lanzamiento de otoño»')
+    expect(b.tasks.find((t) => t.kind === 'start_deliverable')!.detail).toContain('«Black Friday»')
+    const done = collaborationWork('creator', collab({ status: 'completed', campaignName: 'Black Friday' }), [], [], 'me')
+    expect(done.tasks[0]!.detail).toBe('«Black Friday» · Tu valoración ayuda a otros usuarios.')
+  })
+  it('sin nombre de campaña usa la primera frase del brief, y sin nada no añade contexto', () => {
+    expect(collabContext({ campaignName: null, brief: 'Una reseña en vídeo del producto. Para el 30 de noviembre.' })).toBe('«Una reseña en vídeo del producto.»')
+    expect(collabContext({ campaignName: '  ', brief: '' })).toBe('')
+    const r = collaborationWork('creator', collab({ status: 'completed', campaignName: null, brief: '' }), [], [], 'me')
+    expect(r.tasks[0]!.detail).toBe('Tu valoración ayuda a otros usuarios.')
   })
 })

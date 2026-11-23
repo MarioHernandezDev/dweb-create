@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { isFileTooLarge, formatFileSize, resizeImageFile } from '~/utils/image'
+import { isFileTooLarge, resizeImageFile } from '~/utils/image'
+import { formatFileSize } from '~/utils/collab-files'
 
 /**
  * Botón grande de foto de portada — mismo patrón visual que
