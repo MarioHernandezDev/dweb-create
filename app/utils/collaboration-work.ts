@@ -1,5 +1,5 @@
 import { expiryState } from './collab-expiry'
-import { formatMoney } from './collab-phase'
+import { formatMoney } from './money'
 import type { CollaborationStatus, PostStatus } from '~/types'
 import type { CollaborationTerms } from './collaboration-terms'
 import { hasAnyBriefSpecified, hasAnyTermsSpecified } from './collaboration-terms'
@@ -27,6 +27,8 @@ export interface WorkCollab extends CollaborationTerms {
   /** Caducidad de la solicitud pendiente: caducada ya no se puede aceptar, así que no es una tarea. */
   expiresAt?: string | null
   /** Perfil que ha propuesto cancelar de común acuerdo (null/ausente: nadie). Si es la otra parte, responder es lo más urgente. */
+  /** Solo partner: publicaciones del creador que aún no ve (ideas y borradores). */
+  hiddenPosts?: number
   cancelRequestedBy?: string | null
   cancelReason?: string | null
 }
@@ -336,7 +338,7 @@ export function collaborationWork(
           cta: 'Crear publicación', to: `/creator/timeline?nueva=1&colaboracion=${collab.id}`
         })
       }
-      if (role === 'partner' && !mine.length) waitingText ??= `${who} aún no ha creado ninguna publicación`
+      if (role === 'partner' && !mine.length) waitingText ??= collab.hiddenPosts ? `${who} está preparando sus publicaciones` : `${who} aún no ha creado ninguna publicación`
       if (role === 'partner' && mine.length && !tasks.length) {
         const pending = states.filter((s) => s.state === 'pending' || s.state === 'changes').length
         if (pending) waitingText ??= `${who} trabaja en ${pending} entrega${pending === 1 ? '' : 's'}`
@@ -365,6 +367,11 @@ export function collaborationWork(
         cta: 'Valorar', to: collaborationHref(role, collab.id) + '#respuesta'
       })
     }
+  }
+
+  // Si yo he propuesto cancelar y la colaboración sigue activa, que la tarea de hoy no lo oculte.
+  if (tasks.length && collab.cancelRequestedBy && collab.cancelRequestedBy === myProfileId && (collab.status === 'accepted' || collab.status === 'in_progress')) {
+    for (const t of tasks) t.detail = `${t.detail ? `${t.detail} ` : ''}(Propusiste cancelar: esperas la respuesta de ${who}.)`
   }
 
   tasks.sort((a, b) => a.priority - b.priority)

@@ -69,7 +69,7 @@ export function useCollabHub(role: 'creator' | 'partner') {
         expiresAt: c.expiresAt,
         scopeNotes: c.scopeNotes,
         usageRights: c.usageRights,
-        phase: collabPhase(c, mine),
+        phase: collabPhase(c, mine, role === 'partner' ? partnerPosts.hidden.value[c.id] : null),
         payment: paymentState(c, paymentsEnabled),
         platforms: [...new Set(mine.map((p) => p.platform))],
         dueDate: due,

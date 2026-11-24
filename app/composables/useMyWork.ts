@@ -25,7 +25,7 @@ export function useMyWork() {
   const { requests, ensureLoaded: ensureRequests } = useCollabRequests()
   const { collaborations, ensureLoaded: ensureCollaborations } = useMyCollaborations()
   const { posts: myPosts, ensureLoaded: ensureMyPosts } = useMyPosts()
-  const { posts: partnerPosts, ensureLoaded: ensurePartnerPosts } = usePartnerPosts()
+  const { posts: partnerPosts, hidden: hiddenPosts, ensureLoaded: ensurePartnerPosts } = usePartnerPosts()
   const { eventsByCollab, loadMany } = useCollabEvents()
   const { byCollab: deliverablesByCollab, loadMany: loadManyDeliverables } = useCollabDeliverables()
 
@@ -42,7 +42,7 @@ export function useMyWork() {
 
   const collabs = computed<WorkCollab[]>(() =>
     myRole.value === 'partner'
-      ? collaborations.value.map((c) => ({ ...c, counterpartName: c.creatorName ?? 'el creador' }))
+      ? collaborations.value.map((c) => ({ ...c, counterpartName: c.creatorName ?? 'el creador', hiddenPosts: hiddenPosts.value[c.id]?.hidden ?? 0 }))
       : requests.value.map((c) => ({ ...c, counterpartName: c.partnerName }))
   )
   const posts = computed(() => (myRole.value === 'partner' ? partnerPosts.value : myPosts.value))

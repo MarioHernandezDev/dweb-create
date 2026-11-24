@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { formatEuros } from '~/utils/mock-data'
-import { COLLAB_PHASES, formatMoney, readyPostCount, type CollabPhase } from '~/utils/collab-phase'
+import { formatMoney } from '~/utils/money'
+import { COLLAB_PHASES, readyPostCount, type CollabPhase } from '~/utils/collab-phase'
 import { PLATFORM_SHORT } from '~/utils/discover-view'
 import { initialsFromName, hueFromString } from '~/utils/avatar'
 import type { HubItem } from '~/composables/useCollabHub'

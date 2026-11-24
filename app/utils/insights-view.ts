@@ -1,4 +1,5 @@
 import type { Avg } from '~~/server/utils/collab-metrics'
+import { formatMoney } from './money'
 
 /** Formato y textos de las métricas propias (components/insights). Sin dato se escribe «—», nunca un 0 inventado. */
 export const NO_DATA = '—'
@@ -21,7 +22,7 @@ export function formatDecimal(a: Avg | null, digits = 1): string {
 }
 
 export function formatEurosAvg(a: Avg | null): string {
-  return a ? new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(a.value / 100) : NO_DATA
+  return a ? formatMoney(a.value) : NO_DATA
 }
 
 /** «sobre 3 colaboraciones» — el tamaño de la muestra acompaña siempre a la cifra. */

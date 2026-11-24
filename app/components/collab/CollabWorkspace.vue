@@ -6,7 +6,8 @@ import { collaborationWork, deliverableState, hasRated, type DeliverableState, t
 import type { CollaborationTerms } from '~/utils/collaboration-terms'
 import type { CollaborationStatus } from '~/types'
 import { expiryState } from '~/utils/collab-expiry'
-import { collabPhase, collabDisplayName, collabBriefExcerpt, paymentState, formatMoney, COLLAB_PHASES } from '~/utils/collab-phase'
+import { collabPhase, collabDisplayName, collabBriefExcerpt, paymentState, COLLAB_PHASES } from '~/utils/collab-phase'
+import { formatMoney } from '~/utils/money'
 import { collaborationStatusMeta } from '~/utils/status'
 import { agreementFingerprint, buildAgreementHtml, printHtml, type AgreementData } from '~/utils/agreement-summary'
 import { buildIcs } from '~/utils/ics'
@@ -30,7 +31,7 @@ const { confirm } = useConfirm()
 const creatorSide = useCollabRequests()
 const partnerSide = useMyCollaborations()
 const { posts: myPosts, ensureLoaded: ensureMyPosts, refresh: refreshMyPosts } = useMyPosts()
-const { posts: partnerPosts, ensureLoaded: ensurePartnerPosts, refresh: refreshPartnerPosts } = usePartnerPosts()
+const { posts: partnerPosts, hidden: hiddenPosts, ensureLoaded: ensurePartnerPosts, refresh: refreshPartnerPosts } = usePartnerPosts()
 const { itemsByPost, ensureItems } = useChecklist()
 const { eventsByCollab, error: eventsError, load: loadEvents } = useCollabEvents()
 const { byCollab: deliverablesByCollab, load: loadDeliverables } = useCollabDeliverables()
@@ -91,7 +92,7 @@ if (!view.value) {
 const expiry = computed(() => expiryState(view.value?.status ?? '', view.value?.expiresAt))
 
 // Fase, título y resumen de lo acordado (todo deducido de datos reales; ver utils/collab-phase.ts).
-const phase = computed(() => (view.value ? collabPhase(view.value, collabPosts.value) : null))
+const phase = computed(() => (view.value ? collabPhase(view.value, collabPosts.value, isPartner ? hiddenPosts.value[view.value.id] : null) : null))
 const phaseLabel = computed(() => COLLAB_PHASES.find((p) => p.value === phase.value)?.label ?? null)
 const title = computed(() => (view.value ? collabDisplayName(view.value, view.value.counterpartName) : ''))
 const briefExcerpt = computed(() => (view.value ? collabBriefExcerpt(view.value, title.value) : null))

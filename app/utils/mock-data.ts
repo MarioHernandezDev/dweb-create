@@ -4,6 +4,7 @@ import type {
   SparklinePoint,
   Suggestion
 } from '~/types'
+import { formatMoney } from './money'
 
 export const engagementSeries: SparklinePoint[] = [
   { label: 'L', value: 42 },
@@ -71,5 +72,5 @@ export function formatCompactNumber(value: number): string {
 
 export function formatEuros(cents: number | null): string {
   if (!cents) return 'Sin presupuesto'
-  return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(cents / 100)
+  return formatMoney(cents)
 }

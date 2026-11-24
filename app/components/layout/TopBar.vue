@@ -65,7 +65,7 @@ const { avatarUrl, initials: myInitials, hue: myHue } = useMyAvatar()
       <span v-if="chatUnreadCount" class="badge badge--on-light badge--corner">{{ badgeText(chatUnreadCount) }}</span>
     </NuxtLink>
 
-    <NuxtLink to="/inbox" :aria-label="unreadCount ? `Bandeja de entrada, ${badgeText(unreadCount)} sin leer` : 'Bandeja de entrada'" title="Bandeja de entrada" class="icon-link">
+    <NuxtLink to="/inbox" :aria-label="unreadCount ? `Bandeja de entrada, ${badgeText(unreadCount)} sin leer` : 'Bandeja de entrada'" title="Bandeja de entrada: avisos y novedades (no es tu lista de tareas)" class="icon-link">
       <Icon name="ph:tray-fill" class="size-5" />
       <span v-if="unreadCount" class="badge badge--on-light badge--corner">{{ badgeText(unreadCount) }}</span>
     </NuxtLink>

@@ -59,22 +59,29 @@ function mapRow(row: PostRow, checklist?: { total: number; done: number }): Post
 /**
  * Los posts visibles para el partner logueado: solo los atados a una de sus
  * colaboraciones — la RLS de `posts` ya lo garantiza (`posts_select_scoped`),
- * esto además filtra la consulta por eficiencia. Aprobar/pedir cambios usa
+ * esto además filtra la consulta por eficiencia. Desde `20261124100000` el partner solo recibe
+ * las publicaciones que ya se enviaron alguna vez a revisión (`submitted_at`); de las demás solo conoce el recuento (`hidden`). Aprobar/pedir cambios usa
  * las funciones `approve_post`/`request_post_changes` en vez de un UPDATE
  * directo: el partner nunca tiene permiso de escritura sobre `posts`, a
  * propósito (ver supabase/migrations).
  */
+export interface HiddenPosts { hidden: number; started: number }
+
 export function usePartnerPosts() {
   const client = useSupabaseClient()
   const posts = useState<Post[]>('partner-posts', () => [])
   const loaded = useState<boolean>('partner-posts-loaded', () => false)
+  // Recuento (no contenido) de las publicaciones que el partner aún no ve —ideas y borradores—, por colaboración.
+  const hidden = useState<Record<string, HiddenPosts>>('partner-posts-hidden', () => ({}))
 
   async function refresh() {
     // UNA sola consulta, sin esperar antes a la lista de colaboraciones: la RLS de `posts`
     // (`posts_select_scoped`) ya limita lo visible a las publicaciones de las colaboraciones de este
     // partner, y el recuento del checklist viaja incrustado (`checklist_items(done)`), como en
     // useMyPosts. Antes eran tres viajes en serie (colaboraciones → posts → checklist).
-    const { data, error } = await client
+    const [hiddenRes, { data, error }] = await Promise.all([
+      client.rpc('partner_hidden_posts' as never),
+      client
       .from('posts')
       .select('*, checklist_items(done)')
       .not('collaboration_id', 'is', null)
@@ -83,6 +90,10 @@ export function usePartnerPosts() {
       // muchas colaboraciones activas durante años acababa trayendo CADA
       // publicación de todas ellas, de siempre, solo para pintar un tablero.
       .limit(300)
+    ])
+    // Si la función aún no existe (migración sin aplicar) no pasa nada: se queda sin recuentos.
+    hidden.value = Object.fromEntries(((hiddenRes.data ?? []) as { collaboration_id: string; hidden: number; started: number }[])
+      .map((r) => [r.collaboration_id, { hidden: r.hidden, started: r.started }]))
     if (error) {
       console.error('[usePartnerPosts] fallo al cargar posts:', error.message)
       return
@@ -124,5 +135,5 @@ export function usePartnerPosts() {
     if (local) local.status = status
   }
 
-  return { posts, loaded, refresh, ensureLoaded, approvePost, requestChanges, applyReview }
+  return { posts, hidden, loaded, refresh, ensureLoaded, approvePost, requestChanges, applyReview }
 }

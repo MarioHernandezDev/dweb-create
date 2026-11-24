@@ -2,6 +2,7 @@
 import type { Avg, MetricsResult } from '~~/server/utils/collab-metrics'
 import { type AdminRole, ROLE_LABELS, canDo } from '~/utils/admin-labels'
 import { formatDecimal, formatHours, formatPct } from '~/utils/insights-view'
+import { formatMoney } from '~/utils/money'
 import { relativeTime } from '~/utils/status'
 import type { AdminAlertItem } from '~/components/admin/AdminAlerts.vue'
 
@@ -136,8 +137,7 @@ const discoveryVolumeSeries = computed(() => [{
 }])
 const maxCategoryCount = computed(() => Math.max(1, ...(discoveryAnalytics.value?.topCategories.map((c) => c.count) ?? [1])))
 
-const euroFormatter = new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 })
-const formatEuroValue = (v: number) => euroFormatter.format(v)
+const formatEuroValue = (v: number) => formatMoney(v * 100)
 const formatIntValue = (v: number) => String(Math.round(v))
 
 const revenueSeries = computed(() => [{

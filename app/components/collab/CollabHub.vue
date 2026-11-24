@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { collaborationStatusMeta } from '~/utils/status'
-import { COLLAB_PHASES, formatMoney, readyPostCount } from '~/utils/collab-phase'
+import { formatMoney } from '~/utils/money'
+import { COLLAB_PHASES, readyPostCount } from '~/utils/collab-phase'
 import { toCsv, downloadCsv } from '~/utils/csv'
 import { buildIcs } from '~/utils/ics'
 import { downloadIcs } from '~/utils/ics-download'

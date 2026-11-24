@@ -70,3 +70,19 @@ describe('readyPostCount', () => {
     expect(readyPostCount([])).toBe(0)
   })
 })
+
+describe('fase vista por el partner con borradores ocultos', () => {
+  const c = { status: 'accepted', paidAt: null }
+  it('con borradores en producción que no ve, la fase es «En producción»', () => {
+    expect(collabPhase(c, [], { hidden: 2, started: 1 })).toBe('in_production')
+  })
+  it('con solo ideas ocultas sigue en «Aceptada»', () => {
+    expect(collabPhase(c, [], { hidden: 1, started: 0 })).toBe('accepted')
+  })
+  it('todas las visibles publicadas pero quedan ocultas: no es «Publicada»', () => {
+    expect(collabPhase(c, [{ status: 'published' }], { hidden: 1, started: 1 })).toBe('in_production')
+  })
+  it('sin ocultas, igual que antes', () => {
+    expect(collabPhase(c, [{ status: 'published' }], null)).toBe('published')
+  })
+})

@@ -24,6 +24,11 @@
     scrollbar-width: none;
   }
 
+  /* Hay pestañas fuera de la vista: se difuminan los bordes por donde se puede seguir desplazando. */
+  .tabs.has-more-right { mask-image: linear-gradient(to right, #000 calc(100% - 2rem), transparent); }
+  .tabs.has-more-left { mask-image: linear-gradient(to left, #000 calc(100% - 2rem), transparent); }
+  .tabs.has-more-left.has-more-right { mask-image: linear-gradient(to right, transparent, #000 2rem, #000 calc(100% - 2rem), transparent); }
+
   .tabs__indicator {
     position: absolute;
     z-index: -1;

@@ -7,6 +7,35 @@
 const props = defineProps<{ options: { value: string; label: string }[]; modelValue: string; label?: string }>()
 const emit = defineEmits<{ 'update:modelValue': [value: string] }>()
 
+const el = ref<HTMLElement | null>(null)
+const more = ref({ left: false, right: false })
+
+/** Avisa con un degradado en el borde cuando hay pestañas fuera de la vista (móvil). */
+function updateMore() {
+  const t = el.value
+  if (!t) return
+  more.value = { left: t.scrollLeft > 4, right: t.scrollLeft + t.clientWidth < t.scrollWidth - 4 }
+}
+
+/** Desplaza solo la tira de pestañas (nunca la página) hasta que la elegida se vea entera. */
+function revealSelected(smooth: boolean) {
+  const t = el.value
+  const s = t?.querySelector<HTMLElement>('[aria-selected="true"]')
+  if (!t || !s) return
+  const left = s.offsetLeft - 8
+  const right = s.offsetLeft + s.offsetWidth + 8
+  if (left < t.scrollLeft) t.scrollTo({ left, behavior: smooth ? 'smooth' : 'auto' })
+  else if (right > t.scrollLeft + t.clientWidth) t.scrollTo({ left: right - t.clientWidth, behavior: smooth ? 'smooth' : 'auto' })
+}
+
+onMounted(() => {
+  updateMore()
+  revealSelected(false)
+  window.addEventListener('resize', updateMore)
+})
+onBeforeUnmount(() => window.removeEventListener('resize', updateMore))
+watch(() => props.modelValue, () => nextTick(() => revealSelected(true)))
+
 const index = computed(() => Math.max(0, props.options.findIndex((o) => o.value === props.modelValue)))
 
 function move(step: number, event: KeyboardEvent) {
@@ -19,7 +48,7 @@ function move(step: number, event: KeyboardEvent) {
 </script>
 
 <template>
-  <div class="tabs" role="tablist" :aria-label="label" :style="{ '--tab-count': options.length, '--tab-index': index }">
+  <div ref="el" class="tabs" @scroll.passive="updateMore" role="tablist" :class="[more.left && 'has-more-left', more.right && 'has-more-right']" :aria-label="label" :style="{ '--tab-count': options.length, '--tab-index': index }">
     <span class="tabs__indicator" aria-hidden="true" />
     <button
       v-for="opt in options" :key="opt.value" type="button" role="tab"

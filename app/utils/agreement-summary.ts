@@ -1,3 +1,4 @@
+import { formatMoney } from './money'
 /**
  * «Resumen del acuerdo» de una colaboración: un documento imprimible (o guardable como PDF) con lo pactado en la
  * plataforma. Es un resumen informativo, no un contrato firmado. La huella (SHA-256 del contenido) permite
@@ -26,7 +27,7 @@ export interface AgreementData {
 
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 const day = (iso: string | null) => (iso ? new Date(iso.length === 10 ? `${iso}T00:00:00` : iso).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' }) : null)
-const euros = (cents: number | null) => (cents == null ? 'Sin importe acordado' : new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(cents / 100))
+const euros = (cents: number | null) => (cents == null ? 'Sin importe acordado' : formatMoney(cents, 2))
 
 /** Filas «etiqueta: valor» del acuerdo, solo con lo que está informado (salvo las que siempre aplican). */
 export function agreementRows(a: AgreementData): { label: string; value: string }[] {

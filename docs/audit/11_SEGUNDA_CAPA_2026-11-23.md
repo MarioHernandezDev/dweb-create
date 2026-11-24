@@ -79,7 +79,7 @@ Comprobado y correcto:
 - Recorridos alternativos que dependen del correo (confirmación, recuperación, avisos).
 
 ## 10. Recomendaciones antes del lanzamiento
-1. Resolver el punto de privacidad de publicaciones en colaboración (decisión de producto + RLS).
+1. ~~Resolver el punto de privacidad de publicaciones en colaboración~~ — decidido el 24-nov: el partner solo ve desde «Para revisar». Migración `20261124100000_partner_posts_visibility.sql` preparada (aplicar y repasar con E2E).
    (Antes: dejar `.env.e2e` con la contraseña actual del creador de prueba.)
 2. Activar «Secure password change» y comprobar que el SMTP envía (sin correo, nadie cambia ni recupera su contraseña).
 3. Proyecto de producción separado (hoy las pruebas y los datos reales comparten base).

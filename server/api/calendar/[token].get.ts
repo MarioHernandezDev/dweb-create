@@ -45,7 +45,7 @@ export default defineEventHandler(async (event) => {
     collabRows = (collabs.data ?? []) as Row[]
     const ids = collabRows.map((c) => String(c.id))
     if (ids.length) {
-      const posts = await client.from('posts').select(POST_COLS).in('collaboration_id', ids).not('due_date', 'is', null).limit(1000)
+      const posts = await client.from('posts').select(POST_COLS).in('collaboration_id', ids).not('submitted_at', 'is', null).not('due_date', 'is', null).limit(1000)
       postRows = (posts.data ?? []) as Row[]
     }
   } else {

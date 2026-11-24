@@ -30,13 +30,16 @@ export function visiblePhases(paymentsEnabled: boolean) {
 export interface PhaseSubject { status: string; paidAt: string | null }
 export interface PhasePost { status: PostStatus }
 
-export function collabPhase(c: PhaseSubject, posts: PhasePost[]): CollabPhase | null {
+/** Lo que el partner NO ve (ideas y borradores): solo cuántas hay y cuántas están ya en producción. */
+export interface HiddenPostCounts { hidden: number; started: number }
+
+export function collabPhase(c: PhaseSubject, posts: PhasePost[], hidden?: HiddenPostCounts | null): CollabPhase | null {
   if (c.status !== 'accepted' && c.status !== 'in_progress' && c.status !== 'completed') return null
   if (c.paidAt) return 'paid'
   if (c.status === 'completed') return 'published'
   if (posts.some((p) => p.status === 'ready_for_review')) return 'brand_review'
-  if (posts.length && posts.every((p) => p.status === 'published')) return 'published'
-  if (posts.some((p) => p.status !== 'idea')) return 'in_production'
+  if (posts.length && !hidden?.hidden && posts.every((p) => p.status === 'published')) return 'published'
+  if (posts.some((p) => p.status !== 'idea') || (hidden?.started ?? 0) > 0) return 'in_production'
   return 'accepted'
 }
 
@@ -86,10 +89,6 @@ export function collabBriefExcerpt(c: { brief: string }, title: string, max = 16
   return brief.length > max ? `${brief.slice(0, max - 1).trimEnd()}…` : brief
 }
 
-/** Importe en euros; a diferencia de `formatEuros`, un 0 se escribe «0 €» (no «Sin presupuesto»). */
-export function formatMoney(cents: number): string {
-  return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(cents / 100)
-}
 
 /**
  * Nombre con el que se reconoce una colaboración en contexto (chips, filtros, tarjetas del tablero): el nombre de la

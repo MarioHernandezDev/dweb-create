@@ -13,12 +13,12 @@
   /* ---- Resumen ---- */
   .psum { display: grid; gap: 1rem; margin-bottom: 1.25rem; @media (width >= 64rem) { grid-template-columns: 22rem minmax(0, 1fr); } }
   .psum__card { padding: 1.25rem; background: var(--surface-raised); border: 1px solid var(--line); border-radius: var(--radius-md); min-width: 0; }
-  .psum__donut { display: flex; align-items: center; gap: 1.25rem; }
-  .psum__ring { flex: none; width: 7.5rem; height: 7.5rem; }
+  .psum__donut { display: flex; align-items: center; gap: 1.25rem; @media (width < 24rem) { gap: 0.75rem; } }
+  .psum__ring { flex: none; width: 7.5rem; height: 7.5rem; @media (width < 24rem) { width: 5.75rem; height: 5.75rem; } }
   .psum__ring-bg { stroke: var(--surface-sunken); }
   .psum__total { font-family: var(--font-display); font-weight: 800; font-size: 20px; fill: var(--text-strong); }
   .psum__total-label { font-size: 7px; fill: var(--text-muted); }
-  .psum__legend { display: grid; gap: 0.375rem; flex: 1; margin: 0; padding: 0; list-style: none; font-size: var(--text-sm); & li { display: flex; align-items: center; gap: 0.5rem; & strong { margin-left: auto; font-variant-numeric: tabular-nums; } } }
+  .psum__legend { display: grid; gap: 0.375rem; flex: 1; margin: 0; padding: 0; list-style: none; font-size: var(--text-sm); overflow-wrap: normal; & li { display: flex; align-items: center; gap: 0.5rem; & strong { margin-left: auto; font-variant-numeric: tabular-nums; } } }
   .psum__dot { width: 0.625rem; height: 0.625rem; border-radius: 2px; flex: none; }
 
   .psum__week-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 0.25rem 1rem; margin-bottom: 0.75rem; & h2 { font-family: var(--font-display); font-weight: 700; font-size: var(--text-lg); } & span { font-size: var(--text-sm); color: var(--text-muted); } }
@@ -36,9 +36,9 @@
 
   /* ---- Calendario ---- */
   .pcal { display: grid; gap: 0.75rem; }
-  .pcal__head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+  .pcal__head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem 1rem; }
   .pcal__title { font-family: var(--font-display); font-weight: 700; font-size: var(--text-title); text-transform: capitalize; }
-  .pcal__nav { display: flex; gap: 0.5rem; }
+  .pcal__nav { display: flex; flex-shrink: 0; gap: 0.5rem; & .btn { white-space: nowrap; } }
   .pcal__grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: var(--radius-md); overflow: hidden; @media (width < 48rem) { overflow-x: auto; grid-template-columns: repeat(7, minmax(6.5rem, 1fr)); } }
   .pcal__dow { padding: 0.5rem; background: var(--surface-sunken); font-size: var(--text-micro); font-weight: 700; color: var(--text-muted); text-align: center; }
   .pcal__cell { display: grid; align-content: start; gap: 0.25rem; min-height: 6.5rem; padding: 0.375rem; background: var(--surface-raised); &.is-out { background: var(--surface-sunken); & .pcal__num { opacity: 0.45; } } &.is-today { box-shadow: inset 0 0 0 2px var(--color-voltio-400); } }
